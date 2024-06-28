@@ -16,3 +16,8 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+.bold-link {
+    font-weight: bold;
+    color: black !important;
+}

@@ -6,24 +6,22 @@
 <ul class="navbar-nav ml-auto">
     @if (SignInManager.IsSignedIn(User))
     {
-        
+        <li class="nav-item">
+            <a class="nav-link text-dark" href="">Hola, @UserManager.GetUserName(User)</a>
+        </li>
+        <li class="nav-item">
+            <form id="logoutForm" method="post" class="form-inline" asp-controller="Cuentas" asp-action="SalirAplicacion">
+                <button type="submit" class="btn nav-link">Salir</button>
+            </form>
+        </li>
     }
-    <li class="nav-item">
-        <a class="nav-link text-white" href="">Hola, @UserManager.GetUserName(User)</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-white" asp-area="" asp-controller="Cuentas" asp-action="Acceso">Acceder</a>
-    </li>
-</ul>
-
-
-
-
-<ul class="navbar-nav ml-auto">
-    <li class="nav-item">
-        <a class="nav-link text-white" asp-area="" asp-controller="Cuentas" asp-action="Registro">Registro</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-white" asp-area="" asp-controller="Cuentas" asp-action="Acceso">Acceder</a>
-    </li>
+    else
+    {
+        <li class="nav-item">
+            <a class="nav-link bold-link" asp-area="" asp-controller="Cuentas" asp-action="Registro">Registro</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link bold-link" asp-area="" asp-controller="Cuentas" asp-action="Acceso">Acceder</a>
+        </li>
+    }
 </ul>

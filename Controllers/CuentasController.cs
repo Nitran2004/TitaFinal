@@ -28,6 +28,8 @@ namespace ProyectoIdentity.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
+
         public async Task<IActionResult> Registro(RegistroViewModel rgViewModel)
         {
             if (ModelState.IsValid)
@@ -88,5 +90,14 @@ namespace ProyectoIdentity.Controllers
 
         }
 
+        //Salir o cerrar sesion de la aplicacion (logout)
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SalirAplicacion()
+        {
+            await _signInManager.SignOutAsync();
+            return RedirectToAction(nameof(HomeController.Index), "Home");
+        }
     }
 }
