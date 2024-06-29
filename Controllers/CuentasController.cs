@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using ProyectoIdentity.Models;
 using System.Runtime.InteropServices;
 
@@ -101,8 +102,27 @@ namespace ProyectoIdentity.Controllers
                 await _roleManager.CreateAsync(new IdentityRole("Registrado"));
             }
 
+            //Para seleccion de rol
+
+            List<SelectListItem> listaRoles = new List<SelectListItem>();
+            listaRoles.Add(new SelectListItem()
+            {
+                Value = "Registrado",
+                Text = "Registrado"
+            });
+
+            listaRoles.Add(new SelectListItem()
+            {
+                Value = "Administrador",
+                Text = "Administrador"
+            });
+
             ViewData["ReturnUrl"] = returnurl;
-            RegistroViewModel registroVM = new RegistroViewModel();
+            RegistroViewModel registroVM = new RegistroViewModel() 
+            { 
+                ListaRoles = listaRoles
+
+            };
             return View(registroVM);
         }
 

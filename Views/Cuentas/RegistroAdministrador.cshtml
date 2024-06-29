@@ -7,7 +7,7 @@
 
 <h1>Registro de usuario</h1>
 
-<form asp-controller="Cuentas" asp-action="Registro" method="post" role="form">
+<form asp-controller="Cuentas" asp-action="RegistroAdministrador" method="post" role="form">
     <div class="text-danger" asp-validation-summary="All"></div>
 
     <div class="form-group">
@@ -97,6 +97,9 @@
             <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
         </div>
     </div>
+
+    @*Seleccion de rol*@
+
 
     <div class="form-group">
         <div class="col-md-10">

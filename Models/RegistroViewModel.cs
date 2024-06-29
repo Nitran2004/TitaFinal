@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 
 namespace ProyectoIdentity.Models
@@ -31,5 +32,10 @@ namespace ProyectoIdentity.Models
         public string Direccion { get; set; }
         public DateTime FechaNacimiento { get; set; }
         public bool Estado { get; set; }
+
+        //Para seleccion de roles
+        [Display(Name ="Seleccionar rol")]
+        public IEnumerable<SelectListItem> ListaRoles { get; set; }
+        public string RolSeleccionado { get; set; }
     }
 }
