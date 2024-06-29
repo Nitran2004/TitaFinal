@@ -36,6 +36,7 @@ namespace ProyectoIdentity.Models
         //Para seleccion de roles
         [Display(Name ="Seleccionar rol")]
         public IEnumerable<SelectListItem> ListaRoles { get; set; }
+        [Display(Name ="Rol Seleccionado")]
         public string RolSeleccionado { get; set; }
     }
 }

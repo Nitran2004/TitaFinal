@@ -128,7 +128,6 @@ namespace ProyectoIdentity.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        ///[AllowAnonymous]
 
 
         public async Task<IActionResult> RegistroAdministrador(RegistroViewModel rgViewModel, string returnurl = null)
@@ -142,6 +141,17 @@ namespace ProyectoIdentity.Controllers
 
                 if (resultado.Succeeded)
                 {
+                    //Para seleccion de rol
+                    if (rgViewModel.RolSeleccionado !=null && rgViewModel.RolSeleccionado.Length>0 && rgViewModel.RolSeleccionado =="Administrador") 
+                    {
+                        await _userManager.AddToRoleAsync(usuario,"Administrador");
+                    }
+                    else
+                    {
+                        await _userManager.AddToRoleAsync(usuario, "Registrado");
+                    }
+
+
                     //Esta linea es para la asignacion del usuario que se registra al rol "Registrado"
                     await _userManager.AddToRoleAsync(usuario, "Registrado");
 
@@ -151,6 +161,21 @@ namespace ProyectoIdentity.Controllers
                 }
                 ValidarErrores(resultado);
             }
+
+            //para seleccion de rol
+            List<SelectListItem> listaRoles = new List<SelectListItem>();
+            listaRoles.Add(new SelectListItem()
+            {
+                Value = "Auditor",
+                Text = "Auditor"
+            });
+
+            listaRoles.Add(new SelectListItem()
+            {
+                Value = "Administrador",
+                Text = "Administrador"
+            });
+            rgViewModel.ListaRoles = listaRoles;
 
             return View(rgViewModel);
 
@@ -311,6 +336,17 @@ namespace ProyectoIdentity.Controllers
 
         public IActionResult ConfirmacionRecuperaPassword()
         {
+            return View();
+        }
+
+
+        [HttpGet]
+        [AllowAnonymous]
+
+        public IActionResult Denegado(string returnurl = null)
+        {
+            ViewData["ReturnUrl"] = returnurl;
+            returnurl = returnurl ?? Url.Content("~/");
             return View();
         }
     }
