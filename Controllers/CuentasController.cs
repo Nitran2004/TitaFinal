@@ -7,27 +7,45 @@ using System.Runtime.InteropServices;
 
 namespace ProyectoIdentity.Controllers
 {
+    [Authorize]
     public class CuentasController : Controller
     {
         private readonly UserManager<IdentityUser>_userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly IEmailSender _emailSender;
 
-        public CuentasController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IEmailSender emailSender)
+        public CuentasController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IEmailSender emailSender, RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
-            _signInManager= signInManager;
+            _roleManager= roleManager;
+            _signInManager = signInManager;
             _emailSender= emailSender;
         }
 
+        [HttpGet]
+        [AllowAnonymous]
         public IActionResult Index()
         {
             return View();
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> Registro(string returnurl = null)
         {
+            //Para la creacion de los roles
+            if (!await _roleManager.RoleExistsAsync("Administrar"))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("Administrador"));
+            }
+
+            //Para la creacion de los registrado
+            if (!await _roleManager.RoleExistsAsync("Registrado"))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("Registrado"));
+            }
+
             ViewData["ReturnUrl"] = returnurl;
             RegistroViewModel registroVM = new RegistroViewModel();
             return View(registroVM);
@@ -35,6 +53,8 @@ namespace ProyectoIdentity.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [AllowAnonymous]
+
 
         public async Task<IActionResult> Registro(RegistroViewModel rgViewModel, string returnurl=null)
         {
@@ -47,6 +67,9 @@ namespace ProyectoIdentity.Controllers
 
                 if (resultado.Succeeded)
                 {
+                    //Esta linea es para la asignacion del usuario que se registra al rol "Registrado"
+                    await _userManager.AddToRoleAsync(usuario, "Registrado");
+
                     await _signInManager.SignInAsync(usuario, isPersistent: false);
                     //return RedirectToAction("Index", "Home");
                     return LocalRedirect(returnurl);    
