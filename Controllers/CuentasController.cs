@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using ProyectoIdentity.Models;
 
@@ -8,11 +10,13 @@ namespace ProyectoIdentity.Controllers
     {
         private readonly UserManager<IdentityUser>_userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly IEmailSender _emailSender;
 
-        public CuentasController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager)
+        public CuentasController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IEmailSender emailSender)
         {
             _userManager = userManager;
             _signInManager= signInManager;
+            _emailSender= emailSender;
         }
 
         public IActionResult Index()
@@ -81,7 +85,7 @@ namespace ProyectoIdentity.Controllers
             if (ModelState.IsValid)
             {
                 
-                var resultado = await _signInManager.PasswordSignInAsync(accViewModel.Email, accViewModel.Password, accViewModel.RememberMe, lockoutOnFailure: false);
+                var resultado = await _signInManager.PasswordSignInAsync(accViewModel.Email, accViewModel.Password, accViewModel.RememberMe, lockoutOnFailure: true);
 
                 if (resultado.Succeeded)
                 {
@@ -89,6 +93,13 @@ namespace ProyectoIdentity.Controllers
                     //return RedirectToAction("Index", "Home");
                     return LocalRedirect(returnurl);
                 }
+                if (resultado.IsLockedOut)
+                {
+
+                    //return RedirectToAction("Index", "Home");
+                    return View("Bloqueado");
+                }
+
                 else
                 {
                     ModelState.AddModelError(String.Empty, "Acceso invalido");
@@ -108,6 +119,45 @@ namespace ProyectoIdentity.Controllers
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction(nameof(HomeController.Index), "Home");
+        }
+
+        //metodo para olvido de contraseña
+
+        [HttpGet]
+        public IActionResult OlvidoPassword()
+        {
+            return View();
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> OlvidoPassword(OlvidoPasswordViewModel opViewModel)
+        {
+            if (ModelState.IsValid)
+            {
+                var usuario =  await _userManager.FindByEmailAsync(opViewModel.Email);
+                if (usuario == null)
+                {
+                    return RedirectToAction("ConfirmacionOlvidoPassword");
+                }
+                var codigo = await _userManager.GeneratePasswordResetTokenAsync(usuario);
+                var urlRetorno = Url.Action("ResetPassword", "Cuentas", new { userId = usuario.Id, code = codigo }, protocol: HttpContext.Request.Scheme);
+
+                await _emailSender.SendEmailAsync(opViewModel.Email, "Recuperar contraseña ", 
+                    "Por favor recupere su contraseña dando click aqui: <a href=\""+ urlRetorno + "\">enlace</a>");
+                return RedirectToAction("ConfirmacionOlvidoPassword");
+            
+            }
+            return View(opViewModel);
+            
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ConfirmacionOlvidoPassword() 
+        {
+            return View(); 
         }
     }
 }
