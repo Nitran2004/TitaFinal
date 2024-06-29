@@ -7,7 +7,7 @@
 
 <h1>Registro de usuario</h1>
 
-<form asp-controller="Cuentas" asp-action="Acceso" method="post" role="form">
+<form asp-controller="Cuentas" asp-action="Acceso" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" >
     <div class="text-danger" asp-validation-summary="All"></div>
 
     <div class="form-group">

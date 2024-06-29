@@ -21,8 +21,9 @@ namespace ProyectoIdentity.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Registro()
+        public async Task<IActionResult> Registro(string returnurl = null)
         {
+            ViewData["ReturnUrl"] = returnurl;
             RegistroViewModel registroVM = new RegistroViewModel();
             return View(registroVM);
         }
@@ -30,8 +31,10 @@ namespace ProyectoIdentity.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
 
-        public async Task<IActionResult> Registro(RegistroViewModel rgViewModel)
+        public async Task<IActionResult> Registro(RegistroViewModel rgViewModel, string returnurl=null)
         {
+            ViewData["ReturnUrl"] = returnurl;
+            returnurl = returnurl ?? Url.Content("~/");
             if (ModelState.IsValid)
             {
                 var usuario = new AppUsuario { UserName = rgViewModel.Email, Email = rgViewModel.Email, Nombre = rgViewModel.Nombre, Url = rgViewModel.Url, CodigoPais = rgViewModel.CodigoPais, Telefono = rgViewModel.Telefono, Pais = rgViewModel.Pais, Ciudad = rgViewModel.Ciudad, Direccion = rgViewModel.Direccion, FechaNacimiento = rgViewModel.FechaNacimiento, Estado = rgViewModel.Estado };
@@ -40,7 +43,8 @@ namespace ProyectoIdentity.Controllers
                 if (resultado.Succeeded)
                 {
                     await _signInManager.SignInAsync(usuario, isPersistent: false);
-                    return RedirectToAction("Index", "Home");
+                    //return RedirectToAction("Index", "Home");
+                    return LocalRedirect(returnurl);    
                 }
                 ValidarErrores(resultado);
             }
@@ -61,14 +65,19 @@ namespace ProyectoIdentity.Controllers
 
         [HttpGet]
 
-        public IActionResult Acceso()
+        public IActionResult Acceso(string returnurl=null)
         {
+            ViewData["ReturnUrl"]= returnurl;
             return View();
         }
 
         [HttpPost]
-        public async Task<IActionResult> Acceso(AccesoViewModel accViewModel)
+        [ValidateAntiForgeryToken]
+
+        public async Task<IActionResult> Acceso(AccesoViewModel accViewModel, string returnurl = null)
         {
+            ViewData["ReturnUrl"] = returnurl;
+            returnurl= returnurl ?? Url.Content("~/");
             if (ModelState.IsValid)
             {
                 
@@ -77,7 +86,8 @@ namespace ProyectoIdentity.Controllers
                 if (resultado.Succeeded)
                 {
 
-                    return RedirectToAction("Index", "Home");
+                    //return RedirectToAction("Index", "Home");
+                    return LocalRedirect(returnurl);
                 }
                 else
                 {
