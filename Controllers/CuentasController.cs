@@ -34,7 +34,7 @@ namespace ProyectoIdentity.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Registro(string returnurl = null)
         {
-            //Para la creacion de los roles
+            //Para la creacion de los rolesff
             if (!await _roleManager.RoleExistsAsync("Administrar"))
             {
                 await _roleManager.CreateAsync(new IdentityRole("Administrador"));
@@ -50,6 +50,8 @@ namespace ProyectoIdentity.Controllers
             RegistroViewModel registroVM = new RegistroViewModel();
             return View(registroVM);
         }
+
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -81,6 +83,61 @@ namespace ProyectoIdentity.Controllers
 
         }
 
+        //Registro especial solo para administradores
+
+        [HttpGet]
+        ///[AllowAnonymous]
+        public async Task<IActionResult> RegistroAdministrador(string returnurl = null)
+        {
+            //Para la creacion de los rolesff
+            if (!await _roleManager.RoleExistsAsync("Administrar"))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("Administrador"));
+            }
+
+            //Para la creacion de los registrado
+            if (!await _roleManager.RoleExistsAsync("Registrado"))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("Registrado"));
+            }
+
+            ViewData["ReturnUrl"] = returnurl;
+            RegistroViewModel registroVM = new RegistroViewModel();
+            return View(registroVM);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        ///[AllowAnonymous]
+
+
+        public async Task<IActionResult> RegistroAdministrador(RegistroViewModel rgViewModel, string returnurl = null)
+        {
+            ViewData["ReturnUrl"] = returnurl;
+            returnurl = returnurl ?? Url.Content("~/");
+            if (ModelState.IsValid)
+            {
+                var usuario = new AppUsuario { UserName = rgViewModel.Email, Email = rgViewModel.Email, Nombre = rgViewModel.Nombre, Url = rgViewModel.Url, CodigoPais = rgViewModel.CodigoPais, Telefono = rgViewModel.Telefono, Pais = rgViewModel.Pais, Ciudad = rgViewModel.Ciudad, Direccion = rgViewModel.Direccion, FechaNacimiento = rgViewModel.FechaNacimiento, Estado = rgViewModel.Estado };
+                var resultado = await _userManager.CreateAsync(usuario, rgViewModel.Password);
+
+                if (resultado.Succeeded)
+                {
+                    //Esta linea es para la asignacion del usuario que se registra al rol "Registrado"
+                    await _userManager.AddToRoleAsync(usuario, "Registrado");
+
+                    await _signInManager.SignInAsync(usuario, isPersistent: false);
+                    //return RedirectToAction("Index", "Home");
+                    return LocalRedirect(returnurl);
+                }
+                ValidarErrores(resultado);
+            }
+
+            return View(rgViewModel);
+
+        }
+
+        [AllowAnonymous]
+
         private void ValidarErrores(IdentityResult resultado)
         {
             foreach(var error in resultado.Errors){
@@ -92,6 +149,8 @@ namespace ProyectoIdentity.Controllers
         //Metodo mostrar formulario de acceso
 
         [HttpGet]
+        [AllowAnonymous]
+
 
         public IActionResult Acceso(string returnurl=null)
         {
@@ -101,6 +160,8 @@ namespace ProyectoIdentity.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [AllowAnonymous]
+
 
         public async Task<IActionResult> Acceso(AccesoViewModel accViewModel, string returnurl = null)
         {
@@ -148,6 +209,8 @@ namespace ProyectoIdentity.Controllers
         //metodo para olvido de contraseña
 
         [HttpGet]
+        [AllowAnonymous]
+
         public IActionResult OlvidoPassword()
         {
             return View();
@@ -156,6 +219,8 @@ namespace ProyectoIdentity.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [AllowAnonymous]
+
         public async Task<IActionResult> OlvidoPassword(OlvidoPasswordViewModel opViewModel)
         {
             if (ModelState.IsValid)
@@ -179,6 +244,7 @@ namespace ProyectoIdentity.Controllers
 
         [HttpGet]
         [AllowAnonymous]
+
         public IActionResult ConfirmacionOlvidoPassword() 
         {
             return View(); 
@@ -186,6 +252,8 @@ namespace ProyectoIdentity.Controllers
 
         //Funcionalidad para recuperar contraseña
         [HttpGet]
+        [AllowAnonymous]
+
         public IActionResult ResetPassword(string code=null) 
         {
             return code == null ? View("Error") : View();
@@ -193,6 +261,8 @@ namespace ProyectoIdentity.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [AllowAnonymous]
+
 
         public async Task <IActionResult> ResetPassword(RecuperaPasswordViewModel rpViewModel)
         {
@@ -217,6 +287,8 @@ namespace ProyectoIdentity.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
+
         public IActionResult ConfirmacionRecuperaPassword()
         {
             return View();
