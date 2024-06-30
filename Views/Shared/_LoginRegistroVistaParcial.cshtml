@@ -15,12 +15,28 @@
         {
              <p>Tu rol es: Auditor</p>   
         }
-        
 
-
-        <li class="nav-item">
-            <a class="nav-link text-dark" href="">Hola, @UserManager.GetUserName(User)</a>
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Mi cuenta
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <li class="nav-item">
+                    <a class="nav-link text-dark" href="#">Hola, @UserManager.GetUserName(User)</a>
+                </li>
+                <li>
+                    <hr class="dropdown-divider">
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark" asp-area="" asp-controller="Usuarios" asp-action="EditarPerfil" asp-route-id="@UserManager.GetUserId(User)">Editar Perfil</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark" asp-area="" asp-controller="Usuarios" asp-action="CambiarPassword">Cambiar Contraseña</a>
+                </li>
+            </ul>
         </li>
+
+
         <li class="nav-item">
             <form id="logoutForm" method="post" class="form-inline" asp-controller="Cuentas" asp-action="SalirAplicacion">
                 <button type="submit" class="btn nav-link">Salir</button>
