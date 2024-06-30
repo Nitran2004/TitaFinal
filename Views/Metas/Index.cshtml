@@ -7,11 +7,14 @@
 
 <h1 class="text-center">Lista de Metas</h1>
 
-<div class="row">
-    <div class="col-sm-3 offset-9">
-        <a asp-action="Crear" asp-controller="Metas" class="btn btn-primary w-100">Crear Nueva Meta</a>
+@if (User.IsInRole("Administrador"))
+{
+    <div class="row">
+        <div class="col-sm-3 offset-9">
+            <a asp-action="Crear" asp-controller="Metas" class="btn btn-primary w-100">Crear Nueva Meta</a>
+        </div>
     </div>
-</div>
+}
 
 <form asp-controller="Metas" asp-action="Index">
     <p>

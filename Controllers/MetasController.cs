@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ProyectoIdentity.Controllers
 {
-    [Authorize(Roles = "Administrador")]
+    [Authorize]
     public class MetasController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -19,6 +19,7 @@ namespace ProyectoIdentity.Controllers
             _context = context;
         }
 
+        [AllowAnonymous]
         public async Task<IActionResult> Index(string buscar)
         {
             // Filtrar por SiglaEG01_EG13 si hay término de búsqueda
@@ -40,6 +41,7 @@ namespace ProyectoIdentity.Controllers
         {
             return View();
         }
+        [Authorize(Roles = "Administrador")]
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -68,6 +70,7 @@ namespace ProyectoIdentity.Controllers
             }
             return View(meta);
         }
+        [Authorize(Roles = "Administrador")]
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -102,7 +105,7 @@ namespace ProyectoIdentity.Controllers
 
             return View(meta);
         }
-
+        [Authorize(Roles = "Administrador")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BorrarConfirmed(int id)
