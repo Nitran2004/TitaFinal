@@ -13,6 +13,13 @@
     </div>
 </div>
 
+<form asp-controller="Metas" asp-action="Index">
+    <p>
+        Buscar por Sigla EG01-EG13: <input type="text" name="buscar" class="form-text" />
+        <input type="submit" value="Buscar" class="btn btn-sm btn-dark" />
+    </p>
+</form>
+
 <div class="row">
     <div class="col-sm-12">
         <div class="card border">
@@ -26,10 +33,11 @@
                         <table class="d-lg-table table-bordered" id="tablaMetas" width="100%" cellspacing="0">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    @*<th>ID</th>*@
                                     <th>Código</th>
                                     <th>Dominio</th>
                                     <th>Nivel de Importancia</th>
+                                    <th>SiglaEG01_EG13</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -37,10 +45,12 @@
                                 @foreach (var meta in Model)
                                 {
                                     <tr>
-                                        <td>@Html.DisplayFor(m => meta.ID)</td>
+                                        @*<td>@Html.DisplayFor(m => meta.ID)</td>*@
                                         <td>@Html.DisplayFor(m => meta.Codigo)</td>
                                         <td>@Html.DisplayFor(m => meta.Dominio)</td>
                                         <td>@Html.DisplayFor(m => meta.Nivel)</td>
+                                        <td>@Html.DisplayFor(m => meta.SiglaEG01_EG13)</td>
+
                                         <td>
                                             <a class="btn btn-primary" asp-controller="Metas" asp-action="Editar" asp-route-id="@meta.ID">Editar</a>
                                             <form asp-controller="Metas" asp-action="BorrarConfirmed" asp-route-id="@meta.ID" method="post" style="display:inline;">

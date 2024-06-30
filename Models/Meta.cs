@@ -15,7 +15,7 @@ namespace ProyectoIdentity.Models
         [Display(Name = "Nivel de Importancia")]
         public string Nivel { get; set; }
 
-        [Display(Name = "Alineamiento y objetivos de gobierno Sigla AG01-AG13")]
+        [Display(Name = "Alineamiento y objetivos de gobierno Sigla EG01-EG13")]
         public string SiglaEG01_EG13 { get; set; } // Renombrar para evitar caracteres especiales
     }
 }

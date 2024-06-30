@@ -1,6 +1,7 @@
 ﻿// Ruta: Controllers/MetaController.cs
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using ProyectoIdentity.Datos;
 using ProyectoIdentity.Models;
 using System.Linq;
@@ -18,9 +19,20 @@ namespace ProyectoIdentity.Controllers
             _context = context;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index(string buscar)
         {
-            var metas = _context.Metas.ToList();
+            // Filtrar por SiglaEG01_EG13 si hay término de búsqueda
+            IQueryable<Meta> metasQuery = _context.Metas;
+
+            if (!string.IsNullOrEmpty(buscar))
+            {
+                metasQuery = metasQuery.Where(m => m.SiglaEG01_EG13.Contains(buscar));
+            }
+
+            // Obtener la lista de metas filtradas
+            var metas = await metasQuery.ToListAsync();
+
+            // Retornar la vista con la lista filtrada
             return View(metas);
         }
 
