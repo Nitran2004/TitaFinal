@@ -1,0 +1,56 @@
+﻿@model IEnumerable<ProyectoIdentity.Models.Modelo>
+
+@{
+    ViewData["Title"] = "Lista de Modelos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1 class="text-center">Lista de Modelos</h1>
+
+@if (User.IsInRole("Administrador"))
+{
+    <div class="row">
+        <div class="col-sm-3 offset-9">
+            <a asp-action="Create" class="btn btn-primary w-100">Crear Nuevo Modelo</a>
+        </div>
+    </div>
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Core</th>
+            <th>Alineamiento</th>
+            @if (User.IsInRole("Administrador"))
+            {
+                <th>Acciones</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.Core)</td>
+                <td>@Html.DisplayFor(modelItem => item.Alineamiento.Codigo)</td>
+                @if (User.IsInRole("Administrador"))
+                {
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.ModeloID" class="btn btn-warning">Editar</a>
+                        <button type="button" class="btn btn-danger" onclick="confirmDelete('@item.ModeloID', '@item.Core')">Borrar</button>
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script type="text/javascript">
+        function confirmDelete(id, core) {
+            if (confirm('¿Está seguro que desea borrar el modelo con core ' + core + '?')) {
+                window.location.href = '/Modelo/Delete/' + id;
+            }
+        }
+    </script>
+}

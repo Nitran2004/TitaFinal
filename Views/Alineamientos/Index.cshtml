@@ -1,0 +1,60 @@
+﻿@model IEnumerable<ProyectoIdentity.Models.Alineamiento>
+
+@{
+    ViewData["Title"] = "Lista de Alineamientos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1 class="text-center">Lista de Alineamientos</h1>
+
+@if (User.IsInRole("Administrador"))
+{
+    <div class="row">
+        <div class="col-sm-3 offset-9">
+            <a asp-action="Create" class="btn btn-primary w-100">Crear Nuevo Alineamiento</a>
+        </div>
+    </div>
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Código</th>
+            <th>Dominio</th>
+            <th>Nivel de Importancia</th>
+            <th>Sigla AG01-AG13</th>
+            @if (User.IsInRole("Administrador"))
+            {
+                <th>Acciones</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.Codigo)</td>
+                <td>@Html.DisplayFor(modelItem => item.Dominio)</td>
+                <td>@Html.DisplayFor(modelItem => item.Nivel)</td>
+                <td>@Html.DisplayFor(modelItem => item.SiglaAG01_AG13)</td>
+                @if (User.IsInRole("Administrador"))
+                {
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.ID" class="btn btn-warning">Editar</a>
+                        <button type="button" class="btn btn-danger" onclick="confirmDelete('@item.ID', '@item.Codigo')">Borrar</button>
+                    </td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script type="text/javascript">
+        function confirmDelete(id, codigo) {
+            if (confirm('¿Está seguro que desea borrar el alineamiento con código ' + codigo + '?')) {
+                window.location.href = '/Alineamiento/Delete/' + id;
+            }
+        }
+    </script>
+}

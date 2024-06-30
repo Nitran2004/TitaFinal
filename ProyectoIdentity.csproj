@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="Views\Alineamientos\Create.cshtml" />
+    <None Include="Views\Alineamientos\Edit.cshtml" />
+    <None Include="Views\Alineamientos\Index.cshtml" />
+    <None Include="Views\Modelos\Index.cshtml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Mailjet.Api" Version="1.2.3" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="6.0.1" />

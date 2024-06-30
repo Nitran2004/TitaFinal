@@ -1,0 +1,48 @@
+﻿@model ProyectoIdentity.Models.Alineamiento
+
+@{
+    ViewData["Title"] = "Editar Alineamiento";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1>Editar Alineamiento</h1>
+
+<h4>Alineamiento</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div class="form-group">
+                <label asp-for="Codigo" class="control-label"></label>
+                <input asp-for="Codigo" class="form-control" />
+                <span asp-validation-for="Codigo" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Dominio" class="control-label"></label>
+                <input asp-for="Dominio" class="form-control" />
+                <span asp-validation-for="Dominio" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Nivel" class="control-label"></label>
+                <input asp-for="Nivel" class="form-control" />
+                <span asp-validation-for="Nivel" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SiglaAG01_AG13" class="control-label"></label>
+                <input asp-for="SiglaAG01_AG13" class="form-control" />
+                <span asp-validation-for="SiglaAG01_AG13" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Guardar" class="btn btn-primary" />
+                <a asp-action="Index">Volver a la lista</a>
+
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

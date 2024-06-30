@@ -13,6 +13,9 @@ namespace ProyectoIdentity.Datos
         public DbSet<AppUsuario> AppUsuario { get; set; }
         public DbSet<Meta> Metas { get; set; }
 
+        public DbSet<Alineamiento> Alineamientos { get; set; }
+        public DbSet<Modelo> Modelos { get; set; }
+
 
     }
 }
