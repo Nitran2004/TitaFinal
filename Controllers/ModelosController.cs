@@ -144,19 +144,19 @@ namespace ProyectoIdentity.Controllers
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (_context.Modelos == null)
-            {
-                return Problem("Entity set 'ApplicationDbContext.Modelos'  is null.");
-            }
             var modelo = await _context.Modelos.FindAsync(id);
-            if (modelo != null)
+            if (modelo == null)
             {
-                _context.Modelos.Remove(modelo);
+                return NotFound();
             }
 
+            _context.Modelos.Remove(modelo);
             await _context.SaveChangesAsync();
+
             return RedirectToAction(nameof(Index));
         }
+
+
 
 
         private bool ModeloExists(int id)

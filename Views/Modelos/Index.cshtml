@@ -49,7 +49,19 @@
     <script type="text/javascript">
         function confirmDelete(id, core) {
             if (confirm('¿Está seguro que desea borrar el modelo con core ' + core + '?')) {
-                window.location.href = '/Modelo/Delete/' + id;
+                $.ajax({
+                    url: '/Modelos/Delete/' + id,
+                    type: 'POST',
+                    headers: {
+                        RequestVerificationToken: $('input:hidden[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function (result) {
+                        window.location.href = '/Modelos/Index';
+                    },
+                    error: function (xhr, status, error) {
+                        alert('No se pudo eliminar el modelo.');
+                    }
+                });
             }
         }
     </script>

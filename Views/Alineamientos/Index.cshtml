@@ -53,8 +53,25 @@
     <script type="text/javascript">
         function confirmDelete(id, codigo) {
             if (confirm('¿Está seguro que desea borrar el alineamiento con código ' + codigo + '?')) {
-                window.location.href = '/Alineamiento/Delete/' + id;
+                // Utiliza fetch para realizar una solicitud POST
+                fetch('/Alineamientos/DeleteConfirmed/' + id, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    }
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload(); // Recarga la página si la eliminación es exitosa
+                        } else {
+                            alert('Hubo un error al intentar borrar el alineamiento.');
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
             }
         }
     </script>
 }
+

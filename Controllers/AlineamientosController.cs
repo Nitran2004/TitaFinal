@@ -115,7 +115,7 @@ namespace ProyectoIdentity.Controllers
         //[Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null || _context.Alineamientos == null)
+            if (id == null)
             {
                 return NotFound();
             }
@@ -131,24 +131,23 @@ namespace ProyectoIdentity.Controllers
         }
 
         // POST: Alineamiento/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (_context.Alineamientos == null)
-            {
-                return Problem("Entity set 'ApplicationDbContext.Alineamientos'  is null.");
-            }
             var alineamiento = await _context.Alineamientos.FindAsync(id);
-            if (alineamiento != null)
+            if (alineamiento == null)
             {
-                _context.Alineamientos.Remove(alineamiento);
+                return NotFound();
             }
 
+            _context.Alineamientos.Remove(alineamiento);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return Ok(); // Devuelve una respuesta 200 OK si la eliminación es exitosa
         }
+
 
 
         private bool AlineamientoExists(int id)

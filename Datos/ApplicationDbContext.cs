@@ -16,6 +16,15 @@ namespace ProyectoIdentity.Datos
         public DbSet<Alineamiento> Alineamientos { get; set; }
         public DbSet<Modelo> Modelos { get; set; }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<Alineamiento>()
+                .HasMany(a => a.Modelos)
+                .WithOne(m => m.Alineamiento)
+                .HasForeignKey(m => m.AlineamientoID)
+                .OnDelete(DeleteBehavior.Cascade); // Configura la eliminación en cascada
+        }
     }
 }
