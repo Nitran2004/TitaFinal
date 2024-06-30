@@ -11,7 +11,7 @@ namespace ProyectoIdentity.Datos
         //Agregamos los diferentes modelos que necesitamos
         //
         public DbSet<AppUsuario> AppUsuario { get; set; }
-        //public DbSet<Meta> Metas { get; set; }
+        public DbSet<Meta> Metas { get; set; }
 
 
     }

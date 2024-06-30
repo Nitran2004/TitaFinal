@@ -1,0 +1,69 @@
+﻿@model IEnumerable<ProyectoIdentity.Models.Meta>
+
+@{
+    ViewData["Title"] = "Lista de Metas";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1 class="text-center">Lista de Metas</h1>
+
+<div class="row">
+    <div class="col-sm-3 offset-9">
+        <a asp-action="Crear" asp-controller="Metas" class="btn btn-primary w-100">Crear Nueva Meta</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-12">
+        <div class="card border">
+            <div class="card-header">
+                <h3><strong>Lista de Metas</strong></h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    @if (Model.Any())
+                    {
+                        <table class="d-lg-table table-bordered" id="tablaMetas" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Código</th>
+                                    <th>Dominio</th>
+                                    <th>Nivel de Importancia</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var meta in Model)
+                                {
+                                    <tr>
+                                        <td>@Html.DisplayFor(m => meta.ID)</td>
+                                        <td>@Html.DisplayFor(m => meta.Codigo)</td>
+                                        <td>@Html.DisplayFor(m => meta.Dominio)</td>
+                                        <td>@Html.DisplayFor(m => meta.Nivel)</td>
+                                        <td>
+                                            <a class="btn btn-primary" asp-controller="Metas" asp-action="Editar" asp-route-id="@meta.ID">Editar</a>
+                                            <form asp-controller="Metas" asp-action="BorrarConfirmed" asp-route-id="@meta.ID" method="post" style="display:inline;">
+                                                <button type="submit" onclick="return confirm('¿Está seguro de borrar esta meta?')" class="btn btn-danger">Borrar</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p>No hay metas registradas.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

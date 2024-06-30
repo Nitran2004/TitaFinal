@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProyectoIdentity.Datos;
 
@@ -11,9 +12,10 @@ using ProyectoIdentity.Datos;
 namespace ProyectoIdentity.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240630170437_AddMetaTable")]
+    partial class AddMetaTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -224,31 +226,6 @@ namespace ProyectoIdentity.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("ProyectoIdentity.Models.Meta", b =>
-                {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"), 1L, 1);
-
-                    b.Property<string>("Codigo")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Dominio")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Nivel")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("SiglaEG01_EG13")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("ID");
-
-                    b.ToTable("Metas");
                 });
 
             modelBuilder.Entity("ProyectoIdentity.Models.AppUsuario", b =>
