@@ -21,3 +21,9 @@ body {
     font-weight: bold;
     color: black !important;
 }
+
+.btn-green {
+    background-color: green;
+    border-color: green;
+    color: white;
+}
