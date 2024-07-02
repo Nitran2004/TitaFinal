@@ -31,7 +31,7 @@
     <thead>
         <tr>
             <th>Código</th>
-            <th>Dominio</th>
+            @*<th>Dominio</th>*@
             <th>Nivel de Importancia</th>
             <th>Sigla AG01-AG13</th>
             @if (User.IsInRole("Administrador"))
@@ -45,7 +45,7 @@
         {
             <tr>
                 <td>@Html.DisplayFor(modelItem => item.Codigo)</td>
-                <td>@Html.DisplayFor(modelItem => item.Dominio)</td>
+                @*<td>@Html.DisplayFor(modelItem => item.Dominio)</td>*@
                 <td>@Html.DisplayFor(modelItem => item.Nivel)</td>
                 <td>@Html.DisplayFor(modelItem => item.SiglaAG01_AG13)</td>
                 @if (User.IsInRole("Administrador"))

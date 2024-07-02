@@ -7,10 +7,8 @@
 
 <h1>Crear Alineamiento</h1>
 
-<h4>Alineamiento</h4>
-<hr />
 <div class="row">
-    <div class="col-md-4">
+    <div class="col-md-10">
         <form asp-action="Create">
             <div class="text-danger" asp-validation-summary="All"></div>
 
@@ -18,55 +16,6 @@
                 <label asp-for="Codigo" class="col-md-2 control-label"></label>
                 <div class="col-md-10">
                     <select asp-for="Codigo" class="form-control">
-                        <option value="EDM01">EDM01</option>
-                        <option value="EDM02">EDM02</option>
-                        <option value="EDM03">EDM03</option>
-                        <option value="EDM04">EDM04</option>
-                        <option value="EDM05">EDM05</option>
-                        <option value="APO01">APO01</option>
-                        <option value="APO02">APO02</option>
-                        <option value="APO03">APO03</option>
-                        <option value="APO04">APO04</option>
-                        <option value="APO05">APO05</option>
-                        <option value="APO06">APO06</option>
-                        <option value="APO07">APO07</option>
-                        <option value="APO08">APO08</option>
-                        <option value="APO09">APO09</option>
-                        <option value="APO10">APO10</option>
-                        <option value="APO11">APO11</option>
-                        <option value="APO12">APO12</option>
-                        <option value="APO13">APO13</option>
-                        <option value="APO14">APO14</option>
-                        <option value="BAI01">BAI01</option>
-                        <option value="BAI02">BAI02</option>
-                        <option value="BAI03">BAI03</option>
-                        <option value="BAI04">BAI04</option>
-                        <option value="BAI05">BAI05</option>
-                        <option value="BAI06">BAI06</option>
-                        <option value="BAI07">BAI07</option>
-                        <option value="BAI08">BAI08</option>
-                        <option value="BAI09">BAI09</option>
-                        <option value="BAI10">BAI10</option>
-                        <option value="DSS01">DSS01</option>
-                        <option value="DSS02">DSS02</option>
-                        <option value="DSS03">DSS03</option>
-                        <option value="DSS04">DSS04</option>
-                        <option value="DSS05">DSS05</option>
-                        <option value="DSS06">DSS06</option>
-                        <option value="MEA01">MEA01</option>
-                        <option value="MEA02">MEA02</option>
-                        <option value="MEA03">MEA03</option>
-                        <option value="MEA04">MEA04</option>
-                        </select>
-                    <span asp-validation-for="Codigo" class="text-danger"></span>
-                </div>
-            </div>
-
-
-            <div class="form-group">
-                <label asp-for="Dominio" class="col-md-2 control-label"></label>
-                <div class="col-md-10">
-                    <select asp-for="Dominio" class="form-control">
                     <option value="">-- Seleccione una opción --</option>
                     <option value="EDM01 Asegurar el establecimiento y el mantenimiento del marco">EDM01 Asegurar el establecimiento y el mantenimiento del marco</option>
                     <option value="EDM02 Asegurar la obtención de beneficios">EDM02 Asegurar la obtención de beneficios</option>
@@ -97,6 +46,7 @@
                     <option value="BAI08 Gestionar el conocimiento">BAI08 Gestionar el conocimiento</option>
                     <option value="BAI09 Gestionar los activos">BAI09 Gestionar los activos</option>
                     <option value="BAI10 Gestionar la configuración">BAI10 Gestionar la configuración</option>
+                    <option value="BAI11 Gestionar los proyectos">BAI11 Gestionar los proyectos</option>
                     <option value="DSS01 Gestionar la operación de servicio">DSS01 Gestionar la operación de servicio</option>
                     <option value="DSS02 Gestionar las peticiones de servicio y soporte">DSS02 Gestionar las peticiones de servicio y soporte</option>
                     <option value="DSS03 Gestionar los incidentes y problemas">DSS03 Gestionar los incidentes y problemas</option>
@@ -108,7 +58,7 @@
                     <option value="MEA03 Asegurar el cumplimiento de políticas y estándares">MEA03 Asegurar el cumplimiento de políticas y estándares</option>
                     <option value="MEA04 Proveer gobierno de TI">MEA04 Proveer gobierno de TI</option>
                 </select>
-                    <span asp-validation-for="Dominio" class="text-danger"></span>
+                    <span asp-validation-for="Codigo" class="text-danger"></span>
             </div>
         </div>
 
