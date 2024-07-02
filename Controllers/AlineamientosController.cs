@@ -19,9 +19,20 @@ namespace ProyectoIdentity.Controllers
         }
 
         [AllowAnonymous] // Permitir acceso público a la lista de alineamientos
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string buscar)
         {
-            return View(await _context.Alineamientos.ToListAsync());
+            // Filtrar por SiglaAG01_AG13 si hay término de búsqueda
+            IQueryable<Alineamiento> alineamientosQuery = _context.Alineamientos;
+
+            if (!string.IsNullOrEmpty(buscar))
+            {
+                alineamientosQuery = alineamientosQuery.Where(m => m.SiglaAG01_AG13.Contains(buscar));
+            }
+
+            // Obtener la lista de alineamientos filtrados
+            var alineamientos = await alineamientosQuery.ToListAsync();
+
+            return View(alineamientos);
         }
 
         [Authorize(Roles = "Administrador")] // Solo los administradores pueden ver la vista de detalles
