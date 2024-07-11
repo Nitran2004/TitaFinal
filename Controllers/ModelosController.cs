@@ -22,8 +22,8 @@ namespace ProyectoIdentity.Controllers
         [AllowAnonymous] // Permitir acceso público a la lista de modelos
         public async Task<IActionResult> Index()
         {
-            var modelos = _context.Modelos.Include(m => m.Alineamiento);
-            return View(await modelos.ToListAsync());
+            var modelos = await _context.Modelos.Include(m => m.Alineamiento).ToListAsync();
+            return View(modelos);
         }
 
         [Authorize(Roles = "Administrador")] // Solo los administradores pueden ver la vista de detalles
@@ -48,14 +48,14 @@ namespace ProyectoIdentity.Controllers
         //[Authorize(Roles = "Administrador")] // Solo los administradores pueden crear
         public IActionResult Create()
         {
-            ViewData["AlineamientoID"] = new SelectList(_context.Alineamientos, "ID", "Codigo");
+            //ViewData["AlineamientoID"] = new SelectList(_context.Alineamientos, "ID", "Codigo");
             return View();
         }
 
         [Authorize(Roles = "Administrador")] // Solo los administradores pueden crear
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ModeloID,Core,AlineamientoID")] Modelo modelo)
+        public async Task<IActionResult> Create([Bind("Core,Alineamiento2")] Modelo modelo)
         {
             if (ModelState.IsValid)
             {

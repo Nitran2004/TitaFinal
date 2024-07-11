@@ -24,14 +24,12 @@
     <p>
         <input type="submit" value="Reiniciar" class="btn btn-sm btn-green" />
     </p>
-
 </form>
 
-<table class="table">
+<table class="table" id="tablaAlineamientos">
     <thead>
         <tr>
             <th>Código</th>
-            @*<th>Dominio</th>*@
             <th>Nivel de Importancia</th>
             <th>Sigla AG01-AG13</th>
             @if (User.IsInRole("Administrador"))
@@ -43,14 +41,14 @@
     <tbody>
         @foreach (var item in Model)
         {
-            <tr>
+            <tr data-dominio="@item.SiglaAG01_AG13">
                 <td>@Html.DisplayFor(modelItem => item.Codigo)</td>
-                @*<td>@Html.DisplayFor(modelItem => item.Dominio)</td>*@
                 <td>@Html.DisplayFor(modelItem => item.Nivel)</td>
                 <td>@Html.DisplayFor(modelItem => item.SiglaAG01_AG13)</td>
                 @if (User.IsInRole("Administrador"))
                 {
                     <td>
+                        <button type="button" class="btn btn-warning" onclick="toggleMarkRow('@item.SiglaAG01_AG13')">Marcar/Desmarcar</button>
                         <a asp-action="Edit" asp-route-id="@item.ID" class="btn btn-warning">Editar</a>
                         <button type="button" class="btn btn-danger" onclick="confirmDelete('@item.ID', '@item.Codigo')">Borrar</button>
                     </td>
@@ -64,7 +62,6 @@
     <script type="text/javascript">
         function confirmDelete(id, codigo) {
             if (confirm('¿Está seguro que desea borrar el alineamiento con código ' + codigo + '?')) {
-                // Utiliza fetch para realizar una solicitud POST
                 fetch('/Alineamientos/DeleteConfirmed/' + id, {
                     method: 'POST',
                     headers: {
@@ -75,13 +72,52 @@
                 })
                     .then(response => {
                         if (response.ok) {
-                            location.reload(); // Recarga la página si la eliminación es exitosa
+                            location.reload();
                         } else {
-                            alert('Hubo un error al intentar borrar el alineamiento.');
+                            alert('Error al borrar el alineamiento.');
                         }
-                    })
-                    .catch(error => console.error('Error:', error));
+                    });
             }
         }
+
+        function toggleMarkRow(dominio) {
+            let markedDominios = JSON.parse(localStorage.getItem('markedDominios')) || [];
+            if (markedDominios.includes(dominio)) {
+                markedDominios = markedDominios.filter(d => d !== dominio);
+            } else {
+                markedDominios.push(dominio);
+            }
+            localStorage.setItem('markedDominios', JSON.stringify(markedDominios));
+            synchronizeWithModelos(dominio); // Sincronizar con la lista de Modelos
+            highlightRows();
+        }
+
+        function synchronizeWithModelos(dominio) {
+            const modelosRows = document.querySelectorAll('#tablaModelos tbody tr');
+            modelosRows.forEach(row => {
+                const modeloDominio = row.getAttribute('data-dominio');
+                if (modeloDominio === dominio) {
+                    row.classList.toggle('marked-row');
+                }
+            });
+        }
+
+        function highlightRows() {
+            const markedDominios = JSON.parse(localStorage.getItem('markedDominios')) || [];
+            document.querySelectorAll('tr[data-dominio]').forEach(row => {
+                const dominio = row.getAttribute('data-dominio');
+                if (markedDominios.includes(dominio)) {
+                    row.style.backgroundColor = 'lightgreen';
+                    row.style.fontWeight = 'bold';
+                } else {
+                    row.style.backgroundColor = '';
+                    row.style.fontWeight = '';
+                }
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            highlightRows();
+        });
     </script>
 }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProyectoIdentity.Datos;
 
@@ -11,9 +12,10 @@ using ProyectoIdentity.Datos;
 namespace ProyectoIdentity.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240711204802_AddAlineamiento2ToModelo")]
+    partial class AddAlineamiento2ToModelo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -287,7 +289,7 @@ namespace ProyectoIdentity.Migrations
                     b.Property<string>("Alineamiento2")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("AlineamientoID")
+                    b.Property<int>("AlineamientoID")
                         .HasColumnType("int");
 
                     b.Property<string>("Core")
@@ -390,7 +392,8 @@ namespace ProyectoIdentity.Migrations
                     b.HasOne("ProyectoIdentity.Models.Alineamiento", "Alineamiento")
                         .WithMany("Modelos")
                         .HasForeignKey("AlineamientoID")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Alineamiento");
                 });

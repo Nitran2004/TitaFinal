@@ -50,13 +50,13 @@
                             <tbody>
                                 @foreach (var meta in Model)
                                 {
-                                    <tr id="row-@meta.Codigo">
-                                        <td class="codigo-col">@Html.DisplayFor(m => meta.Codigo)</td>
-                                        <td class="dominio-col">@Html.DisplayFor(m => meta.Dominio)</td>
+                                    <tr data-dominio="@meta.Dominio">
+                                        <td>@Html.DisplayFor(m => meta.Codigo)</td>
+                                        <td>@Html.DisplayFor(m => meta.Dominio)</td>
                                         <td>@Html.DisplayFor(m => meta.Nivel)</td>
                                         <td>@Html.DisplayFor(m => meta.SiglaEG01_EG13)</td>
                                         <td>
-                                            <button type="button" class="btn btn-warning" onclick="markRow('@meta.Codigo')">Marcar</button>
+                                            <button type="button" class="btn btn-warning" onclick="toggleMarkRow('@meta.Dominio')">Marcar/Desmarcar</button>
                                             <a class="btn btn-primary" asp-controller="Metas" asp-action="Editar" asp-route-id="@meta.ID">Editar</a>
                                             <form asp-controller="Metas" asp-action="BorrarConfirmed" asp-route-id="@meta.ID" method="post" style="display:inline;">
                                                 <button type="submit" onclick="return confirm('¿Está seguro de borrar esta meta?')" class="btn btn-danger">Borrar</button>
@@ -78,28 +78,42 @@
 </div>
 
 @section Scripts {
-    <script>
-        function markRow(codigo) {
-            var selectedRow = document.getElementById("row-" + codigo);
-            var codigoCol = selectedRow.querySelector('.codigo-col');
-            var dominioCol = selectedRow.querySelector('.dominio-col');
-
-            if (codigoCol.style.backgroundColor === "lightgreen" && dominioCol.style.backgroundColor === "lightgreen") {
-                // Unmark the columns if they are already marked
-                codigoCol.style.backgroundColor = "";
-                codigoCol.style.fontWeight = "";
-                codigoCol.style.textDecoration = "";
-                dominioCol.style.backgroundColor = "";
-                dominioCol.style.fontWeight = "";
-                dominioCol.style.textDecoration = "";
+    <script type="text/javascript">
+        function toggleMarkRow(dominio) {
+            let markedDominios = JSON.parse(localStorage.getItem('markedDominios')) || [];
+            if (markedDominios.includes(dominio)) {
+                markedDominios = markedDominios.filter(d => d !== dominio);
             } else {
-                // Mark the columns if they are not already marked
-                codigoCol.style.backgroundColor = "lightgreen";
-                codigoCol.style.fontWeight = "bold";
-                codigoCol.style.textDecoration = "underline";
-                dominioCol.style.backgroundColor = "lightgreen";
-                dominioCol.style.fontWeight = "bold";
-                dominioCol.style.textDecoration = "underline";
+                markedDominios.push(dominio);
+            }
+            localStorage.setItem('markedDominios', JSON.stringify(markedDominios));
+            highlightRows();
+        }
+
+        function highlightRows() {
+            const markedDominios = JSON.parse(localStorage.getItem('markedDominios')) || [];
+            document.querySelectorAll('tr[data-dominio]').forEach(row => {
+                const dominio = row.getAttribute('data-dominio');
+                if (markedDominios.includes(dominio)) {
+                    row.style.backgroundColor = 'lightgreen';
+                    row.style.fontWeight = 'bold';
+                } else {
+                    row.style.backgroundColor = '';
+                    row.style.fontWeight = '';
+                }
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            highlightRows();
+            synchronizeWithMetas();
+        });
+
+        function synchronizeWithMetas() {
+            const syncData = JSON.parse(localStorage.getItem('syncMetas')) || {};
+            if (syncData.dominio) {
+                toggleMarkRow(syncData.dominio);
+                localStorage.removeItem('syncMetas');
             }
         }
     </script>
