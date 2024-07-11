@@ -27,3 +27,11 @@ body {
     border-color: green;
     color: white;
 }
+
+<style >
+.highlight {
+    background-color: orange;
+    /*color: white;*/ /* Opcional, para mejorar la visibilidad del texto */
+}
+
+</style >
