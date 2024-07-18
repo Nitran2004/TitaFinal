@@ -1,0 +1,72 @@
+﻿@model ProyectoIdentity.Models.Asset
+@{
+}
+
+<hr />
+<style>
+    #container {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    #left-side {
+        width: 40%;
+    }
+
+    #right-side p {
+        font-size: 2em; /* Ajusta este valor según tus necesidades */
+    }
+
+    #right-side {
+        width: 55%;
+    }
+
+        #right-side p {
+            font-size: 2em; /* Ajusta este valor según tus necesidades */
+        }
+
+    img {
+        max-width: 100%; /* Aumenta el tamaño máximo de la imagen */
+        height: auto;
+    }
+
+        .btn-info {
+        color: #fff;
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+        border-radius: 25px; /* Añade bordes redondeados */
+        padding: 20px 40px; /* Aumenta el padding para un botón más grande */
+        font-size: 22px; /* Ajusta el tamaño de la fuente */
+        transition: all 0.5s; /* Añade una transición suave */
+        margin-top: 30px; /* Añade un margen superior para separar el botón de la imagen */
+    }
+
+        .btn-info:hover {
+            background-color: #138496; /* Cambia el color de fondo al pasar el mouse */
+            border-color: #138496; /* Cambia el color del borde al pasar el mouse */
+        }
+
+
+</style>
+<div id="container" style="display: flex; justify-content: space-between;">
+    <div id="left-side" style="width: 40%;">
+        <h1>Jurassic World: Campamento Cretácico - Aventura misteriosa</h1>
+        <img src="~/images/port.jpeg" alt="Descripción de la imagen" />
+    </div>
+    <div id="right-side" style="width: 55%;">
+        <p style="text-align: justify;">
+            "Jurassic World: Campamento Cretácico - Aventura misteriosa" es una historia emocionante donde tú, como espectador, ayudas a un grupo de adolescentes a sobrevivir en la isla Nublar. Los dinosaurios escapan y los jóvenes deben tomar decisiones importantes para mantenerse a salvo. ¡Disfruta tomando decisiones cruciales junto a los personajes! 😊
+        </p>
+        <div>
+            <form method="post">
+                <div style="display: flex; justify-content: flex-end;">
+                    <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div>
+    <a asp-controller="Books" asp-action="Index">Regresar a Books</a>
+</div>

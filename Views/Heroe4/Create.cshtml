@@ -1,0 +1,63 @@
+﻿@model ProyectoIdentity.Models.Heroe4
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<hr />
+
+<style>
+    #container {
+        display: flex;
+        justify-content: center; /* Esto centrará las imágenes */
+    }
+
+    .img-container img {
+        width: 500px; /* Ajusta este valor según tus necesidades */
+        height: 500px; /* Ahora el alto es igual al ancho */
+        object-fit: cover; /* Esto hará que la imagen cubra el área designada sin distorsionarse */
+    }
+
+    .img-container:first-child {
+        margin-right: 10px; /* Ajusta este valor para cambiar la separación entre las imágenes */
+    }
+
+    .btn-info {
+        color: #fff;
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+        border-radius: 25px;
+        padding: 20px 40px;
+        font-size: 22px;
+        transition: all 0.5s;
+        margin-top: 30px;
+    }
+
+        .btn-info:hover {
+            background-color: #138496;
+            border-color: #138496;
+        }
+</style>
+
+<div id="container">
+    <div class="img-container">
+        <img src="~/images/fiesta.jpg" alt="Imagen de dinosaurio" />
+    </div>
+    <div class="img-container">
+        <img src="~/images/puños.jpg" alt="Imagen de dinosaurio" />
+    </div>
+</div>
+
+<div id="right-side">
+    <p style="font-size: 2em;">
+        Tienen un debate sobre la fiesta para June. Al final, deciden hacerla para relajarse de lo que sucede en la ciudad. Se ponen de acuerdo y buscan pastel, globos y una fuente de queso para nachos.
+    </p>
+</div>
+
+<div>
+    <form method="post">
+        <div style="display: flex; justify-content: flex-end;">
+            <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,79 @@
+﻿@model IEnumerable<ProyectoIdentity.Models.Sobre2>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<hr />
+<style>
+    #container {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .text-center {
+        text-align: center;
+    }
+
+    .img-fluid {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .btn {
+        color: #fff;
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+        border-radius: 25px; /* Añade bordes redondeados */
+        padding: 15px 30px; /* Aumenta el padding para un mejor aspecto */
+        font-size: 22px; /* Ajusta el tamaño de la fuente */
+        transition: all 0.5s; /* Añade una transición suave */
+        text-decoration: none;
+        margin-top: 10px;
+    }
+
+        .btn:hover {
+            background-color: #138496; /* Cambia el color de fondo al pasar el mouse */
+            border-color: #138496; /* Cambia el color del borde al pasar el mouse */
+        }
+
+    #center p {
+        font-size: 2.5em;
+        color: #333;
+        line-height: 1.6;
+    }
+</style>
+
+
+
+<div id="container">
+    <div id="left-side" class="text-center">
+        <img src="~/images/huevo.jpeg" alt="Imagen de dinosaurio 1" class="img-fluid" />
+    </div>
+
+    <div id="right-side" class="text-center">
+        <img src="~/images/comestible.jpeg" alt="Imagen de dinosaurio 2" class="img-fluid" />
+    </div>
+</div>
+
+<div id="container">
+    <div id="center" class="text-center">
+        <p>
+
+            Al escalar encontramos un huevo de codorniz y una flor comestible. ¿Cuál nos comemos?
+        </p>
+    </div>
+</div>
+
+<div id="container" style="justify-content: space-around;">
+    <div id="left-side" class="text-center">
+        <a class="btn" asp-action="Index" asp-controller="Sobre3">Huevo</a>
+    </div>
+    <div id="center" class="text-center">
+    </div>
+    <div id="right-side" class="text-center">
+        <a class="btn" asp-action="Create" asp-controller="Sobre4">Diente de leon</a>
+    </div>
+</div>

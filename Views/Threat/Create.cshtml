@@ -1,0 +1,96 @@
+﻿@model ProyectoIdentity.Models.Threat
+
+@{
+    ViewData["Title"] = "Jurásico 2";
+}
+
+
+<hr />
+
+<style>
+    #container {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    #left-side {
+        width: 40%;
+    }
+
+        #left-side img {
+            max-width: 110%; /* Ajusta este valor según tus necesidades */
+            height: auto; /* Asegura que la imagen mantenga su proporción */
+        }
+
+    #right-side {
+        width: 55%;
+    }
+
+        #right-side p {
+            font-size: 3.5em; /* Aumenta el tamaño de la fuente del párrafo */
+        }
+
+    .btn-info {
+        color: #fff;
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+        border-radius: 25px; /* Añade bordes redondeados */
+        padding: 15px 30px; /* Aumenta el padding para un mejor aspecto */
+        font-size: 22px; /* Ajusta el tamaño de la fuente */
+        transition: all 0.5s; /* Añade una transición suave */
+    }
+
+        .btn-info:hover {
+            background-color: #138496; /* Cambia el color de fondo al pasar el mouse */
+            border-color: #138496; /* Cambia el color del borde al pasar el mouse */
+        }
+
+    .mt-4 {
+        margin-top: 1.5rem !important;
+    }
+
+    .text-start {
+        text-align: left !important;
+    }
+
+    .text-end {
+        text-align: right !important;
+    }
+
+    .row {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .col {
+        flex: 1;
+        display: flex;
+        justify-content: center; /* Centra el contenido horizontalmente */
+        align-items: center; /* Centra el contenido verticalmente */
+    }
+</style>
+
+
+<div id="container">
+    <div id="left-side" class="text-center">
+        <img src="~/images/despierta.jpg" alt="Imagen de dinosaurio" class="img-fluid" />
+    </div>
+    <div id="right-side">
+        <p>
+            Un chico se despierta junto a huevos de dinosaurio con mal olor, se asusta al ver un dinosaurio a su lado y grita.
+        </p>
+    </div>
+</div>
+
+<div class="mt-4">
+    <form method="post">
+        <div class="row">
+            <div class="col text-start">
+                <button class="btn btn-info" type="submit" name="accion" value="Página anterior">Página anterior</button>
+            </div>
+            <div class="col text-end">
+                <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
+            </div>
+        </div>
+    </form>
+</div>

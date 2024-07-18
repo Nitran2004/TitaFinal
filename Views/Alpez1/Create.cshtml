@@ -1,0 +1,52 @@
+﻿@model ProyectoIdentity.Models.Alpez1
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+
+<hr />
+
+<style>
+    #container {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    #left-side {
+        width: 30%; /* Reducido el tamaño del lado izquierdo */
+    }
+
+    #right-side {
+        width: 65%; /* Ampliado el tamaño del lado derecho */
+    }
+
+        #right-side p {
+            font-size: 1.5em; /* Ajusta el tamaño del texto según sea necesario */
+        }
+
+    img {
+        max-width: 100%; /* Ajustado el tamaño máximo de la imagen */
+        height: auto;
+    }
+</style>
+<div id="container">
+    <div id="left-side">
+        <h1>
+            Mision Alpez Suizoz
+        </h1>
+        <img src="~/images/alpez.jpg" alt="Descripción de la imagen" />
+    </div>
+    <div id="right-side">
+        <p>
+            Nieve, grietas y avalanchas son algunas amenazas que enfrentara Felipe mientras le das una mano para hallas una perra de rescate perdida en los Alpes suizos
+        </p>
+        <div class="buttons">
+            <a class="btn btn-primary mb-3 custom-text-color" asp-action="Index" asp-controller="Alpez1">Leer cuento</a>
+        </div>
+    </div>
+</div>
+<div>
+    <a asp-controller="Home" asp-action="Index">Regresar a la lista</a>
+</div>
+

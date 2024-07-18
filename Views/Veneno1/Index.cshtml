@@ -1,0 +1,72 @@
+﻿@model IEnumerable<ProyectoIdentity.Models.Veneno1>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<hr />
+<style>
+    #container {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    #left-side {
+        margin-right: 30px; /* Añade un margen a la derecha para separar la imagen del texto */
+    }
+
+    #right-side p {
+        font-size: 3em; /* Ajusta este valor según tus necesidades */
+    }
+
+    .btn-info {
+        color: #fff;
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+        border-radius: 25px; /* Añade bordes redondeados */
+        padding: 20px 40px; /* Aumenta el padding para un botón más grande */
+        font-size: 22px; /* Ajusta el tamaño de la fuente */
+        transition: all 0.5s; /* Añade una transición suave */
+        margin-top: 30px; /* Añade un margen superior para separar el botón de la imagen */
+    }
+
+        .btn-info:hover {
+            background-color: #138496; /* Cambia el color de fondo al pasar el mouse */
+            border-color: #138496; /* Cambia el color del borde al pasar el mouse */
+        }
+</style>
+
+<div id="container" style="display: flex; justify-content: center;">
+    <div class="img-container" style="margin-right: 20px;">
+        <img src="~/images/principio.jpeg" alt="Imagen de dinosaurio" class="img-fluid" style="max-width: 550px;" />
+    </div>
+    <div class="img-container">
+        <img src="~/images/motoca.jpeg" alt="Imagen de dinosaurio" class="img-fluid" style="max-width: 550px;" />
+    </div>
+</div>
+
+<div id="right-side">
+    <p style="font-size: 2em;">
+
+        Pero para capturar estos tipo de animales debemos de recorrer lugares fríos como cuevas minas y mas. Pero para eso nuestro helicóptero nos trae una motocicleta colgando
+    </p>
+</div>
+
+
+<div>
+    <form method="post">
+        <div style="display: flex; justify-content: flex-end;">
+            <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
+        </div>
+    </form>
+</div>
+
+
+
+
+
+<style>
+    .img-container {
+        display: inline-block;
+    }
+</style>

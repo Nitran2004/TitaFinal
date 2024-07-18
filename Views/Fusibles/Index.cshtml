@@ -1,0 +1,61 @@
+﻿@model IEnumerable<ProyectoIdentity.Models.Fusible>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+
+<hr />
+
+<div id="container">
+    <div id="left-side" class="text-center">
+        <img src="~/images/quemado.jpg" alt="Imagen de dinosaurio" class="img-fluid" style="max-width: 600px; margin: 0 auto;" />
+    </div>
+    <div id="right-side">
+        <p style="font-size: 1.8em;">
+            Lo que causa que la caja de electricidad se queme y provoque frustración,
+            es el riesgo de que los animales de la reserva no estén seguros y
+            puedan escaparse.
+        </p>
+    </div>
+</div>
+
+<div>
+    <form method="post">
+        <div class="d-flex justify-content-end">
+            <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
+        </div>
+    </form>
+</div>
+
+
+<style>
+    #container {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    #left-side {
+        margin-right: 30px; /* Añade un margen a la derecha para separar la imagen del texto */
+    }
+
+    #right-side p {
+        font-size: 3em; /* Ajusta este valor según tus necesidades */
+    }
+
+    .btn-info {
+        color: #fff;
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+        border-radius: 25px; /* Añade bordes redondeados */
+        padding: 20px 40px; /* Aumenta el padding para un botón más grande */
+        font-size: 22px; /* Ajusta el tamaño de la fuente */
+        transition: all 0.5s; /* Añade una transición suave */
+        margin-top: 30px; /* Añade un margen superior para separar el botón de la imagen */
+    }
+
+        .btn-info:hover {
+            background-color: #138496; /* Cambia el color de fondo al pasar el mouse */
+            border-color: #138496; /* Cambia el color del borde al pasar el mouse */
+        }
+</style>

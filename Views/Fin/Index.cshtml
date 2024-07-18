@@ -1,0 +1,103 @@
+﻿@model IEnumerable<ProyectoIdentity.Models.Fin>
+
+@{
+    ViewData["Title"] = "Jurasico 9.2";
+}
+<hr />
+
+<style>
+    #container {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .img-container {
+        width: 50%; /* Ajusta el ancho del contenedor de la imagen */
+        margin-right: 20px; /* Ajusta el margen derecho para separar las imágenes */
+    }
+
+        .img-container:last-child {
+            margin-right: 0; /* Elimina el margen derecho de la última imagen */
+        }
+
+        .img-container img {
+            max-width: 100%; /* Establece el ancho máximo de la imagen al tamaño del contenedor */
+            height: auto; /* Asegura que la imagen mantenga su proporción */
+        }
+
+    #right-side {
+        width: 100%;
+    }
+
+        #right-side p {
+            font-size: 3em; /* Ajusta el tamaño de la fuente del párrafo */
+            text-align: center; /* Centra el texto horizontalmente */
+        }
+
+    .btn-info {
+        color: #fff;
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+        border-radius: 25px; /* Añade bordes redondeados */
+        padding: 15px 30px; /* Aumenta el padding para un mejor aspecto */
+        font-size: 22px; /* Ajusta el tamaño de la fuente */
+        transition: all 0.5s; /* Añade una transición suave */
+    }
+
+        .btn-info:hover {
+            background-color: #138496; /* Cambia el color de fondo al pasar el mouse */
+            border-color: #138496; /* Cambia el color del borde al pasar el mouse */
+        }
+
+    .mt-4 {
+        margin-top: 1.5rem !important;
+    }
+
+    .text-start {
+        text-align: left !important;
+    }
+
+    .text-end {
+        text-align: right !important;
+    }
+
+    .row {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .col {
+        flex: 1;
+        display: flex;
+        justify-content: center; /* Centra el contenido horizontalmente */
+        align-items: center; /* Centra el contenido verticalmente */
+    }
+</style>
+
+<div id="container">
+    <div class="img-container">
+        <img src="~/img/segu.jpg" alt="Imagen de dinosaurio" class="img-fluid" />
+    </div>
+    <div class="img-container">
+        <img src="~/img/venti.jpg" alt="Imagen de dinosaurio" class="img-fluid" />
+    </div>
+</div>
+
+<div id="right-side">
+    <p>
+        Hasta encontrar las cámaras de seguridad, pequeños velocirraptores se abalanzaron sobre ellos cuando les comenzaron a atacar velocirraptores pequeños en manada, pero lograron deshacerse de ellos encerrándolos en el cuarto rápidamente.
+    </p>
+</div>
+
+<div class="mt-4">
+    <form method="post">
+        <div class="row">
+            <div class="col text-start">
+                <button class="btn btn-info" type="submit" name="accion" value="Página anterior">Página anterior</button>
+            </div>
+            <div class="col text-end">
+                <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
+            </div>
+        </div>
+    </form>
+</div>
