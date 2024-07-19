@@ -19,7 +19,7 @@ namespace ProyectoIdentity.Controllers
             return View();
         }
 
-        [Authorize(Roles="Registrado")]
+        //[Authorize(Roles= "Registrado,Administrador")]
         public IActionResult Privacy()
         {
             return View();

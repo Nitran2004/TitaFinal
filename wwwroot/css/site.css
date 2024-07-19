@@ -1,37 +1,81 @@
 html {
-  font-size: 14px;
+    font-size: 14px;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+    html {
+        font-size: 16px;
+    }
 }
 
 html {
-  position: relative;
-  min-height: 100%;
+    position: relative;
+    min-height: 100%;
 }
 
 body {
-  margin-bottom: 60px;
+    margin-bottom: 60px;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to right, #f7f8f8, #e9eff1); /* Gradiente suave de fondo */
+    color: #333; /* Color de texto principal */
 }
 
 .bold-link {
     font-weight: bold;
-    color: black !important;
+    color: #2c3e50 !important; /* Color oscuro para enlaces destacados */
 }
 
 .btn-green {
-    background-color: green;
-    border-color: green;
+    background-color: #27ae60; /* Verde más brillante */
+    border-color: #27ae60;
     color: white;
 }
 
-<style >
-.highlight {
-    background-color: orange;
-    /*color: white;*/ /* Opcional, para mejorar la visibilidad del texto */
+    .btn-green:hover {
+        background-color: #2ecc71; /* Efecto hover más claro */
+        border-color: #2ecc71;
+    }
+
+/* Carousel */
+.carousel-caption p {
+    font-size: 20px;
+    line-height: 1.4;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* Sombra en el texto para mejor legibilidad */
 }
 
-</style >
+/* Make .svg files in the carousel display properly in older browsers */
+.carousel-inner .item img[src$=".svg"],
+.carousel-inner .item img[src$=".jpeg"],
+.carousel-inner .item img[src$=".jpg"] {
+    width: 100%; /* Ajusta imágenes al 100% del contenedor */
+}
+
+/* Hide/rearrange for smaller screens */
+@media screen and (max-width: 767px) {
+    /* Hide captions */
+    .carousel-caption {
+        display: none;
+    }
+}
+
+.highlight {
+    background-color: #f39c12; /* Color de fondo más brillante para resaltar */
+    color: white; /* Color del texto en contraste */
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.card {
+    background-color: white;
+    padding: 20px; /* Añade relleno a toda la tarjeta */
+    border-radius: 10px; /* Bordes redondeados opcionales */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Sombra opcional para dar un efecto de profundidad */
+}
+
+.card-body {
+    padding: 20px; /* Ajusta el relleno en el cuerpo de la tarjeta */
+}
+
+.card-img-top {
+    margin-bottom: 15px; /* Espacio entre la imagen y el contenido */
+}

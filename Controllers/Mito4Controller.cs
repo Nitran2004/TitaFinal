@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ProyectoIdentity.Controllers
 {
+    [Authorize(Roles = "Administrador")]
+
     public class Mito4Controller : Controller
     {
         public IActionResult Create()

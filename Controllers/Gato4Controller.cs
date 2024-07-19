@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ProyectoIdentity.Controllers
 {
+    [Authorize(Roles = "Administrador")]
+
     public class Gato4Controller : Controller
     {
         public IActionResult Create()

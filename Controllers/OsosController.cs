@@ -2,6 +2,7 @@
 
 namespace ProyectoIdentity.Controllers
 {
+    
     public class OsosController : Controller
     {
         public IActionResult Index()

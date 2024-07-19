@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ProyectoIdentity.Controllers
 {
     public class Nieve11Controller : Controller
     {
+        [Authorize(Roles = "Administrador")]
+
         public IActionResult Create()
         {
             return View();

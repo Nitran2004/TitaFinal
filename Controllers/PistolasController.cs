@@ -2,6 +2,7 @@
 
 namespace ProyectoIdentity.Controllers
 {
+    
     public class PistolasController : Controller
     {
         public IActionResult Create()

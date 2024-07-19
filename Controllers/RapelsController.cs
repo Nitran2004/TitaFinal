@@ -2,6 +2,7 @@
 
 namespace ProyectoIdentity.Controllers
 {
+    
     public class RapelsController : Controller
     {
         public IActionResult Create()
