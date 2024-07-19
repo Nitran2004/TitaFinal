@@ -79,3 +79,20 @@ body {
 .card-img-top {
     margin-bottom: 15px; /* Espacio entre la imagen y el contenido */
 }
+
+/* Estilo para el botón "Salir" */
+#logoutForm .btn {
+    background-color: #e74c3c !important; /* Rojo para el botón "Salir" */
+    border: none !important; /* Sin borde */
+    color: white !important; /* Color de texto blanco */
+    font-weight: bold !important; /* Texto en negrita */
+    padding: 10px 20px !important; /* Relleno */
+    text-transform: uppercase !important; /* Texto en mayúsculas */
+    border-radius: 5px !important; /* Bordes redondeados */
+    cursor: pointer !important; /* Cursor pointer */
+}
+
+    /* Estilo para el hover del botón "Salir" */
+    #logoutForm .btn:hover {
+        background-color: #c0392b !important; /* Rojo oscuro para el efecto hover */
+    }
