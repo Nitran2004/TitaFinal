@@ -4,74 +4,84 @@
     ViewData["Title"] = "Index";
 }
 
-
-
 <hr />
-
-
-
 <style>
     #container {
         display: flex;
-        justify-content: space-between;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
     }
 
-    #left-side {
-        margin-right: 30px; /* Añade un margen a la derecha para separar la imagen del texto */
+    .img-container {
+        flex: 1 1 300px;
+        max-width: 45%;
+        box-sizing: border-box;
     }
 
-    #right-side p {
-        font-size: 3em; /* Ajusta este valor según tus necesidades */
+    .img-fluid {
+        width: 91%;
+        height: auto;
+        display: block;
     }
+
+    #right-side {
+        width: 100%;
+        margin-top: 30px;
+        display: flex;
+        justify-content: center;
+    }
+
+        #right-side p {
+            font-size: 2em;
+            text-align: center;
+            max-width: 80%;
+        }
 
     .btn-info {
         color: #fff;
         background-color: #17a2b8;
         border-color: #17a2b8;
-        border-radius: 25px; /* Añade bordes redondeados */
-        padding: 20px 40px; /* Aumenta el padding para un botón más grande */
-        font-size: 22px; /* Ajusta el tamaño de la fuente */
-        transition: all 0.5s; /* Añade una transición suave */
-        margin-top: 30px; /* Añade un margen superior para separar el botón de la imagen */
+        border-radius: 25px;
+        padding: 20px 40px;
+        font-size: 22px;
+        transition: all 0.5s;
+        margin-top: 30px;
     }
 
         .btn-info:hover {
-            background-color: #138496; /* Cambia el color de fondo al pasar el mouse */
-            border-color: #138496; /* Cambia el color del borde al pasar el mouse */
+            background-color: #138496;
+            border-color: #138496;
         }
+
+    .text-center {
+        text-align: center;
+    }
+
+    form {
+        display: flex;
+        justify-content: flex-end; /* Alinea el botón a la derecha */
+        margin-top: 20px;
+    }
 </style>
 
-<div id="container" style="display: flex; justify-content: center;">
-    <div class="img-container" style="margin-right: 20px;">
-        <img src="~/images/aero.jpg" alt="Imagen de dinosaurio" class="img-fluid" style="max-width: 550px;" />
+<div id="container">
+    <div class="img-container">
+        <img src="~/images/aero.jpg" alt="Imagen de dinosaurio" class="img-fluid" />
     </div>
     <div class="img-container">
-        <img src="~/images/ori.jpg" alt="Imagen de dinosaurio" class="img-fluid" style="max-width: 550px;" />
+        <img src="~/images/ori.jpg" alt="Imagen de dinosaurio" class="img-fluid" />
     </div>
 </div>
 
 <div id="right-side">
-    <p style="font-size: 2em;">
-
+    <p>
         Descendimos del hidroplano y nadamos hasta la orilla.
     </p>
 </div>
 
-
 <div>
     <form method="post">
-        <div style="display: flex; justify-content: flex-end;">
-            <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
-        </div>
+        <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
     </form>
 </div>
-
-
-
-
-
-<style>
-    .img-container {
-        display: inline-block;
-    }
-</style>

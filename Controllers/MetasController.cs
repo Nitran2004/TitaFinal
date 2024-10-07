@@ -1,5 +1,4 @@
-﻿// Ruta: Controllers/MetaController.cs
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProyectoIdentity.Datos;
@@ -22,7 +21,6 @@ namespace ProyectoIdentity.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Index(string buscar)
         {
-            // Filtrar por SiglaEG01_EG13 si hay término de búsqueda
             IQueryable<Meta> metasQuery = _context.Metas;
 
             if (!string.IsNullOrEmpty(buscar))
@@ -30,10 +28,7 @@ namespace ProyectoIdentity.Controllers
                 metasQuery = metasQuery.Where(m => m.SiglaEG01_EG13.Contains(buscar));
             }
 
-            // Obtener la lista de metas filtradas
             var metas = await metasQuery.ToListAsync();
-
-            // Retornar la vista con la lista filtrada
             return View(metas);
         }
 
@@ -41,8 +36,8 @@ namespace ProyectoIdentity.Controllers
         {
             return View();
         }
-        [Authorize(Roles = "Administrador")]
 
+        [Authorize(Roles = "Administrador")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Crear(Meta meta)
@@ -70,8 +65,8 @@ namespace ProyectoIdentity.Controllers
             }
             return View(meta);
         }
-        [Authorize(Roles = "Administrador")]
 
+        [Authorize(Roles = "Administrador")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Editar(int id, Meta meta)
@@ -105,6 +100,7 @@ namespace ProyectoIdentity.Controllers
 
             return View(meta);
         }
+
         [Authorize(Roles = "Administrador")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -121,6 +117,20 @@ namespace ProyectoIdentity.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [Authorize(Roles = "Administrador")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BorrarTodo()
+        {
+            var todasLasMetas = await _context.Metas.ToListAsync();
 
+            if (todasLasMetas.Any())
+            {
+                _context.Metas.RemoveRange(todasLasMetas);
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
     }
 }

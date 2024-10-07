@@ -3,70 +3,106 @@
 @{
     ViewData["Title"] = "Create";
 }
+
 <hr />
 <style>
     #container {
         display: flex;
-        justify-content: space-between;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
     }
 
-    #left-side {
-        margin-right: 30px; /* Añade un margen a la derecha para separar la imagen del texto */
+    .img-container {
+        flex: 1 1 300px;
+        max-width: 45%;
+        box-sizing: border-box;
+    }
+
+    .img-fluid {
+        width: 91%;
+        height: auto;
+        display: block;
+        border: 1px solid #333; /* Añade un borde sólido de 5px de grosor y color gris oscuro */
     }
 
     #right-side p {
-        font-size: 3em; /* Ajusta este valor según tus necesidades */
+        font-size: 2em;
+        text-align: justify;
+    }
+
+    /* Estilos para el botón y el audio, para que se vean como en el código de 'Bosque' */
+    #button-audio-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-top: 30px;
+        padding: 0 15px;
+    }
+
+    .audio-container {
+        flex: 1;
+        max-width: 300px;
+    }
+
+    audio {
+        width: 100%;
     }
 
     .btn-info {
         color: #fff;
         background-color: #17a2b8;
         border-color: #17a2b8;
-        border-radius: 25px; /* Añade bordes redondeados */
-        padding: 20px 40px; /* Aumenta el padding para un botón más grande */
-        font-size: 22px; /* Ajusta el tamaño de la fuente */
-        transition: all 0.5s; /* Añade una transición suave */
-        margin-top: 30px; /* Añade un margen superior para separar el botón de la imagen */
+        border-radius: 25px;
+        padding: 15px 30px;
+        font-size: 18px;
+        transition: all 0.5s;
     }
 
         .btn-info:hover {
-            background-color: #138496; /* Cambia el color de fondo al pasar el mouse */
-            border-color: #138496; /* Cambia el color del borde al pasar el mouse */
+            background-color: #138496;
+            border-color: #138496;
         }
+
+    /* Contenedor para alinear el botón a la derecha */
+    #button-container {
+        display: flex;
+        justify-content: flex-end;
+        flex: 1;
+    }
 </style>
 
-<div id="container" style="display: flex; justify-content: center;">
-    <div class="img-container" style="margin-right: 20px;">
-        <img src="~/images/orgullo.jpg" alt="Imagen de dinosaurio" class="img-fluid" style="max-width: 550px;" />
+<div id="container">
+    <div class="img-container">
+        <img src="~/images/orgullo.jpg" alt="Imagen de dinosaurio" class="img-fluid" />
     </div>
     <div class="img-container">
-        <img src="~/images/orgullo2.jpg" alt="Imagen de dinosaurio" class="img-fluid" style="max-width: 550px;" />
+        <img src="~/images/orgullo2.jpg" alt="Imagen de dinosaurio" class="img-fluid" />
     </div>
 </div>
 
-<div id="right-side">
-    <p style="font-size: 2em;">
+<div id="right-side" class="text-center">
+    <p>
+        ¡Bien hecho! Ahora los guardabosques pueden venir y llevar al león de vuelta al santuario, a salvo. ¡Deberías sentirte orgulloso, al igual que Maxime!
 
-
-        "¡BIEN HECHO! Ahora los guardabosques pueden venir y llevar al león de vuelta al santuario, a salvo. ¡Deberías sentirte orgulloso, al igual que Maxime!"
     </p>
 </div>
 
+<div id="button-audio-container">
+    <!-- Audio a la izquierda -->
+    <div class="audio-container">
+        <audio controls>
+            <source src="~/Canciones/cheer_8k.wav" type="audio/wav">
+            Tu navegador no soporta el elemento de audio.
+        </audio>
+    </div>
 
-<div>
-    <form method="post">
-        <div style="display: flex; justify-content: flex-end;">
-            <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Repertir Cuento</button>
-        </div>
-    </form>
+    <!-- Botón a la derecha -->
+    <div id="button-container">
+        <form asp-controller="Home" asp-action="Index" method="get">
+            <button class="btn btn-info" type="submit">Regresar al menú</button>
+        </form>
+    </div>
 </div>
 
-
-
-
-
-<style>
-    .img-container {
-        display: inline-block;
-    }
-</style>

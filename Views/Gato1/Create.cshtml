@@ -9,42 +9,94 @@
 <style>
     #container {
         display: flex;
-        justify-content: space-between;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
+        padding: 10px;
     }
 
-    #left-side {
-        width: 30%; /* Reducido el tamaño del lado izquierdo */
+    h1 {
+        font-size: 2.5em;
+        text-align: center;
+        margin-bottom: 20px;
     }
-
-    #right-side {
-        width: 65%; /* Ampliado el tamaño del lado derecho */
-    }
-
-        #right-side p {
-            font-size: 1.5em; /* Ajusta el tamaño del texto según sea necesario */
-        }
 
     img {
-        max-width: 100%; /* Ajustado el tamaño máximo de la imagen */
+        max-width: 39%;
         height: auto;
+        margin-bottom: 20px;
+    }
+
+    p {
+        font-size: 1.8em;
+        text-align: justify;
+        margin-bottom: 30px;
+        padding: 0 15px;
+    }
+
+    /* Contenedor de audio y botón */
+    #button-audio-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-top: 20px;
+        padding: 0 15px;
+    }
+
+    .audio-container {
+        flex: 1;
+        max-width: 300px;
+    }
+
+    audio {
+        width: 100%;
+    }
+
+    .btn-info {
+        color: #fff;
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+        border-radius: 25px;
+        padding: 15px 30px;
+        font-size: 18px;
+        transition: all 0.5s;
+    }
+
+        .btn-info:hover {
+            background-color: #138496;
+            border-color: #138496;
+        }
+
+    /* Contenedor para alinear botón */
+    #button-container {
+        display: flex;
+        justify-content: flex-end;
+        flex: 1;
     }
 </style>
+
 <div id="container">
-    <div id="left-side">
-        <h1>
-            El gato ladron
-        </h1>
-        <img src="~/images/port10.jpeg" alt="Descripción de la imagen" />
-    </div>
-    <div id="right-side">
-        <p>
-            Eligen las respuesta correcta para ayudar a un gato ladron a escapar del perro guardian de un museo valiosas pinturas.
-        </p>
-        <div class="buttons">
-            <a class="btn btn-primary mb-3 custom-text-color" asp-action="Index" asp-controller="Gato1">Leer cuento</a>
+    <h1>El Gato Maestro</h1>
+    <img src="~/images/port10.jpeg" alt="Descripción de la imagen" />
+    <p>
+        Elige la respuesta correcta para ayudar a un gato ladrón a escapar del perro guardián de un museo con valiosas pinturas.
+    </p>
+
+    <div id="button-audio-container">
+        <!-- Audio a la izquierda -->
+        <div class="audio-container">
+            <audio controls>
+                <source src="~/Canciones/cat-98721.wav" type="audio/wav">
+                Tu navegador no soporta el elemento de audio.
+            </audio>
+        </div>
+
+        <!-- Botón a la derecha -->
+        <div id="button-container">
+            <form method="post" asp-controller="Gato1" asp-action="Index">
+                <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
+            </form>
         </div>
     </div>
-</div>
-<div>
-    <a asp-controller="Home" asp-action="Index">Regresar a la lista</a>
 </div>

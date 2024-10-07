@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -11,6 +11,28 @@
     <None Include="Views\Alineamientos\Edit.cshtml" />
     <None Include="Views\Alineamientos\Index.cshtml" />
     <None Include="Views\Modelos\Index.cshtml" />
+    <None Include="wwwroot\Canciones\beach.wav" />
+    <None Include="wwwroot\Canciones\cat-98721.wav" />
+    <None Include="wwwroot\Canciones\Ejemplo.wav" />
+    <None Include="wwwroot\Canciones\Ejemplo10.wav" />
+    <None Include="wwwroot\Canciones\Ejemplo11.wav" />
+    <None Include="wwwroot\Canciones\Ejemplo12.wav" />
+    <None Include="wwwroot\Canciones\Ejemplo13.wav" />
+    <None Include="wwwroot\Canciones\Ejemplo14.wav" />
+    <None Include="wwwroot\Canciones\Ejemplo15.wav" />
+    <None Include="wwwroot\Canciones\Ejemplo16.wav" />
+    <None Include="wwwroot\Canciones\Ejemplo18.wav" />
+    <None Include="wwwroot\Canciones\Ejemplo2.wav" />
+    <None Include="wwwroot\Canciones\Ejemplo3.wav" />
+    <None Include="wwwroot\Canciones\Ejemplo4.wav" />
+    <None Include="wwwroot\Canciones\Ejemplo5.wav" />
+    <None Include="wwwroot\Canciones\Ejemplo6.wav" />
+    <None Include="wwwroot\Canciones\Ejemplo7.wav" />
+    <None Include="wwwroot\Canciones\Ejemplo8.wav" />
+    <None Include="wwwroot\Canciones\Ejemplo9.wav" />
+    <None Include="wwwroot\Canciones\Godzilla_1962-1975_SFX.mp3" />
+    <None Include="wwwroot\Canciones\jungle2.wav" />
+    <None Include="wwwroot\Canciones\Ejemplo17.wav" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,6 +44,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.1" />
+    <PackageReference Include="System.Windows.Extensions" Version="8.0.0" />
   </ItemGroup>
 
 </Project>

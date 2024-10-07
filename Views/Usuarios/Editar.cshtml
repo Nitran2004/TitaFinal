@@ -1,0 +1,26 @@
+﻿@model AppUsuario
+
+<h1 class="text-info">Asignar Roles A Usuario</h1>
+<div class="row">
+    <div class="col-md-8">
+        <form method="post" asp-controller="Usuarios" asp-action="Editar">
+            <input asp-for="Id" type="hidden" />
+            <hr />
+            <div asp-validation-summary="All" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Email"></label>
+                <input asp-for="Email" readonly class="form-control" />
+            </div>
+            <div class="form-group">
+                <label asp-for="IdRol"></label>
+                <select asp-for="IdRol" asp-items="Model.ListaRoles" class="form-control">
+                    <option disabled selected>--Seleccionar Rol--</option>
+                </select>
+            </div>
+            <div class="form-group mt-4">
+                <button type="submit" class="btn btn-primary">Grabar Rol</button>
+                <a asp-action="Index" class="text-dark" style="width:auto">Volver atrás</a>
+            </div>
+        </form>
+    </div>
+</div>

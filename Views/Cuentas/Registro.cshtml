@@ -5,107 +5,125 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>Registro de usuario</h1>
+<div class="d-flex justify-content-center">
+    <div class="card w-50 p-4">
+        <h2 class="card-title text-center">Registro de usuario</h2>
 
-<form asp-controller="Cuentas" asp-action="Registro" method="post" role="form">
-    <div class="text-danger" asp-validation-summary="All"></div>
+        <form asp-controller="Cuentas" asp-action="Registro" method="post" role="form" id="registrationForm">
+            <div class="text-danger" asp-validation-summary="All"></div>
 
-    <div class="form-group">
-        <label asp-for="Nombre" class="col-md-2"></label>
-        <div class="col-md-10">
-            <input asp-for="Nombre" class="form-control" />
-            <span asp-validation-for="Nombre" class="text-danger"></span>
-        </div>
+            <div class="form-group row mb-3">
+                <!-- Agregué mb-3 aquí -->
+                <label asp-for="Nombre" class="col-md-2"></label>
+                <div class="col-md-10">
+                    <input asp-for="Nombre" class="form-control" />
+                    <span asp-validation-for="Nombre" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group row mb-3">
+                <!-- Agregué mb-3 aquí -->
+                <label asp-for="Email" class="col-md-2"></label>
+                <div class="col-md-10">
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group row mb-3">
+                <!-- Agregué mb-3 aquí -->
+                <label asp-for="Url" class="col-md-2"></label>
+                <div class="col-md-10">
+                    <input asp-for="Url" class="form-control" />
+                    <span asp-validation-for="Url" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group row mb-3">
+                <!-- Agregué mb-3 aquí -->
+                <label asp-for="Telefono" class="col-md-2"></label>
+                <div class="col-md-10">
+                    <input asp-for="Telefono" class="form-control" />
+                    <span asp-validation-for="Telefono" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group row mb-3">
+                <!-- Agregué mb-3 aquí -->
+                <div class="col-md-6 position-relative mb-3">
+                    <label asp-for="Password"></label>
+                    <input asp-for="Password" type="password" class="form-control" id="Password" />
+                    <span asp-validation-for="Password" class="text-danger" id="passwordValidation" style="display:none;"></span>
+                    <button type="button" id="togglePassword" class="password-toggle" style="position: absolute; right: 30px; top: 70%; transform: translateY(-50%);">
+                        <i class="bi bi-eye-slash"></i>
+                    </button>
+                </div>
+                <div class="col-md-6 position-relative mb-3">
+                    <label asp-for="ConfirmPassword"></label>
+                    <input asp-for="ConfirmPassword" type="password" class="form-control" id="ConfirmPassword" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger" id="confirmPasswordValidation" style="display:none;"></span>
+                    <button type="button" id="toggleConfirmPassword" class="password-toggle" style="position: absolute; right: 30px; top: 70%; transform: translateY(-50%);">
+                        <i class="bi bi-eye-slash"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group row mb-4">
+                <div class="col-md-10">
+                    <button type="submit" class="btn btn-primary btn-block">Registrar</button>
+                </div>
+            </div>
+        </form>
     </div>
+</div>
 
-    <div class="form-group">
-        <label asp-for="Email" class="col-md-2"></label>
-        <div class="col-md-10">
-            <input asp-for="Email" class="form-control" />
-            <span asp-validation-for="Email" class="text-danger"></span>
-        </div>
-    </div>
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordField = document.getElementById('Password');
 
-    <div class="form-group">
-        <label asp-for="Url" class="col-md-2"></label>
-        <div class="col-md-10">
-            <input asp-for="Url" class="form-control" />
-            <span asp-validation-for="Url" class="text-danger"></span>
-        </div>
-    </div>
+            if (togglePassword && passwordField) {
+                togglePassword.addEventListener('click', function () {
+                    const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordField.setAttribute('type', type);
+                    this.querySelector('i').classList.toggle('bi-eye');
+                    this.querySelector('i').classList.toggle('bi-eye-slash');
+                });
+            }
 
-    <div class="form-group">
-        <label asp-for="CodigoPais" class="col-md-2"></label>
-        <div class="col-md-10">
-            <input asp-for="CodigoPais" class="form-control" />
-            <span asp-validation-for="CodigoPais" class="text-danger"></span>
-        </div>
-    </div>
+            const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+            const confirmPasswordField = document.getElementById('ConfirmPassword');
 
-    <div class="form-group">
-        <label asp-for="Pais" class="col-md-2"></label>
-        <div class="col-md-10">
-            <input asp-for="Pais" class="form-control" />
-            <span asp-validation-for="Pais" class="text-danger"></span>
-        </div>
-    </div>
+            if (toggleConfirmPassword && confirmPasswordField) {
+                toggleConfirmPassword.addEventListener('click', function () {
+                    const type = confirmPasswordField.getAttribute('type') === 'password' ? 'text' : 'password';
+                    confirmPasswordField.setAttribute('type', type);
+                    this.querySelector('i').classList.toggle('bi-eye');
+                    this.querySelector('i').classList.toggle('bi-eye-slash');
+                });
+            }
 
-    <div class="form-group">
-        <label asp-for="Telefono" class="col-md-2"></label>
-        <div class="col-md-10">
-            <input asp-for="Telefono" class="form-control" />
-            <span asp-validation-for="Telefono" class="text-danger"></span>
-        </div>
-    </div>
+            const form = document.getElementById('registrationForm');
+            form.addEventListener('submit', function (event) {
+                const password = passwordField.value;
+                const confirmPassword = confirmPasswordField.value;
+                const passwordValidation = document.getElementById('passwordValidation');
+                const confirmPasswordValidation = document.getElementById('confirmPasswordValidation');
 
-    <div class="form-group">
-        <label asp-for="Ciudad" class="col-md-2"></label>
-        <div class="col-md-10">
-            <input asp-for="Ciudad" class="form-control" />
-            <span asp-validation-for="Ciudad" class="text-danger"></span>
-        </div>
-    </div>
+                // Reset validation messages
+                passwordValidation.style.display = 'none';
+                confirmPasswordValidation.style.display = 'none';
 
-    <div class="form-group">
-        <label asp-for="Direccion" class="col-md-2"></label>
-        <div class="col-md-10">
-            <input asp-for="Direccion" class="form-control" />
-            <span asp-validation-for="Direccion" class="text-danger"></span>
-        </div>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="FechaNacimiento" class="col-md-2"></label>
-        <div class="col-md-10">
-            <input asp-for="FechaNacimiento" class="form-control" />
-            <span asp-validation-for="FechaNacimiento" class="text-danger"></span>
-        </div>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="Password" class="col-md-2"></label>
-        <div class="col-md-10">
-            <input asp-for="Password" class="form-control" />
-            <span asp-validation-for="Password" class="text-danger"></span>
-        </div>
-    </div>
-
-    <div class="form-group">
-        <label asp-for="ConfirmPassword" class="col-md-2"></label>
-        <div class="col-md-10">
-            <input asp-for="ConfirmPassword" class="form-control" />
-            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-        </div>
-    </div>
-
-    <div class="form-group">
-        <div class="col-md-10">
-        <button type="submit" class="btn btn-primary">Registrar</button>
-        </div>
-    </div>
-</form>
-
-@section Scripts{
+                // Check if passwords match
+                if (password !== confirmPassword) {
+                    event.preventDefault(); // Prevent form submission
+                    confirmPasswordValidation.innerText = 'Las contraseñas no coinciden.';
+                    confirmPasswordValidation.style.display = 'block';
+                }
+            });
+        });
+    </script>
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }

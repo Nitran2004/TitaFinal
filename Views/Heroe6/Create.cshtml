@@ -4,77 +4,72 @@
     ViewData["Title"] = "Create";
 }
 
-
 <hr />
-
-
 
 <style>
     #container {
         display: flex;
         justify-content: space-between;
+        flex-wrap: wrap; /* Permite que los elementos se envuelvan si es necesario */
     }
 
-    #left-side {
-        margin-right: 30px; /* Añade un margen a la derecha para separar la imagen del texto */
+    .img-container {
+        flex: 1 1 45%; /* Permite que los contenedores de imágenes crezcan o se encojan */
+        max-width: 45%; /* Limita el ancho máximo al 45% del contenedor */
+        box-sizing: border-box; /* Asegura que el padding y el borde se incluyan en el tamaño total */
     }
+
+        .img-container img {
+            width: 92%; /* Ajusta el ancho de la imagen al 100% del contenedor */
+            height: auto; /* Mantiene la proporción de la imagen */
+            display: block; /* Asegura que la imagen ocupe el ancho completo del contenedor */
+        }
 
     #right-side p {
-        font-size: 3em; /* Ajusta este valor según tus necesidades */
+        font-size: 2em; /* Tamaño del texto del párrafo */
+        text-align: justify; /* Justifica el texto */
     }
 
     .btn-info {
         color: #fff;
         background-color: #17a2b8;
         border-color: #17a2b8;
-        border-radius: 25px; /* Añade bordes redondeados */
-        padding: 20px 40px; /* Aumenta el padding para un botón más grande */
-        font-size: 22px; /* Ajusta el tamaño de la fuente */
-        transition: all 0.5s; /* Añade una transición suave */
-        margin-top: 30px; /* Añade un margen superior para separar el botón de la imagen */
+        border-radius: 25px; /* Bordes redondeados */
+        padding: 20px 40px; /* Aumenta el padding del botón */
+        font-size: 22px; /* Tamaño del texto en el botón */
+        transition: all 0.5s; /* Transición suave para efectos */
+        margin-top: 30px; /* Separación del botón del contenido superior */
     }
 
         .btn-info:hover {
             background-color: #138496; /* Cambia el color de fondo al pasar el mouse */
             border-color: #138496; /* Cambia el color del borde al pasar el mouse */
         }
+
+    .btn-container {
+        display: flex;
+        justify-content: flex-end; /* Alinea el botón a la derecha */
+        margin-top: 30px; /* Margen superior para separación */
+    }
 </style>
 
-<div id="container" style="display: flex; justify-content: center;">
-    <div class="img-container" style="margin-right: 20px;">
-        <img src="~/images/plan.jpeg" alt="Imagen de dinosaurio" class="img-fluid" style="max-width: 550px;" />
+<div id="container">
+    <div class="img-container">
+        <img src="~/images/plan.jpeg" alt="Imagen de plan" />
     </div>
     <div class="img-container">
-        <img src="~/images/atrapados.jpeg" alt="Imagen de dinosaurio" class="img-fluid" style="max-width: 550px;" />
+        <img src="~/images/atrapados.jpeg" alt="Imagen de atrapados" />
     </div>
 </div>
 
 <div id="right-side">
-    <p style="font-size: 2em;">
-
-
+    <p>
         Para que los otros dos amigos puedan hacerlos caer en su trampa de chicle y dejar inmovilizados a los zombies.
-
     </p>
 </div>
 
-
-<div>
+<div class="btn-container">
     <form method="post">
-        <div style="display: flex; justify-content: flex-end;">
-            <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
-        </div>
+        <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
     </form>
 </div>
-
-
-
-
-
-<style>
-    .img-container {
-        display: inline-block;
-    }
-</style>
-
-

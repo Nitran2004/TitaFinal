@@ -8,17 +8,18 @@
 
 ﻿
 
-<div class="row">
+@* <div class="row">
     <div class="col-sm-3 offset-9">
         <a asp-action="Crear" asp-controller="Roles" class="btn btn-primary w-100">Crear Nuevo Rol</a>
     </div>
-</div>
+</div> *@
 
 <div class="row">
     <div class="col-sm-12">
         <div class="card border">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h3><strong>Lista de roles</strong></h3>
+                <a class="btn btn-success" asp-controller="Roles" asp-action="Crear">Agregar Rol</a>
             </div>
             <div class="card-body">
                 <div class="table-responsive">

@@ -4,93 +4,90 @@
     ViewData["Title"] = "Jurásico 2";
 }
 
-
 <hr />
 
 <style>
     #container {
         display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 2.5em;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .img-fluid {
+        max-width: 43%; /* Ajuste de tamaño similar a Jurásico 3 */
+        height: auto;
+        margin-bottom: 20px;
+    }
+
+    p {
+        font-size: 1.85em;
+        text-align: justify;
+        margin-bottom: 30px;
+        padding: 0 15px;
+    }
+
+    /* Contenedor de audio y botón */
+    #button-audio-container {
+        display: flex;
         justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-top: 20px;
+        padding: 0 15px;
     }
 
-    #left-side {
-        width: 40%;
+    .audio-container {
+        flex: 1;
+        max-width: 300px;
     }
 
-        #left-side img {
-            max-width: 110%; /* Ajusta este valor según tus necesidades */
-            height: auto; /* Asegura que la imagen mantenga su proporción */
-        }
-
-    #right-side {
-        width: 55%;
+    audio {
+        width: 100%;
     }
-
-        #right-side p {
-            font-size: 3.5em; /* Aumenta el tamaño de la fuente del párrafo */
-        }
 
     .btn-info {
         color: #fff;
         background-color: #17a2b8;
         border-color: #17a2b8;
-        border-radius: 25px; /* Añade bordes redondeados */
-        padding: 15px 30px; /* Aumenta el padding para un mejor aspecto */
-        font-size: 22px; /* Ajusta el tamaño de la fuente */
-        transition: all 0.5s; /* Añade una transición suave */
+        border-radius: 25px;
+        padding: 15px 30px;
+        font-size: 18px;
+        transition: all 0.5s;
     }
 
         .btn-info:hover {
-            background-color: #138496; /* Cambia el color de fondo al pasar el mouse */
-            border-color: #138496; /* Cambia el color del borde al pasar el mouse */
+            background-color: #138496;
+            border-color: #138496;
         }
 
-    .mt-4 {
-        margin-top: 1.5rem !important;
-    }
-
-    .text-start {
-        text-align: left !important;
-    }
-
-    .text-end {
-        text-align: right !important;
-    }
-
-    .row {
+    /* Contenedor para alinear botón */
+    #button-container {
         display: flex;
-        justify-content: space-between;
-    }
-
-    .col {
+        justify-content: flex-end;
         flex: 1;
-        display: flex;
-        justify-content: center; /* Centra el contenido horizontalmente */
-        align-items: center; /* Centra el contenido verticalmente */
     }
 </style>
 
-
 <div id="container">
-    <div id="left-side" class="text-center">
-        <img src="~/images/despierta.jpg" alt="Imagen de dinosaurio" class="img-fluid" />
-    </div>
-    <div id="right-side">
-        <p>
-            Un chico se despierta junto a huevos de dinosaurio con mal olor, se asusta al ver un dinosaurio a su lado y grita.
-        </p>
-    </div>
-</div>
+    <img src="~/images/despierta.jpg" alt="Descripción de la imagen" class="img-fluid" />
+    <p>
+        Un chico se despierta junto a huevos de dinosaurio con mal olor, se asusta al ver un dinosaurio a su lado y grita.
+    </p>
 
-<div class="mt-4">
-    <form method="post">
-        <div class="row">
-            <div class="col text-start">
-                <button class="btn btn-info" type="submit" name="accion" value="Página anterior">Página anterior</button>
-            </div>
-            <div class="col text-end">
+    <div id="button-audio-container">
+        <!-- Botón a la derecha -->
+        <div id="button-container">
+            <form method="post" asp-action="Create">
                 <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
-            </div>
+            </form>
         </div>
-    </form>
+    </div>
 </div>

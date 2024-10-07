@@ -22,7 +22,8 @@
         <input type="submit" value="Buscar" class="btn btn-sm btn-dark" />
     </p>
     <p>
-        <input type="submit" value="Reiniciar" class="btn btn-sm btn-green" />
+        <input type="button" value="Reiniciar" onclick="resetSearch()" class="btn btn-sm btn-success" />
+        <input type="button" value="Borrar Todo" onclick="confirmDeleteAll()" class="btn btn-sm btn-danger" />
     </p>
 </form>
 
@@ -80,6 +81,28 @@
             }
         }
 
+        function confirmDeleteAll() {
+            if (confirm('¿Está seguro que desea borrar TODOS los alineamientos marcados?')) {
+                let markedDominios = JSON.parse(localStorage.getItem('markedDominios')) || [];
+                fetch('/Alineamientos/DeleteMarked', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    body: JSON.stringify(markedDominios)
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            alert('Error al borrar los alineamientos.');
+                        }
+                    });
+            }
+        }
+
         function toggleMarkRow(dominio) {
             let markedDominios = JSON.parse(localStorage.getItem('markedDominios')) || [];
             if (markedDominios.includes(dominio)) {
@@ -88,18 +111,7 @@
                 markedDominios.push(dominio);
             }
             localStorage.setItem('markedDominios', JSON.stringify(markedDominios));
-            synchronizeWithModelos(dominio); // Sincronizar con la lista de Modelos
             highlightRows();
-        }
-
-        function synchronizeWithModelos(dominio) {
-            const modelosRows = document.querySelectorAll('#tablaModelos tbody tr');
-            modelosRows.forEach(row => {
-                const modeloDominio = row.getAttribute('data-dominio');
-                if (modeloDominio === dominio) {
-                    row.classList.toggle('marked-row');
-                }
-            });
         }
 
         function highlightRows() {
@@ -114,6 +126,10 @@
                     row.style.fontWeight = '';
                 }
             });
+        }
+
+        function resetSearch() {
+            window.location.href = '/Alineamientos';
         }
 
         document.addEventListener("DOMContentLoaded", function () {

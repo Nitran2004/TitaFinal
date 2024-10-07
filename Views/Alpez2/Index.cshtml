@@ -4,72 +4,90 @@
     ViewData["Title"] = "Index";
 }
 
-
-
 <hr />
-
-
 
 <style>
     #container {
         display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 2.5em;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .img-fluid {
+        max-width: 43%; /* Ajuste de tamaño similar a Jurásico 3 */
+        height: auto;
+        margin-bottom: 20px;
+    }
+
+    p {
+        font-size: 1.85em;
+        text-align: justify;
+        margin-bottom: 30px;
+        padding: 0 15px;
+    }
+
+    /* Contenedor de audio y botón */
+    #button-audio-container {
+        display: flex;
         justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-top: 20px;
+        padding: 0 15px;
     }
 
-    #left-side {
-        margin-right: 30px; /* Añade un margen a la derecha para separar la imagen del texto */
+    .audio-container {
+        flex: 1;
+        max-width: 300px;
     }
 
-    #right-side p {
-        font-size: 3em; /* Ajusta este valor según tus necesidades */
+    audio {
+        width: 100%;
     }
 
     .btn-info {
         color: #fff;
         background-color: #17a2b8;
         border-color: #17a2b8;
-        border-radius: 25px; /* Añade bordes redondeados */
-        padding: 20px 40px; /* Aumenta el padding para un botón más grande */
-        font-size: 22px; /* Ajusta el tamaño de la fuente */
-        transition: all 0.5s; /* Añade una transición suave */
-        margin-top: 30px; /* Añade un margen superior para separar el botón de la imagen */
+        border-radius: 25px;
+        padding: 15px 30px;
+        font-size: 18px;
+        transition: all 0.5s;
     }
 
         .btn-info:hover {
-            background-color: #138496; /* Cambia el color de fondo al pasar el mouse */
-            border-color: #138496; /* Cambia el color del borde al pasar el mouse */
+            background-color: #138496;
+            border-color: #138496;
         }
-</style>
 
-<div id="container" style="display: flex; justify-content: center;">
-    <div class="img-container" style="margin-right: 20px;">
-        <img src="~/images/destru.png" alt="Imagen de dinosaurio" class="img-fluid" style="max-width: 550px;" />
-    </div>
-</div>
-
-<div id="right-side">
-    <p style="font-size: 2em;">
-
-        Con los skis rotos, optamos por el parapente para continuar la misión de búsqueda y rescate.
-    </p>
-</div>
-
-
-<div>
-    <form method="post">
-        <div style="display: flex; justify-content: flex-end;">
-            <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
-        </div>
-    </form>
-</div>
-
-
-
-
-
-<style>
-    .img-container {
-        display: inline-block;
+    /* Contenedor para alinear botón */
+    #button-container {
+        display: flex;
+        justify-content: flex-end;
+        flex: 1;
     }
 </style>
 
+<div id="container">
+    <img src="~/images/destru.png" alt="Descripción de la imagen" class="img-fluid" />
+    <p>
+        Con los skis rotos, optamos por el parapente para continuar la misión de búsqueda y rescate.
+    </p>
+
+    <div id="button-audio-container">
+        <!-- Botón a la derecha -->
+        <div id="button-container">
+            <form method="post">
+                <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
+            </form>
+        </div>
+    </div>
+</div>

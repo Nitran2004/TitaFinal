@@ -13,27 +13,30 @@
             <div class="row row-cols-1 row-cols-md-3 g-4">
                 <!-- Aquí puedes iterar sobre una lista de libros y mostrar cada uno -->
                 <div class="col">
-                    <div class="card h-100">
+                    <div class="card h-100 card-crema">
                         <div class="d-flex justify-content-center">
-                            <img src="~/images/port.jpeg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                            <a asp-action="Create" asp-controller="Asset">
+                                <img src="~/images/port.jpeg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                            </a>
                         </div>
                         <div class="card-body">
-                            <h3 class="card-title fs-2">Mundo Jurasico</h3>
+                            <h3 class="card-title fs-2">Jurásico Infinito</h3>
                             <div class="buttons">
                                 <a class="btn btn-primary mb-3 custom-text-color" asp-action="Create" asp-controller="Asset">Leer cuento</a>
                             </div>
                         </div>
                     </div>
                 </div>
-
                 <!-- Agrega más tarjetas para más libros -->
                 <div class="col">
-                    <div class="card h-100">
+                    <div class="card h-100 card-crema">
                         <div class="d-flex justify-content-center">
-                            <img src="~/images/huida.jpg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                            <a asp-action="Create" asp-controller="Bosques">
+                                <img src="~/images/huida.jpg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                            </a>
                         </div>
                         <div class="card-body">
-                            <h3 class="card-title fs-2">Aventura Salvaje con Mateo y Eduardo</h3>
+                            <h3 class="card-title fs-2">Fugaz Selva</h3>
                             <div class="buttons">
                                 <a class="btn btn-primary mb-3 custom-text-color" asp-action="Create" asp-controller="Bosques">Leer cuento</a>
                             </div>
@@ -42,28 +45,33 @@
                 </div>
                 <!-- Agrega más tarjetas para más libros -->
                 <div class="col">
-                    <div class="card h-100">
+                    <div class="card h-100 card-crema">
                         <div class="d-flex justify-content-center">
-                            <img src="~/images/piente.jpg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                            <a asp-action="Create" asp-controller="Safari">
+                                <img src="~/images/piente.jpg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                            </a>
                         </div>
                         <div class="card-body">
-                            <h3 class="card-title fs-2">Mision Safari</h3>
+                            <h3 class="card-title fs-2">Safari Sin Fin</h3>
                             <div class="buttons">
                                 <a class="btn btn-primary mb-3 custom-text-color" asp-action="Create" asp-controller="Safari">Leer cuento</a>
                             </div>
                         </div>
                     </div>
                 </div>
-                @if (User.IsInRole("Administrador"))
+
+                @if (User.IsInRole("Administrador") || User.IsInRole("Lector 15 libros"))
                 {
-                    <!-- SOLO ESTOS LIBROS DE ACA ABAJO  PUEDEN TENER ACCESO LOS administrador -->
+                    <!-- SOLO ESTOS LIBROS DE ACA ABAJO PUEDEN TENER ACCESO LOS ADMINISTRADORES -->
                     <div class="col">
-                        <div class="card h-100">
+                        <div class="card h-100 card-crema">
                             <div class="d-flex justify-content-center">
-                                <img src="~/images/para.jpg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                                <a asp-action="Create" asp-controller="Nieves">
+                                    <img src="~/images/para.jpg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                                </a>
                             </div>
                             <div class="card-body">
-                                <h3 class="card-title fs-2">Mision en la nieve</h3>
+                                <h3 class="card-title fs-2">Reino Helado</h3>
                                 <div class="buttons">
                                     <a class="btn btn-primary mb-3 custom-text-color" asp-action="Create" asp-controller="Nieves">Leer cuento</a>
                                 </div>
@@ -72,27 +80,30 @@
                     </div>
                     <!-- Agrega más tarjetas para más libros -->
                     <div class="col">
-                        <div class="card h-100">
+                        <div class="card h-100 card-crema">
                             <div class="d-flex justify-content-center">
-                                <img src="~/images/porta.jpg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                                <a asp-action="Create" asp-controller="Heros">
+                                    <img src="~/images/porta.jpg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                                </a>
                             </div>
                             <div class="card-body">
-                                <h3 class="card-title fs-2">Los heroes del apocalipsos</h3>
+                                <h3 class="card-title fs-2">Héroes del Fin</h3>
                                 <div class="buttons">
                                     <a class="btn btn-primary mb-3 custom-text-color" asp-action="Create" asp-controller="Heros">Leer cuento</a>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                     <!-- Agrega más tarjetas para más libros -->
                     <div class="col">
-                        <div class="card h-100">
+                        <div class="card h-100 card-crema">
                             <div class="d-flex justify-content-center">
-                                <img src="~/images/pobla.jpg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                                <a asp-action="Create" asp-controller="Entre1">
+                                    <img src="~/images/pobla.jpg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                                </a>
                             </div>
                             <div class="card-body">
-                                <h3 class="card-title fs-2">Operación entrega</h3>
+                                <h3 class="card-title fs-2">Entrega Decisiva</h3>
                                 <div class="buttons">
                                     <a class="btn btn-primary mb-3 custom-text-color" asp-action="Create" asp-controller="Entre1">Leer cuento</a>
                                 </div>
@@ -101,12 +112,14 @@
                     </div>
                     <!-- Agrega más tarjetas para más libros -->
                     <div class="col">
-                        <div class="card h-100">
+                        <div class="card h-100 card-crema">
                             <div class="d-flex justify-content-center">
-                                <img src="~/images/entre.jpeg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                                <a asp-action="Create" asp-controller="Medi1">
+                                    <img src="~/images/entre.jpeg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                                </a>
                             </div>
                             <div class="card-body">
-                                <h3 class="card-title fs-2">Operación rescate en la selva</h3>
+                                <h3 class="card-title fs-2">Rescate en la Selva</h3>
                                 <div class="buttons">
                                     <a class="btn btn-primary mb-3 custom-text-color" asp-action="Create" asp-controller="Medi1">Leer cuento</a>
                                 </div>
@@ -115,12 +128,14 @@
                     </div>
                     <!-- Agrega más tarjetas para más libros -->
                     <div class="col">
-                        <div class="card h-100">
+                        <div class="card h-100 card-crema">
                             <div class="d-flex justify-content-center">
-                                <img src="~/images/alpez.jpg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                                <a asp-action="Create" asp-controller="Alpez1">
+                                    <img src="~/images/alpez.jpg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                                </a>
                             </div>
                             <div class="card-body">
-                                <h3 class="card-title fs-2">Mision Alpez Suizoz</h3>
+                                <h3 class="card-title fs-2">Alpez: Enigma Suizo</h3>
                                 <div class="buttons">
                                     <a class="btn btn-primary mb-3 custom-text-color" asp-action="Create" asp-controller="Alpez1">Leer cuento</a>
                                 </div>
@@ -129,12 +144,14 @@
                     </div>
                     <!-- Agrega más tarjetas para más libros -->
                     <div class="col">
-                        <div class="card h-100">
+                        <div class="card h-100 card-crema">
                             <div class="d-flex justify-content-center">
-                                <img src="~/images/portni.jpeg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                                <a asp-action="Create" asp-controller="Super1">
+                                    <img src="~/images/portni.jpeg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                                </a>
                             </div>
                             <div class="card-body">
-                                <h3 class="card-title fs-2">Mision Montaña</h3>
+                                <h3 class="card-title fs-2">Cumbres de Aventura</h3>
                                 <div class="buttons">
                                     <a class="btn btn-primary mb-3 custom-text-color" asp-action="Create" asp-controller="Super1">Leer cuento</a>
                                 </div>
@@ -143,12 +160,14 @@
                     </div>
                     <!-- Agrega más tarjetas para más libros -->
                     <div class="col">
-                        <div class="card h-100">
+                        <div class="card h-100 card-crema">
                             <div class="d-flex justify-content-center">
-                                <img src="~/images/port5.jpeg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                                <a asp-action="Create" asp-controller="Peli1">
+                                    <img src="~/images/port5.jpeg" class="card-img-top" alt="Aventura Peligrosa" style="max-width: 300px; max-height: 200px;">
+                                </a>
                             </div>
                             <div class="card-body">
-                                <h3 class="card-title fs-2">Aventura Peligrosa</h3>
+                                <h3 class="card-title fs-2">Peligro Inminente</h3>
                                 <div class="buttons">
                                     <a class="btn btn-primary mb-3 custom-text-color" asp-action="Create" asp-controller="Peli1">Leer cuento</a>
                                 </div>
@@ -157,12 +176,14 @@
                     </div>
                     <!-- Agrega más tarjetas para más libros -->
                     <div class="col">
-                        <div class="card h-100">
+                        <div class="card h-100 card-crema">
                             <div class="d-flex justify-content-center">
-                                <img src="~/images/port6.jpeg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                                <a asp-action="Create" asp-controller="Veneno1">
+                                    <img src="~/images/port6.jpeg" class="card-img-top" alt="Aventura Venenosa" style="max-width: 300px; max-height: 200px;">
+                                </a>
                             </div>
                             <div class="card-body">
-                                <h3 class="card-title fs-2">Aventura venenosa</h3>
+                                <h3 class="card-title fs-2">Venenos Ocultos</h3>
                                 <div class="buttons">
                                     <a class="btn btn-primary mb-3 custom-text-color" asp-action="Create" asp-controller="Veneno1">Leer cuento</a>
                                 </div>
@@ -171,12 +192,14 @@
                     </div>
                     <!-- Agrega más tarjetas para más libros -->
                     <div class="col">
-                        <div class="card h-100">
+                        <div class="card h-100 card-crema">
                             <div class="d-flex justify-content-center">
-                                <img src="~/images/port7.jpeg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                                <a asp-action="Create" asp-controller="Sobre1">
+                                    <img src="~/images/port7.jpeg" class="card-img-top" alt="Misión Torres" style="max-width: 300px; max-height: 200px;">
+                                </a>
                             </div>
                             <div class="card-body">
-                                <h3 class="card-title fs-2">Mision torres</h3>
+                                <h3 class="card-title fs-2">Torres de Poder</h3>
                                 <div class="buttons">
                                     <a class="btn btn-primary mb-3 custom-text-color" asp-action="Create" asp-controller="Sobre1">Leer cuento</a>
                                 </div>
@@ -185,12 +208,14 @@
                     </div>
                     <!-- Agrega más tarjetas para más libros -->
                     <div class="col">
-                        <div class="card h-100">
+                        <div class="card h-100 card-crema">
                             <div class="d-flex justify-content-center">
-                                <img src="~/images/port9.jpeg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                                <a asp-action="Create" asp-controller="Mito1">
+                                    <img src="~/images/port9.jpeg" class="card-img-top" alt="Mision Peligrosa" style="max-width: 300px; max-height: 200px;">
+                                </a>
                             </div>
                             <div class="card-body">
-                                <h3 class="card-title fs-2">Mision peligrosa</h3>
+                                <h3 class="card-title fs-2">Mito Peligroso</h3>
                                 <div class="buttons">
                                     <a class="btn btn-primary mb-3 custom-text-color" asp-action="Create" asp-controller="Mito1">Leer cuento</a>
                                 </div>
@@ -199,33 +224,36 @@
                     </div>
                     <!-- Agrega más tarjetas para más libros -->
                     <div class="col">
-                        <div class="card h-100">
+                        <div class="card h-100 card-crema">
                             <div class="d-flex justify-content-center">
-                                <img src="~/images/port10.jpeg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                                <a asp-action="Create" asp-controller="Gato1">
+                                    <img src="~/images/port10.jpeg" class="card-img-top" alt="El gato ladrón" style="max-width: 300px; max-height: 200px;">
+                                </a>
                             </div>
                             <div class="card-body">
-                                <h3 class="card-title fs-2">Mision peligrosa</h3>
+                                <h3 class="card-title fs-2">El Gato Maestro</h3>
                                 <div class="buttons">
                                     <a class="btn btn-primary mb-3 custom-text-color" asp-action="Create" asp-controller="Gato1">Leer cuento</a>
                                 </div>
                             </div>
                         </div>
                     </div>
-                                        <!-- Agrega más tarjetas para más libros -->
+                    <!-- Agrega más tarjetas para más libros -->
                     <div class="col">
-                        <div class="card h-100">
+                        <div class="card h-100 card-crema">
                             <div class="d-flex justify-content-center">
-                                <img src="~/images/port11.jpeg" class="card-img-top" alt="..." style="max-width: 300px; max-height: 200px;">
+                                <a asp-action="Create" asp-controller="Taker1">
+                                    <img src="~/images/port11.jpeg" class="card-img-top" alt="Escapada de Kofi" style="max-width: 300px; max-height: 200px;">
+                                </a>
                             </div>
                             <div class="card-body">
-                                <h3 class="card-title fs-2">Escapada de Undertaker</h3>
+                                <h3 class="card-title fs-2">La Gran Escapada</h3>
                                 <div class="buttons">
                                     <a class="btn btn-primary mb-3 custom-text-color" asp-action="Create" asp-controller="Taker1">Leer cuento</a>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                 }
             </div>
         </div>

@@ -3,8 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ProyectoIdentity.Controllers
 {
-    [Authorize(Roles = "Administrador")]
-
+    [Authorize(Roles = "Administrador,Lector 15 libros")]
     public class Mito6Controller : Controller
     {
         public IActionResult Create()
@@ -21,22 +20,15 @@ namespace ProyectoIdentity.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Create(string accion)
         {
-            if (accion == "Página siguiente")
+            if (accion == "Repetir Cuento")
             {
-
-                return RedirectToAction("Index", "Mito5");
-            }
-            return View();
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Index(string accion)
-        {
-            if (accion == "Página siguiente")
-            {
-
+                // Redirige a la acción Create del controlador Mito1
                 return RedirectToAction("Create", "Mito1");
+            }
+            else if (accion == "Página siguiente")
+            {
+                // Redirige a la acción Index del controlador Mito5
+                return RedirectToAction("Index", "Mito5");
             }
             return View();
         }

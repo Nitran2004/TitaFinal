@@ -5,58 +5,69 @@
 }
 
 <hr />
+
 <style>
     #container {
         display: flex;
-        justify-content: space-between;
+        justify-content: center; /* Centra las imágenes */
+        gap: 20px; /* Espacio entre las imágenes */
     }
 
-    #left-side {
-        margin-right: 30px; /* Añade un margen a la derecha para separar la imagen del texto */
+    .img-container {
+        max-width: 550px;
+    }
+
+    .img-fluid {
+        width: 96.5%;
+        height: auto;
+        display: block;
     }
 
     #right-side p {
-        font-size: 3em; /* Ajusta este valor según tus necesidades */
+        font-size: 2em; /* Tamaño del texto */
+        text-align: justify; /* Justifica el texto */
     }
 
     .btn-info {
         color: #fff;
         background-color: #17a2b8;
         border-color: #17a2b8;
-        border-radius: 25px; /* Añade bordes redondeados */
-        padding: 20px 40px; /* Aumenta el padding para un botón más grande */
-        font-size: 22px; /* Ajusta el tamaño de la fuente */
-        transition: all 0.5s; /* Añade una transición suave */
-        margin-top: 30px; /* Añade un margen superior para separar el botón de la imagen */
+        border-radius: 25px; /* Bordes redondeados */
+        padding: 20px 40px; /* Aumenta el padding */
+        font-size: 22px; /* Tamaño de la fuente */
+        transition: all 0.5s; /* Transición suave */
+        margin-top: 30px; /* Margen superior */
     }
 
         .btn-info:hover {
             background-color: #138496; /* Cambia el color de fondo al pasar el mouse */
             border-color: #138496; /* Cambia el color del borde al pasar el mouse */
         }
+
+    .btn-container {
+        display: flex;
+        justify-content: flex-end; /* Mueve el botón hacia la derecha */
+        margin-top: 30px;
+    }
 </style>
 
-<div id="container" style="display: flex; justify-content: center;">
-    <div class="img-container" style="margin-right: 20px;">
-        <img src="~/images/pregunta.jpg" alt="Imagen de dinosaurio" class="img-fluid" style="max-width: 550px;" />
+<div id="container">
+    <div class="img-container">
+        <img src="~/images/pregunta.jpg" alt="Imagen de montaña" class="img-fluid" />
     </div>
     <div class="img-container">
-        <img src="~/images/baja2.jpg" alt="Imagen de dinosaurio" class="img-fluid" style="max-width: 550px;" />
+        <img src="~/images/baja2.jpg" alt="Imagen de descenso" class="img-fluid" />
     </div>
 </div>
 
 <div id="right-side">
-    <p style="font-size: 2em;">
-
+    <p>
         Al atravesar la montaña, Maxime se enfrenta a la decisión de escalar más o deslizarse por la nieve para continuar su camino.
     </p>
 </div>
 
-
-<div>
+<div class="btn-container">
     <form method="post">
-        <div style="display: flex; justify-content: flex-end;">
-            <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
-        </div>
+        <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
     </form>
 </div>

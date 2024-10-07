@@ -29,7 +29,7 @@ namespace ProyectoIdentity.Controllers
             if (accion == "Página siguiente")
             {
 
-                return RedirectToAction("Create", "Asset");
+                return RedirectToAction("Index", "Home");
             }
             return View();
         }

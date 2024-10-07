@@ -1,31 +1,62 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Media;
 
 namespace ProyectoIdentity.Controllers
 {
-    [Authorize(Roles = "Administrador")]
+    [Authorize(Roles = "Administrador,Lector 15 libros")]
     public class NievesController : Controller
     {
+        private SoundPlayer player = new SoundPlayer();
+        private string[] canciones = { "Canciones/Ejemplo6.wav" }; // Actualiza con la ruta correcta a tus archivos de audio
+        private int posicion = 0;
+
+        [HttpGet]
         public IActionResult Create()
-        {
-            return View();
-        }
-        public IActionResult Index()
         {
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Index(string accion)
+        public IActionResult Create(string accion)
         {
-            if (accion == "Página siguiente")
+            if (accion == "parar")
             {
-
+                player.Stop();
+            }
+            else if (accion == "reanudar")
+            {
+                player = new SoundPlayer(canciones[posicion]);
+                player.LoadAsync();
+                player.PlaySync();
+            }
+            else if (accion == "anterior" && posicion > 0)
+            {
+                posicion--;
+                player = new SoundPlayer(canciones[posicion]);
+                player.LoadAsync();
+                player.PlaySync();
+            }
+            else if (accion == "siguiente" && posicion < canciones.Length - 1)
+            {
+                posicion++;
+                player = new SoundPlayer(canciones[posicion]);
+                player.LoadAsync();
+                player.PlaySync();
+            }
+            else if (accion == "Página siguiente")
+            {
                 return RedirectToAction("Create", "Nieve2");
             }
             return View();
         }
+
+        public IActionResult Index()
+        {
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             return View();

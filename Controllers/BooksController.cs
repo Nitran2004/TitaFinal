@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ProyectoIdentity.Controllers
 {
-    [Authorize(Roles = "Administrador")]
+    [Authorize(Roles = "Administrador,Lector 15 libros")]
     public class BooksController : Controller
     {
         [AllowAnonymous] // Permitir acceso público a la lista de alineamientos

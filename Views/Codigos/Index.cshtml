@@ -5,18 +5,35 @@
 }
 
 <hr />
+
 <style>
     #container {
         display: flex;
-        justify-content: space-between;
+        flex-wrap: wrap; /* Permite que los elementos se envuelvan si no caben en una fila */
+        justify-content: center;
+        align-items: center;
+        margin-top: 30px;
+        gap: 20px; /* Espacio entre los elementos */
     }
 
-    #left-side {
-        margin-right: 30px; /* Añade un margen a la derecha para separar la imagen del texto */
+    #left-side, #right-side {
+        flex: 1 1 300px; /* Permite que los elementos crezcan o se encojan, pero con un ancho mínimo */
+        max-width: 45%; /* Limita el ancho máximo al 45% del contenedor */
+        box-sizing: border-box; /* Incluye el padding y border en el tamaño total del elemento */
     }
 
-    #right-side p {
-        font-size: 3em; /* Ajusta este valor según tus necesidades */
+        #right-side p {
+            font-size: 2em; /* Ajusta el tamaño de la fuente para mantener la consistencia */
+            text-align: justify; /* Alineación justificada */
+            margin-bottom: 20px;
+            padding: 0 10px; /* Añade padding para separar el texto de los bordes */
+        }
+
+    img {
+        width: 92%;
+        height: auto;
+        display: block;
+        margin: 0 auto;
     }
 
     .btn-info {
@@ -24,35 +41,37 @@
         background-color: #17a2b8;
         border-color: #17a2b8;
         border-radius: 25px; /* Añade bordes redondeados */
-        padding: 20px 40px; /* Aumenta el padding para un botón más grande */
-        font-size: 22px; /* Ajusta el tamaño de la fuente */
+        padding: 15px 30px; /* Ajusta el padding para el botón */
+        font-size: 18px; /* Ajusta el tamaño de la fuente */
         transition: all 0.5s; /* Añade una transición suave */
-        margin-top: 30px; /* Añade un margen superior para separar el botón de la imagen */
+        margin-top: 20px; /* Añade un margen superior para separar el botón del texto */
     }
 
         .btn-info:hover {
             background-color: #138496; /* Cambia el color de fondo al pasar el mouse */
             border-color: #138496; /* Cambia el color del borde al pasar el mouse */
         }
+
+    #button-container {
+        display: flex;
+        justify-content: flex-end; /* Alinea el botón a la derecha */
+        width: 100%; /* Ocupa el ancho completo disponible */
+        margin-top: 20px; /* Espacio entre el contenedor del botón y el contenido superior */
+    }
 </style>
 
 <div id="container">
-    <div id="left-side" class="text-center">
-        <img src="~/images/no.jpg" alt="Imagen de dinosaurio" class="img-fluid" style="max-width: 500px; margin: 0 auto;" />
+    <div id="left-side">
+        <img src="~/images/no.jpg" alt="Imagen de dinosaurio" class="img-fluid" />
     </div>
     <div id="right-side">
         <p>
             Los dinosaurios los atraparon, sin dejarles escapar. Darius aprendió que en momentos peligrosos, es crucial mantener la calma y planificar bien.
         </p>
+        <div id="button-container">
+            <form method="post">
+                <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
+            </form>
+        </div>
     </div>
 </div>
-
-
-<div>
-    <form method="post">
-        <div style="display: flex; justify-content: flex-end;">
-            <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
-        </div>
-    </form>
-</div>
-

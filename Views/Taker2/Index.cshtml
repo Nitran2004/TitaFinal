@@ -5,57 +5,66 @@
 }
 
 <hr />
-
-
-
 <style>
     #container {
         display: flex;
-        justify-content: space-between;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
     }
 
-    #left-side {
-        margin-right: 30px; /* Añade un margen a la derecha para separar la imagen del texto */
+    .img-container {
+        flex: 1 1 300px;
+        max-width: 45%;
+        box-sizing: border-box;
+    }
+
+    .img-fluid {
+        width: 91%;
+        height: auto;
+        display: block;
     }
 
     #right-side p {
-        font-size: 3em; /* Ajusta este valor según tus necesidades */
+        font-size: 2em;
+        text-align: justify;
     }
 
     .btn-info {
         color: #fff;
         background-color: #17a2b8;
         border-color: #17a2b8;
-        border-radius: 25px; /* Añade bordes redondeados */
-        padding: 20px 40px; /* Aumenta el padding para un botón más grande */
-        font-size: 22px; /* Ajusta el tamaño de la fuente */
-        transition: all 0.5s; /* Añade una transición suave */
-        margin-top: 30px; /* Añade un margen superior para separar el botón de la imagen */
+        border-radius: 25px;
+        padding: 20px 40px;
+        font-size: 22px;
+        transition: all 0.5s;
+        margin-top: 30px;
     }
 
         .btn-info:hover {
-            background-color: #138496; /* Cambia el color de fondo al pasar el mouse */
-            border-color: #138496; /* Cambia el color del borde al pasar el mouse */
+            background-color: #138496;
+            border-color: #138496;
         }
+
+    .text-center {
+        text-align: center;
+    }
 </style>
 
-<div id="container" style="display: flex; justify-content: center;">
-    <div class="img-container" style="margin-right: 20px;">
-        <img src="~/images/morado2.jpeg" alt="Imagen de dinosaurio" class="img-fluid" style="max-width: 550px;" />
+<div id="container">
+    <div class="img-container">
+        <img src="~/images/morado2.jpeg" alt="Imagen de dinosaurio" class="img-fluid" />
     </div>
-    <div class="img-container" style="margin-right: 20px;">
-        <img src="~/images/atrapado.jpeg" alt="Imagen de dinosaurio" class="img-fluid" style="max-width: 550px;" />
+    <div class="img-container">
+        <img src="~/images/atrapado.jpeg" alt="Imagen de dinosaurio" class="img-fluid" />
     </div>
 </div>
 
-
-<div id="right-side">
-    <p style="font-size: 2em;">
-
+<div id="right-side" class="text-center">
+    <p>
         Kofi cae en la trampa y la urna empieza a quitar los poderes.
     </p>
 </div>
-
 
 <div>
     <form method="post">
@@ -64,13 +73,3 @@
         </div>
     </form>
 </div>
-
-
-
-
-
-<style>
-    .img-container {
-        display: inline-block;
-    }
-</style>

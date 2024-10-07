@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ProyectoIdentity.Controllers
 {
-    [Authorize(Roles = "Administrador")]
+    [Authorize(Roles = "Administrador,Lector 15 libros")]
 
     public class Entre8Controller : Controller
     {
@@ -24,7 +24,7 @@ namespace ProyectoIdentity.Controllers
             if (accion == "Página siguiente")
             {
 
-                return RedirectToAction("Create", "Entre1");
+                return RedirectToAction("Index", "Home");
             }
             return View();
         }

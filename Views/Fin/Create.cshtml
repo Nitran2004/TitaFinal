@@ -5,78 +5,76 @@
 }
 
 <hr />
+
 <style>
     #container {
         display: flex;
-        justify-content: space-around;
-        align-items: center;
-        gap: 20px;
+        flex-wrap: wrap; /* Permite que los elementos se envuelvan si no caben en una fila */
+        justify-content: center;
+        gap: 20px; /* Espacio entre las imágenes */
     }
+
+    .img-container {
+        flex: 1 1 300px; /* Permite que los contenedores de imágenes crezcan o se encojan, pero con un ancho mínimo */
+        max-width: 45%; /* Limita el ancho máximo al 45% del contenedor */
+        box-sizing: border-box; /* Incluye el padding y border en el tamaño total del elemento */
+    }
+
+    .img-fluid {
+        width: 95%;
+        height: auto;
+        display: block;
+    }
+
+    #right-side p {
+        font-size: 2em; /* Tamaño del texto */
+        text-align: justify; /* Justifica el texto */
+    }
+
+    .btn-info {
+        color: #fff;
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+        border-radius: 25px;
+        padding: 20px 40px;
+        font-size: 22px;
+        transition: all 0.5s;
+        margin-top: 30px;
+    }
+
+        .btn-info:hover {
+            background-color: #138496;
+            border-color: #138496;
+        }
 
     .text-center {
         text-align: center;
     }
 
-    .img-fluid {
-        max-width: 100%;
-        height: auto;
-    }
-
-    .btn {
-        color: #fff;
-        background-color: #17a2b8;
-        border-color: #17a2b8;
-        border-radius: 25px; /* Añade bordes redondeados */
-        padding: 15px 30px; /* Aumenta el padding para un mejor aspecto */
-        font-size: 22px; /* Ajusta el tamaño de la fuente */
-        transition: all 0.5s; /* Añade una transición suave */
-        text-decoration: none;
-        margin-top: 10px;
-    }
-
-        .btn:hover {
-            background-color: #138496; /* Cambia el color de fondo al pasar el mouse */
-            border-color: #138496; /* Cambia el color del borde al pasar el mouse */
-        }
-
-    #center p {
-        font-size: 2.5em;
-        color: #333;
-        line-height: 1.6;
+    #button-container {
+        display: flex;
+        justify-content: flex-end; /* Alinea el botón a la derecha */
+        margin-top: 30px; /* Espacio entre el contenido superior y el botón */
     }
 </style>
 
-<div id="container" style="display: flex; justify-content: center;">
-    <div class="img-container" style="margin-right: 20px;">
-        <img src="~/img/sonido.jpg" alt="Imagen de dinosaurio" class="img-fluid" style="max-width: 450px;" />
+<div id="container">
+    <div class="img-container">
+        <img src="~/img/sonido.jpg" alt="Imagen de dinosaurio" class="img-fluid" />
     </div>
     <div class="img-container">
-        <img src="~/img/rojo.jpg" alt="Imagen de dinosaurio" class="img-fluid" style="max-width: 450px;" />
+        <img src="~/img/rojo.jpg" alt="Imagen de dinosaurio" class="img-fluid" />
     </div>
 </div>
 
-<div id="right-side">
-    <p style="font-size: 2em;">
-        Luego el velociraptor los persigue pero el Darius se le ocurre dejar el video de los velociraptors peleando lo que le hace distraer y el grupo de amigos logran salir corriendo y se preguntan a donde deben ir ya que es como un laberinto
+<div id="right-side" class="text-center">
+    <p>
+        El velociraptor los persigue, pero Darius deja un video de velocirraptores peleando, distrayéndolo. Los amigos escapan corriendo y se preguntan hacia dónde ir en el laberinto.
     </p>
 </div>
 
-
-<div>
+<div id="button-container">
     <form method="post">
-        <div style="display: flex; justify-content: flex-end;">
-            <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
-        </div>
+        <button class="btn btn-info" type="submit" name="accion" value="Página siguiente">Página siguiente</button>
     </form>
 </div>
-
-<style>
-    .img-container {
-        display: inline-block;
-    }
-</style>
-
-
-
-
-

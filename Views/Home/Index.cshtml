@@ -1,241 +1,176 @@
-﻿@using Microsoft.AspNetCore.Identity
-@inject SignInManager<IdentityUser> SignInManager
-@inject UserManager<IdentityUser> UserManager
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@ViewData["Title"] - e-Books</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <title>@ViewData["Title"] - Libros Interactivos para niños</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <style>
-        html {
-            font-size: 14px;
-        }
-
-        html {
-            position: relative;
-            min-height: 100%;
-        }
-
         body {
-            margin-bottom: 60px;
+            font-size: 14px;
+            background-color: #f0f8ff; /* Fondo azul claro */
         }
 
-        .bold-link {
+        .container-welcome {
+            background-color: #fff8dc; /* Fondo color crema */
+            padding: 40px;
+            margin-top: 60px;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); /* Corrección de sintaxis */
+        }
+
+        .welcome-title {
+            font-size: 28px;
             font-weight: bold;
-            color: black !important;
+            margin-bottom: 20px;
         }
 
-        .btn-green {
-            background-color: green;
-            border-color: green;
-            color: white;
+        .img-small {
+            width: 300px; /* Tamaño pequeño para las imágenes */
+            margin: 5px; /* Espaciado entre las imágenes */
+            display: inline-block; /* Mostrar imágenes en línea */
         }
 
-        /* Carousel */
-        .carousel-caption p {
-            font-size: 20px;
-            line-height: 1.4;
+        .container-books {
+            padding: 20px;
+            margin-top: 20px;
+            background-color: #fff;
+            border-radius: 10px;
         }
 
-        /* Make .svg files in the carousel display properly in older browsers */
-        .carousel-inner .item img[src$=".svg"],
-        .carousel-inner .item img[src$=".jpeg"],
-        .carousel-inner .item img[src$=".jpg"] {
-            width: 30%; /* Adjust the width to make the images smaller */
-            margin: 0 auto; /* Center the images horizontally */
-        }
-
-        .highlight {
-            background-color: orange;
-        }
-
-        /* Custom background colors for carousel items */
-        .carousel-inner .item-green {
-            background-color: green;
-        }
-
-        .carousel-inner .item-blue {
-            background-color: #003366; /* Azul oscuro */
-        }
-
-
-        .carousel-inner .item-purple {
-            background-color: purple;
-        }
-
-        /* Add margin to the top of the carousel to prevent it from interfering with the nav bar */
-        .carousel {
-            margin-top: 60px; /* Adjust this value as needed */
-        }
-
-        /* Styles for sticky navbar */
-        .navbar {
-            transition: top 0.3s;
-        }
-
-        /* Align navbar links to the right */
-        .navbar-nav {
-            margin-left: auto;
+        .footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #fff8dc;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2); /* Corrección de sintaxis */
         }
     </style>
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3 navbar-fixed-top">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">e-Books</a>
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        @if (User.IsInRole("Administrador"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Roles" asp-action="Index">Administracion de roles</a>
-                            </li>
-                        }
-
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Books" asp-action="Index">Books</a>
-                        </li>
-                    </ul>
-                    <ul class="navbar-nav ml-auto">
-                        @if (SignInManager.IsSignedIn(User))
-                        {
-                            @if (User.IsInRole("Administrador"))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link bold-link" asp-area="" asp-controller="Cuentas" asp-action="RegistroAdministrador"><strong>Tu rol es Administrador ->> Registro Administrador</strong></a>
-                                </li>
-                            }
-                            else
-                            {
-                                <p>Tu rol es: Usuario</p>
-                            }
-
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-expanded="false">
-                                    Mi cuenta
-                                </a>
-                                <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                    <li class="nav-item">
-                                        <a class="nav-link text-dark" href="#">Hola, @UserManager.GetUserName(User)</a>
-                                    </li>
-                                    <li>
-                                        <hr class="dropdown-divider">
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link text-dark" asp-area="" asp-controller="Usuarios" asp-action="EditarPerfil" asp-route-id="@UserManager.GetUserId(User)">Editar Perfil</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link text-dark" asp-area="" asp-controller="Usuarios" asp-action="CambiarPassword">Cambiar Contraseña</a>
-                                    </li>
-                                </ul>
-                            </li>
-
-                            <li class="nav-item">
-                                <form id="logoutForm" method="post" class="form-inline" asp-controller="Cuentas" asp-action="SalirAplicacion">
-                                    <button type="submit" class="btn nav-link">Salir</button>
-                                </form>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link bold-link" asp-area="" asp-controller="Cuentas" asp-action="Registro">Registro</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link bold-link" asp-area="" asp-controller="Cuentas" asp-action="Acceso">Acceder</a>
-                            </li>
-                        }
-                    </ul>
-                </div>
-            </div>
-        </nav>
-    </header>
-
-    <div id="myCarousel" class="carousel slide" data-ride="carousel" data-interval="6000">
-        <ol class="carousel-indicators">
-            <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
-            <li data-target="#myCarousel" data-slide-to="1"></li>
-            <li data-target="#myCarousel" data-slide-to="2"></li>
-        </ol>
-        <div class="carousel-inner" role="listbox">
-            <div class="item item-green active">
-                <img src="~/images/port.jpeg" alt="ASP.NET" class="img-responsive" />
-                <div class="carousel-caption" role="option">
-                    <p>
-                        <strong>Welcome to the e-Library</strong>
-                    </p>
-                </div>
-            </div>
-            <div class="item item-blue">
-                <img src="~/images/huida.jpg" alt="Visual Studio" class="img-responsive" />
-                <div class="carousel-caption" role="option">
-                    <p>
-                        <strong>Welcome to the e-Library</strong>
-                    </p>
-                </div>
-            </div>
-            <div class="item item-purple">
-                <img src="~/images/piente.jpg" alt="Microsoft Azure" class="img-responsive" />
-                <div class="carousel-caption" role="option">
-                    <p>
-                        <strong>Welcome to the e-Library</strong>
-                    </p>
-                </div>
-            </div>
-        </div>
-        <a class="left carousel-control" href="#myCarousel" role="button" data-slide="prev">
-            <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
-            <span class="sr-only">Previous</span>
-        </a>
-        <a class="right carousel-control" href="#myCarousel" role="button" data-slide="next">
-            <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
-            <span class="sr-only">Next</span>
-        </a>
+    <div class="container-welcome">
+        <h2 class="welcome-title">Bienvenido a Libros Interactivos para niños</h2>
+        <p>Disfruta de una variedad de aventuras interactivas que harán volar tu imaginación.</p>
     </div>
 
-    <div class="container" id="books">
-        <h2>e-Books</h2>
-        <ul>
-            <li>Mundo Jurasico</li>
-            <li>Aventura Salvaje con Mateo y Eduardo</li>
-            <li>Mision Safari</li>
+    <div class="container text-center">
+        <!-- Imágenes alineadas horizontalmente con enlaces -->
+        <a asp-action="Create" asp-controller="Asset">
+            <img src="~/images/port.jpeg" alt="Mundo Jurasico" class="img-small">
+        </a>
+        <a asp-action="Create" asp-controller="Bosques">
+            <img src="~/images/huida.jpg" alt="Aventura Salvaje" class="img-small">
+        </a>
+        <a asp-action="Create" asp-controller="Safari">
+            <img src="~/images/piente.jpg" alt="Mision Safari" class="img-small">
+        </a>
+                    @if (User.IsInRole("Administrador") || User.IsInRole("Lector 15 libros"))
+            {
+            <a asp-action="Create" asp-controller="Nieves">
+                <img src="~/images/para.jpg" alt="Misión en la nieve" class="img-small">
+            </a>
+            <a asp-action="Create" asp-controller="Heros">
+                <img src="~/images/porta.jpg" alt="Los heroes del apocalipsis" class="img-small">
+            </a>
+            <a asp-action="Create" asp-controller="Entre1">
+                <img src="~/images/pobla.jpg" alt="Operación entrega" class="img-small">
+            </a>
+            <a asp-action="Create" asp-controller="Medi1">
+                <img src="~/images/entre.jpeg" alt="Operación rescate en la selva" class="img-small">
+            </a>
+            <a asp-action="Create" asp-controller="Alpez1">
+                <img src="~/images/alpez.jpg" alt="Misión Alpez Suizoz" class="img-small">
+            </a>
+            <a asp-action="Create" asp-controller="Super1">
+                <img src="~/images/portni.jpeg" alt="Misión Montaña" class="img-small">
+            </a>
+            <a asp-action="Create" asp-controller="Peli1">
+                <img src="~/images/port5.jpeg" alt="Aventura Peligrosa" class="img-small">
+            </a>
+            <a asp-action="Create" asp-controller="Veneno1">
+                <img src="~/images/port6.jpeg" alt="Aventura Venenosa" class="img-small">
+            </a>
+            <a asp-action="Create" asp-controller="Sobre1">
+                <img src="~/images/port7.jpeg" alt="Misión Torres" class="img-small">
+            </a>
+            <a asp-action="Create" asp-controller="Mito1">
+                <img src="~/images/port9.jpeg" alt="Misión Peligrosa" class="img-small">
+            </a>
+            <a asp-action="Create" asp-controller="Gato1">
+                <img src="~/images/port10.jpeg" alt="El gato ladrón" class="img-small">
+            </a>
+            <a asp-action="Create" asp-controller="Taker1">
+                <img src="~/images/port11.jpeg" alt="Escapada de Kofi" class="img-small">
+        </a>
+        }
+    </div>
 
+    <div class="container-books">
+        <h2>Libros Disponibles:</h2>
+        <ul>
+            <li>
+                <a asp-action="Create" asp-controller="Asset">Jurásico Infinito</a>
+            </li>
+            <li>
+                <a asp-action="Create" asp-controller="Bosques">Fugaz Selva</a>
+            </li>
+            <li>
+                <a asp-action="Create" asp-controller="Safari">Safari Sin Fin</a>
+            </li>
+            @if (User.IsInRole("Administrador") || User.IsInRole("Lector 15 libros"))
+            {
+                <li>
+                    <a asp-action="Create" asp-controller="Nieves">Reino Helado</a>
+                </li>
+                <li>
+                    <a asp-action="Create" asp-controller="Heros">Héroes del Fin</a>
+                </li>
+                <li>
+                    <a asp-action="Create" asp-controller="Entre1">Entrega Decisiva</a>
+                </li>
+                <li>
+                    <a asp-action="Create" asp-controller="Medi1">Rescate en la Selva</a>
+                </li>
+                <li>
+                    <a asp-action="Create" asp-controller="Alpez1">Alpez: Enigma Suizo</a>
+                </li>
+                <li>
+                    <a asp-action="Create" asp-controller="Super1">Cumbres de Aventura</a>
+                </li>
+                <li>
+                    <a asp-action="Create" asp-controller="Peli1">Peligro Inminente</a>
+                </li>
+                <li>
+                    <a asp-action="Create" asp-controller="Veneno1">Venenos Ocultos</a>
+                </li>
+                <li>
+                    <a asp-action="Create" asp-controller="Sobre1">Torres de Poder</a>
+                </li>
+                <li>
+                    <a asp-action="Create" asp-controller="Mito1">Mito Peligroso</a>
+                </li>
+                <li>
+                    <a asp-action="Create" asp-controller="Gato1">El Gato Maestro</a>
+                </li>
+                <li>
+                    <a asp-action="Create" asp-controller="Taker1">La Gran Escapada</a>
+                </li>
+            }
         </ul>
     </div>
 
-    <footer class="footer">
-        <p>© 2023 e-Books. Todos los derechos reservados.</p>
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2024 - Libros Interactivos para niños -
+            <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacidad</a>
+        </div>
     </footer>
 
-    <script>
-        var lastScrollTop = 0;
-        $(window).scroll(function (event) {
-            var currentScrollTop = $(this).scrollTop();
-            if (currentScrollTop > lastScrollTop) {
-                // Scroll down
-                $('.navbar').css('top', '-60px'); // Adjust this value according to your navbar height
-            } else {
-                // Scroll up
-                $('.navbar').css('top', '0');
-            }
-            lastScrollTop = currentScrollTop;
-        });
-    </script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
 </body>
 </html>

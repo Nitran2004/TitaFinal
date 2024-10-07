@@ -34,7 +34,7 @@ namespace ProyectoIdentity.Controllers
             if (accion == "Página siguiente")
             {
 
-                return RedirectToAction("Create", "Bosques");
+                return RedirectToAction("Index", "Home");
             }
             return View();
         }

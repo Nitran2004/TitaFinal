@@ -159,6 +159,25 @@ namespace ProyectoIdentity.Controllers
             return Ok(); // Devuelve una respuesta 200 OK si la eliminación es exitosa
         }
 
+        [Authorize(Roles = "Administrador")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteMarked([FromBody] string[] dominios)
+        {
+            var alineamientos = await _context.Alineamientos
+                .Where(a => dominios.Contains(a.SiglaAG01_AG13))
+                .ToListAsync();
+
+            if (alineamientos == null || !alineamientos.Any())
+            {
+                return NotFound();
+            }
+
+            _context.Alineamientos.RemoveRange(alineamientos);
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
 
 
         private bool AlineamientoExists(int id)

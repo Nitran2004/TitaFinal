@@ -5,7 +5,7 @@ namespace ProyectoIdentity.Controllers
 {
     public class Nieve11Controller : Controller
     {
-        [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador,Lector 15 libros")]
 
         public IActionResult Create()
         {

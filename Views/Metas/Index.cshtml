@@ -11,7 +11,10 @@
 {
     <div class="row">
         <div class="col-sm-3 offset-9">
-            <a asp-action="Crear" asp-controller="Metas" class="btn btn-primary w-100">Crear Nueva Meta</a>
+            <a asp-action="Crear" asp-controller="Metas" class="btn btn-primary w-100 mb-2">Crear Nueva Meta</a>
+            <form asp-action="BorrarTodo" asp-controller="Metas" method="post">
+                <button type="submit" class="btn btn-danger w-100" onclick="return confirm('¿Está seguro de que desea borrar todas las metas?')">Borrar Todas las Metas</button>
+            </form>
         </div>
     </div>
 }
@@ -76,45 +79,3 @@
         </div>
     </div>
 </div>
-
-@section Scripts {
-    <script type="text/javascript">
-        function toggleMarkRow(dominio) {
-            let markedDominios = JSON.parse(localStorage.getItem('markedDominios')) || [];
-            if (markedDominios.includes(dominio)) {
-                markedDominios = markedDominios.filter(d => d !== dominio);
-            } else {
-                markedDominios.push(dominio);
-            }
-            localStorage.setItem('markedDominios', JSON.stringify(markedDominios));
-            highlightRows();
-        }
-
-        function highlightRows() {
-            const markedDominios = JSON.parse(localStorage.getItem('markedDominios')) || [];
-            document.querySelectorAll('tr[data-dominio]').forEach(row => {
-                const dominio = row.getAttribute('data-dominio');
-                if (markedDominios.includes(dominio)) {
-                    row.style.backgroundColor = 'lightgreen';
-                    row.style.fontWeight = 'bold';
-                } else {
-                    row.style.backgroundColor = '';
-                    row.style.fontWeight = '';
-                }
-            });
-        }
-
-        document.addEventListener("DOMContentLoaded", function () {
-            highlightRows();
-            synchronizeWithMetas();
-        });
-
-        function synchronizeWithMetas() {
-            const syncData = JSON.parse(localStorage.getItem('syncMetas')) || {};
-            if (syncData.dominio) {
-                toggleMarkRow(syncData.dominio);
-                localStorage.removeItem('syncMetas');
-            }
-        }
-    </script>
-}

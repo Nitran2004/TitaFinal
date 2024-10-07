@@ -102,6 +102,12 @@ namespace ProyectoIdentity.Controllers
                 await _roleManager.CreateAsync(new IdentityRole("Registrado"));
             }
 
+            //Para la creacion de los registrado
+            if (!await _roleManager.RoleExistsAsync("Lector 15 libros"))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("Lector 15 libros"));
+            }
+
             //Para seleccion de rol
 
             List<SelectListItem> listaRoles = new List<SelectListItem>();
@@ -117,6 +123,12 @@ namespace ProyectoIdentity.Controllers
                 Text = "Administrador"
             });
 
+            listaRoles.Add(new SelectListItem()
+            {
+                Value = "Lector 15 libros",
+                Text = "Lector 15 libros"
+            });
+
             ViewData["ReturnUrl"] = returnurl;
             RegistroViewModel registroVM = new RegistroViewModel() 
             { 
@@ -128,58 +140,66 @@ namespace ProyectoIdentity.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-
-
         public async Task<IActionResult> RegistroAdministrador(RegistroViewModel rgViewModel, string returnurl = null)
         {
             ViewData["ReturnUrl"] = returnurl;
             returnurl = returnurl ?? Url.Content("~/");
+
             if (ModelState.IsValid)
             {
-                var usuario = new AppUsuario { UserName = rgViewModel.Email, Email = rgViewModel.Email, Nombre = rgViewModel.Nombre, Url = rgViewModel.Url, CodigoPais = rgViewModel.CodigoPais, Telefono = rgViewModel.Telefono, Pais = rgViewModel.Pais, Ciudad = rgViewModel.Ciudad, Direccion = rgViewModel.Direccion, FechaNacimiento = rgViewModel.FechaNacimiento, Estado = rgViewModel.Estado };
+                var usuario = new AppUsuario
+                {
+                    UserName = rgViewModel.Email,
+                    Email = rgViewModel.Email,
+                    Nombre = rgViewModel.Nombre,
+                    Url = rgViewModel.Url,
+                    CodigoPais = rgViewModel.CodigoPais,
+                    Telefono = rgViewModel.Telefono,
+                    Pais = rgViewModel.Pais,
+                    Ciudad = rgViewModel.Ciudad,
+                    Direccion = rgViewModel.Direccion,
+                    FechaNacimiento = rgViewModel.FechaNacimiento,
+                    Estado = rgViewModel.Estado
+                };
+
                 var resultado = await _userManager.CreateAsync(usuario, rgViewModel.Password);
 
                 if (resultado.Succeeded)
                 {
-                    //Para seleccion de rol
-                    if (rgViewModel.RolSeleccionado !=null && rgViewModel.RolSeleccionado.Length>0 && rgViewModel.RolSeleccionado =="Administrador") 
+                    // Para selección de rol
+                    if (!string.IsNullOrEmpty(rgViewModel.RolSeleccionado) && rgViewModel.RolSeleccionado == "Administrador")
                     {
-                        await _userManager.AddToRoleAsync(usuario,"Administrador");
+                        await _userManager.AddToRoleAsync(usuario, "Administrador");
+                    }
+                    else if (rgViewModel.RolSeleccionado == "Lector 15 libros")
+                    {
+                        await _userManager.AddToRoleAsync(usuario, "Lector 15 libros");
                     }
                     else
                     {
                         await _userManager.AddToRoleAsync(usuario, "Registrado");
                     }
 
-
-                    //Esta linea es para la asignacion del usuario que se registra al rol "Registrado"
-                    await _userManager.AddToRoleAsync(usuario, "Registrado");
-
                     await _signInManager.SignInAsync(usuario, isPersistent: false);
-                    //return RedirectToAction("Index", "Home");
                     return LocalRedirect(returnurl);
                 }
+
+
                 ValidarErrores(resultado);
             }
 
-            //para seleccion de rol
-            List<SelectListItem> listaRoles = new List<SelectListItem>();
-            listaRoles.Add(new SelectListItem()
-            {
-                Value = "Auditor",
-                Text = "Auditor"
-            });
+            // Para selección de rol
+            rgViewModel.ListaRoles = new List<SelectListItem>
+    {
+        new SelectListItem { Value = "Registrado", Text = "Registrado" },
+        new SelectListItem { Value = "Administrador", Text = "Administrador" },
+        new SelectListItem { Value = "Lector 15 libros", Text = "Lector 15 libros" }
 
-            listaRoles.Add(new SelectListItem()
-            {
-                Value = "Administrador",
-                Text = "Administrador"
-            });
-            rgViewModel.ListaRoles = listaRoles;
+    };
 
             return View(rgViewModel);
-
         }
+
 
         [AllowAnonymous]
 

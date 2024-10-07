@@ -1,0 +1,78 @@
+﻿@model IEnumerable<ProyectoIdentity.Models.AppUsuario>
+
+@{
+    ViewData["Title"] = "Administración de usuarios";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h1 class="text-center">Administracion de usuarios</h1>
+
+<div class="row">
+    <div class="col-sm-12">
+        <div class="card border">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3><strong>Lista de usuarios</strong></h3>
+                <a class="btn btn-success" asp-controller="Cuentas" asp-action="RegistroAdministrador">Agregar Usuario</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    @if (Model.Count() > 0)
+                    {
+                        <table class="table table-bordered" id="tablaRoles" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>@Html.DisplayNameFor(m => Model.First().Nombre)</th>
+                                    <th>@Html.DisplayNameFor(m => Model.First().Email)</th>
+                                    <th>@Html.DisplayNameFor(m => Model.First().Telefono)</th>
+                                    <th>@Html.DisplayNameFor(m => Model.First().Rol)</th>
+                                    <th>Contraseña</th> <!-- Cambiado para evitar problemas con la propiedad Password -->
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>@Html.DisplayFor(m => item.Nombre)</td>
+                                        <td>@Html.DisplayFor(m => item.Email)</td>
+                                        <td>@Html.DisplayFor(m => item.Telefono)</td>
+                                        <td>@Html.DisplayFor(m => item.Rol)</td>
+                                        <td>@Html.DisplayFor(m => item.PasswordHash)</td>
+                                        <td>
+                                            <div class="text-center">
+                                                <form asp-action="Borrar" asp-route-idUsuario="@item.Id">
+                                                    <a class="btn btn-primary" asp-controller="Usuarios" asp-action="Editar" asp-route-id="@item.Id">Editar</a>
+
+                                                    @if (item.LockoutEnd == null || item.LockoutEnd < DateTime.Now)
+                                                    {
+                                                        <button asp-action="BloquearDesbloquear" asp-route-idUsuario="@item.Id" class="btn btn-secondary text-white" style="cursor:pointer">
+                                                            <strong>Bloquear</strong>
+                                                        </button>
+                                                    }
+                                                    else
+                                                    {
+                                                        <button asp-action="BloquearDesbloquear" asp-route-idUsuario="@item.Id" class="btn btn-warning text-white" style="cursor:pointer">
+                                                            <strong>Desbloquear</strong>
+                                                        </button>
+                                                    }
+
+                                                    <button type="submit" class="btn btn-danger text-white" style="cursor:pointer">
+                                                        <strong>Borrar</strong>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p>No hay registros</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

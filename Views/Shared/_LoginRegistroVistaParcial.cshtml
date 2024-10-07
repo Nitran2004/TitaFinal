@@ -1,5 +1,4 @@
 ﻿@using Microsoft.AspNetCore.Identity
-
 @inject SignInManager<IdentityUser> SignInManager
 @inject UserManager<IdentityUser> UserManager
 
@@ -11,9 +10,12 @@
             <li class="nav-item">
                 <a class="nav-link bold-link" asp-area="" asp-controller="Cuentas" asp-action="RegistroAdministrador"><strong>Tu rol es Administrador->> Registro Administrador</strong></a>
             </li>
-        }else
+        }
+        else
         {
-             <p>Tu rol es: Usuario</p>   
+            <li class="nav-item">
+                <a class="nav-link">Tu rol es: Usuario</a>
+            </li>
         }
 
         <li class="nav-item dropdown">
@@ -22,36 +24,33 @@
             </a>
             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                 <li class="nav-item">
-                    <a class="nav-link text-dark" href="#">Hola, @UserManager.GetUserName(User)</a>
+                    <a class="nav-link" style="color: black;" href="#">Hola, @UserManager.GetUserName(User)</a>
                 </li>
                 <li>
                     <hr class="dropdown-divider">
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-dark" asp-area="" asp-controller="Usuarios" asp-action="EditarPerfil" asp-route-id="@UserManager.GetUserId(User)">Editar Perfil</a>
+                    <a class="nav-link" style="color: black;" asp-area="" asp-controller="Usuarios" asp-action="EditarPerfil" asp-route-id="@UserManager.GetUserId(User)">Editar Perfil</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-dark" asp-area="" asp-controller="Usuarios" asp-action="CambiarPassword">Cambiar Contraseña</a>
+                    <a class="nav-link" style="color: black;" asp-area="" asp-controller="Usuarios" asp-action="CambiarPassword">Cambiar Contraseña</a>
                 </li>
             </ul>
         </li>
-
 
         <li class="nav-item">
             <form id="logoutForm" method="post" class="form-inline" asp-controller="Cuentas" asp-action="SalirAplicacion">
                 <button type="submit" class="btn">Salir</button>
             </form>
-
         </li>
     }
     else
     {
-
         <li class="nav-item">
             <a class="nav-link bold-link" asp-area="" asp-controller="Cuentas" asp-action="Registro">Registro</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link bold-link" asp-area="" asp-controller="Cuentas" asp-action="Acceso">Acceder</a>
+            <a class="nav-link bold-link" asp-area="" asp-controller="Cuentas" asp-action="Acceso">Iniciar Sesión</a>
         </li>
     }
 </ul>

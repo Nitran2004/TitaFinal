@@ -5,8 +5,9 @@
 }
 
 <hr />
+
 <style>
-    #container {
+    .container {
         display: flex;
         justify-content: space-around;
         align-items: center;
@@ -18,7 +19,7 @@
     }
 
     .img-fluid {
-        max-width: 100%;
+        max-width: 85.8%;
         height: auto;
     }
 
@@ -39,41 +40,39 @@
             border-color: #138496; /* Cambia el color del borde al pasar el mouse */
         }
 
-    #center p {
-        font-size: 2.5em;
+    .text-justify {
+        font-size: 2em;
         color: #333;
         line-height: 1.6;
+        text-align: justify; /* Justifica el texto */
     }
 </style>
 
-
-
-<div id="container">
-    <div id="left-side" class="text-center">
-        <img src="~/images/cuerda1.jpeg" alt="Imagen de dinosaurio 1" class="img-fluid" />
+<div class="container">
+    <div class="text-center">
+        <img src="~/images/cuerda1.jpeg" alt="Imagen de cuerda" class="img-fluid" />
     </div>
 
-    <div id="right-side" class="text-center">
-        <img src="~/images/rappel1.jpeg" alt="Imagen de dinosaurio 2" class="img-fluid" />
+    <div class="text-center">
+        <img src="~/images/rappel1.jpeg" alt="Imagen de rappel" class="img-fluid" />
     </div>
 </div>
 
-<div id="container">
-    <div id="center" class="text-center">
-        <p>
-
+<div class="container">
+    <div class="text-center">
+        <p class="text-justify">
             Debes decidir si pasar por la cuerda o hacer rappel.
         </p>
     </div>
 </div>
 
-<div id="container" style="justify-content: space-around;">
-    <div id="left-side" class="text-center">
+<div class="container" style="justify-content: space-around;">
+    <div class="text-center">
         <a class="btn" asp-action="Index" asp-controller="Entre2">Cuerda</a>
     </div>
-    <div id="center" class="text-center">
+    <div class="text-center">
     </div>
-    <div id="right-side" class="text-center">
+    <div class="text-center">
         <a class="btn" asp-action="Create" asp-controller="Entre3">Rappel</a>
     </div>
 </div>

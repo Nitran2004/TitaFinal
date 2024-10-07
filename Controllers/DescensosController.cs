@@ -23,7 +23,7 @@ namespace ProyectoIdentity.Controllers
             if (accion == "Página siguiente")
             {
 
-                return RedirectToAction("Create", "Safari");
+                return RedirectToAction("Index", "Home");
             }
             return View();
         }
