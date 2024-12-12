@@ -1,5 +1,5 @@
 
-```markdown
+
 # Sistema de Gestión de Proyectos
 
 ## Descripción
@@ -85,7 +85,3 @@ Puedes acceder al proyecto en línea desde el siguiente enlace:
 [https://www.minicoremz.somee.com/](https://www.minicoremz.somee.com/)
 ```
 
-### Cambios realizados:
-1. Se corrigieron errores en las instrucciones.
-2. Se añadió consistencia en los bloques de código.
-3. Se mejoró la estructura para que sea más fácil de leer.
