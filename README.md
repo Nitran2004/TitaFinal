@@ -83,5 +83,5 @@ Para ejecutar el proyecto localmente, asegúrate de configurar correctamente el 
 ## Proyecto Deployado
 Puedes acceder al proyecto en línea desde el siguiente enlace:  
 [https://www.minicoremz.somee.com/](https://www.minicoremz.somee.com/)
-```
+
 
