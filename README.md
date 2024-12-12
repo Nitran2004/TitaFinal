@@ -84,4 +84,8 @@ Para ejecutar el proyecto localmente, asegúrate de configurar correctamente el 
 Puedes acceder al proyecto en línea desde el siguiente enlace:  
 [https://www.minicoremz.somee.com/](https://www.minicoremz.somee.com/)
 
+Para acceder a rol Administrador
+Correo: martin.zumarraga@udla.edu.ec
+Contraseña: rpf!Tzv3
+
 
