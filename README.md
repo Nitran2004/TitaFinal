@@ -1,3 +1,5 @@
+
+```markdown
 # Sistema de Gestión de Proyectos
 
 ## Descripción
@@ -56,18 +58,34 @@ Para ejecutar el proyecto localmente, asegúrate de configurar correctamente el 
     "SecretKey": "1fd6c6ba91f52a4aa6153581b6ce08f3"
   }
 }
+```
 
- Requisitos Previos
--- SQL Server Management Studio (SSMS) o cualquier cliente de base de datos compatible con SQL Server. **
--- Configuración del hosting en Somee.
+## Requisitos Previos
+- **SQL Server Management Studio (SSMS)** o cualquier cliente de base de datos compatible con SQL Server.
+- **Configuración del hosting en Somee.**
 
+## Instrucciones para Ejecutar
+1. **Clonar el repositorio**:
+   ```bash
+   git clone https://github.com/Nitran2004/ProyectoIdentity.git
+   ```
+2. **Configurar la cadena de conexión en `appsettings.json`.**
+3. **Ejecutar migraciones de base de datos**:
+   ```bash
+   dotnet ef database update
+   ```
+4. **Iniciar la aplicación**:
+   ```bash
+   dotnet run
+   ```
+   Accede al sistema en: [http://localhost:5000](https://localhost:44301/)
 
-Instrucciones para Ejecutar
-1. Clonar el repositorio:
-git clone https://github.com/tu-usuario/tu-repositorio.git
-2. Configurar la cadena de conexión en appsettings.json.
-3. Ejecutar migraciones de base de datos:
-dotnet ef database update
-4. Iniciar la aplicación:
-dotnet run
-Accede al sistema en: [http://localhost:5000.](https://localhost:44301/)
+## Proyecto Deployado
+Puedes acceder al proyecto en línea desde el siguiente enlace:  
+[https://www.minicoremz.somee.com/](https://www.minicoremz.somee.com/)
+```
+
+### Cambios realizados:
+1. Se corrigieron errores en las instrucciones.
+2. Se añadió consistencia en los bloques de código.
+3. Se mejoró la estructura para que sea más fácil de leer.
