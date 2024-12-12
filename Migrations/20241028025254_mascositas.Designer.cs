@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProyectoIdentity.Datos;
 
@@ -11,9 +12,10 @@ using ProyectoIdentity.Datos;
 namespace ProyectoIdentity.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241028025254_mascositas")]
+    partial class mascositas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -226,88 +228,78 @@ namespace ProyectoIdentity.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("ProyectoIdentity.Models.Empleado", b =>
+            modelBuilder.Entity("ProyectoIdentity.Models.Alineamiento", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("ID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"), 1L, 1);
 
-                    b.Property<string>("LastName")
+                    b.Property<string>("Codigo")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("Dominio")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.Property<string>("Nivel")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.ToTable("Empleados");
+                    b.Property<string>("SiglaAG01_AG13")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ID");
+
+                    b.ToTable("Alineamientos");
                 });
 
-            modelBuilder.Entity("ProyectoIdentity.Models.Proyecto", b =>
+            modelBuilder.Entity("ProyectoIdentity.Models.Meta", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("ID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"), 1L, 1);
 
-                    b.Property<string>("Name")
+                    b.Property<string>("Codigo")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.Property<string>("Dominio")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.ToTable("Proyectos");
+                    b.Property<string>("Nivel")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SiglaEG01_EG13")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ID");
+
+                    b.ToTable("Metas");
                 });
 
-            modelBuilder.Entity("ProyectoIdentity.Models.Tarea", b =>
+            modelBuilder.Entity("ProyectoIdentity.Models.Modelo", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("ModeloID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ModeloID"), 1L, 1);
 
-                    b.Property<int?>("EmpleadoId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("EstadoProgreso")
+                    b.Property<string>("Alineamiento2")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("FechadeFin")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("FechadeInicio")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Nombredelatarea")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("Prioridad")
+                    b.Property<int?>("AlineamientoID")
                         .HasColumnType("int");
 
-                    b.Property<double?>("Productividad")
-                        .HasColumnType("float");
+                    b.Property<string>("Core")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ProyectoId")
-                        .HasColumnType("int");
+                    b.HasKey("ModeloID");
 
-                    b.Property<double?>("TiempoEstimado")
-                        .HasColumnType("float");
+                    b.HasIndex("AlineamientoID");
 
-                    b.Property<double?>("TiempoUtilizado")
-                        .HasColumnType("float");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EmpleadoId");
-
-                    b.HasIndex("ProyectoId");
-
-                    b.ToTable("Tareas");
+                    b.ToTable("Modelos");
                 });
 
             modelBuilder.Entity("ProyectoIdentity.Models.AppUsuario", b =>
@@ -398,32 +390,19 @@ namespace ProyectoIdentity.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ProyectoIdentity.Models.Tarea", b =>
+            modelBuilder.Entity("ProyectoIdentity.Models.Modelo", b =>
                 {
-                    b.HasOne("ProyectoIdentity.Models.Empleado", "Empleado")
-                        .WithMany("Tareas")
-                        .HasForeignKey("EmpleadoId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                    b.HasOne("ProyectoIdentity.Models.Alineamiento", "Alineamiento")
+                        .WithMany("Modelos")
+                        .HasForeignKey("AlineamientoID")
+                        .OnDelete(DeleteBehavior.Cascade);
 
-                    b.HasOne("ProyectoIdentity.Models.Proyecto", "Proyecto")
-                        .WithMany("Tareas")
-                        .HasForeignKey("ProyectoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Empleado");
-
-                    b.Navigation("Proyecto");
+                    b.Navigation("Alineamiento");
                 });
 
-            modelBuilder.Entity("ProyectoIdentity.Models.Empleado", b =>
+            modelBuilder.Entity("ProyectoIdentity.Models.Alineamiento", b =>
                 {
-                    b.Navigation("Tareas");
-                });
-
-            modelBuilder.Entity("ProyectoIdentity.Models.Proyecto", b =>
-                {
-                    b.Navigation("Tareas");
+                    b.Navigation("Modelos");
                 });
 #pragma warning restore 612, 618
         }

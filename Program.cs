@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using ProyectoIdentity.Datos;
 using ProyectoIdentity.Servicios;
 using static ProyectoIdentity.Controllers.UsuariosController;
@@ -10,14 +11,9 @@ using static ProyectoIdentity.Controllers.UsuariosController;
 var builder = WebApplication.CreateBuilder(args);
 
 // Configuramos la conexión a SQL Server
-//builder.Services.AddDbContext<ApplicationDbContext>(opciones =>
-//    opciones.UseSqlServer(builder.Configuration.GetConnectionString("ConexionSql"))
-//);
-
-// Agregar el servicio de MySQL en el contexto de la aplicación.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
-        new MySqlServerVersion(new Version(8, 0, 25))));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("ConexionSql"))
+);
 
 // Agregar el servicio Identity a la aplicación
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
@@ -28,15 +24,12 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>()
 
 builder.Services.AddScoped<IPasswordHasher<IdentityUser>, PlainTextPasswordHasher>();
 
-
 // Configuración de las opciones de Identity
 builder.Services.Configure<IdentityOptions>(options =>
 {
-    // Configuración de bloqueo
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(1);
     options.Lockout.MaxFailedAccessAttempts = 10;
 
-    // Desactivar validadores predeterminados
     options.Password.RequireDigit = false;
     options.Password.RequireLowercase = false;
     options.Password.RequireUppercase = false;
@@ -79,7 +72,6 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
-
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

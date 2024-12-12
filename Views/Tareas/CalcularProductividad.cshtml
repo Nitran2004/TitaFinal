@@ -1,0 +1,50 @@
+﻿@model IEnumerable<ProyectoIdentity.Models.Tarea>
+
+@{
+    ViewData["Title"] = "Productividad del Desarrollador";
+}
+
+<h2>Productividad del Desarrollador</h2>
+
+<h4>Desarrollador: @ViewBag.Empleado?.Name @ViewBag.Empleado?.LastName</h4>
+<h5>Tareas Completadas: @ViewBag.TareasCompletadas</h5>
+<h5>Productividad Promedio: @ViewBag.ProductividadPromedio</h5>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Tarea</th>
+            <th>Prioridad</th>
+            <th>Tiempo Estimado (Horas)</th>
+            <th>Tiempo Utilizado (Horas)</th>
+            <th>Productividad</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var tarea in Model)
+        {
+            <tr>
+                <td>@tarea.Nombredelatarea</td>
+                <td>
+                    @if (tarea.Prioridad == 3)
+                    {
+                        <span>Alta</span>
+                    }
+                    else if (tarea.Prioridad == 2)
+                    {
+                        <span>Media</span>
+                    }
+                    else
+                    {
+                        <span>Baja</span>
+                    }
+                </td>
+                <td>@tarea.TiempoEstimado</td>
+                <td>@tarea.TiempoUtilizado</td>
+                <td>@tarea.Productividad</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-action="Index" class="btn btn-primary">Regresar</a>

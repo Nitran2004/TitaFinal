@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProyectoIdentity.Datos;
 
@@ -11,9 +12,10 @@ using ProyectoIdentity.Datos;
 namespace ProyectoIdentity.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241130234032_bdddd")]
+    partial class bdddd
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -275,16 +277,17 @@ namespace ProyectoIdentity.Migrations
                     b.Property<string>("EstadoProgreso")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("FechadeFin")
-                        .HasColumnType("datetime2");
-
                     b.Property<DateTime>("FechadeInicio")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("LastName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Nombredelatarea")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Prioridad")
                         .HasColumnType("int");
@@ -295,7 +298,7 @@ namespace ProyectoIdentity.Migrations
                     b.Property<int>("ProyectoId")
                         .HasColumnType("int");
 
-                    b.Property<double?>("TiempoEstimado")
+                    b.Property<double>("TiempoEstimado")
                         .HasColumnType("float");
 
                     b.Property<double?>("TiempoUtilizado")

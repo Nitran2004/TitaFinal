@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Libros Interactivos para niños</title>
+    <title>@ViewData["Title"] - CORE</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
@@ -16,31 +16,49 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Libros Interactivos para niños</a>
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">CORE</a>
                 <button class="navbar-toggler menu-button" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="text-menu">Menú</span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        @if (User.IsInRole("Administrador"))
-                        {
+                            @if (User.IsInRole("Administrador"))
+                            {
                             <li class="nav-item">
                                 <a class="nav-link text-white" asp-area="" asp-controller="Usuarios" asp-action="Index">Administracion de Usuarios</a>
                             </li>
-
+                        
                             <li class="nav-item">
                                 <a class="nav-link text-white" asp-area="" asp-controller="Roles" asp-action="Index">Administracion de Roles</a>
                             </li>
-                        }
+                            }
+                            @if (User.IsInRole("Administrador") || User.IsInRole("Gerente"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-area="" asp-controller="Proyectoes" asp-action="Index">Proyectos</a>
+                            </li>
 
-                        <li class="nav-item">
+                            <li class="nav-item">
+                                <a class="nav-link text-white" asp-area="" asp-controller="Empleadoes" asp-action="Index">Empleados</a>
+                            </li>
+                        }
+                        @if (User.IsInRole("Administrador") || User.IsInRole("Gerente") || User.IsInRole("Desarrollador"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-white" asp-area="" asp-controller="Tareas" asp-action="Index">Tareas</a>
+                                </li>
+                            }
+
+                        
+
+@*                         <li class="nav-item">
                             <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="Privacy">Privacidad</a>
                         </li>
 
                         <li class="nav-item">
                             <a class="nav-link text-white" asp-area="" asp-controller="Books" asp-action="Index">Libros</a>
-                        </li>
+                        </li> *@
                     </ul>
 
                     <ul class="navbar-nav ml-auto">
@@ -58,7 +76,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2024 - Libros Interactivos para niños - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacidad</a>
+            &copy; 2024 - CORE - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacidad</a>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

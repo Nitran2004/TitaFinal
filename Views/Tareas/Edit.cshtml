@@ -1,0 +1,76 @@
+﻿@model ProyectoIdentity.Models.Tarea
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit Tarea</h1>
+
+<hr />
+
+<div class="card">
+    <div class="card-body">
+        <form asp-action="Edit">
+            <input type="hidden" asp-for="Id" />
+            <div class="form-group">
+                <label asp-for="Nombredelatarea"></label>
+                <input asp-for="Nombredelatarea" class="form-control" />
+                <span asp-validation-for="Nombredelatarea" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="FechadeInicio"></label>
+                <input asp-for="FechadeInicio" class="form-control" type="date" />
+                <span asp-validation-for="FechadeInicio" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="FechadeFin"></label>
+                <input asp-for="FechadeFin" class="form-control" type="date" />
+                <span asp-validation-for="FechadeInicio" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="TiempoEstimado"></label>
+                <input asp-for="TiempoEstimado" class="form-control" />
+                <span asp-validation-for="TiempoEstimado" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="TiempoUtilizado"></label>
+                <input asp-for="TiempoUtilizado" class="form-control" />
+                <span asp-validation-for="TiempoUtilizado" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="EstadoProgreso"></label>
+                <select asp-for="EstadoProgreso" class="form-control" asp-items="ViewBag.Estado"></select>
+                <span asp-validation-for="EstadoProgreso" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="EmpleadoId"></label>
+                <select asp-for="EmpleadoId" class="form-control" asp-items="ViewBag.Empleados"></select>
+                <span asp-validation-for="EmpleadoId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ProyectoId"></label>
+                <select asp-for="ProyectoId" class="form-control" asp-items="ViewBag.Proyectos"></select>
+                <span asp-validation-for="ProyectoId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Prioridad"></label>
+                <select asp-for="Prioridad" class="form-control" asp-items="ViewBag.Prioridades"></select>
+                <span asp-validation-for="Prioridad" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function calcularProductividad() {
+        const tiempoEstimado = parseFloat(document.querySelector('[asp-for="TiempoEstimado"]').value) || 0;
+        const tiempoUtilizado = parseFloat(document.querySelector('[asp-for="TiempoUtilizado"]').value) || 0;
+
+        let productividad = tiempoEstimado ? (tiempoUtilizado / tiempoEstimado) * 100 : 0;
+        document.getElementById("productividad").value = productividad.toFixed(2) + "%";
+    }
+</script>
