@@ -10,5 +10,6 @@ namespace ProyectoIdentity.Models
         public string LastName { get; set; } = null!;
 
         public List<Tarea>? Tareas { get; set; } // Relación con Tarea
+        public List<Gasto>? Gastos { get; set; }
     }
 }
