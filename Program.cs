@@ -10,14 +10,14 @@ using static ProyectoIdentity.Controllers.UsuariosController;
 var builder = WebApplication.CreateBuilder(args);
 
 // Configuramos la conexión a SQL Server
-//builder.Services.AddDbContext<ApplicationDbContext>(opciones =>
-//    opciones.UseSqlServer(builder.Configuration.GetConnectionString("ConexionSql"))
-//);
+builder.Services.AddDbContext<ApplicationDbContext>(opciones =>
+    opciones.UseSqlServer(builder.Configuration.GetConnectionString("ConexionSql"))
+);
 
 // Agregar el servicio de MySQL en el contexto de la aplicación.
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
-        new MySqlServerVersion(new Version(8, 0, 25))));
+//builder.Services.AddDbContext<ApplicationDbContext>(options =>
+//    options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
+//        new MySqlServerVersion(new Version(8, 0, 25))));
 
 // Agregar el servicio Identity a la aplicación
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
