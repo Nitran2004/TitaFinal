@@ -1,0 +1,38 @@
+﻿@model IEnumerable<ProyectoIdentity.Models.Tarea>
+
+<h2>Histórico de Productividad de @ViewBag.EmpleadoNombre</h2>
+
+<p>
+    <strong>Total de Tareas:</strong> @ViewBag.TotalTareas <br />
+    <strong>Productividad Promedio:</strong> @ViewBag.ProductividadPromedio
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Nombre de Tarea</th>
+            <th>Fecha de Inicio</th>
+            <th>Estado</th>
+            <th>Tiempo Estimado (hrs)</th>
+            <th>Tiempo Utilizado (hrs)</th>
+            <th>Prioridad</th>
+            <th>Productividad</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var tarea in Model)
+        {
+            <tr>
+                <td>@tarea.Nombredelatarea</td>
+                <td>@tarea.FechadeInicio.ToString("yyyy-MM-dd")</td>
+                <td>@tarea.EstadoProgreso</td>
+                <td>@tarea.TiempoEstimado</td>
+                <td>@tarea.TiempoUtilizado</td>
+                <td>@tarea.Prioridad</td>
+                <td>@tarea.Productividad</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-action="Index" class="btn btn-secondary">Regresar</a>

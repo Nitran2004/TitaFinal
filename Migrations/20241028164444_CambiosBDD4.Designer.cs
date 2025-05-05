@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProyectoIdentity.Datos;
 
@@ -11,9 +12,10 @@ using ProyectoIdentity.Datos;
 namespace ProyectoIdentity.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241028164444_CambiosBDD4")]
+    partial class CambiosBDD4
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -226,6 +228,31 @@ namespace ProyectoIdentity.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ProyectoIdentity.Models.Alineamiento", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"), 1L, 1);
+
+                    b.Property<string>("Codigo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Dominio")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Nivel")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SiglaAG01_AG13")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ID");
+
+                    b.ToTable("Alineamientos");
+                });
+
             modelBuilder.Entity("ProyectoIdentity.Models.Empleado", b =>
                 {
                     b.Property<int>("Id")
@@ -243,6 +270,55 @@ namespace ProyectoIdentity.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Empleados");
+                });
+
+            modelBuilder.Entity("ProyectoIdentity.Models.Meta", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"), 1L, 1);
+
+                    b.Property<string>("Codigo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Dominio")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Nivel")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SiglaEG01_EG13")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ID");
+
+                    b.ToTable("Metas");
+                });
+
+            modelBuilder.Entity("ProyectoIdentity.Models.Modelo", b =>
+                {
+                    b.Property<int>("ModeloID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ModeloID"), 1L, 1);
+
+                    b.Property<string>("Alineamiento2")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("AlineamientoID")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Core")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ModeloID");
+
+                    b.HasIndex("AlineamientoID");
+
+                    b.ToTable("Modelos");
                 });
 
             modelBuilder.Entity("ProyectoIdentity.Models.Proyecto", b =>
@@ -269,22 +345,17 @@ namespace ProyectoIdentity.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int?>("EmpleadoId")
+                    b.Property<int>("EmpleadoId")
                         .HasColumnType("int");
 
                     b.Property<string>("EstadoProgreso")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("FechadeFin")
-                        .HasColumnType("datetime2");
-
                     b.Property<DateTime>("FechadeInicio")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Nombredelatarea")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Prioridad")
                         .HasColumnType("int");
@@ -295,7 +366,7 @@ namespace ProyectoIdentity.Migrations
                     b.Property<int>("ProyectoId")
                         .HasColumnType("int");
 
-                    b.Property<double?>("TiempoEstimado")
+                    b.Property<double>("TiempoEstimado")
                         .HasColumnType("float");
 
                     b.Property<double?>("TiempoUtilizado")
@@ -398,12 +469,22 @@ namespace ProyectoIdentity.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ProyectoIdentity.Models.Modelo", b =>
+                {
+                    b.HasOne("ProyectoIdentity.Models.Alineamiento", "Alineamiento")
+                        .WithMany("Modelos")
+                        .HasForeignKey("AlineamientoID");
+
+                    b.Navigation("Alineamiento");
+                });
+
             modelBuilder.Entity("ProyectoIdentity.Models.Tarea", b =>
                 {
                     b.HasOne("ProyectoIdentity.Models.Empleado", "Empleado")
                         .WithMany("Tareas")
                         .HasForeignKey("EmpleadoId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired();
 
                     b.HasOne("ProyectoIdentity.Models.Proyecto", "Proyecto")
                         .WithMany("Tareas")
@@ -414,6 +495,11 @@ namespace ProyectoIdentity.Migrations
                     b.Navigation("Empleado");
 
                     b.Navigation("Proyecto");
+                });
+
+            modelBuilder.Entity("ProyectoIdentity.Models.Alineamiento", b =>
+                {
+                    b.Navigation("Modelos");
                 });
 
             modelBuilder.Entity("ProyectoIdentity.Models.Empleado", b =>

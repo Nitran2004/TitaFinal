@@ -1,0 +1,20 @@
+﻿@model ProyectoIdentity.Models.Proyecto
+
+<h2>Detalles del Proyecto</h2>
+
+<p><strong>Nombre del Proyecto:</strong> @Model.Name</p>
+
+<h3>Tareas Asociadas:</h3>
+@if (Model.Tareas != null && Model.Tareas.Any())
+{
+    <ul>
+        @foreach (var tarea in Model.Tareas)
+        {
+            <li>@tarea.Nombredelatarea</li>
+        }
+    </ul>
+}
+else
+{
+    <p>No hay tareas asociadas.</p>
+}

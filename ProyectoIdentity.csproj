@@ -7,32 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="Views\Alineamientos\Create.cshtml" />
-    <None Include="Views\Alineamientos\Edit.cshtml" />
-    <None Include="Views\Alineamientos\Index.cshtml" />
-    <None Include="Views\Modelos\Index.cshtml" />
-    <None Include="wwwroot\Canciones\beach.wav" />
-    <None Include="wwwroot\Canciones\cat-98721.wav" />
-    <None Include="wwwroot\Canciones\Ejemplo.wav" />
-    <None Include="wwwroot\Canciones\Ejemplo10.wav" />
-    <None Include="wwwroot\Canciones\Ejemplo11.wav" />
-    <None Include="wwwroot\Canciones\Ejemplo12.wav" />
-    <None Include="wwwroot\Canciones\Ejemplo13.wav" />
-    <None Include="wwwroot\Canciones\Ejemplo14.wav" />
-    <None Include="wwwroot\Canciones\Ejemplo15.wav" />
-    <None Include="wwwroot\Canciones\Ejemplo16.wav" />
-    <None Include="wwwroot\Canciones\Ejemplo18.wav" />
-    <None Include="wwwroot\Canciones\Ejemplo2.wav" />
-    <None Include="wwwroot\Canciones\Ejemplo3.wav" />
-    <None Include="wwwroot\Canciones\Ejemplo4.wav" />
-    <None Include="wwwroot\Canciones\Ejemplo5.wav" />
-    <None Include="wwwroot\Canciones\Ejemplo6.wav" />
-    <None Include="wwwroot\Canciones\Ejemplo7.wav" />
-    <None Include="wwwroot\Canciones\Ejemplo8.wav" />
-    <None Include="wwwroot\Canciones\Ejemplo9.wav" />
-    <None Include="wwwroot\Canciones\Godzilla_1962-1975_SFX.mp3" />
-    <None Include="wwwroot\Canciones\jungle2.wav" />
-    <None Include="wwwroot\Canciones\Ejemplo17.wav" />
+    <Compile Remove="Views\Alineamientos\**" />
+    <Compile Remove="Views\Modelos\**" />
+    <Content Remove="Views\Alineamientos\**" />
+    <Content Remove="Views\Modelos\**" />
+    <EmbeddedResource Remove="Views\Alineamientos\**" />
+    <EmbeddedResource Remove="Views\Modelos\**" />
+    <None Remove="Views\Alineamientos\**" />
+    <None Remove="Views\Modelos\**" />
   </ItemGroup>
 
   <ItemGroup>

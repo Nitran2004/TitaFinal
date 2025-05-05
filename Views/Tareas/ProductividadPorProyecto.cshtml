@@ -1,0 +1,25 @@
+﻿@model List<ProyectoIdentity.Models.ProyectoProductividadViewModel>
+
+<h2>Productividad por Proyectos</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Nombre del Proyecto</th>
+            <th>Total de Tareas</th>
+            <th>Tareas Completadas</th>
+            <th>Productividad Promedio</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var proyecto in Model)
+        {
+            <tr>
+                <td>@proyecto.Proyecto.Name</td>
+                <td>@proyecto.TotalTareas</td>
+                <td>@proyecto.TareasCompletadas</td>
+                <td>@proyecto.ProductividadPromedio.ToString("F0")%</td> <!-- Formato sin decimales -->
+            </tr>
+        }
+    </tbody>
+</table>
