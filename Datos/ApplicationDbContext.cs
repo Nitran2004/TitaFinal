@@ -16,6 +16,8 @@ namespace ProyectoIdentity.Datos
         public DbSet<Alineamiento> Alineamientos { get; set; }
         public DbSet<Modelo> Modelos { get; set; }
 
+        public DbSet<CollectionPoint> CollectionPoints { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

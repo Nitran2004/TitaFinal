@@ -1,0 +1,624 @@
+﻿@{
+    ViewData["Title"] = "Café americano";
+    var product = new
+    {
+        Id = "cafeamericano",
+        Name = "Café americano",
+        Price = 1.5,
+        ImagePath = Url.Content("~/images1/americano.jpg"),
+        Description = "Refresca tu diversión. Preparate y enfrenta la sed con una bebida helada y disfruta al máximo."
+    };
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - Detalle Producto</title>
+    <style>
+        :root {
+            --primary-color: #28a745;
+            --secondary-color: #6c757d;
+            --border-color: #e9ecef;
+            --gold-color: #ffc107;
+            --dark-color: #212529;
+            --light-color: #f8f9fa;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: white;
+            color: #000;
+        }
+
+        .product-page {
+            max-width: 1200px;
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 106vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-icons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .icon-button {
+            width: 28px;
+            height: 28px;
+            fill: var(--dark-color);
+            cursor: pointer;
+            transition: fill 0.2s ease;
+        }
+
+            .icon-button:hover {
+                fill: var(--primary-color);
+            }
+
+        .category-header-touch {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .category-icon {
+            width: 38px;
+            height: 38px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        .touchable-text {
+            font-size: 17px;
+            font-weight: bold;
+            color: black;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+            .touchable-text:hover {
+                color: black;
+            }
+
+        .tight-line {
+            line-height: 0.01;
+        }
+
+        .main-content {
+            padding: 20px 0;
+            flex: 1;
+        }
+
+        /* Card resumen */
+        .card {
+            background-color: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+            .card.shadow-sm {
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+
+            .card.rounded {
+                border-radius: 10%;
+            }
+
+            .card.p-3 {
+                padding: 1rem;
+            }
+
+            .card.mb-4 {
+                margin-bottom: 1.5rem;
+            }
+
+        .d-flex {
+            display: flex;
+        }
+
+        .flex-wrap {
+            flex-wrap: wrap;
+        }
+
+        .align-items-center {
+            align-items: center;
+        }
+
+        .me-3 {
+            margin-right: 1rem;
+        }
+
+        .img-fluid {
+            max-width: 50%;
+            height: auto;
+        }
+
+        .rounded {
+            border-radius: 10px;
+        }
+
+        /* Detalles y acordeones */
+        .product-details {
+            margin-top: 30px;
+        }
+
+        .more-info-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .accordion-item {
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .accordion-header {
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--light-color);
+        }
+
+        .accordion-title {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .accordion-icon {
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-content {
+            display: none;
+            padding: 10px;
+            font-size: 14px;
+        }
+
+            .accordion-content.active {
+                display: block;
+            }
+
+        .nutrition-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+            .nutrition-table td {
+                padding: 5px;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+        /* Controles de carrito */
+        .cart-controls {
+            margin-top: 40px;
+        }
+
+        .quantity-price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .quantity-control {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border-color);
+            border-radius: 50px;
+            overflow: hidden;
+            width: fit-content;
+        }
+
+        .qty-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background-color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .qty-input {
+            width: 40px;
+            text-align: center;
+            border: none;
+            background-color: white;
+            font-size: 16px;
+        }
+
+        .total-price {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .add-to-cart-btn {
+            width: 100%;
+            max-width: 300px;
+            padding: 12px;
+            background-color: var(--gold-color);
+            color: var(--dark-color);
+            border: none;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+            .add-to-cart-btn:hover {
+                background-color: #e0ac00;
+            }
+
+        /* Resumen pequeño */
+        .product-summary-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 20px;
+        }
+
+            .product-summary-container .product-text-content {
+                text-align: left;
+                max-width: 400px;
+            }
+
+        /* Estilos para el contador del carrito */
+        .cart-icon-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .cart-counter {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: #ff0000;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            opacity: 0;
+            transform: scale(0);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+            .cart-counter.show {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+        /* Animación para el contador del carrito */
+        keyframes pulse {
+            0%
+
+        {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.2);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+
+        }
+
+        .cart-counter.animate {
+            animation: pulse 0.5s;
+        }
+
+        .fixed-image {
+            width: 300px;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .nutrition-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            background-color: var(--light-color);
+        }
+
+        .nutrition-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            background-color: white;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+        }
+
+            .nutrition-item strong {
+                font-size: 14px;
+                color: var(--dark-color);
+            }
+
+            .nutrition-item span {
+                font-size: 13px;
+                color: var(--secondary-color);
+            }
+
+    </style>
+</head>
+<body>
+    <div class="product-page">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-icons">
+                <a href="/" title="Volver">
+                    <svg class="icon-button" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" /></svg>
+                </a>
+                <a href="#" class="touchable-text">
+                    <span class="tight-line">Bebidas</span>
+                </a>
+            </div>
+            <div class="category-header-touch">
+                <img src="~/images1/ra.png" alt="Icono" class="category-icon" />
+                <a href="#" class="touchable-text">
+                    <span class="tight-line">Realidad</span><br />
+                    <span class="tight-line">Aumentada</span>
+                </a>
+            </div>
+            <div class="header-icons">
+                <a href="/carrito" title="Carrito" class="cart-icon-container">
+                    <svg class="icon-button" viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-13zM6 6L4 3H1M10 22a1 1 0 110-2 1 1 0 010 2zm8 0a1 1 0 110-2 1 1 0 010 2z" /></svg>
+                    <div class="cart-counter" id="cart-counter">0</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Card resumen -->
+            <div class="card shadow-sm rounded p-3 mb-4" style="width: 100%; border: 1px solid #ccc;">
+                <div class="d-flex flex-nowrap align-items-center">
+                    <div class="product-image-container me-3" style="flex: 0 0 auto;">
+                        <img src="@product.ImagePath" alt="@product.Name" class="fixed-image" />
+                    </div>
+                    <div class="product-text-content" style="flex: 1;">
+                        <h2>@product.Name</h2>
+                        <p>@product.Description</p>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Detalles y acordeones -->
+            <div class="product-details">
+                <h3 class="more-info-title">Más información</h3>
+
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion('nutritionContent','nutritionIcon')">
+                        <h4 class="accordion-title">Información nutricional</h4>
+                        <span class="accordion-icon" id="nutritionIcon">›</span>
+                    </div>
+                    <div class="accordion-content" id="nutritionContent">
+                        <div class="nutrition-grid">
+                            <div class="nutrition-item">
+                                <strong>Calorías</strong>
+                                <span>0 kcal</span>
+                            </div>
+                            <div class="nutrition-item">
+                                <strong>Grasas</strong>
+                                <span>0 g</span>
+                            </div>
+                            <div class="nutrition-item">
+                                <strong>Azúcares</strong>
+                                <span>0 g</span>
+                            </div>
+                            <div class="nutrition-item">
+                                <strong>Sodio</strong>
+                                <span>0 mg</span>
+                            </div>
+                            <div class="nutrition-item">
+                                <strong>Proteínas</strong>
+                                <span>0 g</span>
+                            </div>
+                        </div>
+
+                        <table class="nutrition-table">
+                            <tr><td>Contenido neto</td><td>500 ml</td></tr>
+                            <tr><td>Calorías</td><td>0 kcal</td></tr>
+                            <tr><td>Grasas totales</td><td>0 g</td></tr>
+                            <tr><td>Grasas saturadas</td><td>0 g</td></tr>
+                            <tr><td>Grasas trans</td><td>0 g</td></tr>
+                            <tr><td>Carbohidratos</td><td>0 g</td></tr>
+                            <tr><td>Azúcares</td><td>0 g</td></tr>
+                            <tr><td>Fibra dietética</td><td>0 g</td></tr>
+                            <tr><td>Proteínas</td><td>0 g</td></tr>
+                            <tr><td>Sodio</td><td>0 mg</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="accordion-item">
+            <div class="accordion-header" onclick="toggleAccordion('allergenContent','allergenIcon')">
+                <h4 class="accordion-title">Información alérgenos</h4>
+                <span class="accordion-icon" id="allergenIcon">›</span>
+            </div>
+            <div class="accordion-content" id="allergenContent">
+                <ul>
+                    <li>Este producto no contiene alérgenos</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Controles de carrito -->
+        <div class="cart-controls">
+            <div class="quantity-price-row">
+                <div class="quantity-control">
+                    <button class="qty-btn" id="btn-decrease">−</button>
+                    <input type="text" class="qty-input" id="qty-input" value="1" readonly />
+                    <button class="qty-btn" id="btn-increase">+</button>
+                </div>
+                <div class="total-price" id="total-price">
+                    $@product.Price.ToString("0.00")
+                </div>
+            </div>
+            <button class="add-to-cart-btn" id="btn-add-to-cart">Agregar al carrito</button>
+        </div>
+    </div>
+    </div>
+    </div>
+
+    <script>
+        // Función acordeón
+        function toggleAccordion(contentId, iconId) {
+            const content = document.getElementById(contentId);
+            const icon = document.getElementById(iconId);
+            if (content.classList.contains('active')) {
+                content.classList.remove('active');
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                content.classList.add('active');
+                icon.style.transform = 'rotate(90deg)';
+            }
+        }
+
+        // Función para actualizar el contador del carrito - VERSIÓN MEJORADA
+        function updateCartCounter() {
+            const cartCounter = document.getElementById('cart-counter');
+
+            // Si no existe el contador en esta página, salir de la función
+            if (!cartCounter) return;
+
+            // Obtener el carrito del localStorage
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            let totalItems = 0;
+
+            // Calcular la cantidad total de productos en el carrito
+            cart.forEach(item => {
+                totalItems += item.quantity;
+            });
+
+            // Actualizar el contador
+            cartCounter.textContent = totalItems;
+
+            // Mostrar u ocultar el contador según la cantidad
+            if (totalItems > 0) {
+                cartCounter.classList.add('show');
+            } else {
+                cartCounter.classList.remove('show');
+            }
+        }
+
+        // Lógica de cantidad y precio
+        document.addEventListener('DOMContentLoaded', () => {
+            const unitPrice = @Html.Raw(Json.Serialize(product.Price));
+            let quantity = 1;
+
+            const btnDec = document.getElementById('btn-decrease');
+            const btnInc = document.getElementById('btn-increase');
+            const qtyInput = document.getElementById('qty-input');
+            const totalPriceEl = document.getElementById('total-price');
+            const addToCartBtn = document.getElementById('btn-add-to-cart');
+            const cartCounter = document.getElementById('cart-counter');
+
+            // Inicializar el contador del carrito
+            updateCartCounter();
+
+            function updateDisplay() {
+                qtyInput.value = quantity;
+                totalPriceEl.textContent = '$' + (unitPrice * quantity).toFixed(2);
+            }
+
+            btnInc.addEventListener('click', () => {
+                quantity++;
+                updateDisplay();
+            });
+
+            btnDec.addEventListener('click', () => {
+                if (quantity > 1) {
+                    quantity--;
+                    updateDisplay();
+                }
+            });
+
+            addToCartBtn.addEventListener('click', () => {
+                const product = {
+                    id: '@product.Id',
+                    name: '@product.Name',
+                    price: unitPrice,
+                    quantity: quantity
+                };
+
+                try {
+                    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+                    // Verificar si el producto ya está en el carrito
+                    const existingProductIndex = cart.findIndex(item => item.id === product.id);
+
+                    if (existingProductIndex >= 0) {
+                        // Si el producto ya existe, incrementar la cantidad
+                        cart[existingProductIndex].quantity += quantity;
+                    } else {
+                        // Si es un producto nuevo, agregarlo al carrito
+                        cart.push(product);
+                    }
+
+                    localStorage.setItem('cart', JSON.stringify(cart));
+
+                    // Actualizar el contador del carrito
+                    updateCartCounter();
+
+                    // Animar el contador
+                    cartCounter.classList.remove('animate');
+                    void cartCounter.offsetWidth; // Forzar un reflow para reiniciar la animación
+                    cartCounter.classList.add('animate');
+
+                    alert('Producto agregado al carrito');
+                } catch (e) {
+                    alert('Error al agregar al carrito');
+                    console.error(e);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

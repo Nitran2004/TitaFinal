@@ -1,0 +1,122 @@
+﻿@{
+    ViewData["Title"] = "Bebidas";
+}
+
+<style>
+    .menu-container {
+        padding: 20px;
+        background-color: white;
+    }
+
+    .menu-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .menu-item {
+        display: block;
+        width: 180px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
+        background-color: #fefefe;
+        transition: transform 0.2s;
+    }
+
+        .menu-item:hover {
+            transform: scale(1.03);
+        }
+
+        .menu-item img {
+            width: 100%;
+            height: 120px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+    .menu-item-text {
+        margin-top: 10px;
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+
+    media (max-width: 600px) {
+        .menu-item
+
+    {
+        width: 100%;
+    }
+
+    }
+</style>
+
+<div class="menu-container">
+    <h2 class="text-center mb-4">
+        Bebidas
+    </h2>
+
+    <div class="menu-grid">
+        <a href="/Bebidas/Aguasingas" class="menu-item">
+            <img src="~/images1/aguasingas.jpg" alt="Aguasingas" />
+            <div class="menu-item-text">Agua sin gas</div>
+        </a>
+
+        <a href="/Bebidas/Aguamineral" class="menu-item">
+            <img src="~/images1/download (8).jpeg" alt="Aguamineral" />
+            <div class="menu-item-text">Agua mineral</div>
+        </a>
+
+        <a href="/Bebidas/Limonada" class="menu-item">
+            <img src="~/images1/imperial.jpg" alt="Limonada" />
+            <div class="menu-item-text">Limonada</div>
+        </a>
+
+        <a href="/Bebidas/Limonadarosa" class="menu-item">
+            <img src="~/images1/rosa.jpg" alt="Limonadarosa" />
+            <div class="menu-item-text">Limonada Rosa</div>
+        </a>
+        <a href="/Bebidas/Tecaliente" class="menu-item">
+            <img src="~/images1/tecaliente.jpg" alt="Tecaliente" />
+            <div class="menu-item-text">Té caliente</div>
+        </a>
+
+        <a href="/Bebidas/CocaCola" class="menu-item">
+            <img src="~/images1/coca.jpg" alt="CocaCola" />
+            <div class="menu-item-text">Coca-Cola</div>
+        </a>
+
+        <a href="/Bebidas/Fanta" class="menu-item">
+            <img src="~/images1/fanta.jpg" alt="Fanta" />
+            <div class="menu-item-text">Fanta</div>
+        </a>
+
+        <a href="/Bebidas/Fioravanti" class="menu-item">
+            <img src="~/images1/fiora.jpg" alt="Fioravanti" />
+            <div class="menu-item-text">Fioravanti</div>
+        </a>
+        <a href="/Bebidas/Sprite" class="menu-item">
+            <img src="~/images1/sprite.jpg" alt="Sprite" />
+            <div class="menu-item-text">Sprite</div>
+        </a>
+
+        <a href="/Bebidas/Caféamericano" class="menu-item">
+            <img src="~/images1/americano.jpg" alt="Café americano" />
+            <div class="menu-item-text">Café americano</div>
+        </a>
+
+        <a href="/Bebidas/Capuccino" class="menu-item">
+            <img src="~/images1/capuccino.jpg" alt="Capuccino" />
+            <div class="menu-item-text">Capuccino</div>
+        </a>
+
+        <a href="/Bebidas/Icedcoffee" class="menu-item">
+            <img src="~/images1/cafefrio.jpg" alt="Iced Coffee" />
+            <div class="menu-item-text">Iced Coffee</div>
+        </a>
+    </div>
+</div>

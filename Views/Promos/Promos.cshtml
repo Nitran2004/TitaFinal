@@ -1,0 +1,87 @@
+﻿@{
+    ViewData["Title"] = "Picadas";
+}
+
+<style>
+    .menu-container {
+        padding: 20px;
+        background-color: white;
+    }
+
+    .menu-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .menu-item {
+        display: block;
+        width: 180px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
+        background-color: #fefefe;
+        transition: transform 0.2s;
+    }
+
+        .menu-item:hover {
+            transform: scale(1.03);
+        }
+
+        .menu-item img {
+            width: 100%;
+            height: 120px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+    .menu-item-text {
+        margin-top: 10px;
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+
+    media (max-width: 600px) {
+        .menu-item
+
+    {
+        width: 100%;
+    }
+
+    }
+</style>
+
+<div class="menu-container">
+    <h2 class="text-center mb-4">Picadas</h2>
+
+    <div class="menu-grid">
+        <a href="/Promos/Promopilas" class="menu-item">
+            <img src="~/images1/470140898_18004212455697669_2952221237043222814_n.jpg" alt="NachosCheddar" />
+            <div class="menu-item-text">Nachos Cheddar</div>
+        </a>
+
+        <a href="/Promos/Promolovers" class="menu-item">
+            <img src="~/images1/promolovers.jpg" alt="NachosVerace" />
+            <div class="menu-item-text">Nachos Verace</div>
+        </a>
+
+        <a href="/Promos/Promoking" class="menu-item">
+            <img src="~/images1/promoking1.jpg" alt="BreadSticks" />
+            <div class="menu-item-text">Bread Sticks</div>
+        </a>
+
+        <a href="/Promos/Promosanduchera" class="menu-item">
+            <img src="~/images1/278953595_514677723447399_1453067101951070993_n.webp" alt="BreadSticksVerace" />
+            <div class="menu-item-text">Bread Sticks Verace</div>
+        </a>
+
+        <a href="/Promos/Promopiqueo" class="menu-item">
+            <img src="~/images1/sticks2.jpg" alt="BreadSticksVerace" />
+            <div class="menu-item-text">Bread Sticks Verace</div>
+        </a>
+    </div>
+</div>

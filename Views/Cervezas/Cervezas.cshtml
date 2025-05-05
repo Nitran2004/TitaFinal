@@ -1,0 +1,125 @@
+﻿@{
+    ViewData["Title"] = "Cervezas";
+}
+
+<style>
+    .menu-container {
+        padding: 20px;
+        background-color: white;
+    }
+
+    .menu-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .menu-item {
+        display: block;
+        width: 180px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
+        background-color: #fefefe;
+        transition: transform 0.2s;
+    }
+
+        .menu-item:hover {
+            transform: scale(1.03);
+        }
+
+        .menu-item img {
+            width: 100%;
+            height: 120px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+    .menu-item-text {
+        margin-top: 10px;
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+
+    media (max-width: 600px) {
+        .menu-item
+
+    {
+        width: 100%;
+    }
+
+    }
+</style>
+
+<div class="menu-container">
+    <h2 class="text-center mb-4">
+        Cervezas
+    </h2>
+
+    <div class="menu-grid">
+        <a href="/Cervezas/Jarro" class="menu-item">
+            <img src="~/images1/jarro.jpg" alt="Jarro" />
+            <div class="menu-item-text">Jarro - $4</div>
+        </a>
+        <a href="/Cervezas/Pinta" class="menu-item">
+            <img src="~/images1/pinta.jpg" alt="Pinta" />
+            <div class="menu-item-text">Pinta - $6</div>
+        </a>
+        <a href="/Cervezas/Litro" class="menu-item">
+            <img src="~/images1/cervegrande.jpg" alt="Litro" />
+            <div class="menu-item-text">Litro - $12</div>
+        </a>
+        <a href="/Cervezas/Growler" class="menu-item">
+            <img src="~/images1/growler.jpg" alt="Growler" />
+            <div class="menu-item-text">Growler - $15</div>
+        </a>
+        <a href="/Cervezas/StellaArtois" class="menu-item">
+            <img src="~/images1/stella.jpg" alt="Stella Artois" />
+            <div class="menu-item-text">Stella Artois - $5</div>
+        </a>
+        <a href="/Cervezas/Corona" class="menu-item">
+            <img src="~/images1/corona.jpg" alt="Corona" />
+            <div class="menu-item-text">Corona - $5</div>
+        </a>
+        <a href="/Cervezas/Pilsener" class="menu-item">
+            <img src="~/images1/pilsener1.jpg" alt="Pilsener" />
+            <div class="menu-item-text">Pilsener - $4</div>
+        </a>
+        <a href="/Cervezas/Club" class="menu-item">
+            <img src="~/images1/club.jpg" alt="Club" />
+            <div class="menu-item-text">Club - $4.5</div>
+        </a>
+        <a href="/Cervezas/Clasico" class="menu-item">
+            <img src="~/images1/miche.jpg" alt="Clásico" />
+            <div class="menu-item-text">Clásico - $1.5</div>
+        </a>
+        <a href="/Cervezas/Micheladamaracuya" class="menu-item">
+            <img src="~/images1/maracuya.jpg" alt="Maracuyá" />
+            <div class="menu-item-text">Maracuyá - $1.5</div>
+        </a>
+        <a href="/Cervezas/tresjarroscervezaartesanal" class="menu-item">
+            <img src="~/images1/jarro1.jpg" alt="3 jarros cerveza artesanal" />
+            <div class="menu-item-text">3 jarros cerveza artesanal - $10</div>
+        </a>
+        <a href="/Cervezas/trespintascualquierestilo" class="menu-item">
+            <img src="~/images1/jarra3.jpg" alt="3 pintas cualquier estilo" />
+            <div class="menu-item-text">3 pintas cualquier estilo - $15</div>
+        </a>
+        <a href="/Cervezas/tresstellaartois" class="menu-item">
+            <img src="~/images1/stella3.jpg" alt="3 Stella Artois / Corona" />
+            <div class="menu-item-text">3 Stella Artois / Corona - $20</div>
+        </a>
+        <a href="/Cervezas/combo-3-pilsener" class="menu-item">
+            <img src="~/images1/pilsener.jpg" alt="Combo 3 Pilsener" />
+            <div class="menu-item-text">Combo 3 Pilsener - $10</div>
+        </a>
+        <a href="/Cervezas/combo-3-club" class="menu-item">
+            <img src="~/images1/club3.jpg" alt="Combo 3 Club" />
+            <div class="menu-item-text">Combo 3 Club - $12</div>
+        </a>
+    </div>
+</div>

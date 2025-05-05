@@ -1,0 +1,455 @@
+﻿@{
+    ViewData["Title"] = "Carrito de Compras";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        /* Incluir los mismos estilos de la página de producto */
+        :root {
+            --primary-color: #28a745;
+            --secondary-color: #6c757d;
+            --border-color: #e9ecef;
+            --gold-color: #ffc107;
+            --dark-color: #212529;
+            --light-color: #f8f9fa;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: white;
+            color: #000;
+        }
+
+        .cart-page {
+            max-width: 1200px;
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            min-height: 106vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-icons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .icon-button {
+            width: 28px;
+            height: 28px;
+            fill: var(--dark-color);
+            cursor: pointer;
+            transition: fill 0.2s ease;
+        }
+
+            .icon-button:hover {
+                fill: var(--primary-color);
+            }
+
+        .touchable-text {
+            font-size: 17px;
+            font-weight: bold;
+            color: black;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+            .touchable-text:hover {
+                color: black;
+            }
+
+        .tight-line {
+            line-height: 0.01;
+        }
+
+        .main-content {
+            padding: 20px 0;
+            flex: 1;
+        }
+
+        /* Estilos para el contador del carrito */
+        .cart-icon-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .cart-counter {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: #ff0000;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            opacity: 0;
+            transform: scale(0);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+
+            .cart-counter.show {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+        /* Estilos para la lista del carrito */
+        .cart-items {
+            margin-top: 20px;
+        }
+
+        .cart-item {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--light-color);
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+
+        .item-details {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .item-image {
+            width: 100%;
+            max-width: 150px;
+            height: auto;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+
+        .item-name {
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .item-quantity {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .qty-btn {
+            width: 36px;
+            height: 36px;
+            font-size: 20px;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .qty-input {
+            width: 50px;
+            text-align: center;
+            font-size: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+
+        .item-price {
+            font-weight: bold;
+            font-size: 16px;
+            align-self: flex-end;
+        }
+
+        .remove-btn {
+            color: #dc3545;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            align-self: flex-end;
+        }
+        .item-quantity {
+            display: flex;
+            align-items: center;
+        }
+
+        .qty-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background-color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .qty-input {
+            width: 40px;
+            text-align: center;
+            border: none;
+            background-color: white;
+            font-size: 16px;
+        }
+
+        .item-price {
+            font-weight: bold;
+        }
+
+        .remove-btn {
+            color: #dc3545;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .cart-summary {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: var(--light-color);
+            border-radius: 5px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--gold-color);
+            color: var(--dark-color);
+            border: none;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .empty-cart {
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .continue-shopping-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .cart-item {
+            display: grid;
+            grid-template-columns: 100px 1fr 120px 80px 60px;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .item-image {
+            width: 100px;
+            height: auto;
+            object-fit: cover;
+        }
+
+        .item-name {
+            font-weight: bold;
+        }
+
+        .item-quantity {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .item-price {
+            font-weight: bold;
+            text-align: right;
+        }
+
+        .remove-btn {
+            background: none;
+            border: none;
+            color: red;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="cart-page">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-icons">
+                <a href="javascript:history.back()" title="Volver atrás">
+                    <svg class="icon-button" viewBox="0 0 24 24">
+                        <path d="M15 18l-6-6 6-6" />
+                    </svg>
+                </a>
+                <a href="#" class="touchable-text">
+                    <span class="tight-line">Carrito</span>
+                </a>
+            </div>
+            <div class="header-icons">
+                <a href="/carrito" title="Carrito" class="cart-icon-container">
+                    <svg class="icon-button" viewBox="0 0 24 24"><path d="M6 6h15l-1.5 9h-13zM6 6L4 3H1M10 22a1 1 0 110-2 1 1 0 010 2zm8 0a1 1 0 110-2 1 1 0 010 2z" /></svg>
+                    <div class="cart-counter" id="cart-counter">0</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div id="cart-container">
+                <!-- Aquí se cargarán los productos del carrito -->
+            </div>
+        </div>
+        <script>
+            // Función para actualizar el contador del carrito
+            function updateCartCounter() {
+                const cartCounter = document.getElementById('cart-counter');
+                let cart = JSON.parse(localStorage.getItem('cart')) || [];
+                let totalItems = 0;
+                cart.forEach(item => {
+                    totalItems += item.quantity;
+                });
+                cartCounter.textContent = totalItems;
+                if (totalItems > 0) {
+                    cartCounter.classList.add('show');
+                } else {
+                    cartCounter.classList.remove('show');
+                }
+            }
+
+            // Función para renderizar los productos del carrito
+            function renderCart() {
+                const cartContainer = document.getElementById('cart-container');
+                const cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+                if (cart.length === 0) {
+                    // Mostrar mensaje de carrito vacío
+                    cartContainer.innerHTML = `
+                            <div class="empty-cart">
+                                <h2>Tu carrito está vacío</h2>
+                                <p>Agrega algunos productos para comenzar</p>
+                                <a href="/" class="continue-shopping-btn">Continuar comprando</a>
+                            </div>`;
+                    return;
+                }
+
+                // Calcular el total
+                let subtotal = 0;
+                cart.forEach(item => {
+                    subtotal += item.price * item.quantity;
+                });
+
+                // Renderizar los productos y el resumen
+                let cartHTML = `<div class="cart-items">`;
+                cart.forEach((item, index) => {
+                    cartHTML += `
+                            <div class="cart-item" data-id="${item.id}">
+                                <div class="item-details">
+                                    <h3>${item.name}</h3>
+                                    <div class="item-quantity">
+                                        <button class="qty-btn decrease-btn" onclick="updateItemQuantity('${item.id}', -1)">−</button>
+                                        <input type="text" class="qty-input" value="${item.quantity}" readonly />
+                                        <button class="qty-btn increase-btn" onclick="updateItemQuantity('${item.id}', 1)">+</button>
+                                    </div>
+                                </div>
+                                <div class="item-price">$${(item.price * item.quantity).toFixed(2)}</div>
+                                <button class="remove-btn" onclick="removeItem('${item.id}')">Eliminar</button>
+                            </div>`;
+                });
+
+                cartHTML += `
+                        </div>
+                        <div class="cart-summary">
+                            <div class="total-row">
+                                <span>Subtotal:</span>
+                                <span>$${subtotal.toFixed(2)}</span>
+                            </div>
+                            <div class="total-row">
+                                <strong>Total:</strong>
+                                <strong>$${subtotal.toFixed(2)}</strong>
+                            </div>
+                            <button class="checkout-btn" onclick="checkout()">Proceder al pago</button>
+                        </div>`;
+                cartContainer.innerHTML = cartHTML;
+            }
+
+            // Función para actualizar la cantidad de un producto
+            function updateItemQuantity(itemId, change) {
+                let cart = JSON.parse(localStorage.getItem('cart')) || [];
+                const itemIndex = cart.findIndex(item => item.id === itemId);
+                if (itemIndex !== -1) {
+                    const newQuantity = cart[itemIndex].quantity + change;
+                    if (newQuantity <= 0) {
+                        // Si la cantidad es 0 o menos, eliminar el producto
+                        removeItem(itemId);
+                    } else {
+                        // Actualizar la cantidad
+                        cart[itemIndex].quantity = newQuantity;
+                        localStorage.setItem('cart', JSON.stringify(cart));
+                        // Actualizar la interfaz
+                        updateCartCounter();
+                        renderCart();
+                    }
+                }
+            }
+
+            // Función para eliminar un producto
+            function removeItem(itemId) {
+                let cart = JSON.parse(localStorage.getItem('cart')) || [];
+                cart = cart.filter(item => item.id !== itemId);
+                localStorage.setItem('cart', JSON.stringify(cart));
+                // Actualizar la interfaz
+                updateCartCounter();
+                renderCart();
+            }
+
+            // Función para proceder al pago
+            function checkout() {
+                window.location.href = '/recoleccion/seleccionar';
+            }
+
+
+            // Inicializar la página del carrito
+            document.addEventListener('DOMContentLoaded', () => {
+                updateCartCounter();
+                renderCart();
+            });
+        </script>
+</body>
+</html>

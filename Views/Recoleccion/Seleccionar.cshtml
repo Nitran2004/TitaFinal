@@ -1,0 +1,69 @@
+﻿@{
+    ViewData["Title"] = "Seleccionar punto de recolección";
+}
+@* Si no usas el model desde el servidor, elimina esta línea. *@
+@* @model IEnumerable<ProyectoIdentity.Models.CollectionPoint> *@
+
+<h2>Encuentra tu punto de recolección</h2>
+<div id="puntos-container">
+    <!-- aquí insertaremos dinámicamente las cards -->
+</div>
+
+<script type="text/javascript">
+
+    // 1) Obtener lista de puntos reales desde tu API
+    fetch('/api/collectionpoints')
+        .then(res => {
+            if (!res.ok) throw new Error('Error al leer los puntos');
+            return res.json();
+        })
+        .then(lista => {
+            const cont = document.getElementById('puntos-container');
+            if (!cont) return;
+
+            lista.forEach(pt => {
+                // Crear la card
+                const card = document.createElement('div');
+                card.className = 'pickup-card';
+                card.innerHTML = `
+                        <strong>${pt.name}</strong><br/>
+                        ${pt.address}<br/>
+                        <button data-id="${pt.id}">Seleccionar</button>
+                    `;
+                cont.appendChild(card);
+
+                // Listener al botón
+                const btn = card.querySelector('button');
+                if (btn) {
+                    btn.addEventListener('click', () => {
+                        localStorage.setItem('puntoSeleccionado', JSON.stringify(pt));
+                        window.location.href = '/recoleccion/confirmar';
+                    });
+                }
+            });
+        })
+        .catch(err => {
+            console.error(err);
+            const cont = document.getElementById('puntos-container');
+            if (cont) cont.innerText = 'No se pudieron cargar los puntos.';
+        });
+</script>
+
+<style>
+    .pickup-card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 12px 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+        .pickup-card button {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+</style>

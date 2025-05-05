@@ -1,0 +1,102 @@
+﻿@{
+    ViewData["Title"] = "Pizzas";
+}
+
+<style>
+    .menu-container {
+        padding: 20px;
+        background-color: white;
+    }
+
+    .menu-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .menu-item {
+        display: block;
+        width: 180px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
+        background-color: #fefefe;
+        transition: transform 0.2s;
+    }
+
+        .menu-item:hover {
+            transform: scale(1.03);
+        }
+
+        .menu-item img {
+            width: 100%;
+            height: 120px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+    .menu-item-text {
+        margin-top: 10px;
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+
+    media (max-width: 600px) {
+        .menu-item
+
+    {
+        width: 100%;
+    }
+
+    }
+</style>
+
+<div class="menu-container">
+    <h2 class="text-center mb-4">Pizzas</h2>
+
+    <div class="menu-grid">
+        <a href="/Pizzas/MiChamp" class="menu-item">
+            <img src="~/images1/champ.jpg" alt="Mi Champ" />
+            <div class="menu-item-text">Mi Champ</div>
+        </a>
+
+        <a href="/Pizzas/Hawaiana" class="menu-item">
+            <img src="~/images1/pexels-brettjordan-842519.jpg" alt="Hawaiana" />
+            <div class="menu-item-text">Hawaiana</div>
+        </a>
+
+        <a href="/Pizzas/Margarita" class="menu-item">
+            <img src="~/images1/marga.jpg" alt="Margarita" />
+            <div class="menu-item-text">Margarita</div>
+        </a>
+
+        <a href="/Pizzas/Cheddar" class="menu-item">
+            <img src="~/images1/champi.jpg" alt="Cheddar" />
+            <div class="menu-item-text">Cheddar</div>
+        </a>
+
+        <a href="/Pizzas/Diavola" class="menu-item">
+            <img src="~/images1/diablo.jpg" alt="Diavola" />
+            <div class="menu-item-text">Diavola</div>
+        </a>
+
+        <a href="/Pizzas/MeatLovers" class="menu-item">
+            <img src="~/images1/meat.jpg" alt="Meat Lovers" />
+            <div class="menu-item-text">Meat Lovers</div>
+        </a>
+
+        <a href="/Pizzas/VeggieLovers" class="menu-item">
+            <img src="~/images1/vege.jpg" alt="Veggie Lovers" />
+            <div class="menu-item-text">Veggie Lovers</div>
+        </a>
+
+        <a href="/Pizzas/Verace" class="menu-item">
+            <img src="~/images1/pexels-ahmedbhutta11-7350139.jpg" alt="Verace" />
+            <div class="menu-item-text">Verace</div>
+        </a>
+    </div>
+</div>

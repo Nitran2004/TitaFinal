@@ -1,0 +1,78 @@
+﻿@{
+    ViewData["Title"] = "Sanduches";
+}
+
+<style>
+    .menu-container {
+        padding: 20px;
+        background-color: white;
+    }
+
+    .menu-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .menu-item {
+        display: block;
+        width: 180px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
+        background-color: #fefefe;
+        transition: transform 0.2s;
+    }
+
+        .menu-item:hover {
+            transform: scale(1.03);
+        }
+
+        .menu-item img {
+            width: 100%;
+            height: 120px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+    .menu-item-text {
+        margin-top: 10px;
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+
+    media (max-width: 600px) {
+        .menu-item
+
+    {
+        width: 100%;
+    }
+
+    }
+</style>
+
+<div class="menu-container">
+    <h2 class="text-center mb-4">Sanduches</h2>
+
+    <div class="menu-grid">
+        <a href="/Sanduches/CarneMechada" class="menu-item">
+            <img src="~/images1/sanduchesp1.jpg" alt="CarneMechada" />
+            <div class="menu-item-text">CarneMechada</div>
+        </a>
+
+        <a href="/Sanduches/Tradicional" class="menu-item">
+            <img src="~/images1/sanduches.png" alt="Tradicional" />
+            <div class="menu-item-text">Tradicional</div>
+        </a>
+
+        <a href="/Sanduches/Veggie" class="menu-item">
+            <img src="~/images1/veggie.webp" alt="Veggie" />
+            <div class="menu-item-text">Veggie</div>
+        </a>
+
+    </div>
+</div>

@@ -1,0 +1,9 @@
+﻿@model int
+
+<a asp-controller="Carrito" asp-action="Index" class="nav-link">
+    <i class="fas fa-shopping-cart"></i> Carrito
+    @if (Model > 0)
+    {
+        <span class="badge badge-pill badge-primary">@Model</span>
+    }
+</a>

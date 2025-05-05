@@ -1,0 +1,81 @@
+﻿@{
+    ViewData["Title"] = "Confirmar Pedido";
+}
+<h3>Dirígete a:</h3>
+<div id="info-punto">Cargando...</div>
+<br />
+<button id="btn-confirmar">Confirmar pedido</button>
+
+<script type="text/javascript">
+    const infoDiv = document.getElementById('info-punto');
+    const pt = JSON.parse(localStorage.getItem('puntoSeleccionado') || 'null');
+
+    if (!pt) {
+        infoDiv.innerText = 'No hay punto seleccionado';
+    } else {
+        infoDiv.innerHTML = `
+          <strong>${pt.name}</strong><br/>
+          ${pt.address}<br/>
+          <em>Coordenadas:</em> ${pt.latitude.toFixed(5)}, ${pt.longitude.toFixed(5)}<br/>
+          <a href="https://www.google.com/maps/search/?api=1&query=${pt.latitude},${pt.longitude}"
+             target="_blank" rel="noopener">
+            Ver en Google Maps
+          </a>
+        `;
+    }
+
+    document.getElementById('btn-confirmar').addEventListener('click', () => {
+        if (!pt) {
+            alert('Selecciona primero un punto de recolección');
+            return;
+        }
+        fetch('/api/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                cart: JSON.parse(localStorage.getItem('cart') || '[]'),
+                collectionPointId: pt.id
+            })
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Error al confirmar el pedido');
+                return res.json();
+            })
+            .then(() => {
+                localStorage.removeItem('cart');
+                localStorage.removeItem('puntoSeleccionado');
+                alert('✅ Pedido confirmado');
+                window.location.href = '/';
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Ocurrió un error: ' + err.message);
+            });
+    });
+</script>
+
+<style>
+    a {
+        color: #007bff;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+    #btn-confirmar {
+        margin-top: 20px;
+        background: #28a745;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+        #btn-confirmar:hover {
+            background: #218838;
+        }
+</style>

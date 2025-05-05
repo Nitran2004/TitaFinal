@@ -1,0 +1,234 @@
+﻿@{
+    ViewBag.Title = "Recomendación de menú con IA";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mt-4 mb-3">
+                <div class="card-header">
+                    <h2>Recomendación de menú con IA</h2>
+                    <p class="text-muted">Sistema inteligente que recomienda platos basados en tus preferencias.</p>
+                </div>
+                <div class="card-body">
+                    <!-- Categoría -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Categoría:</label>
+                        <div class="categories-container">
+                            @foreach (var categoria in ViewBag.Categorias)
+                            {
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="categoria" id="cat-@categoria" value="@categoria">
+                                    <label class="form-check-label" for="cat-@categoria">@categoria</label>
+                                </div>
+                            }
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="categoria" id="cat-cualquiera" value="Cualquiera">
+                                <label class="form-check-label" for="cat-cualquiera">Cualquiera</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Presupuesto -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <label class="form-label fw-bold">Presupuesto ($):</label>
+                            <span class="badge bg-primary" id="presupuestoValor">9</span>
+                        </div>
+                        <input type="range" class="form-range" min="1" max="45" step="1" value="9" id="presupuestoSlider">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">1</small>
+                            <small class="text-muted">45</small>
+                        </div>
+                    </div>
+
+                    <!-- Ingredientes -->
+                    <div class="mb-4">
+                        <label for="ingredientes" class="form-label fw-bold">Ingredientes preferidos:</label>
+                        <input type="text" class="form-control" id="ingredientes" placeholder="Ej: Sin Carne, Con Carne, o ingredientes específicos">
+                        <div class="form-text">
+                            Puedes escribir "Sin Carne", "Con Carne", o ingredientes específicos como "queso, tomate"
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="d-flex mb-4">
+                        <button type="button" class="btn btn-outline-secondary me-2" id="btnLimpiar">Limpiar</button>
+                        <button type="button" class="btn btn-warning" id="btnRecomendar">Recomendar</button>
+                    </div>
+
+                    <!-- Resultados -->
+                    <div id="resultados" style="display: none;">
+                        <h3 class="text-center mb-3">Recomendaciones Personalizadas</h3>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Precio</th>
+                                        <th>Calorías</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyResultados">
+                                    <!-- Aquí se cargarán los resultados dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para detalles del plato -->
+<div class="modal fade" id="detallesModal" tabindex="-1" aria-labelledby="detallesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detallesModalLabel">Detalles del plato</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="detallesModalBody">
+                <!-- Aquí se cargarán los detalles -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            // Actualizar valor del presupuesto cuando cambia el slider
+            $("#presupuestoSlider").on("input", function () {
+                $("#presupuestoValor").text($(this).val());
+            });
+
+            // Limpiar filtros
+            $("#btnLimpiar").click(function () {
+                $("input[name='categoria']").prop('checked', false);
+                $("#presupuestoSlider").val(9);
+                $("#presupuestoValor").text(9);
+                $("#ingredientes").val("");
+                $("#resultados").hide();
+            });
+
+            // Obtener recomendaciones
+            $("#btnRecomendar").click(function () {
+                var categoria = $("input[name='categoria']:checked").val() || "";
+                var presupuesto = $("#presupuestoSlider").val();
+                var ingredientes = $("#ingredientes").val();
+
+                $.ajax({
+                    url: '@Url.Action("ObtenerRecomendaciones", "MenuRecomendacion")',
+                    type: 'POST',
+                    data: {
+                        categoria: categoria,
+                        presupuesto: presupuesto,
+                        ingredientes: ingredientes
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            mostrarResultados(response.data);
+                        } else {
+                            alert("Error: " + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert("Error al procesar la solicitud");
+                    }
+                });
+            });
+
+            // Función para mostrar resultados en la tabla
+            function mostrarResultados(data) {
+                var tbody = $("#tbodyResultados");
+                tbody.empty();
+
+                if (data.length === 0) {
+                    tbody.append('<tr><td colspan="4" class="text-center">No se encontraron resultados que coincidan con tus preferencias</td></tr>');
+                } else {
+                    $.each(data, function (index, item) {
+                        var row = '<tr>' +
+                            '<td>' + item.Nombre + '</td>' +
+                            '<td>$' + item.Precio + '</td>' +
+                            '<td>' + item.Calorias + '</td>' +
+                            '<td><button class="btn btn-sm btn-info ver-detalles" data-index="' + index + '">Ver detalles</button></td>' +
+                            '</tr>';
+                        tbody.append(row);
+                    });
+
+                    // Almacenar los datos para usarlos en el modal
+                    tbody.data('platosData', data);
+                }
+
+                $("#resultados").show();
+            }
+
+            // Manejar clic en "Ver detalles"
+            $(document).on('click', '.ver-detalles', function () {
+                var index = $(this).data('index');
+                var platosData = $("#tbodyResultados").data('platosData');
+                var plato = platosData[index];
+
+                var detallesHTML = '<div class="container">' +
+                    '<div class="row mb-2"><div class="col-4 fw-bold">Nombre:</div><div class="col-8">' + plato.Nombre + '</div></div>' +
+                    '<div class="row mb-2"><div class="col-4 fw-bold">Precio:</div><div class="col-8">$' + plato.Precio + '</div></div>' +
+                    '<div class="row mb-2"><div class="col-4 fw-bold">Calorías:</div><div class="col-8">' + plato.Calorias + '</div></div>' +
+                    '<div class="row mb-2"><div class="col-4 fw-bold">Categoría:</div><div class="col-8">' + plato.Categoria + '</div></div>' +
+                    '<div class="row mb-2"><div class="col-4 fw-bold">Ingredientes:</div><div class="col-8">' + plato.Ingredientes + '</div></div>' +
+                    '</div>';
+
+                $("#detallesModalLabel").text(plato.Nombre);
+                $("#detallesModalBody").html(detallesHTML);
+
+                var detallesModal = new bootstrap.Modal(document.getElementById('detallesModal'));
+                detallesModal.show();
+            });
+        });
+    </script>
+}
+
+@section styles {
+    <style>
+        .categories-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .form-check-inline {
+            margin-right: 0.5rem;
+        }
+
+        #presupuestoValor {
+            font-size: 1.2rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+        .table tbody tr {
+            cursor: pointer;
+        }
+
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .btn-warning {
+            color: #fff;
+            background-color: #F2A900;
+            border-color: #F2A900;
+        }
+
+            .btn-warning:hover {
+                color: #fff;
+                background-color: #e09600;
+                border-color: #d48e00;
+            }
+    </style>
+}

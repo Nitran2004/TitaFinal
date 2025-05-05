@@ -1,0 +1,180 @@
+﻿@{
+    ViewData["Title"] = "Cervezas";
+}
+
+<style>
+    .menu-container {
+        padding: 20px;
+        background-color: white;
+    }
+
+    .menu-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .menu-item {
+        display: block;
+        width: 180px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
+        background-color: #fefefe;
+        transition: transform 0.2s;
+    }
+
+        .menu-item:hover {
+            transform: scale(1.03);
+        }
+
+        .menu-item img {
+            width: 100%;
+            height: 120px;
+            border-radius: 10px;
+            object-fit: cover;
+        }
+
+    .menu-item-text {
+        margin-top: 10px;
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+
+    media (max-width: 600px) {
+        .menu-item
+
+    {
+        width: 100%;
+    }
+
+    }
+</style>
+
+<div class="menu-container">
+    <h2 class="text-center mb-4">
+        Cervezas
+    </h2>
+
+    <div class="menu-grid">
+        <a href="/Cocteles/copadevinotinto" class="menu-item">
+            <img src="~/images1/vinotinto.jpg" alt="Copa de vino tinto" />
+            <div class="menu-item-text">Copa de vino tinto - $5</div>
+        </a>
+        <a href="/Cocteles/copadecalimotcho" class="menu-item">
+            <img src="~/images1/calimocho.jpg" alt="Copa de calimotcho" />
+            <div class="menu-item-text">Copa de calimotcho - $6</div>
+        </a>
+        <a href="/Cocteles/copadetintodeverano" class="menu-item">
+            <img src="~/images1/tintodeverano.jpg" alt="Copa de tinto de verano" />
+            <div class="menu-item-text">Copa de tinto de verano - $6</div>
+        </a>
+        <a href="/Cocteles/botelladevinotinto" class="menu-item">
+            <img src="~/images1/botellavinotinto.jpg" alt="Botella de vino tinto" />
+            <div class="menu-item-text">Botella de vino tinto - $20</div>
+        </a>
+        <a href="/Cocteles/jarradecalimotcho" class="menu-item">
+            <img src="~/images1/jarrajalimocho.jpg" alt="Jarra de calimotcho" />
+            <div class="menu-item-text">Jarra de calimotcho - $18</div>
+        </a>
+        <a href="/Cocteles/jarradetintodeverano" class="menu-item">
+            <img src="~/images1/jarratintoverano.jpg" alt="Jarra de tinto de verano" />
+            <div class="menu-item-text">Jarra de tinto de verano - $18</div>
+        </a>
+        <a href="/Cocteles/manabamule" class="menu-item">
+            <img src="~/images1/manamule.jpg" alt="Manaba mule" />
+            <div class="menu-item-text">Manaba mule - $6</div>
+        </a>
+        <a href="/Cocteles/caipirinhamanaba" class="menu-item">
+            <img src="~/images1/caipimanaba.jpg" alt="Caipirinha manaba" />
+            <div class="menu-item-text">Caipirinha manaba - $6</div>
+        </a>
+        <a href="/Cocteles/botelladecañamanabita" class="menu-item">
+            <img src="~/images1/cañamanaba.jpg" alt="Botella de caña manabita" />
+            <div class="menu-item-text">Botella de caña manabita - $25</div>
+        </a>
+        <a href="/Cocteles/botelladeantioqueño" class="menu-item">
+            <img src="~/images1/botellaantioqueño.jpg" alt="Botella de Antioqueño" />
+            <div class="menu-item-text">Botella de Antioqueño - $45</div>
+        </a>
+        <a href="/Cocteles/paloma" class="menu-item">
+            <img src="~/images1/paloma.jpg" alt="Paloma" />
+            <div class="menu-item-text">Paloma - $8</div>
+        </a>
+        <a href="/Cocteles/margaritaclásica" class="menu-item">
+            <img src="~/images1/margarira.jpg" alt="Margarita clásica" />
+            <div class="menu-item-text">Margarita clásica - $6</div>
+        </a>
+        <a href="/Cocteles/margaritamaracuya" class="menu-item">
+            <img src="~/images1/maracuya.jpg" alt="Margarita maracuyá" />
+            <div class="menu-item-text">Margarita maracuyá - $6</div>
+        </a>
+        <a href="/Cocteles/margaritafrutosrojos" class="menu-item">
+            <img src="~/images1/frutosrojos.jpg" alt="Margarita frutos rojos" />
+            <div class="menu-item-text">Margarita frutos rojos - $6</div>
+        </a>
+        <a href="/Cocteles/botelladetequila" class="menu-item">
+            <img src="~/images1/josecuervo.jpg" alt="Botella de tequila" />
+            <div class="menu-item-text">Botella de tequila - $45</div>
+        </a>
+        <a href="/Cocteles/cubalibre" class="menu-item">
+            <img src="~/images1/cubalibre.jpg" alt="Cuba libre" />
+            <div class="menu-item-text">Cuba libre - $6</div>
+        </a>
+        <a href="/Cocteles/mojito" class="menu-item">
+            <img src="~/images1/mojito.jpg" alt="Mojito" />
+            <div class="menu-item-text">Mojito - $6</div>
+        </a>
+        <a href="/Cocteles/mojitomaracuya" class="menu-item">
+            <img src="~/images1/mojitomaracuya.jpg" alt="Mojito maracuyá" />
+            <div class="menu-item-text">Mojito maracuyá - $7</div>
+        </a>
+        <a href="/Cocteles/mojitofrutosrojos" class="menu-item">
+            <img src="~/images1/mojitofrutosrojos.jpg" alt="Mojito frutos rojos" />
+            <div class="menu-item-text">Mojito frutos rojos - $7</div>
+        </a>
+        <a href="/Cocteles/botelladeronabuelo" class="menu-item">
+            <img src="~/images1/ronabuelo.jpg" alt="Botella de Ron Abuelo" />
+            <div class="menu-item-text">Botella de Ron Abuelo - $45</div>
+        </a>
+        <a href="/Cocteles/gintonic" class="menu-item">
+            <img src="~/images1/gintonic.jpg" alt="Gin Tonic" />
+            <div class="menu-item-text">Gin Tonic - $6</div>
+        </a>
+        <a href="/Cocteles/gintonicmaracuya" class="menu-item">
+            <img src="~/images1/gintonicmaracuya.jpg" alt="Gin Tonic Maracuyá" />
+            <div class="menu-item-text">Gin Tonic Maracuyá - $7</div>
+        </a>
+        <a href="/Cocteles/gintonicfrutosrojos" class="menu-item">
+            <img src="~/images1/gintonicfrutosrojos.jpg" alt="Gin Tonic Frutos rojos" />
+            <div class="menu-item-text">Gin Tonic Frutos rojos - $7</div>
+        </a>
+        <a href="/Cocteles/moscowmule" class="menu-item">
+            <img src="~/images1/moscowmule.jpg" alt="Moscow Mule" />
+            <div class="menu-item-text">Moscow Mule - $8</div>
+        </a>
+        <a href="/Cocteles/jagersour" class="menu-item">
+            <img src="~/images1/jagersour.jpg" alt="Jager Sour" />
+            <div class="menu-item-text">Jager Sour - $12</div>
+        </a>
+        <a href="/Cocteles/jagerito" class="menu-item">
+            <img src="~/images1/jagerito.jpg" alt="Jagerito" />
+            <div class="menu-item-text">Jagerito - $12</div>
+        </a>
+        <a href="/Cocteles/whiskysour" class="menu-item">
+            <img src="~/images1/whiskysour.jpg" alt="Whisky Sour" />
+            <div class="menu-item-text">Whisky Sour - $12</div>
+        </a>
+        <a href="/Cocteles/newyorksour" class="menu-item">
+            <img src="~/images1/newyork.jpg" alt="New York Sour" />
+            <div class="menu-item-text">New York Sour - $12</div>
+        </a>
+        <a href="/Cocteles/whiskyontherocks" class="menu-item">
+            <img src="~/images1/whiskyrocks.jpg" alt="Whisky on the rocks" />
+            <div class="menu-item-text">Whisky on the rocks - $12</div>
+        </a>
+</div>
