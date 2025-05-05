@@ -1,69 +1,248 @@
 ﻿@{
     ViewData["Title"] = "Seleccionar punto de recolección";
 }
-@* Si no usas el model desde el servidor, elimina esta línea. *@
-@* @model IEnumerable<ProyectoIdentity.Models.CollectionPoint> *@
 
-<h2>Encuentra tu punto de recolección</h2>
-<div id="puntos-container">
-    <!-- aquí insertaremos dinámicamente las cards -->
+<div class="container">
+    <h2>Encuentra tu punto de recolección</h2>
+    <div id="location-permission" class="location-permission">
+        <p>Para encontrar los puntos de recolección más cercanos, necesitamos acceder a tu ubicación.</p>
+        <button id="allow-location">Permitir ubicación</button>
+    </div>
+    <div id="puntos-container" class="points-grid" style="display:none;">
+        <!-- Los puntos se insertarán dinámicamente aquí -->
+    </div>
+    <div id="error-container" class="error-message" style="display:none;">
+        <!-- Mensajes de error se mostrarán aquí -->
+    </div>
 </div>
 
+<style>
+    .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        font-family: Arial, sans-serif;
+    }
+
+    .location-permission {
+        text-align: center;
+        padding: 20px;
+        background-color: #f0f0f0;
+        border-radius: 8px;
+    }
+
+        .location-permission button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+            .location-permission button:hover {
+                background: #45a049;
+            }
+
+    .points-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .pickup-card {
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .pickup-card-info {
+        flex-grow: 1;
+    }
+
+        .pickup-card-info strong {
+            font-size: 16px;
+            color: #333;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .pickup-card-info small {
+            color: #666;
+        }
+
+    .pickup-card .distance {
+        font-weight: bold;
+        color: #4CAF50;
+        margin-right: 15px;
+    }
+
+    .pickup-card button {
+        background: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+        .pickup-card button:hover {
+            background: #45a049;
+        }
+
+    .error-message {
+        color: red;
+        text-align: center;
+        padding: 20px;
+    }
+</style>
+
 <script type="text/javascript">
+    // Función para calcular distancia geodésica (Haversine)
+    function haversineDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Radio de la Tierra en kilómetros
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
 
-    // 1) Obtener lista de puntos reales desde tu API
-    fetch('/api/collectionpoints')
-        .then(res => {
-            if (!res.ok) throw new Error('Error al leer los puntos');
-            return res.json();
-        })
-        .then(lista => {
+    // Función para obtener puntos de recolección con distancia
+    async function fetchCollectionPointsWithDistance(userLocation) {
+        try {
+            // Log de coordenadas de usuario
+            console.log(`Coordenadas de usuario: ${userLocation.latitude}, ${userLocation.longitude}`);
+
+            // Fetch con las coordenadas del usuario
+            const response = await fetch(`/api/collectionpoints/nearest?latitude=${userLocation.latitude}&longitude=${userLocation.longitude}`);
+
+            if (!response.ok) {
+                throw new Error('Error al obtener los puntos de recolección');
+            }
+
+            const lista = await response.json();
+
+            // Log de puntos recibidos
+            console.log('Puntos recibidos:', lista);
+
             const cont = document.getElementById('puntos-container');
-            if (!cont) return;
+            const locationPermission = document.getElementById('location-permission');
 
+            // Ocultar permiso de ubicación, mostrar puntos
+            locationPermission.style.display = 'none';
+            cont.style.display = 'flex';
+
+            // Limpiar contenedor
+            cont.innerHTML = '';
+
+            // Crear tarjetas para cada punto
             lista.forEach(pt => {
-                // Crear la card
+                // Calcular distancia geodésica más precisa
+                const distanciaGeodесica = haversineDistance(
+                    userLocation.latitude, userLocation.longitude,
+                    pt.latitude, pt.longitude
+                );
+
                 const card = document.createElement('div');
                 card.className = 'pickup-card';
                 card.innerHTML = `
-                        <strong>${pt.name}</strong><br/>
-                        ${pt.address}<br/>
-                        <button data-id="${pt.id}">Seleccionar</button>
+                        <div class="pickup-card-info">
+                            <strong>${pt.name}</strong>
+                            <small>${pt.address}</small>
+                        </div>
+                        <div class="distance">${distanciaGeodесica.toFixed(2)} km</div>
+                        <button data-id="${pt.collectionPointId}">Seleccionar</button>
                     `;
-                cont.appendChild(card);
 
-                // Listener al botón
+                // Añadir listener al botón
                 const btn = card.querySelector('button');
-                if (btn) {
-                    btn.addEventListener('click', () => {
-                        localStorage.setItem('puntoSeleccionado', JSON.stringify(pt));
-                        window.location.href = '/recoleccion/confirmar';
-                    });
-                }
-            });
-        })
-        .catch(err => {
-            console.error(err);
-            const cont = document.getElementById('puntos-container');
-            if (cont) cont.innerText = 'No se pudieron cargar los puntos.';
-        });
-</script>
+                btn.addEventListener('click', () => {
+                    // Guardar punto seleccionado en localStorage
+                    localStorage.setItem('puntoSeleccionado', JSON.stringify({
+                        id: pt.collectionPointId,
+                        name: pt.name,
+                        address: pt.address,
+                        latitude: pt.latitude,
+                        longitude: pt.longitude
+                    }));
 
-<style>
-    .pickup-card {
-        background: #fff;
-        border-radius: 8px;
-        padding: 16px;
-        margin: 12px 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    // Redirigir a página de confirmación
+                    window.location.href = '/recoleccion/confirmar';
+                });
+
+                cont.appendChild(card);
+            });
+        } catch (err) {
+            console.error(err);
+            const errorCont = document.getElementById('error-container');
+            errorCont.style.display = 'block';
+            errorCont.innerHTML = `No se pudieron cargar los puntos: ${err.message}`;
+        }
     }
 
-        .pickup-card button {
-            background: #4caf50;
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-</style>
+    // Función para obtener ubicación del usuario
+    function getUserLocation() {
+        return new Promise((resolve, reject) => {
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        resolve({
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude
+                        });
+                    },
+                    (error) => {
+                        reject(error);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                reject(new Error('Geolocalización no soportada por este navegador'));
+            }
+        });
+    }
+
+    // Configurar listener para botón de permiso de ubicación
+    document.addEventListener('DOMContentLoaded', () => {
+        const allowLocationBtn = document.getElementById('allow-location');
+
+        allowLocationBtn.addEventListener('click', async () => {
+            try {
+                const userLocation = await getUserLocation();
+                await fetchCollectionPointsWithDistance(userLocation);
+            } catch (error) {
+                const errorCont = document.getElementById('error-container');
+                errorCont.style.display = 'block';
+
+                // Mensajes de error más específicos
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorCont.innerHTML = 'Permiso de ubicación denegado. Por favor, habilite los permisos de ubicación.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorCont.innerHTML = 'Información de ubicación no disponible.';
+                        break;
+                    case error.TIMEOUT:
+                        errorCont.innerHTML = 'La solicitud de ubicación ha expirado.';
+                        break;
+                    default:
+                        errorCont.innerHTML = `Error al obtener ubicación: ${error.message}`;
+                }
+            }
+        });
+    });
+</script>
