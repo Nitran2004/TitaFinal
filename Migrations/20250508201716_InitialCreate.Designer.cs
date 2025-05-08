@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ProyectoIdentity.Datos;
 
@@ -11,9 +12,10 @@ using ProyectoIdentity.Datos;
 namespace ProyectoIdentity.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250508201716_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -324,36 +326,6 @@ namespace ProyectoIdentity.Migrations
                     b.ToTable("Gasto");
                 });
 
-            modelBuilder.Entity("ProyectoIdentity.Models.HistorialCanje", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<DateTime>("FechaCanje")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("ProductoRecompensaId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PuntosCanjeados")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UsuarioId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductoRecompensaId");
-
-                    b.HasIndex("UsuarioId");
-
-                    b.ToTable("HistorialCanjes", (string)null);
-                });
-
             modelBuilder.Entity("ProyectoIdentity.Models.Pedido", b =>
                 {
                     b.Property<int>("Id")
@@ -447,43 +419,6 @@ namespace ProyectoIdentity.Migrations
                     b.ToTable("Productos");
                 });
 
-            modelBuilder.Entity("ProyectoIdentity.Models.ProductoRecompensa", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<string>("Categoria")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Imagen")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<decimal>("PrecioOriginal")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int>("ProductoId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PuntosNecesarios")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductoId");
-
-                    b.ToTable("ProductosRecompensa", (string)null);
-                });
-
             modelBuilder.Entity("ProyectoIdentity.Models.Proyecto", b =>
                 {
                     b.Property<int>("Id")
@@ -547,28 +482,6 @@ namespace ProyectoIdentity.Migrations
                     b.HasIndex("ProyectoId");
 
                     b.ToTable("Tareas");
-                });
-
-            modelBuilder.Entity("ProyectoIdentity.Models.UsuarioPuntos", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<int>("PuntosAcumulados")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UsuarioId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UsuarioId");
-
-                    b.ToTable("UsuarioPuntos", (string)null);
                 });
 
             modelBuilder.Entity("ProyectoIdentity.Models.AppUsuario", b =>
@@ -674,25 +587,6 @@ namespace ProyectoIdentity.Migrations
                     b.Navigation("Empleado");
                 });
 
-            modelBuilder.Entity("ProyectoIdentity.Models.HistorialCanje", b =>
-                {
-                    b.HasOne("ProyectoIdentity.Models.ProductoRecompensa", "ProductoRecompensa")
-                        .WithMany()
-                        .HasForeignKey("ProductoRecompensaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "Usuario")
-                        .WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ProductoRecompensa");
-
-                    b.Navigation("Usuario");
-                });
-
             modelBuilder.Entity("ProyectoIdentity.Models.PedidoProducto", b =>
                 {
                     b.HasOne("ProyectoIdentity.Models.Pedido", "Pedido")
@@ -721,17 +615,6 @@ namespace ProyectoIdentity.Migrations
                     b.Navigation("Pedido");
                 });
 
-            modelBuilder.Entity("ProyectoIdentity.Models.ProductoRecompensa", b =>
-                {
-                    b.HasOne("ProyectoIdentity.Models.Producto", "Producto")
-                        .WithMany()
-                        .HasForeignKey("ProductoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Producto");
-                });
-
             modelBuilder.Entity("ProyectoIdentity.Models.Tarea", b =>
                 {
                     b.HasOne("ProyectoIdentity.Models.Empleado", "Empleado")
@@ -748,17 +631,6 @@ namespace ProyectoIdentity.Migrations
                     b.Navigation("Empleado");
 
                     b.Navigation("Proyecto");
-                });
-
-            modelBuilder.Entity("ProyectoIdentity.Models.UsuarioPuntos", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "Usuario")
-                        .WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("ProyectoIdentity.Models.Departamento", b =>

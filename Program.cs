@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using ProyectoIdentity.Datos;
 using ProyectoIdentity.Models;
 using ProyectoIdentity.Servicios;
@@ -11,12 +10,12 @@ using static ProyectoIdentity.Controllers.UsuariosController;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuramos la conexi�n a SQL Server
+// Configuramos la conexión a SQL Server
 builder.Services.AddDbContext<ApplicationDbContext>(opciones =>
     opciones.UseSqlServer(builder.Configuration.GetConnectionString("ConexionSql"))
 );
 
-// ① Añade CORS
+// Configuración de CORS
 builder.Services.AddCors(opts =>
 {
     opts.AddDefaultPolicy(policy =>
@@ -25,28 +24,23 @@ builder.Services.AddCors(opts =>
               .AllowAnyHeader());
 });
 
-// ② Asegúrate de incluir AddControllers (necesario para MapControllers)
-builder.Services.AddControllers();       // <-- para tus api/[controller]
-builder.Services.AddControllersWithViews(); // <-- para MVC normal
+// Configuración de controladores
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    })
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.SuppressModelStateInvalidFilter = false; // Valida los modelos
+    });
 
+builder.Services.AddControllersWithViews();
 
-// Agregar el servicio de MySQL en el contexto de la aplicación.
-//builder.Services.AddDbContext<ApplicationDbContext>(options =>
-//    options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
-//        new MySqlServerVersion(new Version(8, 0, 25))));
-
-// Agregar el servicio Identity a la aplicaci�n
-builder.Services.AddIdentity<IdentityUser, IdentityRole>()
-    .AddPasswordValidator<CustomPasswordValidator>() // A�adir el validador personalizado
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddErrorDescriber<CustomIdentityErrorDescriber>() // Aqu� se agrega el describidor personalizado
-    .AddDefaultTokenProviders();
-
-builder.Services.AddScoped<IPasswordHasher<IdentityUser>, PlainTextPasswordHasher>();
-
-// Configuraci�n de las opciones de Identity
-builder.Services.Configure<IdentityOptions>(options =>
+// Configuración de Identity
+builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
+    // Configuración de opciones de Identity
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(1);
     options.Lockout.MaxFailedAccessAttempts = 10;
 
@@ -55,69 +49,78 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequireUppercase = false;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequiredLength = 0;
-});
+})
+.AddPasswordValidator<CustomPasswordValidator>()
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddErrorDescriber<CustomIdentityErrorDescriber>()
+.AddDefaultTokenProviders();
 
-// Configuraci�n de la URL de retorno al acceder
+// Servicios personalizados
+builder.Services.AddScoped<IPasswordHasher<IdentityUser>, PlainTextPasswordHasher>();
+builder.Services.AddScoped<CartService>();
+
+// Configuración de cookies de autenticación
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = new PathString("/Cuentas/Acceso");
     options.AccessDeniedPath = new PathString("/Cuentas/Denegado");
 });
 
-// Configuramos localizaci�n
+// Configuración de localización
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
-
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
-    var supportedCultures = new[] { new CultureInfo("es-ES") }; // Cultura soportada (espa�ol)
-    options.DefaultRequestCulture = new RequestCulture("es-ES"); // Cultura predeterminada
+    var supportedCultures = new[] { new CultureInfo("es-ES") };
+    options.DefaultRequestCulture = new RequestCulture("es-ES");
     options.SupportedCultures = supportedCultures;
     options.SupportedUICultures = supportedCultures;
 });
 
-// Register IHttpContextAccessor for session access
-builder.Services.AddHttpContextAccessor();
-
-// Se agrega IEmailSender
-builder.Services.AddTransient<IEmailSender, MailJetEmailSender>();
-builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-builder.Services.AddScoped<CartService>();
-
-
-// Add services to the container.
-builder.Services.AddControllersWithViews();
-
-builder.Services.AddDistributedMemoryCache(); // Almac�n en memoria para la sesi�n
+// Servicios de sesión y contexto HTTP
+builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Tiempo de expiraci�n de la sesi�n
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<IEmailSender, MailJetEmailSender>();
+
+// Configuración de logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
+// Construcción de la aplicación
 var app = builder.Build();
 
-// Configurar el middleware de localizaci�n
-app.UseRequestLocalization();
-
-// Configure the HTTP request pipeline.
+// Configuración del pipeline de middleware
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
-
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<ApplicationDbContext>();
+    DbInitializer.Initialize(context);
+    RecompensasInitializer.Initialize(context);
+}
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-app.UseCors();
-app.UseSession(); // Habilitar uso de sesiones
 
-// Se agrega la autenticaci�n
+// Middleware de CORS, sesión y autenticación
+app.UseCors();
+app.UseSession();
+app.UseRequestLocalization();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Mapeo de rutas
 app.MapControllers();
 app.MapControllerRoute(
     name: "default",

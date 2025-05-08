@@ -30,7 +30,7 @@ namespace ProyectoIdentity.Models
             var existing = cart.FirstOrDefault(x => x.Id == item.Id);
             if (existing != null)
             {
-                existing.Quantity += item.Quantity;
+                existing.Cantidad += item.Cantidad;
             }
             else
             {
@@ -45,8 +45,8 @@ namespace ProyectoIdentity.Models
             var item = cart.FirstOrDefault(x => x.Id == itemId);
             if (item != null)
             {
-                if (item.Quantity > 1)
-                    item.Quantity--;
+                if (item.Cantidad > 1)
+                    item.Cantidad--;
                 else
                     cart.Remove(item);
             }
@@ -59,8 +59,8 @@ namespace ProyectoIdentity.Models
             var item = cart.FirstOrDefault(x => x.Id == itemId);
             if (item != null)
             {
-                item.Quantity = quantity;
-                if (item.Quantity <= 0)
+                item.Cantidad = quantity;
+                if (item.Cantidad <= 0)
                     cart.Remove(item);
             }
             SaveCart(cart);
@@ -68,12 +68,12 @@ namespace ProyectoIdentity.Models
 
         public int GetItemCount()
         {
-            return GetCart().Sum(x => x.Quantity);
+            return GetCart().Sum(x => x.Cantidad);
         }
 
         public decimal GetTotalAmount()
         {
-            return GetCart().Sum(x => x.Price * x.Quantity);
+            return GetCart().Sum(x => x.Total * x.Cantidad);
         }
 
         public List<Carrito> GetAllItems() => GetCart();

@@ -1,0 +1,21 @@
+﻿@model Pedido
+
+<h2>Resumen del Pedido</h2>
+
+@if (Model.PedidoProductos != null && Model.PedidoProductos.Any())
+{
+    foreach (var item in Model.PedidoProductos)
+    {
+        <div>
+            <strong>Nombre:</strong> @item.Producto?.Nombre  <br />
+            <strong>Cantidad:</strong> @item.Cantidad <br />
+            <strong>Precio:</strong> $@item.Precio <br />
+            <strong>Total:</strong> $@(item.Cantidad * item.Precio)
+        </div>
+        <hr />
+    }
+}
+else
+{
+    <p>No hay productos en este pedido.</p>
+}

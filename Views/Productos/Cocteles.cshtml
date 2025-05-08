@@ -1,0 +1,76 @@
+﻿@model IEnumerable<ProyectoIdentity.Models.Producto>
+
+@{
+    ViewData["Title"] = "Cócteles";
+}
+
+<style>
+    .product-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+    }
+
+    .product-card {
+        width: 220px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        text-align: center;
+        background-color: #fff;
+        transition: transform 0.2s;
+    }
+
+        .product-card:hover {
+            transform: scale(1.03);
+        }
+
+        .product-card img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+    .product-name {
+        font-size: 1.1em;
+        font-weight: bold;
+    }
+
+    .product-price {
+        margin: 5px 0;
+    }
+
+    .form-inline {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        align-items: center;
+    }
+
+        .form-inline input[type="number"] {
+            width: 60px;
+            text-align: center;
+        }
+</style>
+
+<h2 class="text-center mb-4">Cócteles</h2>
+
+<div class="product-grid">
+    @foreach (var p in Model.Where(x => x.Categoria == "Cocteles"))
+    {
+        <div class="product-card">
+            <a asp-action="Detalle" asp-controller="Productos" asp-route-id="@p.Id">
+            <img src="data:image/jpeg;base64,@Convert.ToBase64String(p.Imagen)" alt="@p.Nombre" />
+            <div class="product-name">@p.Nombre</div>
+            <div class="product-price">Precio: $@p.Precio</div>
+            </a>
+
+            <form asp-controller="Pedidos" asp-action="Crear" method="post" class="form-inline">
+                <input type="hidden" name="productoId" value="@p.Id" />           
+            </form>
+        </div>
+    }
+</div>

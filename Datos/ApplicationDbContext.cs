@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ProyectoIdentity.Models;
-
 namespace ProyectoIdentity.Datos
 {
     public class ApplicationDbContext : IdentityDbContext
@@ -17,6 +16,17 @@ namespace ProyectoIdentity.Datos
         public DbSet<Proyecto> Proyectos { get; set; }
 
         public DbSet<CollectionPoint> CollectionPoints { get; set; }
+
+        public DbSet<Pedido> Pedidos { get; set; }
+
+        public DbSet<Producto> Productos { get; set; }
+
+        public DbSet<PedidoProducto> PedidoProductos { get; set; }
+
+        public DbSet<ProductoRecompensa> ProductosRecompensa { get; set; }
+        public DbSet<UsuarioPuntos> UsuarioPuntos { get; set; }
+        public DbSet<HistorialCanje> HistorialCanjes { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -35,6 +45,15 @@ namespace ProyectoIdentity.Datos
                 .WithMany(e => e.Tareas)
                 .HasForeignKey(t => t.EmpleadoId)
                 .OnDelete(DeleteBehavior.SetNull); // Si se elimina el empleado, se establece como null.
+                                                   // Configuración específica para Pedido
+
+            // Configuraciones para las nuevas tablas
+            modelBuilder.Entity<ProductoRecompensa>().ToTable("ProductosRecompensa");
+            modelBuilder.Entity<UsuarioPuntos>().ToTable("UsuarioPuntos");
+            modelBuilder.Entity<HistorialCanje>().ToTable("HistorialCanjes");
+
+
+
         }
 
     }

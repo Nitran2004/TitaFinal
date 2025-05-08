@@ -1,0 +1,216 @@
+﻿@model IEnumerable<ProyectoIdentity.Models.Producto>
+
+<h2>Menú de Productos</h2>
+
+<div id="carrito-resumen" style="position: fixed; top: 10px; right: 10px; background-color: #f8f9fa; padding: 10px; border-radius: 5px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.1); z-index: 1000;">
+    <h4>Carrito <span id="cart-count">(0)</span></h4>
+    <p>Total: $<span id="cart-total">0.00</span></p>
+    <button id="ver-carrito" style="background-color: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Ver Carrito</button>
+</div>
+
+<div class="product-list">
+    @foreach (var producto in Model)
+    {
+        <div class="product-item" style="margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+            <!-- Imagen -->
+            <img src="data:image/jpeg;base64,@Convert.ToBase64String(producto.Imagen)"
+                 alt="@producto.Nombre"
+                 style="max-width:200px; height:auto; display:block; margin-bottom:10px;" />
+            <!-- Datos -->
+            <h4>@producto.Nombre</h4>
+            <p>@producto.Categoria</p>
+            <p>Precio: $@(producto.Precio?.ToString("F2") ?? "0.00")</p>
+            <!-- Controles para añadir al carrito -->
+            <div class="add-to-cart-controls">
+                <label>Cantidad:</label>
+                <input type="number" id="cantidad-@producto.Id" value="1" min="1" style="width: 60px; margin-right: 10px;" />
+                <button class="add-to-cart-btn" data-id="@producto.Id" data-name="@producto.Nombre" data-price="@producto.Precio" style="background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
+                    Agregar al Carrito
+                </button>
+                <a href="@Url.Action("Detalle", "Productos", new { id = producto.Id })" style="margin-left: 10px; display: inline-block; padding: 5px 10px; background-color: #17a2b8; color: white; text-decoration: none; border-radius: 3px;">
+                    Ver Detalles
+                </a>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Modal para visualizar el carrito -->
+<div id="carrito-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="background-color: white; width: 80%; max-width: 800px; margin: 50px auto; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.3);">
+        <h3>Tu Carrito</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <thead>
+                <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                    <th style="padding: 10px; text-align: left;">Producto</th>
+                    <th style="padding: 10px; text-align: right;">Precio</th>
+                    <th style="padding: 10px; text-align: center;">Cantidad</th>
+                    <th style="padding: 10px; text-align: right;">Subtotal</th>
+                    <th style="padding: 10px; text-align: center;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="cart-items">
+                <!-- Los items del carrito se cargarán aquí dinámicamente -->
+            </tbody>
+            <tfoot>
+                <tr style="border-top: 2px solid #dee2e6; font-weight: bold;">
+                    <td colspan="3" style="padding: 10px; text-align: right;">Total:</td>
+                    <td id="cart-modal-total" style="padding: 10px; text-align: right;">$0.00</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+        <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+            <button id="cerrar-carrito" style="padding: 8px 15px; background-color: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer;">Seguir Comprando</button>
+            <form asp-controller="Pedidos" asp-action="CrearDesdeCarrito" method="post">
+                <input type="hidden" id="pedido-json" name="pedidoJson" value="" />
+                <button type="submit" style="padding: 8px 15px; background-color: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;">Procesar Pedido</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Inicialización del carrito
+    let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+
+    // Actualizar el resumen del carrito
+    function actualizarResumenCarrito() {
+        const cantidad = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+        const total = carrito.reduce((sum, item) => sum + item.precio * item.cantidad, 0).toFixed(2);
+
+        document.getElementById('cart-count').textContent = `(${cantidad})`;
+        document.getElementById('cart-total').textContent = total;
+    }
+
+    // Agregar al carrito
+    document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const id = this.getAttribute('data-id');
+            const nombre = this.getAttribute('data-name');
+            const precio = parseFloat(this.getAttribute('data-price'));
+            const cantidad = parseInt(document.getElementById(`cantidad-${id}`).value);
+
+            // Verificar si el producto ya está en el carrito
+            const existingItemIndex = carrito.findIndex(item => item.id === id);
+
+            if (existingItemIndex >= 0) {
+                // Si ya existe, incrementar la cantidad
+                carrito[existingItemIndex].cantidad += cantidad;
+            } else {
+                // Si no existe, añadir como nuevo item
+                carrito.push({
+                    id: id,
+                    nombre: nombre,
+                    precio: precio,
+                    cantidad: cantidad
+                });
+            }
+
+            // Guardar en localStorage
+            localStorage.setItem('carrito', JSON.stringify(carrito));
+
+            // Actualizar el resumen
+            actualizarResumenCarrito();
+
+            // Mostrar mensaje
+            alert(`${cantidad} ${nombre}(s) añadidos al carrito`);
+        });
+    });
+
+    // Ver carrito
+    document.getElementById('ver-carrito').addEventListener('click', function () {
+        // Limpiar la tabla
+        const cartItems = document.getElementById('cart-items');
+        cartItems.innerHTML = '';
+
+        // Llenar con los items actuales
+        carrito.forEach((item, index) => {
+            const subtotal = (item.precio * item.cantidad).toFixed(2);
+            cartItems.innerHTML += `
+                    <tr data-index="${index}" style="border-bottom: 1px solid #dee2e6;">
+                        <td style="padding: 10px;">${item.nombre}</td>
+                        <td style="padding: 10px; text-align: right;">$${item.precio.toFixed(2)}</td>
+                        <td style="padding: 10px; text-align: center;">
+                            <button class="decrease-qty" style="border: none; background: none; cursor: pointer; font-size: 16px;">-</button>
+                            <span class="item-qty" style="margin: 0 5px;">${item.cantidad}</span>
+                            <button class="increase-qty" style="border: none; background: none; cursor: pointer; font-size: 16px;">+</button>
+                        </td>
+                        <td style="padding: 10px; text-align: right;">$${subtotal}</td>
+                        <td style="padding: 10px; text-align: center;">
+                            <button class="remove-item" style="border: none; background: #dc3545; color: white; padding: 3px 8px; border-radius: 3px; cursor: pointer;">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+        });
+
+        // Actualizar el total
+        const total = carrito.reduce((sum, item) => sum + item.precio * item.cantidad, 0).toFixed(2);
+        document.getElementById('cart-modal-total').textContent = `$${total}`;
+
+        // Preparar datos para el formulario
+        document.getElementById('pedido-json').value = JSON.stringify(carrito);
+
+        // Mostrar el modal
+        document.getElementById('carrito-modal').style.display = 'block';
+    });
+
+    // Cerrar carrito
+    document.getElementById('cerrar-carrito').addEventListener('click', function () {
+        document.getElementById('carrito-modal').style.display = 'none';
+    });
+
+    // Manejar cambios en el carrito (delegación de eventos)
+    document.getElementById('cart-items').addEventListener('click', function (event) {
+        const target = event.target;
+        const row = target.closest('tr');
+        if (!row) return;
+
+        const index = parseInt(row.getAttribute('data-index'));
+
+        if (isNaN(index) || index < 0 || index >= carrito.length) return;
+
+        // Botón de disminuir cantidad
+        if (target.classList.contains('decrease-qty')) {
+            if (carrito[index].cantidad > 1) {
+                carrito[index].cantidad--;
+                row.querySelector('.item-qty').textContent = carrito[index].cantidad;
+                const subtotal = (carrito[index].precio * carrito[index].cantidad).toFixed(2);
+                row.cells[3].textContent = `$${subtotal}`;
+            }
+        }
+
+        // Botón de aumentar cantidad
+        if (target.classList.contains('increase-qty')) {
+            carrito[index].cantidad++;
+            row.querySelector('.item-qty').textContent = carrito[index].cantidad;
+            const subtotal = (carrito[index].precio * carrito[index].cantidad).toFixed(2);
+            row.cells[3].textContent = `$${subtotal}`;
+        }
+
+        // Botón de eliminar item
+        if (target.classList.contains('remove-item')) {
+            carrito.splice(index, 1);
+            row.remove();
+
+            // Actualizar índices de las filas restantes
+            document.querySelectorAll('#cart-items tr').forEach((tr, i) => {
+                tr.setAttribute('data-index', i);
+            });
+        }
+
+        // Actualizar localStorage
+        localStorage.setItem('carrito', JSON.stringify(carrito));
+
+        // Actualizar total
+        const total = carrito.reduce((sum, item) => sum + item.precio * item.cantidad, 0).toFixed(2);
+        document.getElementById('cart-modal-total').textContent = `$${total}`;
+        document.getElementById('pedido-json').value = JSON.stringify(carrito);
+
+        // Actualizar resumen
+        actualizarResumenCarrito();
+    });
+
+    // Inicializar resumen al cargar la página
+    document.addEventListener('DOMContentLoaded', actualizarResumenCarrito);
+</script>

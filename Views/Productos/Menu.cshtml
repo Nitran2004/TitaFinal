@@ -1,0 +1,96 @@
+﻿@{
+    ViewData["Title"] = "Menú";
+}
+
+<style>
+    .menu-container {
+        padding: 20px;
+        background-color: white;
+    }
+
+    .menu-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .menu-item {
+        display: block;
+        width: 180px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
+        background-color: #fefefe;
+        transition: transform 0.2s;
+    }
+    .menu-item:hover {
+        transform: scale(1.03);
+    }
+    .menu-item img {
+        width: 100%;
+        height: 120px;
+        border-radius: 10px;
+        object-fit: cover;
+    }
+    .menu-item-text {
+        margin-top: 10px;
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+
+    media (max-width: 600px) {
+        .menu-item {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="menu-container">
+    <h2 class="text-center mb-4">Menú</h2>
+
+    <div class="menu-grid">
+        <a asp-controller="Productos" asp-action="Pizzas" class="menu-item">
+            <img src="~/images1/pizzas.png" alt="Pizzas" />
+            <div class="menu-item-text">Pizzas</div>
+        </a>
+
+        <a asp-controller="Productos" asp-action="Sanduches" class="menu-item">
+            <img src="~/images1/sanduches.png" alt="Sanduches" />
+            <div class="menu-item-text">Sanduches</div>
+        </a>
+
+        <a asp-controller="Productos" asp-action="Picadas" class="menu-item">
+            <img src="~/images1/picadas.png" alt="Picadas" />
+            <div class="menu-item-text">Picadas</div>
+        </a>
+
+        <a asp-controller="Productos" asp-action="Bebidas" class="menu-item">
+            <img src="~/images1/bebidas.png" alt="Bebidas" />
+            <div class="menu-item-text">Bebidas</div>
+        </a>
+
+        <a asp-controller="Productos" asp-action="Promos" class="menu-item">
+            <img src="~/images1/promos.png" alt="Promos" />
+            <div class="menu-item-text">Promos</div>
+        </a>
+
+        <a asp-controller="Productos" asp-action="Cerveza" class="menu-item">
+            <img src="~/images1/cervesa.webp" alt="Cerveza" />
+            <div class="menu-item-text">Cerveza</div>
+        </a>
+
+        <a asp-controller="Productos" asp-action="Cocteles" class="menu-item">
+            <img src="~/images1/cocteles.webp" alt="Cocteles" />
+            <div class="menu-item-text">Cocteles</div>
+        </a>
+
+        <a asp-controller="Productos" asp-action="Shots" class="menu-item">
+            <img src="~/images1/shots.jpg" alt="Shots" />
+            <div class="menu-item-text">Shots</div>
+        </a>
+    </div>
+</div>

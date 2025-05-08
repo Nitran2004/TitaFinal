@@ -1,0 +1,442 @@
+/* Estilos para el sistema de recompensas */
+
+/* Estilos generales */
+.rewards-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+h2 {
+    color: #333;
+    margin: 30px 0 20px;
+    font-weight: 600;
+}
+
+/* Estilos para la barra de progreso */
+.progress-section {
+    margin-bottom: 40px;
+}
+
+.user-points-card {
+    background: linear-gradient(135deg, #5558DA, #36B3C2);
+    border-radius: 15px;
+    color: #fff;
+    padding: 20px;
+    display: flex;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.points-display {
+    flex: 0 0 25%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.points-circle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+    .points-circle #current-points {
+        font-size: 36px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+.points-label {
+    font-size: 18px;
+    opacity: 0.9;
+}
+
+.points-info {
+    flex: 1;
+    padding-left: 30px;
+}
+
+    .points-info h3 {
+        color: #fff;
+        margin-top: 5px;
+        margin-bottom: 20px;
+        font-size: 22px;
+    }
+
+.progress-container {
+    position: relative;
+    padding-bottom: 60px;
+}
+
+.progress-bar {
+    height: 15px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #FFD600, #FF9900);
+    border-radius: 10px;
+    transition: width 0.5s ease-in-out;
+}
+
+.progress-markers {
+    position: relative;
+    height: 50px;
+}
+
+.marker {
+    position: absolute;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+    .marker:before {
+        content: '';
+        width: 12px;
+        height: 12px;
+        background-color: rgba(255, 255, 255, 0.5);
+        border-radius: 50%;
+        margin-bottom: 5px;
+    }
+
+    .marker.active:before {
+        background-color: #FFD600;
+        box-shadow: 0 0 10px #FFD600;
+    }
+
+.marker-label {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.marker-points {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+/* Filtros y ordenación */
+.filter-section {
+    background-color: #f7f9fc;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.filter-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.search-box {
+    flex: 1;
+    min-width: 250px;
+}
+
+    .search-box input {
+        width: 100%;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+
+.category-filter,
+.sort-options {
+    min-width: 200px;
+}
+
+    .category-filter select,
+    .sort-options select {
+        width: 100%;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+        background-color: #fff;
+    }
+
+/* Recompensas */
+.rewards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.reward-card {
+    background-color: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+    .reward-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    }
+
+.reward-image {
+    position: relative;
+    height: 180px;
+    overflow: hidden;
+}
+
+    .reward-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+.reward-card:hover .reward-image img {
+    transform: scale(1.05);
+}
+
+.unavailable-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.points-needed {
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #e74c3c;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.reward-info {
+    padding: 15px;
+}
+
+    .reward-info h3 {
+        margin: 0 0 5px 0;
+        font-size: 18px;
+        color: #333;
+    }
+
+.reward-category {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.reward-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.original-price {
+    text-decoration: line-through;
+    color: #888;
+    font-size: 14px;
+}
+
+.reward-points {
+    background-color: #f8c146;
+    color: #333;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.canjear-btn {
+    width: 100%;
+    padding: 10px 0;
+    background-color: #5558DA;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+    .canjear-btn:hover {
+        background-color: #4547b8;
+    }
+
+    .canjear-btn.disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
+
+/* Historial */
+.history-section {
+    margin-top: 40px;
+    margin-bottom: 30px;
+}
+
+.empty-history {
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    color: #666;
+}
+
+.history-table-container {
+    overflow-x: auto;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .history-table th,
+    .history-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+
+    .history-table th {
+        background-color: #f7f9fc;
+        color: #333;
+        font-weight: 600;
+    }
+
+    .history-table tr:hover {
+        background-color: #f9f9f9;
+    }
+
+/* Modales */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 25px;
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 24px;
+    cursor: pointer;
+    color: #888;
+}
+
+    .close-modal:hover {
+        color: #333;
+    }
+
+.modal-content h2 {
+    color: #333;
+    margin-top: 10px;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.btn-primary,
+.btn-secondary {
+    padding: 10px 25px;
+    border-radius: 5px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-primary {
+    background-color: #5558DA;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #f1f1f1;
+    color: #333;
+}
+
+.success-icon {
+    font-size: 60px;
+    color: #2ecc71;
+    margin-bottom: 15px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .user-points-card {
+        flex-direction: column;
+    }
+
+    .points-display {
+        margin-bottom: 20px;
+    }
+
+    .points-info {
+        padding-left: 0;
+    }
+
+    .filter-controls > * {
+        width: 100%;
+    }
+
+    .rewards-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .rewards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .points-circle {
+        width: 120px;
+        height: 120px;
+    }
+
+    .modal-content {
+        padding: 15px;
+    }
+}

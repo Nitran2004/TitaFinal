@@ -1,0 +1,316 @@
+﻿@model ProyectoIdentity.ViewModels.RecompensasViewModel
+@{
+    ViewData["Title"] = "Programa de Recompensas";
+}
+
+<div class="rewards-container">
+    <!-- Barra de Progreso -->
+    <div class="progress-section">
+        <h2>Tus Puntos</h2>
+        <div class="user-points-card">
+            <div class="points-display">
+                <div class="points-circle">
+                    <span id="current-points">@Model.PuntosActuales</span>
+                    <span class="points-label">pts</span>
+                </div>
+            </div>
+            <div class="points-info">
+                <h3>Nivel de Recompensas</h3>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: @Model.PorcentajeProgreso%"></div>
+                    </div>
+                    <div class="progress-markers">
+                        @foreach (var nivel in Model.NivelesRecompensa)
+                        {
+                            var posicion = nivel.PuntosNecesarios * 100 / Model.PuntosMaximos;
+                            var activeClass = Model.PuntosActuales >= nivel.PuntosNecesarios ? "active" : "";
+
+                            <div class="marker @activeClass" style="left: @posicion%">
+                                <div class="marker-label">@nivel.Nombre</div>
+                                <div class="marker-points">@nivel.PuntosNecesarios pts</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y Ordenación -->
+    <div class="filter-section">
+        <div class="filter-controls">
+            <div class="search-box">
+                <input type="text" id="search-rewards" placeholder="Buscar recompensas...">
+            </div>
+            <div class="category-filter">
+                <select id="category-select">
+                    <option value="">Todas las categorías</option>
+                    @foreach (var categoria in Model.Categorias)
+                    {
+                        <option value="@categoria">@categoria</option>
+                    }
+                </select>
+            </div>
+            <div class="sort-options">
+                <select id="sort-select">
+                    <option value="points-asc">Puntos: Menor a Mayor</option>
+                    <option value="points-desc">Puntos: Mayor a Menor</option>
+                    <option value="name-asc">Nombre: A-Z</option>
+                    <option value="name-desc">Nombre: Z-A</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Recompensas -->
+    <div class="rewards-section">
+        <h2>Recompensas Disponibles</h2>
+        <div class="rewards-grid" id="rewards-container">
+            @foreach (var recompensa in Model.ProductosRecompensa)
+            {
+                var disponible = Model.PuntosActuales >= recompensa.PuntosNecesarios;
+                var cardClass = disponible ? "reward-card available" : "reward-card unavailable";
+
+                <div class="@cardClass" data-category="@recompensa.Categoria" data-points="@recompensa.PuntosNecesarios" data-name="@recompensa.Nombre">
+                    <div class="reward-image">
+                        <img src="@recompensa.Imagen" alt="@recompensa.Nombre">
+                        @if (!disponible)
+                        {
+                            <div class="unavailable-overlay">
+                                <div class="points-needed">
+                                    <span>Faltan @(recompensa.PuntosNecesarios - Model.PuntosActuales) pts</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div class="reward-info">
+                        <h3>@recompensa.Nombre</h3>
+                        <p class="reward-category">@recompensa.Categoria</p>
+                        <div class="reward-price">
+                            <span class="original-price">$@recompensa.PrecioOriginal.ToString("F2")</span>
+                            <span class="reward-points">@recompensa.PuntosNecesarios pts</span>
+                        </div>
+                        @if (disponible)
+                        {
+                            <button class="canjear-btn" data-product-id="@recompensa.ProductoId" data-points="@recompensa.PuntosNecesarios">Canjear Ahora</button>
+                        }
+                        else
+                        {
+                            <button class="canjear-btn disabled" disabled>Canjear Ahora</button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Historial de Canjes -->
+    <div class="history-section">
+        <h2>Historial de Canjes</h2>
+        @if (Model.HistorialCanjes.Count == 0)
+        {
+            <div class="empty-history">
+                <p>No has realizado canjes todavía.</p>
+            </div>
+        }
+        else
+        {
+            <div class="history-table-container">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Producto</th>
+                            <th>Puntos Canjeados</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var canje in Model.HistorialCanjes)
+                        {
+                            <tr>
+                                <td>@canje.FechaCanje.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@canje.NombreProducto</td>
+                                <td>@canje.PuntosCanjeados pts</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal de Confirmación de Canje -->
+<div id="confirmation-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>Confirmar Canje</h2>
+        <p>¿Estás seguro de que deseas canjear <span id="product-name"></span> por <span id="points-required"></span> puntos?</p>
+        <div class="modal-buttons">
+            <button id="cancel-canje" class="btn-secondary">Cancelar</button>
+            <button id="confirm-canje" class="btn-primary">Confirmar Canje</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Éxito -->
+<div id="success-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <div class="success-icon">
+            <i class="fa fa-check-circle"></i>
+        </div>
+        <h2>¡Canje Exitoso!</h2>
+        <p>Has canjeado <span id="success-product-name"></span> por <span id="success-points"></span> puntos.</p>
+        <p>Tu nuevo saldo de puntos es: <span id="new-points-balance"></span> pts</p>
+        <div class="modal-buttons">
+            <button id="close-success" class="btn-primary">Aceptar</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Filtrado y ordenación
+            function filterAndSortRewards() {
+                const searchTerm = $('#search-rewards').val().toLowerCase();
+                const category = $('#category-select').val();
+                const sortOption = $('#sort-select').val();
+
+                let rewards = $('.reward-card').hide();
+
+                // Aplicar filtros
+                rewards = rewards.filter(function () {
+                    const matchesSearch = $(this).data('name').toLowerCase().includes(searchTerm);
+                    const matchesCategory = category === '' || $(this).data('category') === category;
+                    return matchesSearch && matchesCategory;
+                });
+
+                // Ordenar
+                rewards.sort(function (a, b) {
+                    const $a = $(a);
+                    const $b = $(b);
+
+                    switch (sortOption) {
+                        case 'points-asc':
+                            return $a.data('points') - $b.data('points');
+                        case 'points-desc':
+                            return $b.data('points') - $a.data('points');
+                        case 'name-asc':
+                            return $a.data('name').localeCompare($b.data('name'));
+                        case 'name-desc':
+                            return $b.data('name').localeCompare($a.data('name'));
+                        default:
+                            return 0;
+                    }
+                });
+
+                // Mostrar resultados
+                $('#rewards-container').append(rewards);
+                rewards.show();
+            }
+
+            // Enlazar eventos de filtro
+            $('#search-rewards, #category-select, #sort-select').on('input change', filterAndSortRewards);
+
+            // Modal de confirmación
+            $('.canjear-btn:not(.disabled)').click(function () {
+                const productId = $(this).data('product-id');
+                const points = $(this).data('points');
+                const productName = $(this).closest('.reward-card').find('h3').text();
+
+                $('#product-name').text(productName);
+                $('#points-required').text(points);
+                $('#confirm-canje').data('product-id', productId).data('points', points).data('name', productName);
+
+                $('#confirmation-modal').css('display', 'flex');
+            });
+
+            // Cerrar modales
+            $('.close-modal, #cancel-canje, #close-success').click(function () {
+                $('.modal').hide();
+            });
+
+            // Confirmar canje
+            $('#confirm-canje').click(function () {
+                const productId = $(this).data('product-id');
+                const points = $(this).data('points');
+                const productName = $(this).data('name');
+
+                // Enviar petición AJAX
+                $.ajax({
+                    url: '@Url.Action("CanjearRecompensa", "Recompensas")',
+                    type: 'POST',
+                    data: {
+                        productoId: productId,
+                        puntos: points
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            // Actualizar puntos en la interfaz
+                            const newPoints = parseInt($('#current-points').text()) - points;
+                            $('#current-points').text(newPoints);
+
+                            // Actualizar progreso
+                            const newProgress = (newPoints * 100) / @Model.PuntosMaximos;
+                            $('.progress-fill').css('width', newProgress + '%');
+
+                            // Actualizar estado de los marcadores
+                            $('.marker').each(function () {
+                                const markerPoints = parseInt($(this).find('.marker-points').text());
+                                if (newPoints >= markerPoints) {
+                                    $(this).addClass('active');
+                                } else {
+                                    $(this).removeClass('active');
+                                }
+                            });
+
+                            // Actualizar disponibilidad de las recompensas
+                            $('.reward-card').each(function () {
+                                const cardPoints = $(this).data('points');
+                                if (newPoints >= cardPoints) {
+                                    $(this).removeClass('unavailable').addClass('available');
+                                    $(this).find('.unavailable-overlay').remove();
+                                    $(this).find('.canjear-btn').removeClass('disabled').prop('disabled', false);
+                                } else {
+                                    if (!$(this).hasClass('unavailable')) {
+                                        $(this).removeClass('available').addClass('unavailable');
+                                        $(this).find('.reward-image').append(`
+                                                    <div class="unavailable-overlay">
+                                                        <div class="points-needed">
+                                                            <span>Faltan ${cardPoints - newPoints} pts</span>
+                                                        </div>
+                                                    </div>
+                                                `);
+                                        $(this).find('.canjear-btn').addClass('disabled').prop('disabled', true);
+                                    } else {
+                                        $(this).find('.points-needed span').text(`Faltan ${cardPoints - newPoints} pts`);
+                                    }
+                                }
+                            });
+
+                            // Mostrar modal de éxito
+                            $('#success-product-name').text(productName);
+                            $('#success-points').text(points);
+                            $('#new-points-balance').text(newPoints);
+                            $('#confirmation-modal').hide();
+                            $('#success-modal').css('display', 'flex');
+
+                            // Recargar la página después de unos segundos para actualizar el historial
+                            setTimeout(function () {
+                                location.reload();
+                            }, 3000);
+                        } else {
+                            alert('Error al canjear: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('Error al procesar la solicitud.');
+                    }
+                });
+            });
+        });
+    </script>
+}

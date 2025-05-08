@@ -293,26 +293,44 @@
             return;
         }
 
+        // Obtener el carrito desde localStorage
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+
+        // Verificar que el carrito no esté vacío
+        if (cart.length === 0) {
+            alert('El carrito está vacío');
+            return;
+        }
+
         fetch('/api/orders', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                // Si estás usando autenticación basada en tokens
+                // 'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
             body: JSON.stringify({
-                cart: JSON.parse(localStorage.getItem('cart') || '[]'),
+                cart: cart,
                 collectionPointId: pt.id
             })
         })
             .then(res => {
-                if (!res.ok) throw new Error('Error al confirmar el pedido');
+                if (!res.ok) {
+                    return res.text().then(errorText => {
+                        console.error('Error response:', errorText);
+                        throw new Error(errorText || 'Error al confirmar el pedido');
+                    });
+                }
                 return res.json();
             })
-            .then(() => {
+            .then(pedidoCreado => {
+                console.log('Pedido creado:', pedidoCreado);
                 localStorage.removeItem('cart');
                 localStorage.removeItem('puntoSeleccionado');
-                alert('✅ Pedido confirmado');
-                window.location.href = '/';
+                window.location.href = '/Pedidos/Pedidos';
             })
             .catch(err => {
-                console.error(err);
+                console.error('Error completo:', err);
                 alert('Ocurrió un error: ' + err.message);
             });
     });

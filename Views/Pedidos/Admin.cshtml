@@ -1,0 +1,21 @@
+﻿@model IEnumerable<Pedido>
+
+<h2>Pedidos (Administrador)</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID Pedido</th>
+            <th>ID Usuario</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var pedido in Model)
+        {
+            <tr>
+                <td>@pedido.Id</td>
+                <td>@pedido.UsuarioId ?? "Anónimo"</td>
+            </tr>
+        }
+    </tbody>
+</table>
