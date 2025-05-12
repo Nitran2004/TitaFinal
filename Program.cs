@@ -57,7 +57,6 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 
 // Servicios personalizados
 builder.Services.AddScoped<IPasswordHasher<IdentityUser>, PlainTextPasswordHasher>();
-builder.Services.AddScoped<CartService>();
 
 // Configuración de cookies de autenticación
 builder.Services.ConfigureApplicationCookie(options =>

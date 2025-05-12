@@ -1,337 +1,240 @@
-﻿@{
-    ViewData["Title"] = "Confirmar Pedido";
+﻿@model ProyectoIdentity.Models.CollectionPoint
+@{
+    ViewData["Title"] = "Confirmar Punto de Recolección";
+
+    // Valores por defecto para Quito si no hay coordenadas
+    if (ViewBag.UserLat == null) { ViewBag.UserLat = -0.1857; }
+    if (ViewBag.UserLng == null) { ViewBag.UserLng = -78.4954; }
+    if (ViewBag.Distancia == null) { ViewBag.Distancia = 3.5; }
+
+    // Es crucial obtener el ID del punto de recolección
+    int puntoRecoleccionId = ViewBag.PuntoRecoleccionId ?? 0;
 }
+<div class="container mt-4">
+    <!-- Mostrar mensajes de error si existen -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    <p>Pedido ID: @ViewBag.PedidoId</p>
+    <p>Punto ID: @ViewBag.PuntoRecoleccionId</p>
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h2 class="mb-0">Confirma tu punto de recolección</h2>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Detalles del punto de recolección</h5>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">@Model.Name</h5>
+                            <p class="card-text">
+                                <strong>Sucursal:</strong> @Model.Sucursal.Nombre<br />
+                                <strong>Dirección:</strong> @Model.Address<br />
+                                <strong>Descripción:</strong> @Model.Descripcion
+                            </p>
+                            <p class="card-text">
+                                <strong>Distancia:</strong>
+                                <span class="@(ViewBag.Distancia < 3 ? "text-success" : (ViewBag.Distancia < 7 ? "text-warning" : "text-danger"))">
+                                    @ViewBag.Distancia km
+                                    @if (ViewBag.Distancia < 3)
+                                    {
+                                        <i class="fas fa-check-circle"></i>
+                                    }
+                                </span>
+                            </p>
+                            <div class="small text-muted">
+                                <p>ID Punto: @puntoRecoleccionId</p>
+                                <p id="coordsInfo">Coordenadas calculadas: Usuario (@ViewBag.UserLat, @ViewBag.UserLng), Sucursal (@Model.Sucursal.Latitud, @Model.Sucursal.Longitud)</p>
+                            </div>
+                        </div>
+                    </div>
+                    @*
+                    <div class="card mb-4">
+                    <div class="card-header bg-light">
+                    <h5 class="mb-0">Mapa</h5>
+                    </div>
+                    <div class="card-body">
+                    <div id="mapa" style="height: 300px; width: 100%;"></div>
+                    <div id="mapError" class="alert alert-danger mt-2" style="display: none;">
+                    Error al cargar el mapa. Verifique su conexión a internet.
+                    </div>
+                    </div>
+                    </div> *@
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Instrucciones</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>Una vez confirmes tu pedido:</p>
+                            <ul>
+                                <li>Recibirás una confirmación con el número de tu pedido</li>
+                                <li>Podrás recoger tu pedido en el punto seleccionado en aproximadamente 20-30 minutos</li>
+                                <li>Cuando llegues, menciona el número de tu pedido</li>
+                            </ul>
 
-<div class="container">
-    <div id="location-permission" class="location-permission" style="display:none;">
-        <h3>Necesitamos tu ubicación</h3>
-        <p>Para mostrarte la distancia al punto de recolección, necesitamos acceder a tu ubicación.</p>
-        <button id="allow-location">Permitir ubicación</button>
+                            @if (ViewBag.Distancia > 5)
+                            {
+                                <div class="alert alert-warning mt-3">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <strong>Nota:</strong> Te encuentras a más de 5 km de distancia.
+                                    Considera el tiempo de viaje para recoger tu pedido.
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 d-flex justify-content-between">
+                <a href="@Url.Action("Seleccionar", "Recoleccion")" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Elegir otro punto
+                </a>
+
+                <!-- Formulario para finalizar el pedido -->
+                @if (puntoRecoleccionId > 0)
+                {
+                    <form asp-action="FinalizarPedido" asp-controller="Recoleccion" method="post"
+                          onsubmit="return confirmarFinalizacion();">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="puntoRecoleccionId" value="@puntoRecoleccionId" />
+                        <button type="submit" class="btn btn-success" id="btnFinalizar">
+                            <i class="fas fa-check"></i> Confirmar y finalizar pedido
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <button class="btn btn-secondary" disabled>
+                        <i class="fas fa-exclamation-triangle"></i> Error: No se puede finalizar
+                    </button>
+                }
+            </div>
+        </div>
     </div>
-
-    <div id="info-container" style="display:none;">
-        <h3>Dirígete a:</h3>
-        <div id="info-punto" class="point-info">Cargando...</div>
-        <button id="btn-confirmar" class="confirm-button">Confirmar pedido</button>
-    </div>
-
-    <div id="error-container" class="error-message" style="display:none;"></div>
 </div>
 
-<style>
-    .container {
-        max-width: 400px;
-        margin: 0 auto;
-        padding: 20px;
-        text-align: center;
-        font-family: Arial, sans-serif;
-    }
+@section Scripts {
+    <!-- Incluir Leaflet para el mapa -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
-    .location-permission {
-        background: #f9f9f9;
-        border-radius: 8px;
-        padding: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
+    <script>
+        // Función para confirmar antes de finalizar
+        function confirmarFinalizacion() {
+            // Deshabilitar el botón para evitar doble clic
+            const btn = document.getElementById('btnFinalizar');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
 
-        .location-permission button {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background 0.3s ease;
-            margin-top: 15px;
+            return true; // Permitir el envío del formulario
         }
 
-            .location-permission button:hover {
-                background: #45a049;
+        document.addEventListener('DOMContentLoaded', function () {
+            // Código del mapa (igual que antes)
+            const defaultLat = -0.1857;
+            const defaultLng = -78.4954;
+
+            let userLat = @ViewBag.UserLat;
+            let userLng = @ViewBag.UserLng;
+            let sucursalLat = @Model.Sucursal.Latitud;
+            let sucursalLng = @Model.Sucursal.Longitud;
+
+            // Validar coordenadas
+            if (isNaN(userLat) || isNaN(userLng) || Math.abs(userLat) > 90 || Math.abs(userLng) > 180) {
+                console.warn("Coordenadas de usuario inválidas, usando valores por defecto");
+                userLat = defaultLat;
+                userLng = defaultLng;
             }
 
-    .point-info {
-        background: #f9f9f9;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-
-        .point-info strong {
-            font-size: 18px;
-            color: #333;
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        .point-info em {
-            color: #666;
-            display: block;
-            margin-top: 10px;
-        }
-
-        .point-info a {
-            color: #4CAF50;
-            text-decoration: none;
-            margin-top: 10px;
-            display: inline-block;
-        }
-
-            .point-info a:hover {
-                text-decoration: underline;
+            if (isNaN(sucursalLat) || isNaN(sucursalLng) || Math.abs(sucursalLat) > 90 || Math.abs(sucursalLng) > 180) {
+                console.warn("Coordenadas de sucursal inválidas, usando valores por defecto");
+                sucursalLat = -0.180653;
+                sucursalLng = -78.467834;
             }
 
-    .confirm-button {
-        background: #4CAF50;
-        color: white;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-        transition: background 0.3s ease;
-    }
+            console.log("Coordenadas para el mapa:");
+            console.log("Usuario:", userLat, userLng);
+            console.log("Sucursal:", sucursalLat, sucursalLng);
 
-        .confirm-button:hover {
-            background: #45a049;
-        }
+            try {
+                // Crear mapa
+                const map = L.map('mapa').setView([
+                    (userLat + sucursalLat) / 2,
+                    (userLng + sucursalLng) / 2
+                ], 13);
 
-    .error-message {
-        color: red;
-        padding: 20px;
-    }
-</style>
+                // Añadir capa de mapa
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
 
-<script type="text/javascript">
-    // Obtener el punto seleccionado del almacenamiento local
-    const pt = JSON.parse(localStorage.getItem('puntoSeleccionado') || 'null');
+                // Añadir marcador para el usuario
+                const userMarker = L.marker([userLat, userLng])
+                    .addTo(map)
+                    .bindPopup('Tu ubicación')
+                    .openPopup();
 
-    // Elementos del DOM
-    const locationPermissionDiv = document.getElementById('location-permission');
-    const infoContainer = document.getElementById('info-container');
-    const errorContainer = document.getElementById('error-container');
-    const infoDiv = document.getElementById('info-punto');
+                // Añadir marcador para la sucursal
+                const sucursalMarker = L.marker([sucursalLat, sucursalLng])
+                    .addTo(map)
+                    .bindPopup('@Model.Sucursal.Nombre');
 
-    // Función de Haversine mejorada para calcular distancia más precisa
-    function haversineDistance(lat1, lon1, lat2, lon2) {
-        // Radio de la Tierra en kilómetros
-        const R = 6371;
+                // Añadir línea entre los dos puntos
+                const polyline = L.polyline([
+                    [userLat, userLng],
+                    [sucursalLat, sucursalLng]
+                ], { color: 'blue' }).addTo(map);
 
-        // Convertir grados a radianes
-        const toRadians = (degrees) => degrees * (Math.PI / 180);
+                // Ajustar la vista para que se vean ambos marcadores
+                map.fitBounds(polyline.getBounds());
 
-        // Diferencias de latitud y longitud
-        const dLat = toRadians(lat2 - lat1);
-        const dLon = toRadians(lon2 - lon1);
+                // Etiqueta con la distancia
+                const midPoint = [
+                    (userLat + sucursalLat) / 2,
+                    (userLng + sucursalLng) / 2
+                ];
 
-        // Cálculos trigonométricos
-        const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                L.marker(midPoint, {
+                    icon: L.divIcon({
+                        className: 'distance-label',
+                        html: '<div style="background: white; padding: 5px; border-radius: 5px; border: 1px solid #ccc; font-weight: bold;">' +
+                            '@ViewBag.Distancia km</div>',
+                        iconSize: [80, 30],
+                        iconAnchor: [40, 15]
+                    })
+                }).addTo(map);
+            } catch (error) {
+                console.error("Error al cargar el mapa:", error);
+                document.getElementById('mapa').style.display = 'none';
+                document.getElementById('mapError').style.display = 'block';
+            }
 
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            // Función para calcular la distancia
+            function calcularDistancia(lat1, lon1, lat2, lon2) {
+                const toRad = function (deg) {
+                    return deg * (Math.PI / 180);
+                };
 
-        // Distancia en kilómetros
-        return R * c;
-    }
+                const R = 6371; // Radio de la Tierra en kilómetros
+                const dLat = toRad(lat2 - lat1);
+                const dLon = toRad(lon2 - lon1);
 
-    // Función para obtener ubicación del usuario
-    function getUserLocation() {
-        return new Promise((resolve, reject) => {
-            if ('geolocation' in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const userLocation = {
-                            latitude: position.coords.latitude,
-                            longitude: position.coords.longitude,
-                            timestamp: Date.now()
-                        };
+                const a =
+                    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
 
-                        // Guardar ubicación en localStorage
-                        localStorage.setItem('userLocation', JSON.stringify(userLocation));
-
-                        resolve(userLocation);
-                    },
-                    (error) => {
-                        reject(error);
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 5000,
-                        maximumAge: 0
-                    }
-                );
-            } else {
-                reject(new Error('Geolocalización no soportada por este navegador'));
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                return R * c;
             }
         });
-    }
-
-    // Función para obtener la ubicación guardada o solicitar nueva
-    function getStoredOrNewLocation() {
-        // Intentar obtener ubicación guardada
-        const storedLocation = JSON.parse(localStorage.getItem('userLocation'));
-
-        // Verificar si la ubicación guardada es reciente (menos de 30 minutos)
-        if (storedLocation &&
-            (Date.now() - storedLocation.timestamp) < 30 * 60 * 1000) {
-            return Promise.resolve({
-                latitude: storedLocation.latitude,
-                longitude: storedLocation.longitude
-            });
-        }
-
-        // Si no hay ubicación guardada o es antigua, solicitar nueva
-        return getUserLocation();
-    }
-
-    // Función para obtener la distancia al punto de recolección
-    async function getDistanceToCollectionPoint(userLocation) {
-        if (!pt) {
-            showError('No hay punto de recolección seleccionado');
-            return;
-        }
-
-        try {
-            // Calcular distancia usando Haversine
-            const distance = haversineDistance(
-                userLocation.latitude,
-                userLocation.longitude,
-                pt.latitude,
-                pt.longitude
-            );
-
-            // Mostrar información
-            infoDiv.innerHTML = `
-                    <strong>${pt.name}</strong><br/>
-                    ${pt.address}<br/>
-                    <em>Coordenadas:</em> ${pt.latitude.toFixed(5)}, ${pt.longitude.toFixed(5)}<br/>
-                    <strong>Distancia aproximada:</strong> ${distance.toFixed(2)} km<br/>
-                    <p style="color: #666; font-size: 0.9em;">
-                        * La distancia es un estimado en línea recta. La ruta real puede variar.
-                    </p>
-                    <a href="https://www.google.com/maps/search/?api=1&query=${pt.latitude},${pt.longitude}"
-                       target="_blank" rel="noopener">
-                        Ver en Google Maps
-                    </a>
-                `;
-
-            // Mostrar contenedor de información
-            locationPermissionDiv.style.display = 'none';
-            infoContainer.style.display = 'block';
-        } catch (error) {
-            showError(`No se pudo obtener la distancia: ${error.message}`);
-        }
-    }
-
-    // Función para mostrar errores
-    function showError(message) {
-        locationPermissionDiv.style.display = 'none';
-        infoContainer.style.display = 'none';
-        errorContainer.style.display = 'block';
-        errorContainer.innerHTML = `
-                <p>${message}</p>
-                ${pt ? `
-                <strong>${pt.name}</strong><br/>
-                ${pt.address}<br/>
-                <em>Coordenadas:</em> ${pt.latitude.toFixed(5)}, ${pt.longitude.toFixed(5)}<br/>
-                <a href="https://www.google.com/maps/search/?api=1&query=${pt.latitude},${pt.longitude}"
-                   target="_blank" rel="noopener">
-                    Ver en Google Maps
-                </a>
-                ` : ''}
-            `;
-    }
-
-    // Configurar listeners
-    document.addEventListener('DOMContentLoaded', async () => {
-        // Si no hay punto seleccionado, mostrar error
-        if (!pt) {
-            showError('No hay punto de recolección seleccionado');
-            return;
-        }
-
-        try {
-            // Intentar obtener ubicación guardada o solicitar nueva
-            const userLocation = await getStoredOrNewLocation();
-            await getDistanceToCollectionPoint(userLocation);
-        } catch (error) {
-            // Si falla la obtención de ubicación, mostrar botón de permiso
-            locationPermissionDiv.style.display = 'block';
-
-            // Listener para botón de permitir ubicación
-            document.getElementById('allow-location').addEventListener('click', async () => {
-                try {
-                    const userLocation = await getUserLocation();
-                    await getDistanceToCollectionPoint(userLocation);
-                } catch (error) {
-                    // Manejar errores de geolocalización
-                    switch (error.code) {
-                        case error.PERMISSION_DENIED:
-                            showError('Permiso de ubicación denegado. Por favor, habilite los permisos de ubicación.');
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            showError('Información de ubicación no disponible.');
-                            break;
-                        case error.TIMEOUT:
-                            showError('La solicitud de ubicación ha expirado.');
-                            break;
-                        default:
-                            showError(`Error al obtener ubicación: ${error.message}`);
-                    }
-                }
-            });
-        }
-    });
-
-    // Evento para confirmar pedido
-    document.getElementById('btn-confirmar')?.addEventListener('click', () => {
-        if (!pt) {
-            alert('Selecciona primero un punto de recolección');
-            return;
-        }
-
-        // Obtener el carrito desde localStorage
-        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-
-        // Verificar que el carrito no esté vacío
-        if (cart.length === 0) {
-            alert('El carrito está vacío');
-            return;
-        }
-
-        fetch('/api/orders', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                // Si estás usando autenticación basada en tokens
-                // 'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify({
-                cart: cart,
-                collectionPointId: pt.id
-            })
-        })
-            .then(res => {
-                if (!res.ok) {
-                    return res.text().then(errorText => {
-                        console.error('Error response:', errorText);
-                        throw new Error(errorText || 'Error al confirmar el pedido');
-                    });
-                }
-                return res.json();
-            })
-            .then(pedidoCreado => {
-                console.log('Pedido creado:', pedidoCreado);
-                localStorage.removeItem('cart');
-                localStorage.removeItem('puntoSeleccionado');
-                window.location.href = '/Pedidos/Pedidos';
-            })
-            .catch(err => {
-                console.error('Error completo:', err);
-                alert('Ocurrió un error: ' + err.message);
-            });
-    });
-</script>
+    </script>
+}

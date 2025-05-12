@@ -1,0 +1,71 @@
+﻿@model ProyectoIdentity.Models.Sucursal
+@{
+    ViewData["Title"] = "Confirmar Sucursal";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">¡Sucursal seleccionada con éxito!</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Has seleccionado la sucursal:</h5>
+
+                    <div class="sucursal-info p-3 mb-3 bg-light rounded">
+                        <h4>@Model.Nombre</h4>
+                        <p class="mb-2"><i class="bi bi-geo-alt-fill text-danger"></i> @Model.Direccion</p>
+                    </div>
+
+                    <div id="map" style="height: 300px; width: 100%; margin-bottom: 20px;"></div>
+
+                    <p>Desde aquí podrás recoger tu pedido cuando esté listo.</p>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-house-door"></i> Volver al inicio
+                        </a>
+                        <a asp-controller="Productos" asp-action="Index" class="btn btn-primary">
+                            <i class="bi bi-cart-plus"></i> Continuar comprando
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function initMap() {
+            const sucursalPos = { lat: @Model.Latitud, lng: @Model.Longitud };
+
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 15,
+                center: sucursalPos,
+            });
+
+            const marker = new google.maps.Marker({
+                position: sucursalPos,
+                map: map,
+                title: "@Model.Nombre",
+                animation: google.maps.Animation.DROP
+            });
+
+            const infoWindow = new google.maps.InfoWindow({
+                content: "<strong>@Model.Nombre</strong><br>@Model.Direccion"
+            });
+
+            marker.addListener("click", () => {
+                infoWindow.open(map, marker);
+            });
+
+            // Abrir el infowindow por defecto
+            infoWindow.open(map, marker);
+        }
+    </script>
+    <script async defer
+            src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&callback=initMap">
+    </script>
+}

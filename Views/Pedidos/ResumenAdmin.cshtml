@@ -1,0 +1,76 @@
+﻿@model List<ProyectoIdentity.Models.Pedido>
+
+<h2>Resumen de Pedidos Para Admin</h2>
+
+@foreach (var pedido in Model)
+{
+    <div style="border:1px solid #ccc; padding:10px; margin-bottom:20px;">
+        <h3>Pedido #@pedido.Id</h3>
+        <p>Fecha del pedido: @pedido.Fecha.ToString("dd/MM/yyyy HH:mm")</p>
+
+        <form asp-action="ActualizarEstado" asp-controller="Pedidos" method="post">
+            <input type="hidden" name="id" value="@pedido.Id" />
+            <label for="estado">Estado del pedido:</label>
+            <select name="estado" id="estado">
+                <option value="Preparándose" selected="@("Preparándose" == pedido.Estado)">Preparándose</option>
+                <option value="Listo para entregar" selected="@("Listo para entregar" == pedido.Estado)">Listo para entregar</option>
+                <option value="Entregado" selected="@("Entregado" == pedido.Estado)">Entregado</option>
+            </select>
+            <button type="submit">Actualizar Estado</button>
+        </form>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in pedido.PedidoProductos)
+                {
+                    <tr>
+                        <td>@item.Producto.Nombre</td>
+                        <td>@item.Producto.Categoria</td>
+                        <td>@item.Cantidad</td>
+                        <td>$@item.Producto.Precio</td>
+                        <td>$@(item.Producto.Precio * item.Cantidad)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <p><strong>Total del pedido:</strong> $@pedido.Total</p>
+
+        @if (pedido.ComentarioEnviado)
+        {
+            <div class="valoracion-cliente mt-3 p-3" style="background-color: #f8f9fa; border-radius: 5px;">
+                <h4>Valoración del cliente</h4>
+                <div>
+                    <span style="font-weight: bold;">Calificación: </span>
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        if (i <= pedido.Calificacion)
+                        {
+                            <span style="color: #ffc107; font-size: 20px;">★</span>
+                        }
+                        else
+                        {
+                            <span style="color: #ddd; font-size: 20px;">★</span>
+                        }
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(pedido.Comentario))
+                {
+                    <div class="mt-2">
+                        <span style="font-weight: bold;">Comentario: </span>
+                        <p>@pedido.Comentario</p>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}

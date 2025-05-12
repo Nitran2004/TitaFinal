@@ -1,21 +1,23 @@
-﻿namespace ProyectoIdentity.Models
+﻿using Microsoft.AspNetCore.Http;
+using System;
+
+namespace ProyectoIdentity.Helpers
 {
-    using System.Text.Json;
-
-    namespace ProyectoIdentity.Extensions
+    public static class SessionExtensions
     {
-        public static class SessionExtensions
+        public static void SetInt32(this ISession session, string key, int value)
         {
-            public static void SetObjectAsJson<T>(this ISession session, string key, T value)
-            {
-                session.SetString(key, JsonSerializer.Serialize(value));
-            }
+            session.Set(key, BitConverter.GetBytes(value));
+        }
 
-            public static T GetObjectFromJson<T>(this ISession session, string key)
+        public static int? GetInt32(this ISession session, string key)
+        {
+            var data = session.Get(key);
+            if (data == null || data.Length < sizeof(int))
             {
-                var value = session.GetString(key);
-                return value == null ? default(T) : JsonSerializer.Deserialize<T>(value);
+                return null;
             }
+            return BitConverter.ToInt32(data, 0);
         }
     }
 }

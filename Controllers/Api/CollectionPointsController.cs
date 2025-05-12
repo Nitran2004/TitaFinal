@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProyectoIdentity.Datos;
-using ProyectoIdentity.Services;
-using ProyectoIdentity.Servicios;
+using ProyectoIdentity.Models;
+using ProyectoIdentity.Services; // Añadido para DistanceCalculator
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,17 +11,17 @@ namespace ProyectoIdentity.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class DistanceController : ControllerBase
+    public class CollectionPointsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
 
-        public DistanceController(ApplicationDbContext context)
+        public CollectionPointsController(ApplicationDbContext context)
         {
             _context = context;
         }
 
         // Clase de respuesta para devolver información de distancia
-        public class DistanceResponse
+        public class CollectionPointDistanceResponse
         {
             public int CollectionPointId { get; set; }
             public string Name { get; set; }
@@ -39,69 +39,63 @@ namespace ProyectoIdentity.Controllers
         /// <param name="maxDistance">Distancia máxima en km (opcional, por defecto 50)</param>
         /// <param name="limit">Número máximo de puntos a devolver (opcional, por defecto 5)</param>
         [HttpGet("nearest")]
-        public async Task<ActionResult<IEnumerable<DistanceResponse>>> GetNearestCollectionPoints(
+        public async Task<ActionResult<IEnumerable<CollectionPointDistanceResponse>>> GetNearestCollectionPoints(
             [FromQuery] double latitude,
             [FromQuery] double longitude,
             [FromQuery] double maxDistance = 50,
             [FromQuery] int limit = 5)
         {
-            // Obtener todos los puntos de recolección
+            // Logs detallados
+            Console.WriteLine($"Coordenadas recibidas - Lat: {latitude}, Lon: {longitude}");
+
             var collectionPoints = await _context.CollectionPoints.ToListAsync();
 
-            // Calcular distancias y filtrar
             var nearestPoints = collectionPoints
-                .Select(point => new DistanceResponse
-                {
-                    CollectionPointId = point.Id,
-                    Name = point.Name,
-                    Address = point.Address,
-                    Latitude = point.Latitude,
-                    Longitude = point.Longitude,
-                    DistanceInKm = DistanceCalculator.CalculateDistance(
+                .Select(point => {
+                    // Cálculo de distancia con log detallado
+                    var distance = DistanceCalculator.CalculateDistance(
                         latitude, longitude,
-                        point.Latitude, point.Longitude)
+                        point.Latitude, point.Longitude);
+
+                    Console.WriteLine($"Punto: {point.Name}");
+                    Console.WriteLine($"Punto Lat: {point.Latitude}, Lon: {point.Longitude}");
+                    Console.WriteLine($"Distancia calculada: {distance} km");
+
+                    return new CollectionPointDistanceResponse
+                    {
+                        CollectionPointId = point.Id,
+                        Name = point.Name,
+                        Address = point.Address,
+                        Latitude = point.Latitude,
+                        Longitude = point.Longitude,
+                        DistanceInKm = distance
+                    };
                 })
                 .Where(p => p.DistanceInKm <= maxDistance)
                 .OrderBy(p => p.DistanceInKm)
                 .Take(limit)
                 .ToList();
 
+            // Log adicional
+            Console.WriteLine($"Puntos encontrados: {nearestPoints.Count}");
+
             return Ok(nearestPoints);
         }
 
         /// <summary>
-        /// Calcula la distancia a un punto de recolección específico
+        /// Obtiene todos los puntos de recolección
         /// </summary>
-        [HttpGet("distance/{collectionPointId}")]
-        public async Task<ActionResult<DistanceResponse>> GetDistanceToCollectionPoint(
-            int collectionPointId,
-            [FromQuery] double latitude,
-            [FromQuery] double longitude)
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<CollectionPoint>>> GetCollectionPoints()
         {
-            // Buscar el punto de recolección
-            var point = await _context.CollectionPoints.FindAsync(collectionPointId);
+            var points = await _context.CollectionPoints.ToListAsync();
 
-            if (point == null)
+            if (!points.Any())
             {
-                return NotFound("Punto de recolección no encontrado");
+                return NotFound("No hay puntos de recolección disponibles");
             }
 
-            // Calcular distancia
-            var distance = DistanceCalculator.CalculateDistance(
-                latitude, longitude,
-                point.Latitude, point.Longitude);
-
-            var response = new DistanceResponse
-            {
-                CollectionPointId = point.Id,
-                Name = point.Name,
-                Address = point.Address,
-                Latitude = point.Latitude,
-                Longitude = point.Longitude,
-                DistanceInKm = distance
-            };
-
-            return Ok(response);
+            return Ok(points);
         }
     }
 }

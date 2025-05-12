@@ -1,0 +1,63 @@
+﻿@model IEnumerable<ProyectoIdentity.Models.Sucursal>
+@{
+    ViewData["Title"] = "Seleccionar Sucursal";
+}
+
+<h2>Selecciona la Sucursal</h2>
+
+<p>Encontramos la siguiente sucursal cerca de ti:</p>
+
+<div class="row">
+    @foreach (var sucursal in Model)
+    {
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">@sucursal.Nombre</h5>
+                    <p class="card-text">
+                        <strong>Dirección:</strong> @sucursal.Direccion
+                    </p>
+                    <p class="card-text">
+                        <strong>Distancia:</strong> <span id="distancia-@sucursal.Id">Calculando...</span>
+                    </p>
+                    <form asp-action="ConfirmarSucursal" method="post">
+                        <input type="hidden" name="sucursalId" value="@sucursal.Id" />
+                        <input type="hidden" name="lat" value="@ViewBag.UserLat" />
+                        <input type="hidden" name="lng" value="@ViewBag.UserLng" />
+                        <button type="submit" class="btn btn-primary">Seleccionar esta sucursal</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const userLat = @ViewBag.UserLat;
+        const userLng = @ViewBag.UserLng;
+
+        // Calcular distancia para cada sucursal
+    @foreach (var sucursal in Model)
+    {
+        <text>
+                        const sucursalLat@(sucursal.Id) = @sucursal.Latitud;
+            const sucursalLng@(sucursal.Id) = @sucursal.Longitud;
+            const distanciaKm@(sucursal.Id) = calcularDistancia(userLat, userLng, sucursalLat@(sucursal.Id), sucursalLng@(sucursal.Id));
+            document.getElementById('distancia-@sucursal.Id').textContent = distanciaKm@(sucursal.Id).toFixed(2) + ' km';
+        </text>
+    }
+
+            function calcularDistancia(lat1, lon1, lat2, lon2) {
+                const R = 6371; // Radio de la Tierra en km
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a =
+                    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                return R * c;
+            }
+    });
+</script>

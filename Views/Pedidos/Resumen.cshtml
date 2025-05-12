@@ -1,21 +1,208 @@
-﻿@model Pedido
+﻿@model ProyectoIdentity.Models.Pedido
+@{
+    ViewData["Title"] = "Resumen del Pedido";
 
-<h2>Resumen del Pedido</h2>
-
-@if (Model.PedidoProductos != null && Model.PedidoProductos.Any())
-{
-    foreach (var item in Model.PedidoProductos)
+    // Calcular el total al principio para evitar errores
+    decimal total = 0;
+    if (Model.PedidoProductos != null && Model.PedidoProductos.Any())
     {
-        <div>
-            <strong>Nombre:</strong> @item.Producto?.Nombre  <br />
-            <strong>Cantidad:</strong> @item.Cantidad <br />
-            <strong>Precio:</strong> $@item.Precio <br />
-            <strong>Total:</strong> $@(item.Cantidad * item.Precio)
-        </div>
-        <hr />
+        // Usar cast explícito en cada elemento del Sum
+        total = Model.PedidoProductos.Sum(p => (decimal)(p.Precio * p.Cantidad));
+    }
+    else
+    {
+        // Usar Model.Total directamente si está disponible
+        var modelTotal = Model.Total;
+        if (modelTotal != null)
+        {
+            total = (decimal)modelTotal;
+        }
+    }
+
+    // Evaluar valores nullable de forma segura
+    bool comentarioEnviado = false;
+    if (Model.ComentarioEnviado != null)
+    {
+        comentarioEnviado = (bool)Model.ComentarioEnviado;
+    }
+
+    int calificacion = 0;
+    if (Model.Calificacion != null)
+    {
+        calificacion = (int)Model.Calificacion;
     }
 }
-else
-{
-    <p>No hay productos en este pedido.</p>
-}
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-dark text-white">
+            <h2 class="mb-0">Resumen del Pedido</h2>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <p><strong>Número de pedido:</strong> @Model.Id</p>
+                    <p><strong>Fecha del pedido:</strong> @Model.Fecha.ToString("dd/MM/yyyy HH:mm")</p>
+                    <p><strong>Estado del pedido:</strong> @Model.Estado</p>
+                </div>
+                <div class="col-md-6">
+                    @if (Model.Sucursal != null)
+                    {
+                        <p><strong>Sucursal:</strong> @Model.Sucursal.Nombre</p>
+                        <p><strong>Dirección:</strong> @Model.Sucursal.Direccion</p>
+                    }
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th class="text-center">Cantidad</th>
+                            <th class="text-end">Precio Unitario</th>
+                            <th class="text-end">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.PedidoProductos != null && Model.PedidoProductos.Any())
+                        {
+                            @foreach (var item in Model.PedidoProductos)
+                            {
+                                <tr>
+                                    <td>@(item.Producto?.Nombre ?? "Producto no disponible")</td>
+                                    <td>@(item.Producto?.Categoria ?? "-")</td>
+                                    <td class="text-center">@item.Cantidad</td>
+                                    <td class="text-end">$@string.Format("{0:F2}", item.Precio)</td>
+                                    <td class="text-end">$@string.Format("{0:F2}", (item.Precio * item.Cantidad))</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center">No hay productos en este pedido</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-dark">
+                            <td colspan="4" class="text-end fw-bold">Total del pedido:</td>
+                            <td class="text-end fw-bold">
+                                $@string.Format("{0:F2}", total)
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            @if ("Entregado".Equals(Model.Estado) && !comentarioEnviado)
+            {
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h3>¿Qué te pareció nuestro servicio?</h3>
+                    <form asp-action="GuardarComentario" asp-controller="Pedidos" method="post">
+                        <input type="hidden" name="pedidoId" value="@Model.Id" />
+                        <div class="form-group mb-3">
+                            <label>Calificación:</label>
+                            <div class="rating">
+                                <input type="radio" id="star5" name="calificacion" value="5" /><label for="star5">★</label>
+                                <input type="radio" id="star4" name="calificacion" value="4" /><label for="star4">★</label>
+                                <input type="radio" id="star3" name="calificacion" value="3" /><label for="star3">★</label>
+                                <input type="radio" id="star2" name="calificacion" value="2" /><label for="star2">★</label>
+                                <input type="radio" id="star1" name="calificacion" value="1" /><label for="star1">★</label>
+                            </div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="comentario">Comentario (opcional):</label>
+                            <textarea class="form-control" id="comentario" name="comentario" rows="3" placeholder="Cuéntanos tu experiencia..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Enviar valoración</button>
+                    </form>
+                </div>
+                <style>
+                    .rating {
+                        display: flex;
+                        flex-direction: row-reverse;
+                        justify-content: flex-end;
+                    }
+
+                        .rating input {
+                            display: none;
+                        }
+
+                        .rating label {
+                            font-size: 30px;
+                            color: #ddd;
+                            cursor: pointer;
+                            margin: 0 5px;
+                        }
+
+                            .rating label:hover,
+                            .rating label:hover ~ label,
+                            .rating input:checked ~ label {
+                                color: #ffc107;
+                            }
+                </style>
+            }
+            else if (comentarioEnviado)
+            {
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h4>Tu valoración</h4>
+                    <div class="stars-display">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            if (i <= calificacion)
+                            {
+                                <span class="star filled">★</span>
+                            }
+                            else
+                            {
+                                <span class="star">★</span>
+                            }
+                        }
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.Comentario))
+                    {
+                        <p class="mt-2"><strong>Tu comentario:</strong> @Model.Comentario</p>
+                    }
+                    <p class="text-muted">Gracias por tu valoración.</p>
+                </div>
+                <style>
+                    .stars-display {
+                        font-size: 24px;
+                    }
+
+                    .star {
+                        color: #ddd;
+                        margin-right: 5px;
+                    }
+
+                        .star.filled {
+                            color: #ffc107;
+                        }
+                </style>
+            }
+
+            <div class="mt-4">
+                <a href="@Url.Action("Menu", "Productos")" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Volver al menú
+                </a>
+
+                <a href="@Url.Action("SeleccionMultiple", "Productos")" class="btn btn-primary">
+                    <i class="fas fa-cart-plus"></i> Realizar otro pedido
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Limpiar el carrito después de procesar el pedido
+    document.addEventListener('DOMContentLoaded', function () {
+        localStorage.removeItem('carrito');
+        if (window.actualizarContadorCarrito) {
+            window.actualizarContadorCarrito();
+        }
+    });
+</script>

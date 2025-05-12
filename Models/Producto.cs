@@ -1,4 +1,7 @@
-﻿namespace ProyectoIdentity.Models
+﻿using ProyectoIdentity.Models;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace ProyectoIdentity.Models
 {
     public class Producto
     {
@@ -7,7 +10,7 @@
         public string? Descripcion { get; set; }
         public string? Categoria { get; set; }
         public int? Cantidad { get; set; }
-        public decimal? Precio { get; set; }
+        public decimal Precio { get; set; }
         public decimal? Total { get; set; }
 
         // Nuevos campos para información nutricional y alérgenos
@@ -22,6 +25,9 @@
 
         // Relación con PedidoProducto
         public ICollection<PedidoProducto>? PedidoProductos { get; set; }
+
+        [NotMapped]
+        public bool Seleccionado { get; set; }
 
     }
 

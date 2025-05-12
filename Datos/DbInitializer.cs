@@ -1,4 +1,4 @@
-﻿using ProyectoIdentity.Datos;
+﻿using Microsoft.EntityFrameworkCore;
 using ProyectoIdentity.Models;
 
 namespace ProyectoIdentity.Datos
@@ -12,12 +12,17 @@ namespace ProyectoIdentity.Datos
                 return; // DB ya tiene datos
             }
 
+
+
+
+
+
             var productos = new List<Producto>
             {
                 // PIZZAS
                 new Producto {
                     Nombre = "Pepperoni",
-                    Precio = 15,
+                    Precio = 8,
                     Categoria = "Pizza",
                     Descripcion = "Mozzarella, jamón y champiñones.",
                     Imagen = File.ReadAllBytes("wwwroot/images1/pexels-muffin-1653877.jpg"),
@@ -817,8 +822,43 @@ namespace ProyectoIdentity.Datos
                 },
             };
 
+
+            if (!context.Sucursales.Any())
+            {
+                var sucursal = new Sucursal
+                {
+                    Nombre = "Verace Pizza",
+                    Direccion = "Av. de los Shyris N35-52",
+                    Latitud = -0.180653,
+                    Longitud = -78.487834
+                };
+
+                context.Sucursales.Add(sucursal);
+                context.SaveChanges();
+
+                // Ahora puedes usar la sucursal creada para CollectionPoints si hay FK
+                var point = new CollectionPoint
+                {
+                    Name = "Verace Pizza",
+                    Address = "Av. de los Shyris N35-52",
+                    Latitude = -0.240653,
+                    Longitude = -78.487834,
+                    SucursalId = sucursal.Id // ← importante si hay FK
+                };
+
+                context.CollectionPoints.Add(point);
+                context.SaveChanges();
+            }
+
+
+
             context.Productos.AddRange(productos);
             context.SaveChanges();
+
         }
+
+
+
     }
 }
+
