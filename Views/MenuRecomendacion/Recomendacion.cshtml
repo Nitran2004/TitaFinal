@@ -1,0 +1,725 @@
+﻿@{
+    ViewBag.Title = "Recomendación de menú con IA";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid px-0">
+    <div class="recommendation-header">
+        <h2><i class="fas fa-robot me-2"></i>Recomendación de menú con IA</h2>
+        <p class="text-muted">Sistema inteligente que recomienda platos basados en tus preferencias.</p>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="recommendation-card">
+                    <!-- Categoría -->
+                    <div class="filter-section">
+                        <label class="filter-label">Categoría:</label>
+                        <div class="categories-container">
+                            @foreach (var categoria in ViewBag.Categorias)
+                            {
+                                <div class="category-option">
+                                    <input class="category-radio" type="radio" name="categoria" id="cat-@categoria" value="@categoria">
+                                    <label class="category-label" for="cat-@categoria">
+                                        <span class="radio-circle"></span>
+                                        @categoria
+                                    </label>
+                                </div>
+                            }
+                            <div class="category-option">
+                                <input class="category-radio" type="radio" name="categoria" id="cat-cualquiera" value="Cualquiera">
+                                <label class="category-label" for="cat-cualquiera">
+                                    <span class="radio-circle"></span>
+                                    Cualquiera
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Presupuesto -->
+                    <div class="filter-section">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <label class="filter-label">Presupuesto ($)</label>
+                            <div class="presupuesto-display">
+                                <span id="presupuestoValor">9</span>
+                                <i class="fas fa-caret-down"></i>
+                            </div>
+                        </div>
+                        <div class="slider-container">
+                            <input type="range" class="slider" min="1" max="45" step="1" value="9" id="presupuestoSlider">
+                            <div class="slider-labels">
+                                <span>1</span>
+                                <span>45</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ingredientes -->
+                    <div class="filter-section">
+                        <label for="ingredientes" class="filter-label">Ingredientes preferidos</label>
+                        <input type="text" class="form-control ingredient-input" id="ingredientes" 
+                               placeholder="Ej: Sin Carne, Con Carne, o ingredientes específicos">
+                        <small class="form-text text-muted mt-2">
+                            Puedes escribir "Sin Carne", "Con Carne", o ingredientes específicos como "queso, tomate"
+                        </small>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="button-container">
+                        <button type="button" class="btn btn-clear" id="btnLimpiar">
+                            <i class="fas fa-eraser me-2"></i>Limpiar
+                        </button>
+                        <button type="button" class="btn btn-recommend" id="btnRecomendar">
+                            <i class="fas fa-magic me-2"></i>Recomendar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Resultados -->
+                <div id="resultados" class="results-card" style="display: none;">
+                    <h3 class="results-title">
+                        <i class="fas fa-star me-2"></i>Recomendaciones Personalizadas
+                    </h3>
+                    <div class="table-responsive">
+                        <table class="table results-table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Precio</th>
+                                    <th>Calorías</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyResultados">
+                                <!-- Resultados dinámicos -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para detalles -->
+<div class="modal fade" id="detallesModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detallesModalLabel">Detalles del plato</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="detallesModalBody">
+                <!-- Detalles dinámicos -->
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            // Actualizar valor del presupuesto
+            $("#presupuestoSlider").on("input", function () {
+                $("#presupuestoValor").text($(this).val());
+            });
+
+            // Limpiar filtros
+            $("#btnLimpiar").click(function () {
+                $("input[name='categoria']").prop('checked', false);
+                $("#presupuestoSlider").val(9);
+                $("#presupuestoValor").text(9);
+                $("#ingredientes").val("");
+                $("#resultados").fadeOut();
+            });
+
+            // Obtener recomendaciones
+            $("#btnRecomendar").click(function () {
+                var $btn = $(this);
+                var categoria = $("input[name='categoria']:checked").val() || "";
+                var presupuesto = $("#presupuestoSlider").val();
+                var ingredientes = $("#ingredientes").val();
+
+                // Quitar la validación obligatoria de ingredientes
+                // Si no hay ingredientes, usar un valor por defecto
+                if (!ingredientes.trim()) {
+                    ingredientes = "todos"; // Valor por defecto para mostrar todos los platos
+                }
+
+                // Loading state
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Buscando...');
+
+                $.ajax({
+                    url: '@Url.Action("ObtenerRecomendaciones", "MenuRecomendacion")',
+                    type: 'POST',
+                    data: {
+                        categoria: categoria,
+                        presupuesto: presupuesto,
+                        ingredientes: ingredientes
+                    },
+                    success: function (response) {
+                        console.log("Respuesta recibida:", response); // Debug
+                        if (response.success) {
+                            console.log("Datos:", response.data); // Debug
+                            mostrarResultados(response.data);
+                        } else {
+                            toastr.error("Error: " + response.message);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error("Error AJAX:", xhr.responseText); // Debug
+                        toastr.error("Error al procesar la solicitud");
+                    },
+                    complete: function () {
+                        $btn.prop('disabled', false).html('<i class="fas fa-magic me-2"></i>Recomendar');
+                    }
+                });
+            });
+
+            // Mostrar resultados
+            function mostrarResultados(data) {
+                var tbody = $("#tbodyResultados");
+                tbody.empty();
+
+                if (!data || data.length === 0) {
+                    tbody.append(`
+                        <tr>
+                            <td colspan="4" class="text-center py-4">
+                                <i class="fas fa-search fa-2x text-muted mb-2"></i>
+                                <p class="mb-0">No se encontraron resultados que coincidan con tus preferencias</p>
+                            </td>
+                        </tr>
+                    `);
+                } else {
+                    $.each(data, function (index, item) {
+                        // Manejar tanto mayúsculas como minúsculas
+                        var nombre = item.nombre || item.Nombre;
+                        var precio = item.precio || item.Precio;
+                        var calorias = item.calorias || item.Calorias;
+                        
+                        var row = `
+                            <tr>
+                                <td class="fw-medium">${nombre}</td>
+                                <td><span class="badge badge-price">${precio}</span></td>
+                                <td><span class="badge badge-calories">${calorias} cal</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-details ver-detalles" data-item='${JSON.stringify(item)}'>
+                                        <i class="fas fa-info-circle"></i> Detalles
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.append(row);
+                    });
+                }
+
+                $("#resultados").fadeIn();
+                
+                // Scroll suave a los resultados
+                $('html, body').animate({
+                    scrollTop: $("#resultados").offset().top - 100
+                }, 500);
+            }
+
+            // Ver detalles del plato
+            $(document).on('click', '.ver-detalles', function () {
+                var item = $(this).data('item');
+                
+                // Manejar tanto mayúsculas como minúsculas
+                var nombre = item.nombre || item.Nombre;
+                var precio = item.precio || item.Precio;
+                var calorias = item.calorias || item.Calorias;
+                var categoria = item.categoria || item.Categoria;
+                var ingredientes = item.ingredientes || item.Ingredientes;
+                var similitud = item.similitud || item.Similitud;
+                
+                var detallesHTML = `
+                    <div class="detail-container">
+                        <div class="detail-row">
+                            <span class="detail-label"><i class="fas fa-utensils me-2"></i>Nombre:</span>
+                            <span class="detail-value">${nombre}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label"><i class="fas fa-dollar-sign me-2"></i>Precio:</span>
+                            <span class="detail-value">${precio}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label"><i class="fas fa-fire me-2"></i>Calorías:</span>
+                            <span class="detail-value">${calorias} cal</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label"><i class="fas fa-tag me-2"></i>Categoría:</span>
+                            <span class="detail-value">${categoria}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label"><i class="fas fa-list me-2"></i>Ingredientes:</span>
+                            <span class="detail-value">${ingredientes}</span>
+                        </div>
+                        ${similitud ? `
+                        <div class="detail-row">
+                            <span class="detail-label"><i class="fas fa-heart me-2"></i>Similitud:</span>
+                            <div class="similarity-bar">
+                                <div class="similarity-fill" style="width: ${(similitud * 100).toFixed(0)}%"></div>
+                                <span class="similarity-text">${(similitud * 100).toFixed(0)}%</span>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+
+                $("#detallesModalLabel").text(nombre);
+                $("#detallesModalBody").html(detallesHTML);
+
+                var detallesModal = new bootstrap.Modal(document.getElementById('detallesModal'));
+                detallesModal.show();
+            });
+
+            // Animación para las categorías
+            $('.category-label').click(function() {
+                $('.category-label').removeClass('selected');
+                $(this).addClass('selected');
+            });
+        });
+    </script>
+}
+
+@section styles {
+    <style>
+        /* Variables */
+        :root {
+            --primary-color: #F2A900;
+            --primary-hover: #e09600;
+            --secondary-color: #6c757d;
+            --light-bg: #f8f9fa;
+            --card-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            --hover-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+
+        /* Header */
+        .recommendation-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #ff9500 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .recommendation-header h2 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .recommendation-header p {
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+        }
+
+        /* Cards */
+        .recommendation-card,
+        .results-card {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: var(--card-shadow);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        /* Filter sections */
+        .filter-section {
+            margin-bottom: 2rem;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1rem;
+            display: block;
+            font-size: 1.1rem;
+        }
+
+        /* Categories */
+        .categories-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .category-option {
+            position: relative;
+        }
+
+        .category-radio {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .category-label {
+            display: flex;
+            align-items: center;
+            background: var(--light-bg);
+            border-radius: 25px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            font-size: 0.95rem;
+        }
+
+        .category-label:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .category-radio:checked + .category-label,
+        .category-label.selected {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .radio-circle {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #6c757d;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .category-radio:checked + .category-label .radio-circle,
+        .category-label.selected .radio-circle {
+            border-color: white;
+        }
+
+        .radio-circle::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.3s ease;
+        }
+
+        .category-radio:checked + .category-label .radio-circle::after,
+        .category-label.selected .radio-circle::after {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* Presupuesto */
+        .presupuesto-display {
+            background: var(--light-bg);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .presupuesto-display i {
+            font-size: 0.8rem;
+        }
+
+        .slider-container {
+            position: relative;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(242, 169, 0, 0.4);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        /* Ingredientes */
+        .ingredient-input {
+            border: 2px solid #e0e0e0;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .ingredient-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(242, 169, 0, 0.25);
+        }
+
+        /* Buttons */
+        .button-container {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn-clear,
+        .btn-recommend {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            border: none;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .btn-clear {
+            background: var(--light-bg);
+            color: var(--secondary-color);
+            flex: 0 0 auto;
+        }
+
+        .btn-clear:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .btn-recommend {
+            background: var(--primary-color);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-recommend:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(242, 169, 0, 0.3);
+        }
+
+        .btn-recommend:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Results */
+        .results-title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+
+        .results-table {
+            margin: 0;
+        }
+
+        .results-table thead th {
+            background: var(--light-bg);
+            color: #333;
+            font-weight: 600;
+            border: none;
+            padding: 1rem;
+        }
+
+        .results-table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .results-table tbody tr:hover {
+            background: var(--light-bg);
+            transform: scale(1.01);
+        }
+
+        .results-table tbody td {
+            vertical-align: middle;
+            padding: 1rem;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .badge-price {
+            background: #28a745;
+            color: white;
+            padding: 0.35rem 0.75rem;
+            border-radius: 1rem;
+            font-weight: 600;
+        }
+
+        .badge-calories {
+            background: #f8f9fa;
+            color: #495057;
+            padding: 0.35rem 0.75rem;
+            border-radius: 1rem;
+            font-weight: 600;
+        }
+
+        .btn-details {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-details:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        /* Modal */
+        .modal-content {
+            border-radius: 0.75rem;
+            border: none;
+        }
+
+        .modal-header {
+            background: var(--light-bg);
+            border-bottom: none;
+            border-radius: 0.75rem 0.75rem 0 0;
+        }
+
+        .modal-title {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .detail-container {
+            padding: 1rem;
+        }
+
+        .detail-row {
+            display: flex;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #333;
+            flex: 0 0 40%;
+        }
+
+        .detail-value {
+            color: #666;
+            flex: 1;
+        }
+
+        .similarity-bar {
+            position: relative;
+            background: #e0e0e0;
+            height: 24px;
+            border-radius: 12px;
+            overflow: hidden;
+            flex: 1;
+        }
+
+        .similarity-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: linear-gradient(to right, #ffc107, var(--primary-color));
+            transition: width 0.5s ease;
+        }
+
+        .similarity-text {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #333;
+        }
+
+        /* Animations */
+        keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .results-card {
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* Responsive */
+        media (max-width: 768px) {
+            .recommendation-header {
+                padding: 1.5rem 0;
+            }
+
+            .recommendation-card,
+            .results-card {
+                padding: 1.5rem;
+            }
+
+            .categories-container {
+                gap: 0.5rem;
+            }
+
+            .category-label {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.875rem;
+            }
+
+            .button-container {
+                flex-direction: column;
+            }
+
+            .btn-clear,
+            .btn-recommend {
+                width: 100%;
+            }
+
+            .detail-label {
+                flex: 0 0 35%;
+            }
+        }
+    </style>
+}
