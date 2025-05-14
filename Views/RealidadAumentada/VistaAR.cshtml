@@ -1,33 +1,26 @@
-﻿@model ProyectoIdentity.Controllers.ProductoARViewModel
-@{
-    ViewData["Title"] = "Realidad Aumentada - " + Model.Nombre;
-    Layout = null; // No usar layout para experiencia AR completa
+﻿@{
+    ViewData["Title"] = "Vista de Realidad Aumentada";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewData["Title"]</title>
-    
+
     <!-- Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    
-    <!-- Font Awesome para iconos -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
 
+    <!-- GLTFLoader para cargar modelos 3D -->
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
+
+    <style>
         body {
-            font-family: Arial, sans-serif;
+            margin: 0;
             overflow: hidden;
-            background-color: #000;
+            font-family: Arial, sans-serif;
         }
 
         #ar-container {
@@ -36,556 +29,475 @@
             left: 0;
             width: 100%;
             height: 100%;
+            background-color: #000;
         }
 
-        #info-panel {
+        #start-ar-button {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 15px;
-            border-radius: 10px;
-            max-width: 300px;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        #info-panel h3 {
-            margin: 0 0 10px 0;
-            color: #333;
-        }
-
-        #info-panel p {
-            margin: 5px 0;
-            font-size: 14px;
-            color: #666;
-        }
-
-        .price {
-            font-size: 18px;
-            font-weight: bold;
-            color: #2196F3;
-        }
-
-        #controls {
-            position: absolute;
-            bottom: 20px;
+            bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 1000;
-            display: flex;
-            gap: 10px;
-        }
-
-        .control-btn {
-            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 30px;
+            background-color: #4CAF50;
+            color: white;
             border: none;
-            padding: 15px 20px;
             border-radius: 25px;
+            font-size: 18px;
             cursor: pointer;
+            z-index: 2000;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+            #start-ar-button:hover {
+                background-color: #45a049;
+                transform: translateX(-50%) scale(1.05);
+            }
+
+        #exit-ar-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #333;
+            border: none;
+            border-radius: 20px;
             font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            transition: background-color 0.3s;
+            cursor: pointer;
+            z-index: 2000;
+            display: none;
         }
 
-        .control-btn:hover {
-            background: rgba(255, 255, 255, 1);
-        }
-
-        .control-btn.ar-active {
-            background: #2196F3;
-            color: white;
-        }
-
-        #ar-button {
-            background: #4CAF50;
-            color: white;
-        }
-
-        #ar-button:hover {
-            background: #45a049;
-        }
-
-        #back-button {
+        #ar-info {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1001;
-        }
-
-        #loading {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            top: 20px;
+            left: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
             color: white;
-            font-size: 24px;
-            z-index: 1002;
-            text-align: center;
-        }
-
-        .loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-
-        @@keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        #ar-instructions {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            color: white;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 20px;
+            padding: 10px 15px;
             border-radius: 10px;
-            max-width: 80%;
+            font-size: 14px;
+            z-index: 1000;
+        }
+
+        #ar-status {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 16px;
+            text-align: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        /* Retículo para AR */
+        #reticle {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
             display: none;
             z-index: 999;
         }
 
-        #ar-instructions.show {
-            display: block;
-        }
+            #reticle::before {
+                content: '';
+                position: absolute;
+                width: 2px;
+                height: 30px;
+                background-color: rgba(255, 255, 255, 0.8);
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+            }
 
-        .reticle {
-            position: absolute;
-            width: 100px;
-            height: 100px;
-            border: 3px solid #4CAF50;
-            border-radius: 50%;
-            pointer-events: none;
-            display: none;
-        }
+            #reticle::after {
+                content: '';
+                position: absolute;
+                width: 30px;
+                height: 2px;
+                background-color: rgba(255, 255, 255, 0.8);
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+            }
     </style>
 </head>
 <body>
-    <div id="ar-container"></div>
-    
-    <div id="info-panel">
-        <h3>@Model.Nombre</h3>
-        <p>@Model.Descripcion</p>
-        <p class="price">$@Model.Precio</p>
-        <p><small>Categoría: @Model.Categoria</small></p>
+    <div id="ar-container">
+        <div id="ar-info">
+            <div id="device-type">Detectando dispositivo...</div>
+            <div id="mode-type">Modo: Cargando...</div>
+        </div>
+
+        <div id="ar-status">Mueve el dispositivo para detectar superficies</div>
+
+        <button id="start-ar-button">Iniciar Realidad Aumentada</button>
+        <button id="exit-ar-button" onclick="exitAR()">Salir</button>
+
+        <div id="reticle"></div>
     </div>
-    
-    <button id="back-button" class="control-btn" onclick="history.back()">
-        <i class="fas fa-arrow-left"></i> Volver
-    </button>
-    
-    <div id="controls">
-        <button id="ar-button" class="control-btn">
-            <i class="fas fa-cube"></i> Iniciar AR
-        </button>
-        <button id="rotate-button" class="control-btn">
-            <i class="fas fa-sync-alt"></i> Rotar
-        </button>
-        <button id="scale-button" class="control-btn">
-            <i class="fas fa-expand"></i> Escalar
-        </button>
-    </div>
-    
-    <div id="loading">
-        <div class="loading-spinner"></div>
-        <p>Cargando modelo 3D...</p>
-    </div>
-    
-    <div id="ar-instructions">
-        <h3>Instrucciones AR</h3>
-        <p>1. Mueve tu dispositivo para escanear el entorno</p>
-        <p>2. Cuando veas el círculo verde, toca la pantalla</p>
-        <p>3. El producto aparecerá en esa posición</p>
-        <button class="control-btn" onclick="document.getElementById('ar-instructions').classList.remove('show')">
-            Entendido
-        </button>
-    </div>
-    
-    <div class="reticle" id="reticle"></div>
 
     <script>
-        // Variables globales
         let scene, camera, renderer;
-        let model;
-        let isARSupported = false;
         let arSession = null;
+        let arSupported = false;
         let hitTestSource = null;
+        let hitTestSourceRequested = false;
         let reticle;
-        let isRotating = false;
-        let isScaling = false;
-        let deviceType = detectDevice();
-        
-        // Información del producto
-        const productInfo = {
-            id: @Model.Id,
-            name: '@Model.Nombre',
-            category: '@Model.Categoria',
-            imageBase64: '@Model.ImagenBase64'
-        };
-        
-        // Detectar tipo de dispositivo
+        let cube;
+        let isARActive = false;
+        let isMobile = false;
+        let productId = @ViewBag.ProductoId;
+        let productName = '@ViewBag.ProductoNombre';
+
+        // Detectar si es dispositivo móvil
         function detectDevice() {
-            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-            if (/android/i.test(userAgent) || /iPad|iPhone|iPod/.test(userAgent)) {
-                return 'mobile';
+            isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            document.getElementById('device-type').textContent = isMobile ? 'Dispositivo móvil detectado' : 'Dispositivo de escritorio detectado';
+
+            // Verificar soporte WebXR
+            if ('xr' in navigator) {
+                navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
+                    arSupported = supported;
+                    document.getElementById('mode-type').textContent =
+                        isMobile && arSupported ? 'Modo: AR disponible' :
+                        isMobile ? 'Modo: Vista 3D (AR no disponible)' :
+                        'Modo: Entorno 3D virtual';
+                });
+            } else {
+                document.getElementById('mode-type').textContent =
+                    isMobile ? 'Modo: Vista 3D' : 'Modo: Entorno 3D virtual';
             }
-            return 'desktop';
         }
-        
-        // Inicializar aplicación
-        async function init() {
-            // Crear escena
+
+        // Inicializar Three.js
+        function initThreeJS() {
             scene = new THREE.Scene();
-            
+
             // Configurar cámara
             camera = new THREE.PerspectiveCamera(
-                75, 
-                window.innerWidth / window.innerHeight, 
-                0.1, 
+                75,
+                window.innerWidth / window.innerHeight,
+                0.1,
                 1000
             );
-            
+            camera.position.set(0, 1.6, 3);
+
             // Configurar renderer
-            renderer = new THREE.WebGLRenderer({ 
-                antialias: true, 
-                alpha: true 
+            renderer = new THREE.WebGLRenderer({
+                antialias: true,
+                alpha: true
             });
             renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.shadowMap.enabled = true;
             renderer.xr.enabled = true;
+
             document.getElementById('ar-container').appendChild(renderer.domElement);
-            
-            // Configurar luces
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-            scene.add(ambientLight);
-            
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(0, 10, 5);
-            scene.add(directionalLight);
-            
-            // Verificar soporte AR
-            if ('xr' in navigator) {
-                isARSupported = await navigator.xr.isSessionSupported('immersive-ar');
+
+            // Crear el cubo rojo
+            createRedCube();
+
+            // Configurar iluminación
+            setupLighting();
+
+            // Si es escritorio, crear entorno virtual
+            if (!isMobile) {
+                createVirtualEnvironment();
             }
-            
-            // Cargar modelo 3D
-            await loadModel();
-            
-            // Configurar controles según dispositivo
-            setupControls();
-            
-            // Ocultar loading
-            document.getElementById('loading').style.display = 'none';
-            
-            // Iniciar renderizado
+
+            // Crear retículo para AR
+            createReticle();
+        }
+
+        // Crear cubo rojo
+        function createRedCube() {
+            const geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+            const material = new THREE.MeshStandardMaterial({
+                color: 0xff0000,
+                metalness: 0.1,
+                roughness: 0.5
+            });
+            cube = new THREE.Mesh(geometry, material);
+            cube.castShadow = true;
+            cube.receiveShadow = true;
+            cube.visible = false; // Oculto inicialmente
+            scene.add(cube);
+        }
+
+        // Configurar iluminación
+        function setupLighting() {
+            // Luz ambiental
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            // Luz direccional (simula el sol)
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(1, 2, 1);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.camera.near = 0.1;
+            directionalLight.shadow.camera.far = 50;
+            directionalLight.shadow.camera.left = -10;
+            directionalLight.shadow.camera.right = 10;
+            directionalLight.shadow.camera.top = 10;
+            directionalLight.shadow.camera.bottom = -10;
+            scene.add(directionalLight);
+        }
+
+        // Crear entorno virtual para escritorio
+        function createVirtualEnvironment() {
+            // Cielo
+            scene.background = new THREE.Color(0x87CEEB); // Azul cielo
+
+            // Suelo
+            const floorGeometry = new THREE.PlaneGeometry(20, 20);
+            const floorMaterial = new THREE.MeshStandardMaterial({
+                color: 0x3a7b3c, // Verde césped
+                roughness: 0.8
+            });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            // Cuadrícula para mejor referencia visual
+            const gridHelper = new THREE.GridHelper(20, 20, 0x000000, 0x000000);
+            gridHelper.material.opacity = 0.2;
+            gridHelper.material.transparent = true;
+            scene.add(gridHelper);
+
+            // Mostrar el cubo en escritorio
+            cube.position.set(0, 0.5, 0);
+            cube.visible = true;
+        }
+
+        // Crear retículo para AR
+        function createReticle() {
+            const geometry = new THREE.RingGeometry(0.15, 0.2, 32);
+            const material = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.8
+            });
+            reticle = new THREE.Mesh(geometry, material);
+            reticle.rotation.x = -Math.PI / 2;
+            reticle.visible = false;
+            scene.add(reticle);
+        }
+
+        // Iniciar AR
+        async function startAR() {
+            if (!arSupported || !isMobile) {
+                if (isMobile) {
+                    // Vista 3D simple en móvil sin AR
+                    startMobile3D();
+                } else {
+                    // Ya está funcionando el entorno 3D en escritorio
+                    document.getElementById('start-ar-button').style.display = 'none';
+                    document.getElementById('exit-ar-button').style.display = 'block';
+                }
+                return;
+            }
+
+            try {
+                // Solicitar sesión AR
+                arSession = await navigator.xr.requestSession('immersive-ar', {
+                    requiredFeatures: ['hit-test']
+                });
+
+                renderer.xr.setReferenceSpaceType('local');
+                await renderer.xr.setSession(arSession);
+
+                // Configurar hit test
+                arSession.addEventListener('select', onSelect);
+
+                document.getElementById('start-ar-button').style.display = 'none';
+                document.getElementById('exit-ar-button').style.display = 'block';
+                document.getElementById('ar-status').style.display = 'block';
+
+                isARActive = true;
+
+                // Iniciar el loop de renderizado AR
+                renderer.setAnimationLoop(render);
+
+            } catch (error) {
+                console.error('Error iniciando AR:', error);
+                alert('No se pudo iniciar la realidad aumentada. Intenta de nuevo.');
+            }
+        }
+
+        // Vista 3D para móvil sin AR
+        function startMobile3D() {
+            // Configurar controles táctiles simples
+            let touchStart = null;
+
+            renderer.domElement.addEventListener('touchstart', (e) => {
+                touchStart = e.touches[0];
+            });
+
+            renderer.domElement.addEventListener('touchmove', (e) => {
+                if (!touchStart) return;
+
+                const touchCurrent = e.touches[0];
+                const deltaX = touchCurrent.pageX - touchStart.pageX;
+                const deltaY = touchCurrent.pageY - touchStart.pageY;
+
+                cube.rotation.y += deltaX * 0.01;
+                cube.rotation.x += deltaY * 0.01;
+
+                touchStart = touchCurrent;
+            });
+
+            // Mostrar el cubo
+            cube.position.set(0, 0, -2);
+            cube.visible = true;
+
+            document.getElementById('start-ar-button').style.display = 'none';
+            document.getElementById('exit-ar-button').style.display = 'block';
+
             animate();
         }
-        
-        // Cargar modelo 3D
-        async function loadModel() {
-            const loader = new THREE.GLTFLoader();
-            
-            // Para este ejemplo, crearemos un modelo simple con primitivas de Three.js
-            // En producción, cargarías modelos .gltf o .glb reales
-            
-            let geometry, material;
-            
-            switch(productInfo.category.toLowerCase()) {
-                case 'pizza':
-                    // Crear una pizza simple con cilindros
-                    geometry = new THREE.CylinderGeometry(1, 1, 0.1, 32);
-                    material = new THREE.MeshStandardMaterial({
-                        color: 0xffcc00,
-                        roughness: 0.8
+
+        // Manejador de selección en AR (cuando el usuario toca la pantalla)
+        function onSelect() {
+            if (reticle.visible && !cube.visible) {
+                // Colocar el cubo en la posición del retículo
+                cube.position.setFromMatrixPosition(reticle.matrix);
+                cube.visible = true;
+
+                // Animación de aparición
+                cube.scale.set(0.1, 0.1, 0.1);
+                animateScale(cube, { x: 1, y: 1, z: 1 }, 300);
+
+                document.getElementById('ar-status').textContent = 'Objeto colocado';
+                setTimeout(() => {
+                    document.getElementById('ar-status').style.display = 'none';
+                }, 2000);
+            }
+        }
+
+        // Animación de escala
+        function animateScale(object, targetScale, duration) {
+            const startScale = {
+                x: object.scale.x,
+                y: object.scale.y,
+                z: object.scale.z
+            };
+            const startTime = Date.now();
+
+            function update() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                object.scale.x = startScale.x + (targetScale.x - startScale.x) * progress;
+                object.scale.y = startScale.y + (targetScale.y - startScale.y) * progress;
+                object.scale.z = startScale.z + (targetScale.z - startScale.z) * progress;
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+
+            update();
+        }
+
+        // Loop de renderizado para AR
+        function render(timestamp, frame) {
+            if (frame && isARActive) {
+                const referenceSpace = renderer.xr.getReferenceSpace();
+                const session = renderer.xr.getSession();
+
+                if (hitTestSourceRequested === false) {
+                    session.requestReferenceSpace('viewer').then((referenceSpace) => {
+                        session.requestHitTestSource({ space: referenceSpace }).then((source) => {
+                            hitTestSource = source;
+                        });
                     });
-                    model = new THREE.Mesh(geometry, material);
-                    
-                    // Añadir toppings (pequeñas esferas)
-                    for(let i = 0; i < 10; i++) {
-                        const topping = new THREE.Mesh(
-                            new THREE.SphereGeometry(0.05, 8, 8),
-                            new THREE.MeshStandardMaterial({
-                                color: Math.random() > 0.5 ? 0xff0000 : 0x00ff00
-                            })
-                        );
-                        topping.position.set(
-                            (Math.random() - 0.5) * 1.6,
-                            0.06,
-                            (Math.random() - 0.5) * 1.6
-                        );
-                        model.add(topping);
-                    }
-                    break;
-                    
-                case 'bebidas':
-                    // Crear una lata simple
-                    geometry = new THREE.CylinderGeometry(0.3, 0.3, 1, 16);
-                    material = new THREE.MeshStandardMaterial({
-                        color: 0xff0000,
-                        metalness: 0.8,
-                        roughness: 0.2
+
+                    session.addEventListener('end', () => {
+                        hitTestSourceRequested = false;
+                        hitTestSource = null;
                     });
-                    model = new THREE.Mesh(geometry, material);
-                    break;
-                    
-                default:
-                    // Modelo por defecto - caja
-                    geometry = new THREE.BoxGeometry(1, 1, 1);
-                    material = new THREE.MeshStandardMaterial({
-                        color: 0x00ff00
-                    });
-                    model = new THREE.Mesh(geometry, material);
-            }
-            
-            model.scale.set(0.5, 0.5, 0.5);
-            
-            if (deviceType === 'desktop') {
-                // En escritorio, añadir modelo a la escena directamente
-                scene.add(model);
-                model.position.set(0, 0, -3);
-                
-                // Añadir suelo
-                const floorGeometry = new THREE.PlaneGeometry(10, 10);
-                const floorMaterial = new THREE.MeshStandardMaterial({
-                    color: 0x00aa00,
-                    side: THREE.DoubleSide
-                });
-                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-                floor.rotation.x = -Math.PI / 2;
-                floor.position.y = -1;
-                scene.add(floor);
-                
-                // Añadir fondo
-                scene.background = new THREE.Color(0x87ceeb);
-            }
-        }
-        
-        // Configurar controles
-        function setupControls() {
-            const arButton = document.getElementById('ar-button');
-            const rotateButton = document.getElementById('rotate-button');
-            const scaleButton = document.getElementById('scale-button');
-            
-            if (isARSupported && deviceType === 'mobile') {
-                arButton.addEventListener('click', startAR);
-            } else {
-                arButton.textContent = 'Vista 3D';
-                arButton.disabled = true;
-                arButton.classList.add('ar-active');
-            }
-            
-            rotateButton.addEventListener('click', () => {
-                isRotating = !isRotating;
-                rotateButton.classList.toggle('ar-active');
-            });
-            
-            scaleButton.addEventListener('click', () => {
-                isScaling = !isScaling;
-                scaleButton.classList.toggle('ar-active');
-            });
-            
-            // Controles táctiles para móvil
-            if (deviceType === 'mobile') {
-                setupTouchControls();
-            } else {
-                setupMouseControls();
-            }
-        }
-        
-        // Iniciar sesión AR
-        async function startAR() {
-            try {
-                const sessionInit = {
-                    requiredFeatures: ['hit-test'],
-                    optionalFeatures: ['dom-overlay'],
-                    domOverlay: { root: document.getElementById('info-panel') }
-                };
-                
-                arSession = await navigator.xr.requestSession('immersive-ar', sessionInit);
-                renderer.xr.setSession(arSession);
-                
-                // Configurar hit test
-                const viewerSpace = await arSession.requestReferenceSpace('viewer');
-                hitTestSource = await arSession.requestHitTestSource({ space: viewerSpace });
-                
-                // Crear reticle
-                const reticleGeometry = new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2);
-                const reticleMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-                reticle = new THREE.Mesh(reticleGeometry, reticleMaterial);
-                reticle.visible = false;
-                scene.add(reticle);
-                
-                // Mostrar instrucciones
-                document.getElementById('ar-instructions').classList.add('show');
-                
-                // Manejar fin de sesión
-                arSession.addEventListener('end', () => {
-                    arSession = null;
-                    hitTestSource = null;
-                    document.getElementById('ar-button').classList.remove('ar-active');
-                });
-                
-                document.getElementById('ar-button').classList.add('ar-active');
-                
-            } catch (error) {
-                console.error('Error al iniciar AR:', error);
-                alert('No se pudo iniciar la realidad aumentada');
-            }
-        }
-        
-        // Configurar controles táctiles
-        function setupTouchControls() {
-            let touchStartX = 0;
-            let touchStartY = 0;
-            
-            renderer.domElement.addEventListener('touchstart', (e) => {
-                if (arSession && hitTestSource) {
-                    // En modo AR, colocar objeto
-                    placeObject();
-                } else {
-                    touchStartX = e.touches[0].clientX;
-                    touchStartY = e.touches[0].clientY;
+
+                    hitTestSourceRequested = true;
                 }
-            });
-            
-            renderer.domElement.addEventListener('touchmove', (e) => {
-                if (!arSession && model) {
-                    const deltaX = e.touches[0].clientX - touchStartX;
-                    const deltaY = e.touches[0].clientY - touchStartY;
-                    
-                    if (isRotating) {
-                        model.rotation.y += deltaX * 0.01;
-                    }
-                    
-                    if (isScaling) {
-                        const scale = Math.max(0.1, model.scale.x + deltaY * 0.001);
-                        model.scale.set(scale, scale, scale);
-                    }
-                    
-                    touchStartX = e.touches[0].clientX;
-                    touchStartY = e.touches[0].clientY;
-                }
-            });
-        }
-        
-        // Configurar controles de mouse
-        function setupMouseControls() {
-            let mouseDown = false;
-            let mouseX = 0;
-            let mouseY = 0;
-            
-            renderer.domElement.addEventListener('mousedown', (e) => {
-                mouseDown = true;
-                mouseX = e.clientX;
-                mouseY = e.clientY;
-            });
-            
-            renderer.domElement.addEventListener('mousemove', (e) => {
-                if (mouseDown && model) {
-                    const deltaX = e.clientX - mouseX;
-                    const deltaY = e.clientY - mouseY;
-                    
-                    if (isRotating) {
-                        model.rotation.y += deltaX * 0.01;
-                        model.rotation.x += deltaY * 0.01;
-                    }
-                    
-                    if (isScaling) {
-                        const scale = Math.max(0.1, model.scale.x + deltaY * 0.001);
-                        model.scale.set(scale, scale, scale);
-                    }
-                    
-                    if (!isRotating && !isScaling) {
-                        // Mover cámara alrededor del objeto
-                        const radius = 5;
-                        camera.position.x = radius * Math.sin(deltaX * 0.01);
-                        camera.position.z = radius * Math.cos(deltaX * 0.01);
-                        camera.lookAt(model.position);
-                    }
-                    
-                    mouseX = e.clientX;
-                    mouseY = e.clientY;
-                }
-            });
-            
-            renderer.domElement.addEventListener('mouseup', () => {
-                mouseDown = false;
-            });
-            
-            // Zoom con rueda del mouse
-            renderer.domElement.addEventListener('wheel', (e) => {
-                if (model) {
-                    const scale = Math.max(0.1, model.scale.x - e.deltaY * 0.0005);
-                    model.scale.set(scale, scale, scale);
-                }
-            });
-        }
-        
-        // Colocar objeto en AR
-        function placeObject() {
-            if (reticle.visible && model) {
-                model.position.copy(reticle.position);
-                model.rotation.copy(reticle.rotation);
-                scene.add(model);
-                
-                // Ocultar reticle después de colocar
-                reticle.visible = false;
-                
-                // Ocultar instrucciones
-                document.getElementById('ar-instructions').classList.remove('show');
-            }
-        }
-        
-        // Bucle de animación
-        function animate() {
-            renderer.setAnimationLoop(() => {
-                // Actualizar hit test en AR
-                if (arSession && hitTestSource) {
-                    const frame = renderer.xr.getFrame();
+
+                if (hitTestSource) {
                     const hitTestResults = frame.getHitTestResults(hitTestSource);
-                    
-                    if (hitTestResults.length > 0) {
+
+                    if (hitTestResults.length > 0 && !cube.visible) {
                         const hit = hitTestResults[0];
+
                         reticle.visible = true;
                         reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
-                    } else {
+                    } else if (hitTestResults.length === 0) {
                         reticle.visible = false;
                     }
                 }
-                
-                // Rotar modelo automáticamente
-                if (model && isRotating) {
-                    model.rotation.y += 0.01;
-                }
-                
-                // Renderizar escena
-                renderer.render(scene, camera);
-            });
+            }
+
+            // Rotación del cubo
+            if (cube.visible) {
+                cube.rotation.y += 0.01;
+            }
+
+            renderer.render(scene, camera);
         }
-        
-        // Manejar cambio de tamaño de ventana
+
+        // Loop de animación para entorno 3D (no AR)
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Rotación del cubo
+            if (cube.visible) {
+                cube.rotation.y += 0.01;
+                cube.rotation.x += 0.005;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Salir de AR
+        function exitAR() {
+            if (arSession) {
+                arSession.end();
+                arSession = null;
+                isARActive = false;
+            }
+
+            // Volver a la página de detalle del producto
+            window.location.href = '@Url.Action("Detalle", "Productos", new { id = ViewBag.ProductoId })';
+        }
+
+        // Manejar redimensionamiento de ventana
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
-        
-        // Cargar GLTFLoader
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';
-        script.onload = init;
-        document.head.appendChild(script);
+
+        // Event listener para el botón de inicio
+        document.getElementById('start-ar-button').addEventListener('click', startAR);
+
+        // Inicialización
+        detectDevice();
+        initThreeJS();
+
+        // Si es escritorio, iniciar animación automáticamente
+        if (!isMobile) {
+            animate();
+        }
     </script>
 </body>
 </html>
