@@ -1,0 +1,591 @@
+﻿@model ProyectoIdentity.Controllers.ProductoARViewModel
+@{
+    ViewData["Title"] = "Realidad Aumentada - " + Model.Nombre;
+    Layout = null; // No usar layout para experiencia AR completa
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        #ar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #info-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 300px;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        #info-panel h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        #info-panel p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .price {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2196F3;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 15px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .control-btn.ar-active {
+            background: #2196F3;
+            color: white;
+        }
+
+        #ar-button {
+            background: #4CAF50;
+            color: white;
+        }
+
+        #ar-button:hover {
+            background: #45a049;
+        }
+
+        #back-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1001;
+        }
+
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            z-index: 1002;
+            text-align: center;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @@keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #ar-instructions {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 80%;
+            display: none;
+            z-index: 999;
+        }
+
+        #ar-instructions.show {
+            display: block;
+        }
+
+        .reticle {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border: 3px solid #4CAF50;
+            border-radius: 50%;
+            pointer-events: none;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="ar-container"></div>
+    
+    <div id="info-panel">
+        <h3>@Model.Nombre</h3>
+        <p>@Model.Descripcion</p>
+        <p class="price">$@Model.Precio</p>
+        <p><small>Categoría: @Model.Categoria</small></p>
+    </div>
+    
+    <button id="back-button" class="control-btn" onclick="history.back()">
+        <i class="fas fa-arrow-left"></i> Volver
+    </button>
+    
+    <div id="controls">
+        <button id="ar-button" class="control-btn">
+            <i class="fas fa-cube"></i> Iniciar AR
+        </button>
+        <button id="rotate-button" class="control-btn">
+            <i class="fas fa-sync-alt"></i> Rotar
+        </button>
+        <button id="scale-button" class="control-btn">
+            <i class="fas fa-expand"></i> Escalar
+        </button>
+    </div>
+    
+    <div id="loading">
+        <div class="loading-spinner"></div>
+        <p>Cargando modelo 3D...</p>
+    </div>
+    
+    <div id="ar-instructions">
+        <h3>Instrucciones AR</h3>
+        <p>1. Mueve tu dispositivo para escanear el entorno</p>
+        <p>2. Cuando veas el círculo verde, toca la pantalla</p>
+        <p>3. El producto aparecerá en esa posición</p>
+        <button class="control-btn" onclick="document.getElementById('ar-instructions').classList.remove('show')">
+            Entendido
+        </button>
+    </div>
+    
+    <div class="reticle" id="reticle"></div>
+
+    <script>
+        // Variables globales
+        let scene, camera, renderer;
+        let model;
+        let isARSupported = false;
+        let arSession = null;
+        let hitTestSource = null;
+        let reticle;
+        let isRotating = false;
+        let isScaling = false;
+        let deviceType = detectDevice();
+        
+        // Información del producto
+        const productInfo = {
+            id: @Model.Id,
+            name: '@Model.Nombre',
+            category: '@Model.Categoria',
+            imageBase64: '@Model.ImagenBase64'
+        };
+        
+        // Detectar tipo de dispositivo
+        function detectDevice() {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            if (/android/i.test(userAgent) || /iPad|iPhone|iPod/.test(userAgent)) {
+                return 'mobile';
+            }
+            return 'desktop';
+        }
+        
+        // Inicializar aplicación
+        async function init() {
+            // Crear escena
+            scene = new THREE.Scene();
+            
+            // Configurar cámara
+            camera = new THREE.PerspectiveCamera(
+                75, 
+                window.innerWidth / window.innerHeight, 
+                0.1, 
+                1000
+            );
+            
+            // Configurar renderer
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true, 
+                alpha: true 
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.xr.enabled = true;
+            document.getElementById('ar-container').appendChild(renderer.domElement);
+            
+            // Configurar luces
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(0, 10, 5);
+            scene.add(directionalLight);
+            
+            // Verificar soporte AR
+            if ('xr' in navigator) {
+                isARSupported = await navigator.xr.isSessionSupported('immersive-ar');
+            }
+            
+            // Cargar modelo 3D
+            await loadModel();
+            
+            // Configurar controles según dispositivo
+            setupControls();
+            
+            // Ocultar loading
+            document.getElementById('loading').style.display = 'none';
+            
+            // Iniciar renderizado
+            animate();
+        }
+        
+        // Cargar modelo 3D
+        async function loadModel() {
+            const loader = new THREE.GLTFLoader();
+            
+            // Para este ejemplo, crearemos un modelo simple con primitivas de Three.js
+            // En producción, cargarías modelos .gltf o .glb reales
+            
+            let geometry, material;
+            
+            switch(productInfo.category.toLowerCase()) {
+                case 'pizza':
+                    // Crear una pizza simple con cilindros
+                    geometry = new THREE.CylinderGeometry(1, 1, 0.1, 32);
+                    material = new THREE.MeshStandardMaterial({
+                        color: 0xffcc00,
+                        roughness: 0.8
+                    });
+                    model = new THREE.Mesh(geometry, material);
+                    
+                    // Añadir toppings (pequeñas esferas)
+                    for(let i = 0; i < 10; i++) {
+                        const topping = new THREE.Mesh(
+                            new THREE.SphereGeometry(0.05, 8, 8),
+                            new THREE.MeshStandardMaterial({
+                                color: Math.random() > 0.5 ? 0xff0000 : 0x00ff00
+                            })
+                        );
+                        topping.position.set(
+                            (Math.random() - 0.5) * 1.6,
+                            0.06,
+                            (Math.random() - 0.5) * 1.6
+                        );
+                        model.add(topping);
+                    }
+                    break;
+                    
+                case 'bebidas':
+                    // Crear una lata simple
+                    geometry = new THREE.CylinderGeometry(0.3, 0.3, 1, 16);
+                    material = new THREE.MeshStandardMaterial({
+                        color: 0xff0000,
+                        metalness: 0.8,
+                        roughness: 0.2
+                    });
+                    model = new THREE.Mesh(geometry, material);
+                    break;
+                    
+                default:
+                    // Modelo por defecto - caja
+                    geometry = new THREE.BoxGeometry(1, 1, 1);
+                    material = new THREE.MeshStandardMaterial({
+                        color: 0x00ff00
+                    });
+                    model = new THREE.Mesh(geometry, material);
+            }
+            
+            model.scale.set(0.5, 0.5, 0.5);
+            
+            if (deviceType === 'desktop') {
+                // En escritorio, añadir modelo a la escena directamente
+                scene.add(model);
+                model.position.set(0, 0, -3);
+                
+                // Añadir suelo
+                const floorGeometry = new THREE.PlaneGeometry(10, 10);
+                const floorMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x00aa00,
+                    side: THREE.DoubleSide
+                });
+                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+                floor.rotation.x = -Math.PI / 2;
+                floor.position.y = -1;
+                scene.add(floor);
+                
+                // Añadir fondo
+                scene.background = new THREE.Color(0x87ceeb);
+            }
+        }
+        
+        // Configurar controles
+        function setupControls() {
+            const arButton = document.getElementById('ar-button');
+            const rotateButton = document.getElementById('rotate-button');
+            const scaleButton = document.getElementById('scale-button');
+            
+            if (isARSupported && deviceType === 'mobile') {
+                arButton.addEventListener('click', startAR);
+            } else {
+                arButton.textContent = 'Vista 3D';
+                arButton.disabled = true;
+                arButton.classList.add('ar-active');
+            }
+            
+            rotateButton.addEventListener('click', () => {
+                isRotating = !isRotating;
+                rotateButton.classList.toggle('ar-active');
+            });
+            
+            scaleButton.addEventListener('click', () => {
+                isScaling = !isScaling;
+                scaleButton.classList.toggle('ar-active');
+            });
+            
+            // Controles táctiles para móvil
+            if (deviceType === 'mobile') {
+                setupTouchControls();
+            } else {
+                setupMouseControls();
+            }
+        }
+        
+        // Iniciar sesión AR
+        async function startAR() {
+            try {
+                const sessionInit = {
+                    requiredFeatures: ['hit-test'],
+                    optionalFeatures: ['dom-overlay'],
+                    domOverlay: { root: document.getElementById('info-panel') }
+                };
+                
+                arSession = await navigator.xr.requestSession('immersive-ar', sessionInit);
+                renderer.xr.setSession(arSession);
+                
+                // Configurar hit test
+                const viewerSpace = await arSession.requestReferenceSpace('viewer');
+                hitTestSource = await arSession.requestHitTestSource({ space: viewerSpace });
+                
+                // Crear reticle
+                const reticleGeometry = new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2);
+                const reticleMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                reticle = new THREE.Mesh(reticleGeometry, reticleMaterial);
+                reticle.visible = false;
+                scene.add(reticle);
+                
+                // Mostrar instrucciones
+                document.getElementById('ar-instructions').classList.add('show');
+                
+                // Manejar fin de sesión
+                arSession.addEventListener('end', () => {
+                    arSession = null;
+                    hitTestSource = null;
+                    document.getElementById('ar-button').classList.remove('ar-active');
+                });
+                
+                document.getElementById('ar-button').classList.add('ar-active');
+                
+            } catch (error) {
+                console.error('Error al iniciar AR:', error);
+                alert('No se pudo iniciar la realidad aumentada');
+            }
+        }
+        
+        // Configurar controles táctiles
+        function setupTouchControls() {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            
+            renderer.domElement.addEventListener('touchstart', (e) => {
+                if (arSession && hitTestSource) {
+                    // En modo AR, colocar objeto
+                    placeObject();
+                } else {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                }
+            });
+            
+            renderer.domElement.addEventListener('touchmove', (e) => {
+                if (!arSession && model) {
+                    const deltaX = e.touches[0].clientX - touchStartX;
+                    const deltaY = e.touches[0].clientY - touchStartY;
+                    
+                    if (isRotating) {
+                        model.rotation.y += deltaX * 0.01;
+                    }
+                    
+                    if (isScaling) {
+                        const scale = Math.max(0.1, model.scale.x + deltaY * 0.001);
+                        model.scale.set(scale, scale, scale);
+                    }
+                    
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                }
+            });
+        }
+        
+        // Configurar controles de mouse
+        function setupMouseControls() {
+            let mouseDown = false;
+            let mouseX = 0;
+            let mouseY = 0;
+            
+            renderer.domElement.addEventListener('mousedown', (e) => {
+                mouseDown = true;
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+            
+            renderer.domElement.addEventListener('mousemove', (e) => {
+                if (mouseDown && model) {
+                    const deltaX = e.clientX - mouseX;
+                    const deltaY = e.clientY - mouseY;
+                    
+                    if (isRotating) {
+                        model.rotation.y += deltaX * 0.01;
+                        model.rotation.x += deltaY * 0.01;
+                    }
+                    
+                    if (isScaling) {
+                        const scale = Math.max(0.1, model.scale.x + deltaY * 0.001);
+                        model.scale.set(scale, scale, scale);
+                    }
+                    
+                    if (!isRotating && !isScaling) {
+                        // Mover cámara alrededor del objeto
+                        const radius = 5;
+                        camera.position.x = radius * Math.sin(deltaX * 0.01);
+                        camera.position.z = radius * Math.cos(deltaX * 0.01);
+                        camera.lookAt(model.position);
+                    }
+                    
+                    mouseX = e.clientX;
+                    mouseY = e.clientY;
+                }
+            });
+            
+            renderer.domElement.addEventListener('mouseup', () => {
+                mouseDown = false;
+            });
+            
+            // Zoom con rueda del mouse
+            renderer.domElement.addEventListener('wheel', (e) => {
+                if (model) {
+                    const scale = Math.max(0.1, model.scale.x - e.deltaY * 0.0005);
+                    model.scale.set(scale, scale, scale);
+                }
+            });
+        }
+        
+        // Colocar objeto en AR
+        function placeObject() {
+            if (reticle.visible && model) {
+                model.position.copy(reticle.position);
+                model.rotation.copy(reticle.rotation);
+                scene.add(model);
+                
+                // Ocultar reticle después de colocar
+                reticle.visible = false;
+                
+                // Ocultar instrucciones
+                document.getElementById('ar-instructions').classList.remove('show');
+            }
+        }
+        
+        // Bucle de animación
+        function animate() {
+            renderer.setAnimationLoop(() => {
+                // Actualizar hit test en AR
+                if (arSession && hitTestSource) {
+                    const frame = renderer.xr.getFrame();
+                    const hitTestResults = frame.getHitTestResults(hitTestSource);
+                    
+                    if (hitTestResults.length > 0) {
+                        const hit = hitTestResults[0];
+                        reticle.visible = true;
+                        reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
+                    } else {
+                        reticle.visible = false;
+                    }
+                }
+                
+                // Rotar modelo automáticamente
+                if (model && isRotating) {
+                    model.rotation.y += 0.01;
+                }
+                
+                // Renderizar escena
+                renderer.render(scene, camera);
+            });
+        }
+        
+        // Manejar cambio de tamaño de ventana
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Cargar GLTFLoader
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';
+        script.onload = init;
+        document.head.appendChild(script);
+    </script>
+</body>
+</html>
