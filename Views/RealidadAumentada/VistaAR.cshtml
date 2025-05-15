@@ -95,42 +95,34 @@
             display: none;
         }
 
-        /* Retículo para AR */
-        #reticle {
+        /* Retículo para AR (ya no necesitamos este estilo CSS aquí, ya que usaremos Three.js para el retículo) */
+        #distance-indicator {
             position: absolute;
             left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            width: 60px;
-            height: 60px;
-            border: 3px solid rgba(255, 255, 255, 0.8);
-            border-radius: 50%;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-            display: none;
+            top: 60%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+            text-align: center;
             z-index: 999;
+            display: none;
         }
 
-            #reticle::before {
-                content: '';
-                position: absolute;
-                width: 2px;
-                height: 30px;
-                background-color: rgba(255, 255, 255, 0.8);
-                left: 50%;
-                top: 50%;
-                transform: translate(-50%, -50%);
-            }
-
-            #reticle::after {
-                content: '';
-                position: absolute;
-                width: 30px;
-                height: 2px;
-                background-color: rgba(255, 255, 255, 0.8);
-                left: 50%;
-                top: 50%;
-                transform: translate(-50%, -50%);
-            }
+        #surface-quality {
+            position: absolute;
+            left: 50%;
+            top: 70%;
+            transform: translateX(-50%);
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+            text-align: center;
+            z-index: 999;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -145,7 +137,8 @@
         <button id="start-ar-button">Iniciar Realidad Aumentada</button>
         <button id="exit-ar-button" onclick="exitAR()">Salir</button>
 
-        <div id="reticle"></div>
+        <div id="distance-indicator">Distancia: -- cm</div>
+        <div id="surface-quality"></div>
     </div>
 
     <script>
@@ -284,16 +277,101 @@
 
         // Crear retículo para AR
         function createReticle() {
-            const geometry = new THREE.RingGeometry(0.15, 0.2, 32);
-            const material = new THREE.MeshBasicMaterial({
+            // Grupo para contener todos los elementos del retículo
+            reticle = new THREE.Group();
+
+            // Anillo principal
+            const ringGeometry = new THREE.RingGeometry(0.05, 0.07, 32);
+            const ringMaterial = new THREE.MeshBasicMaterial({
+                color: 0x0099ff,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.8
+            });
+            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+            reticle.add(ring);
+
+            // Anillo exterior pulsante
+            const outerRingGeometry = new THREE.RingGeometry(0.08, 0.09, 32);
+            const outerRingMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.5
+            });
+            const outerRing = new THREE.Mesh(outerRingGeometry, outerRingMaterial);
+            reticle.add(outerRing);
+
+            // Líneas cruzadas
+            const lineMaterial = new THREE.LineBasicMaterial({
                 color: 0xffffff,
                 transparent: true,
                 opacity: 0.8
             });
-            reticle = new THREE.Mesh(geometry, material);
+
+            // Línea horizontal
+            const horizontalPoints = [];
+            horizontalPoints.push(new THREE.Vector3(-0.05, 0, 0));
+            horizontalPoints.push(new THREE.Vector3(0.05, 0, 0));
+            const horizontalGeometry = new THREE.BufferGeometry().setFromPoints(horizontalPoints);
+            const horizontalLine = new THREE.Line(horizontalGeometry, lineMaterial);
+            reticle.add(horizontalLine);
+
+            // Línea vertical
+            const verticalPoints = [];
+            verticalPoints.push(new THREE.Vector3(0, -0.05, 0));
+            verticalPoints.push(new THREE.Vector3(0, 0.05, 0));
+            const verticalGeometry = new THREE.BufferGeometry().setFromPoints(verticalPoints);
+            const verticalLine = new THREE.Line(verticalGeometry, lineMaterial);
+            reticle.add(verticalLine);
+
+            // Flecha indicadora de normal del plano
+            const arrowGeometry = new THREE.ConeGeometry(0.02, 0.05, 16);
+            const arrowMaterial = new THREE.MeshBasicMaterial({
+                color: 0xff0000,
+                transparent: true,
+                opacity: 0.9
+            });
+            const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
+            arrow.position.set(0, 0, 0.08);
+            arrow.rotation.x = Math.PI / 2;
+            reticle.add(arrow);
+
+            // Plano semitransparente para visualizar orientación
+            const planeGeometry = new THREE.PlaneGeometry(0.15, 0.15);
+            const planeMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00ff00,
+                transparent: true,
+                opacity: 0.2,
+                side: THREE.DoubleSide
+            });
+            const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+            reticle.add(plane);
+
+            // Cuadrícula para mostrar el plano detectado
+            const gridHelper = new THREE.GridHelper(0.3, 5, 0xffffff, 0xffffff);
+            gridHelper.material.opacity = 0.3;
+            gridHelper.material.transparent = true;
+            gridHelper.position.set(0, -0.001, 0);  // Ligeramente por debajo del plano
+            reticle.add(gridHelper);
+
+            // Rotación inicial para que quede paralelo al suelo
             reticle.rotation.x = -Math.PI / 2;
+
+            // Oculto inicialmente
             reticle.visible = false;
+
+            // Añadir al escenario
             scene.add(reticle);
+
+            // Animación de pulso para el anillo exterior
+            function animatePulse() {
+                const scale = 1 + Math.sin(Date.now() * 0.005) * 0.2;
+                outerRing.scale.set(scale, scale, 1);
+
+                requestAnimationFrame(animatePulse);
+            }
+            animatePulse();
         }
 
         // Iniciar AR
@@ -372,17 +450,47 @@
         // Manejador de selección en AR (cuando el usuario toca la pantalla)
         function onSelect() {
             if (reticle.visible && !cube.visible) {
-                // Colocar el cubo en la posición del retículo
-                cube.position.setFromMatrixPosition(reticle.matrix);
+                // Obtener la posición y orientación del retículo
+                const position = new THREE.Vector3();
+                const quaternion = new THREE.Quaternion();
+                const scale = new THREE.Vector3();
+
+                reticle.matrix.decompose(position, quaternion, scale);
+
+                // Colocar el cubo en la posición del retículo con la misma orientación
+                cube.position.copy(position);
+
+                // Elevar ligeramente el cubo sobre la superficie
+                cube.position.y += 0.15;
+
+                // Si la superficie es vertical (ángulo cercano a 90 grados)
+                const normalVector = new THREE.Vector3(0, 0, 1);
+                normalVector.applyQuaternion(quaternion);
+                const upVector = new THREE.Vector3(0, 1, 0);
+                const angle = Math.acos(normalVector.dot(upVector)) * (180 / Math.PI);
+
+                // Si la superficie es más vertical que horizontal
+                if (angle > 45 && angle < 135) {
+                    // Rotar el cubo para que se "pegue" a la pared
+                    cube.quaternion.copy(quaternion);
+                    // Y luego ajustar la posición para que esté justo frente a la superficie
+                    const offset = new THREE.Vector3(0, 0, 0.15);
+                    offset.applyQuaternion(quaternion);
+                    cube.position.add(offset);
+                }
+
                 cube.visible = true;
 
                 // Animación de aparición
                 cube.scale.set(0.1, 0.1, 0.1);
                 animateScale(cube, { x: 1, y: 1, z: 1 }, 300);
 
+                // Ocultar indicadores
                 document.getElementById('ar-status').textContent = 'Objeto colocado';
                 setTimeout(() => {
                     document.getElementById('ar-status').style.display = 'none';
+                    document.getElementById('distance-indicator').style.display = 'none';
+                    document.getElementById('surface-quality').style.display = 'none';
                 }, 2000);
             }
         }
@@ -438,11 +546,92 @@
 
                     if (hitTestResults.length > 0 && !cube.visible) {
                         const hit = hitTestResults[0];
+                        const pose = hit.getPose(referenceSpace);
 
+                        // Obtener la posición y orientación del hit test
+                        const position = pose.transform.position;
+                        const orientation = pose.transform.orientation;
+
+                        // Calcular distancia a la superficie
+                        const distance = Math.sqrt(
+                            position.x * position.x +
+                            position.y * position.y +
+                            position.z * position.z
+                        );
+
+                        // Mostrar indicador de distancia
+                        const distanceEl = document.getElementById('distance-indicator');
+                        distanceEl.style.display = 'block';
+                        const distanceCm = (distance * 100).toFixed(0);
+                        distanceEl.textContent = `Distancia: ${distanceCm} cm`;
+
+                        // Evaluar calidad de la superficie
+                        const surfaceQualityEl = document.getElementById('surface-quality');
+                        surfaceQualityEl.style.display = 'block';
+
+                        // Calidad basada en ángulo y distancia
+                        let quality = 'buena';
+                        let color = '#4CAF50'; // Verde por defecto
+
+                        // Verificar si la superficie es más o menos horizontal
+                        // Calculando el ángulo entre el vector normal de la superficie y el vector "hacia arriba"
+                        const normalVector = new THREE.Vector3(0, 0, 1);
+                        normalVector.applyQuaternion(new THREE.Quaternion(
+                            orientation.x,
+                            orientation.y,
+                            orientation.z,
+                            orientation.w
+                        ));
+
+                        const upVector = new THREE.Vector3(0, 1, 0);
+                        const angle = Math.acos(normalVector.dot(upVector)) * (180 / Math.PI);
+
+                        // Ajustar calidad según el ángulo (para superficies horizontales y verticales)
+                        if ((angle < 20 || angle > 160) || (angle > 70 && angle < 110)) {
+                            // Superficie horizontal o vertical (buena)
+                            if (distance > 2) {
+                                quality = 'demasiado lejos';
+                                color = '#FFC107'; // Amarillo
+                            }
+                        } else {
+                            // Superficie inclinada (menos ideal)
+                            quality = 'inclinada';
+                            color = '#FF9800'; // Naranja
+
+                            if (distance > 1.5) {
+                                quality = 'inclinada y lejos';
+                                color = '#F44336'; // Rojo
+                            }
+                        }
+
+                        surfaceQualityEl.textContent = `Superficie: ${quality}`;
+                        surfaceQualityEl.style.backgroundColor = color;
+                        surfaceQualityEl.style.color = 'white';
+
+                        // Actualizar el retículo
                         reticle.visible = true;
-                        reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
+
+                        // Aplicar la matriz de transformación completa al retículo
+                        reticle.matrix.fromArray(pose.transform.matrix);
+                        reticle.matrix.decompose(reticle.position, reticle.quaternion, reticle.scale);
+
+                        // Ajustar el tamaño basado en la distancia
+                        const scaleFactor = Math.max(0.5, Math.min(1.5, distance));
+                        reticle.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+                        // Cambiar color según calidad
+                        reticle.children.forEach(child => {
+                            if (child.material && child.material.color) {
+                                // El plano semitransparente (índice 4) cambia de color según calidad
+                                if (child === reticle.children[4]) {
+                                    child.material.color.set(color);
+                                }
+                            }
+                        });
                     } else if (hitTestResults.length === 0) {
                         reticle.visible = false;
+                        document.getElementById('distance-indicator').style.display = 'none';
+                        document.getElementById('surface-quality').style.display = 'none';
                     }
                 }
             }
