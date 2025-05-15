@@ -593,6 +593,10 @@
             }
 
             try {
+                // Ocultar botón de inicio y mostrar botón de salir inmediatamente
+                document.getElementById('start-ar-button').style.display = 'none';
+                document.getElementById('exit-ar-button').style.display = 'block';
+
                 // Solicitar sesión AR
                 const sessionInit = {
                     requiredFeatures: ['hit-test'],
@@ -600,7 +604,7 @@
                 };
 
                 // Configurar overlay si es posible
-                if (navigator.xr && 'dom-overlay' in sessionInit) {
+                if (navigator.xr && sessionInit.optionalFeatures.includes('dom-overlay')) {
                     sessionInit.domOverlay = { root: document.getElementById('ar-container') };
                     logDebug('DOM Overlay configurado');
                 }
@@ -622,8 +626,6 @@
                 arSession.addEventListener('end', onARSessionEnd);
 
                 // Mostrar UI de AR
-                document.getElementById('start-ar-button').style.display = 'none';
-                document.getElementById('exit-ar-button').style.display = 'block';
                 document.getElementById('ar-status').textContent = 'Mueve el dispositivo para detectar superficies';
                 document.getElementById('ar-status').style.display = 'block';
 
@@ -641,6 +643,11 @@
                 logDebug('Error iniciando AR:', error);
                 document.getElementById('ar-status').textContent = 'No se pudo acceder a la cámara. Verifica los permisos.';
                 document.getElementById('ar-status').style.display = 'block';
+
+                // Restaurar botón de inicio si hay error
+                document.getElementById('start-ar-button').style.display = 'block';
+                document.getElementById('exit-ar-button').style.display = 'none';
+
                 setTimeout(() => {
                     document.getElementById('ar-status').style.display = 'none';
                 }, 3000);
@@ -656,7 +663,7 @@
             hitTestSourceRequested = false;
             hitTestSource = null;
 
-            // Mostrar botón de salir
+            // Asegurarse de que el botón de salir siga visible
             document.getElementById('exit-ar-button').style.display = 'block';
 
             // Verificar si ya se colocó el objeto
@@ -670,12 +677,11 @@
                 // Restaurar animación sin AR
                 animate();
             } else {
-                logDebug("Sesión AR terminada sin objeto colocado, volviendo a estado inicial");
-                currentAppState = AppState.INITIAL;
-
-                // Restaurar botón de inicio
-                document.getElementById('start-ar-button').style.display = 'block';
-                document.getElementById('exit-ar-button').style.display = 'none';
+                logDebug("Sesión AR terminada sin objeto colocado, manteniendo UI de AR");
+                // Mantener en estado AR_ACTIVE aunque la sesión haya terminado
+                // para permitir reintentar con el botón de salir siempre visible
+                document.getElementById('ar-status').textContent = 'Sesión AR interrumpida. Usa el botón Salir para volver.';
+                document.getElementById('ar-status').style.display = 'block';
             }
 
             updateDebugOverlay();
@@ -1076,108 +1082,127 @@
                         session.requestReferenceSpace('viewer').then((referenceSpace) => {
                             session.requestHitTestSource({ space: referenceSpace }).then((source) => {
                                 hitTestSource = source;
+                                logDebug('Hit test source creado');
+                            }).catch(error => {
+                                logDebug('Error creando hit test source:', error);
                             });
+                        }).catch(error => {
+                            logDebug('Error obteniendo reference space:', error);
                         });
 
                         session.addEventListener('end', () => {
                             hitTestSourceRequested = false;
                             hitTestSource = null;
+                            logDebug('Hit test source limpiado al terminar sesión');
                         });
 
                         hitTestSourceRequested = true;
+                        logDebug('Hit test source solicitado');
                     }
 
                     if (hitTestSource) {
-                        const hitTestResults = frame.getHitTestResults(hitTestSource);
+                        try {
+                            const hitTestResults = frame.getHitTestResults(hitTestSource);
 
-                        if (hitTestResults.length > 0 && !cube.visible) {
-                            const hit = hitTestResults[0];
-                            const pose = hit.getPose(referenceSpace);
+                            if (hitTestResults.length > 0 && !cube.visible) {
+                                const hit = hitTestResults[0];
+                                const pose = hit.getPose(referenceSpace);
 
-                            // Obtener la posición y orientación del hit test
-                            const position = pose.transform.position;
-                            const orientation = pose.transform.orientation;
-
-                            // Calcular distancia a la superficie
-                            const distance = Math.sqrt(
-                                position.x * position.x +
-                                position.y * position.y +
-                                position.z * position.z
-                            );
-
-                            // Mostrar indicador de distancia
-                            const distanceEl = document.getElementById('distance-indicator');
-                            distanceEl.style.display = 'block';
-                            const distanceCm = (distance * 100).toFixed(0);
-                            distanceEl.textContent = `Distancia: ${distanceCm} cm`;
-
-                            // Evaluar calidad de la superficie
-                            const surfaceQualityEl = document.getElementById('surface-quality');
-                            surfaceQualityEl.style.display = 'block';
-
-                            // Calidad basada en ángulo y distancia
-                            let quality = 'buena';
-                            let color = '#4CAF50'; // Verde por defecto
-
-                            // Verificar si la superficie es más o menos horizontal
-                            // Calculando el ángulo entre el vector normal de la superficie y el vector "hacia arriba"
-                            const normalVector = new THREE.Vector3(0, 0, 1);
-                            normalVector.applyQuaternion(new THREE.Quaternion(
-                                orientation.x,
-                                orientation.y,
-                                orientation.z,
-                                orientation.w
-                            ));
-
-                            const upVector = new THREE.Vector3(0, 1, 0);
-                            const angle = Math.acos(normalVector.dot(upVector)) * (180 / Math.PI);
-
-                            // Ajustar calidad según el ángulo (para superficies horizontales y verticales)
-                            if ((angle < 20 || angle > 160) || (angle > 70 && angle < 110)) {
-                                // Superficie horizontal o vertical (buena)
-                                if (distance > 2) {
-                                    quality = 'demasiado lejos';
-                                    color = '#FFC107'; // Amarillo
+                                if (!pose) {
+                                    logDebug('No se pudo obtener pose del hit test');
+                                    return;
                                 }
-                            } else {
-                                // Superficie inclinada (menos ideal)
-                                quality = 'inclinada';
-                                color = '#FF9800'; // Naranja
 
-                                if (distance > 1.5) {
-                                    quality = 'inclinada y lejos';
-                                    color = '#F44336'; // Rojo
-                                }
-                            }
+                                // Obtener la posición y orientación del hit test
+                                const position = pose.transform.position;
+                                const orientation = pose.transform.orientation;
 
-                            surfaceQualityEl.textContent = `Superficie: ${quality}`;
-                            surfaceQualityEl.style.backgroundColor = color;
-                            surfaceQualityEl.style.color = 'white';
+                                // Calcular distancia a la superficie
+                                const distance = Math.sqrt(
+                                    position.x * position.x +
+                                    position.y * position.y +
+                                    position.z * position.z
+                                );
 
-                            // Actualizar el retículo
-                            reticle.visible = true;
+                                // Mostrar indicador de distancia
+                                const distanceEl = document.getElementById('distance-indicator');
+                                distanceEl.style.display = 'block';
+                                const distanceCm = (distance * 100).toFixed(0);
+                                distanceEl.textContent = `Distancia: ${distanceCm} cm`;
 
-                            // Aplicar la matriz de transformación completa al retículo
-                            reticle.matrix.fromArray(pose.transform.matrix);
-                            reticle.matrix.decompose(reticle.position, reticle.quaternion, reticle.scale);
+                                // Evaluar calidad de la superficie
+                                const surfaceQualityEl = document.getElementById('surface-quality');
+                                surfaceQualityEl.style.display = 'block';
 
-                            // Ajustar el tamaño basado en la distancia
-                            const scaleFactor = Math.max(0.5, Math.min(1.5, distance));
-                            reticle.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                                // Calidad basada en ángulo y distancia
+                                let quality = 'buena';
+                                let color = '#4CAF50'; // Verde por defecto
 
-                            // Cambiar color según calidad
-                            reticle.children.forEach(child => {
-                                if (child.material && child.material.color) {
-                                    // El plano semitransparente (índice 4) cambia de color según calidad
-                                    if (child === reticle.children[4]) {
-                                        child.material.color.set(color);
+                                // Verificar si la superficie es más o menos horizontal
+                                // Calculando el ángulo entre el vector normal de la superficie y el vector "hacia arriba"
+                                const normalVector = new THREE.Vector3(0, 0, 1);
+                                normalVector.applyQuaternion(new THREE.Quaternion(
+                                    orientation.x,
+                                    orientation.y,
+                                    orientation.z,
+                                    orientation.w
+                                ));
+
+                                const upVector = new THREE.Vector3(0, 1, 0);
+                                const angle = Math.acos(normalVector.dot(upVector)) * (180 / Math.PI);
+
+                                // Ajustar calidad según el ángulo (para superficies horizontales y verticales)
+                                if ((angle < 20 || angle > 160) || (angle > 70 && angle < 110)) {
+                                    // Superficie horizontal o vertical (buena)
+                                    if (distance > 2) {
+                                        quality = 'demasiado lejos';
+                                        color = '#FFC107'; // Amarillo
+                                    }
+                                } else {
+                                    // Superficie inclinada (menos ideal)
+                                    quality = 'inclinada';
+                                    color = '#FF9800'; // Naranja
+
+                                    if (distance > 1.5) {
+                                        quality = 'inclinada y lejos';
+                                        color = '#F44336'; // Rojo
                                     }
                                 }
-                            });
-                        } else if (hitTestResults.length === 0) {
-                            reticle.visible = false;
-                            document.getElementById('distance-indicator').style.display = 'none';
-                            document.getElementById('surface-quality').style.display = 'none';
+
+                                surfaceQualityEl.textContent = `Superficie: ${quality}`;
+                                surfaceQualityEl.style.backgroundColor = color;
+                                surfaceQualityEl.style.color = 'white';
+
+                                // Actualizar el retículo
+                                reticle.visible = true;
+
+                                // Aplicar la matriz de transformación completa al retículo
+                                reticle.matrix.fromArray(pose.transform.matrix);
+                                reticle.matrix.decompose(reticle.position, reticle.quaternion, reticle.scale);
+
+                                // Ajustar el tamaño basado en la distancia
+                                const scaleFactor = Math.max(0.5, Math.min(1.5, distance));
+                                reticle.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+                                // Cambiar color según calidad
+                                reticle.children.forEach(child => {
+                                    if (child.material && child.material.color) {
+                                        // El plano semitransparente (índice 4) cambia de color según calidad
+                                        if (child === reticle.children[4]) {
+                                            child.material.color.set(color);
+                                        }
+                                    }
+                                });
+                            } else if (hitTestResults.length === 0) {
+                                if (reticle.visible) {
+                                    logDebug('No se detectaron superficies, ocultando retículo');
+                                }
+                                reticle.visible = false;
+                                document.getElementById('distance-indicator').style.display = 'none';
+                                document.getElementById('surface-quality').style.display = 'none';
+                            }
+                        } catch (error) {
+                            logDebug('Error en el hit test:', error);
                         }
                     }
                 }
