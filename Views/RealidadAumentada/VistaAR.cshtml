@@ -123,6 +123,40 @@
             z-index: 999;
             display: none;
         }
+
+        #object-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            text-align: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        #gesture-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
     </style>
 </head>
 <body>
@@ -139,6 +173,8 @@
 
         <div id="distance-indicator">Distancia: -- cm</div>
         <div id="surface-quality"></div>
+        <div id="object-controls">Arrastra para mover • Pellizca para acercar/alejar</div>
+        <div id="gesture-indicator"></div>
     </div>
 
     <script>
@@ -153,6 +189,16 @@
         let isMobile = false;
         let productId = @ViewBag.ProductoId;
         let productName = '@ViewBag.ProductoNombre';
+
+        // Variables para manipulación del objeto
+        let isObjectPlaced = false;
+        let isMovingObject = false;
+        let isScalingObject = false;
+        let lastTouchPosition = { x: 0, y: 0 };
+        let initialTouchDistance = 0;
+        let initialObjectDistance = 0;
+        let objectPlane = new THREE.Plane();
+        let movementIndicator;
 
         // Detectar si es dispositivo móvil
         function detectDevice() {
@@ -212,6 +258,94 @@
 
             // Crear retículo para AR
             createReticle();
+
+            // Crear indicador de movimiento
+            createMovementIndicator();
+        }
+
+        // Crear indicador de movimiento
+        function createMovementIndicator() {
+            // Grupo para contener todos los elementos del indicador
+            movementIndicator = new THREE.Group();
+
+            // Crear anillo indicador
+            const ringGeometry = new THREE.RingGeometry(0.2, 0.22, 32);
+            const ringMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffff00,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.7
+            });
+            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+            movementIndicator.add(ring);
+
+            // Crear flechas direccionales (cuatro flechas)
+            const arrowSize = 0.05;
+            const arrowShape = new THREE.Shape();
+
+            // Dibujar flecha
+            arrowShape.moveTo(0, arrowSize * 2);
+            arrowShape.lineTo(arrowSize, 0);
+            arrowShape.lineTo(-arrowSize, 0);
+            arrowShape.lineTo(0, arrowSize * 2);
+
+            const arrowGeometry = new THREE.ShapeGeometry(arrowShape);
+            const arrowMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffff00,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.9
+            });
+
+            // Flecha hacia arriba
+            const arrowUp = new THREE.Mesh(arrowGeometry, arrowMaterial);
+            arrowUp.position.set(0, 0.28, 0);
+            movementIndicator.add(arrowUp);
+
+            // Flecha hacia abajo
+            const arrowDown = new THREE.Mesh(arrowGeometry, arrowMaterial);
+            arrowDown.rotation.z = Math.PI;
+            arrowDown.position.set(0, -0.28, 0);
+            movementIndicator.add(arrowDown);
+
+            // Flecha hacia la derecha
+            const arrowRight = new THREE.Mesh(arrowGeometry, arrowMaterial);
+            arrowRight.rotation.z = -Math.PI / 2;
+            arrowRight.position.set(0.28, 0, 0);
+            movementIndicator.add(arrowRight);
+
+            // Flecha hacia la izquierda
+            const arrowLeft = new THREE.Mesh(arrowGeometry, arrowMaterial);
+            arrowLeft.rotation.z = Math.PI / 2;
+            arrowLeft.position.set(-0.28, 0, 0);
+            movementIndicator.add(arrowLeft);
+
+            // Círculo central
+            const circleGeometry = new THREE.CircleGeometry(0.15, 32);
+            const circleMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffff00,
+                transparent: true,
+                opacity: 0.3
+            });
+            const circle = new THREE.Mesh(circleGeometry, circleMaterial);
+            movementIndicator.add(circle);
+
+            // Inicialmente invisible
+            movementIndicator.visible = false;
+
+            // Añadir al escenario
+            scene.add(movementIndicator);
+
+            // Animación pulsante
+            function animatePulse() {
+                if (movementIndicator.visible) {
+                    const scale = 1 + Math.sin(Date.now() * 0.005) * 0.1;
+                    ring.scale.set(scale, scale, 1);
+                }
+                requestAnimationFrame(animatePulse);
+            }
+
+            animatePulse();
         }
 
         // Crear cubo rojo
@@ -485,13 +619,205 @@
                 cube.scale.set(0.1, 0.1, 0.1);
                 animateScale(cube, { x: 1, y: 1, z: 1 }, 300);
 
-                // Ocultar indicadores
+                // Guardar el plano en el que se colocó el objeto
+                // Para cálculos futuros de movimiento
+                objectPlane.setFromNormalAndCoplanarPoint(
+                    normalVector,
+                    cube.position
+                );
+
+                // Marcar que el objeto ha sido colocado
+                isObjectPlaced = true;
+
+                // Ocultar indicadores de AR
                 document.getElementById('ar-status').textContent = 'Objeto colocado';
-                setTimeout(() => {
-                    document.getElementById('ar-status').style.display = 'none';
-                    document.getElementById('distance-indicator').style.display = 'none';
-                    document.getElementById('surface-quality').style.display = 'none';
-                }, 2000);
+                document.getElementById('ar-status').style.display = 'none';
+                document.getElementById('distance-indicator').style.display = 'none';
+                document.getElementById('surface-quality').style.display = 'none';
+
+                // Mostrar controles de objeto
+                document.getElementById('object-controls').style.display = 'block';
+
+                // Configurar eventos táctiles para manipulación
+                setupObjectManipulation();
+            }
+        }
+
+        // Configurar manipulación del objeto
+        function setupObjectManipulation() {
+            const canvas = renderer.domElement;
+
+            // Evento de inicio de toque
+            canvas.addEventListener('touchstart', onTouchStart, false);
+            canvas.addEventListener('touchmove', onTouchMove, false);
+            canvas.addEventListener('touchend', onTouchEnd, false);
+
+            // Mostrar instrucciones de manipulación
+            showGestureIndicator('👆');
+            setTimeout(() => {
+                showGestureIndicator('👋');
+            }, 1500);
+            setTimeout(() => {
+                showGestureIndicator('👌');
+            }, 3000);
+        }
+
+        // Mostrar indicador de gesto
+        function showGestureIndicator(emoji) {
+            const indicator = document.getElementById('gesture-indicator');
+            indicator.textContent = emoji;
+            indicator.style.opacity = '0.8';
+
+            setTimeout(() => {
+                indicator.style.opacity = '0';
+            }, 1000);
+        }
+
+        // Evento de inicio de toque
+        function onTouchStart(event) {
+            event.preventDefault();
+
+            if (!isObjectPlaced || !cube.visible) return;
+
+            // Verificar si es multitoque (escalar) o toque simple (mover)
+            if (event.touches.length === 2) {
+                // Dos dedos - escalar (zoom)
+                isScalingObject = true;
+                isMovingObject = false;
+
+                // Calcular distancia inicial entre los dedos
+                const touch1 = event.touches[0];
+                const touch2 = event.touches[1];
+                initialTouchDistance = Math.hypot(
+                    touch2.clientX - touch1.clientX,
+                    touch2.clientY - touch1.clientY
+                );
+
+                // Calcular tamaño inicial del objeto
+                initialObjectDistance = cube.scale.x; // Asumiendo escala uniforme
+
+                // Mostrar indicador de escala
+                showGestureIndicator('↔️');
+
+            } else if (event.touches.length === 1) {
+                // Un dedo - mover
+                isMovingObject = true;
+                isScalingObject = false;
+
+                // Guardar posición inicial del toque
+                const touch = event.touches[0];
+                lastTouchPosition.x = touch.clientX;
+                lastTouchPosition.y = touch.clientY;
+
+                // Posicionar y mostrar el indicador de movimiento
+                updateMovementIndicator();
+
+                // Mostrar indicador de movimiento
+                showGestureIndicator('✋');
+            }
+        }
+
+        // Actualizar indicador de movimiento
+        function updateMovementIndicator() {
+            if (!movementIndicator || !cube.visible) return;
+
+            // Posicionar el indicador justo encima del cubo
+            movementIndicator.position.copy(cube.position);
+            movementIndicator.position.y += 0.3; // Elevarlo un poco sobre el cubo
+
+            // Hacer el indicador visible y mirando a la cámara
+            movementIndicator.visible = isMovingObject;
+            movementIndicator.quaternion.copy(camera.quaternion);
+        }
+
+        // Evento de movimiento de toque
+        function onTouchMove(event) {
+            event.preventDefault();
+
+            if (!isObjectPlaced || !cube.visible) return;
+
+            // Si estamos escalando (dos dedos)
+            if (isScalingObject && event.touches.length === 2) {
+                const touch1 = event.touches[0];
+                const touch2 = event.touches[1];
+
+                // Calcular nueva distancia entre dedos
+                const currentTouchDistance = Math.hypot(
+                    touch2.clientX - touch1.clientX,
+                    touch2.clientY - touch1.clientY
+                );
+
+                // Calcular factor de escala
+                const scaleFactor = currentTouchDistance / initialTouchDistance;
+
+                // Aplicar nueva escala al objeto, limitando el tamaño
+                const newScale = initialObjectDistance * scaleFactor;
+                const clampedScale = Math.max(0.3, Math.min(2.0, newScale));
+                cube.scale.set(clampedScale, clampedScale, clampedScale);
+
+            // Si estamos moviendo (un dedo)
+            } else if (isMovingObject && event.touches.length === 1) {
+                const touch = event.touches[0];
+
+                // Calcular el movimiento del dedo
+                const deltaX = touch.clientX - lastTouchPosition.x;
+                const deltaY = touch.clientY - lastTouchPosition.y;
+
+                // Convertir movimiento de pantalla a movimiento 3D
+                moveObjectOnPlane(deltaX, deltaY);
+
+                // Actualizar última posición
+                lastTouchPosition.x = touch.clientX;
+                lastTouchPosition.y = touch.clientY;
+
+                // Actualizar posición del indicador de movimiento
+                updateMovementIndicator();
+            }
+        }
+
+        // Mover objeto en el plano detectado
+        function moveObjectOnPlane(deltaX, deltaY) {
+            // Obtener el tamaño de la pantalla
+            const width = renderer.domElement.clientWidth;
+            const height = renderer.domElement.clientHeight;
+
+            // Calcular dirección de movimiento relativa a la cámara
+            const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+            const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+
+            // Ajustar la dirección 'up' para que sea paralela al plano
+            up.projectOnPlane(objectPlane.normal).normalize();
+
+            // Ajustar la dirección 'right' para que sea paralela al plano
+            right.projectOnPlane(objectPlane.normal).normalize();
+
+            // Calcular factor de sensibilidad basado en la distancia a la cámara
+            const distance = camera.position.distanceTo(cube.position);
+            const sensitivity = distance * 0.003;
+
+            // Aplicar movimiento
+            cube.position.add(right.multiplyScalar(deltaX * sensitivity));
+            cube.position.add(up.multiplyScalar(-deltaY * sensitivity));
+
+            // Asegurarse de que permanezca en el plano original
+            const distanceToPlane = objectPlane.distanceToPoint(cube.position);
+            if (Math.abs(distanceToPlane) > 0.01) {
+                const correction = objectPlane.normal.clone().multiplyScalar(-distanceToPlane);
+                cube.position.add(correction);
+            }
+        }
+
+        // Evento de fin de toque
+        function onTouchEnd(event) {
+            event.preventDefault();
+
+            // Restablecer estados
+            isMovingObject = false;
+            isScalingObject = false;
+
+            // Ocultar indicador de movimiento
+            if (movementIndicator) {
+                movementIndicator.visible = false;
             }
         }
 
@@ -526,118 +852,121 @@
                 const referenceSpace = renderer.xr.getReferenceSpace();
                 const session = renderer.xr.getSession();
 
-                if (hitTestSourceRequested === false) {
-                    session.requestReferenceSpace('viewer').then((referenceSpace) => {
-                        session.requestHitTestSource({ space: referenceSpace }).then((source) => {
-                            hitTestSource = source;
+                if (!isObjectPlaced) {
+                    // Si el objeto aún no ha sido colocado, seguir con el hit test
+                    if (hitTestSourceRequested === false) {
+                        session.requestReferenceSpace('viewer').then((referenceSpace) => {
+                            session.requestHitTestSource({ space: referenceSpace }).then((source) => {
+                                hitTestSource = source;
+                            });
                         });
-                    });
 
-                    session.addEventListener('end', () => {
-                        hitTestSourceRequested = false;
-                        hitTestSource = null;
-                    });
+                        session.addEventListener('end', () => {
+                            hitTestSourceRequested = false;
+                            hitTestSource = null;
+                        });
 
-                    hitTestSourceRequested = true;
-                }
+                        hitTestSourceRequested = true;
+                    }
 
-                if (hitTestSource) {
-                    const hitTestResults = frame.getHitTestResults(hitTestSource);
+                    if (hitTestSource) {
+                        const hitTestResults = frame.getHitTestResults(hitTestSource);
 
-                    if (hitTestResults.length > 0 && !cube.visible) {
-                        const hit = hitTestResults[0];
-                        const pose = hit.getPose(referenceSpace);
+                        if (hitTestResults.length > 0 && !cube.visible) {
+                            const hit = hitTestResults[0];
+                            const pose = hit.getPose(referenceSpace);
 
-                        // Obtener la posición y orientación del hit test
-                        const position = pose.transform.position;
-                        const orientation = pose.transform.orientation;
+                            // Obtener la posición y orientación del hit test
+                            const position = pose.transform.position;
+                            const orientation = pose.transform.orientation;
 
-                        // Calcular distancia a la superficie
-                        const distance = Math.sqrt(
-                            position.x * position.x +
-                            position.y * position.y +
-                            position.z * position.z
-                        );
+                            // Calcular distancia a la superficie
+                            const distance = Math.sqrt(
+                                position.x * position.x +
+                                position.y * position.y +
+                                position.z * position.z
+                            );
 
-                        // Mostrar indicador de distancia
-                        const distanceEl = document.getElementById('distance-indicator');
-                        distanceEl.style.display = 'block';
-                        const distanceCm = (distance * 100).toFixed(0);
-                        distanceEl.textContent = `Distancia: ${distanceCm} cm`;
+                            // Mostrar indicador de distancia
+                            const distanceEl = document.getElementById('distance-indicator');
+                            distanceEl.style.display = 'block';
+                            const distanceCm = (distance * 100).toFixed(0);
+                            distanceEl.textContent = `Distancia: ${distanceCm} cm`;
 
-                        // Evaluar calidad de la superficie
-                        const surfaceQualityEl = document.getElementById('surface-quality');
-                        surfaceQualityEl.style.display = 'block';
+                            // Evaluar calidad de la superficie
+                            const surfaceQualityEl = document.getElementById('surface-quality');
+                            surfaceQualityEl.style.display = 'block';
 
-                        // Calidad basada en ángulo y distancia
-                        let quality = 'buena';
-                        let color = '#4CAF50'; // Verde por defecto
+                            // Calidad basada en ángulo y distancia
+                            let quality = 'buena';
+                            let color = '#4CAF50'; // Verde por defecto
 
-                        // Verificar si la superficie es más o menos horizontal
-                        // Calculando el ángulo entre el vector normal de la superficie y el vector "hacia arriba"
-                        const normalVector = new THREE.Vector3(0, 0, 1);
-                        normalVector.applyQuaternion(new THREE.Quaternion(
-                            orientation.x,
-                            orientation.y,
-                            orientation.z,
-                            orientation.w
-                        ));
+                            // Verificar si la superficie es más o menos horizontal
+                            // Calculando el ángulo entre el vector normal de la superficie y el vector "hacia arriba"
+                            const normalVector = new THREE.Vector3(0, 0, 1);
+                            normalVector.applyQuaternion(new THREE.Quaternion(
+                                orientation.x,
+                                orientation.y,
+                                orientation.z,
+                                orientation.w
+                            ));
 
-                        const upVector = new THREE.Vector3(0, 1, 0);
-                        const angle = Math.acos(normalVector.dot(upVector)) * (180 / Math.PI);
+                            const upVector = new THREE.Vector3(0, 1, 0);
+                            const angle = Math.acos(normalVector.dot(upVector)) * (180 / Math.PI);
 
-                        // Ajustar calidad según el ángulo (para superficies horizontales y verticales)
-                        if ((angle < 20 || angle > 160) || (angle > 70 && angle < 110)) {
-                            // Superficie horizontal o vertical (buena)
-                            if (distance > 2) {
-                                quality = 'demasiado lejos';
-                                color = '#FFC107'; // Amarillo
-                            }
-                        } else {
-                            // Superficie inclinada (menos ideal)
-                            quality = 'inclinada';
-                            color = '#FF9800'; // Naranja
+                            // Ajustar calidad según el ángulo (para superficies horizontales y verticales)
+                            if ((angle < 20 || angle > 160) || (angle > 70 && angle < 110)) {
+                                // Superficie horizontal o vertical (buena)
+                                if (distance > 2) {
+                                    quality = 'demasiado lejos';
+                                    color = '#FFC107'; // Amarillo
+                                }
+                            } else {
+                                // Superficie inclinada (menos ideal)
+                                quality = 'inclinada';
+                                color = '#FF9800'; // Naranja
 
-                            if (distance > 1.5) {
-                                quality = 'inclinada y lejos';
-                                color = '#F44336'; // Rojo
-                            }
-                        }
-
-                        surfaceQualityEl.textContent = `Superficie: ${quality}`;
-                        surfaceQualityEl.style.backgroundColor = color;
-                        surfaceQualityEl.style.color = 'white';
-
-                        // Actualizar el retículo
-                        reticle.visible = true;
-
-                        // Aplicar la matriz de transformación completa al retículo
-                        reticle.matrix.fromArray(pose.transform.matrix);
-                        reticle.matrix.decompose(reticle.position, reticle.quaternion, reticle.scale);
-
-                        // Ajustar el tamaño basado en la distancia
-                        const scaleFactor = Math.max(0.5, Math.min(1.5, distance));
-                        reticle.scale.set(scaleFactor, scaleFactor, scaleFactor);
-
-                        // Cambiar color según calidad
-                        reticle.children.forEach(child => {
-                            if (child.material && child.material.color) {
-                                // El plano semitransparente (índice 4) cambia de color según calidad
-                                if (child === reticle.children[4]) {
-                                    child.material.color.set(color);
+                                if (distance > 1.5) {
+                                    quality = 'inclinada y lejos';
+                                    color = '#F44336'; // Rojo
                                 }
                             }
-                        });
-                    } else if (hitTestResults.length === 0) {
-                        reticle.visible = false;
-                        document.getElementById('distance-indicator').style.display = 'none';
-                        document.getElementById('surface-quality').style.display = 'none';
+
+                            surfaceQualityEl.textContent = `Superficie: ${quality}`;
+                            surfaceQualityEl.style.backgroundColor = color;
+                            surfaceQualityEl.style.color = 'white';
+
+                            // Actualizar el retículo
+                            reticle.visible = true;
+
+                            // Aplicar la matriz de transformación completa al retículo
+                            reticle.matrix.fromArray(pose.transform.matrix);
+                            reticle.matrix.decompose(reticle.position, reticle.quaternion, reticle.scale);
+
+                            // Ajustar el tamaño basado en la distancia
+                            const scaleFactor = Math.max(0.5, Math.min(1.5, distance));
+                            reticle.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+                            // Cambiar color según calidad
+                            reticle.children.forEach(child => {
+                                if (child.material && child.material.color) {
+                                    // El plano semitransparente (índice 4) cambia de color según calidad
+                                    if (child === reticle.children[4]) {
+                                        child.material.color.set(color);
+                                    }
+                                }
+                            });
+                        } else if (hitTestResults.length === 0) {
+                            reticle.visible = false;
+                            document.getElementById('distance-indicator').style.display = 'none';
+                            document.getElementById('surface-quality').style.display = 'none';
+                        }
                     }
                 }
             }
 
-            // Rotación del cubo
-            if (cube.visible) {
+            // Rotación del cubo solo si no está siendo manipulado
+            if (cube.visible && !isMovingObject && !isScalingObject) {
                 cube.rotation.y += 0.01;
             }
 
@@ -660,9 +989,16 @@
         // Salir de AR
         function exitAR() {
             if (arSession) {
+                // Eliminar eventos de manipulación
+                const canvas = renderer.domElement;
+                canvas.removeEventListener('touchstart', onTouchStart);
+                canvas.removeEventListener('touchmove', onTouchMove);
+                canvas.removeEventListener('touchend', onTouchEnd);
+
                 arSession.end();
                 arSession = null;
                 isARActive = false;
+                isObjectPlaced = false;
             }
 
             // Volver a la página de detalle del producto
