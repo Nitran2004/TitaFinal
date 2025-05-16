@@ -1,543 +1,167 @@
-﻿<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Restaurante App</title>
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-          integrity="sha512-pEc06c4Iqik4CkO9L+9muypmvPUpZ2pA0x6LgjiTQ3vK8fO/hk6V8aXOOemKu66PCY8XakP+e6OpYJ4Y3L6VUw=="
-          crossorigin="anonymous" referrerpolicy="no-referrer" />
+﻿@model IEnumerable<ProyectoIdentity.Models.Producto>
+@{
+    ViewData["Title"] = "Inicio - Categorías";
+}
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
-        
-        body {
-            background-color: #f9f9f9;
-        }
+<style>
+  /* --------- Menú de Categorías --------- */
+  .category-nav {
+    position: sticky; top: 0; background: #fff;
+    padding: 8px 0; box-shadow: 0 2px 6px rgba(0,0,0,0.1); z-index: 100;
+  }
+  .category-container {
+    display: flex; overflow-x: auto; gap: 16px; padding: 0 24px;
+    scroll-behavior: smooth;
+  }
+  .category-container::-webkit-scrollbar { height:6px; }
+  .category-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius:3px; }
+  .category-btn {
+    flex:0 0 auto; display:flex; flex-direction:column; align-items:center;
+    border:none; background:transparent; cursor:pointer;
+    padding:6px 12px; transition:color .2s,transform .2s; color:#555;
+  }
+  .category-btn i { font-size:1.4rem; margin-bottom:4px; transition:transform .2s; }
+  .category-btn span { font-size:.85rem; white-space:nowrap; }
+  .category-btn.active,
+  .category-btn:hover { color:#28a745; transform:translateY(-3px); }
+  .category-btn.active i,
+  .category-btn:hover i { transform:scale(1.2); }
+  .category-btn.active::after {
+    content:''; display:block; width:100%; height:3px;
+    background:linear-gradient(90deg,#ffc107,#28a745);
+    border-radius:2px; margin-top:6px; animation:indicator-in .3s ease-out;
+  }
+  keyframes indicator-in { from{width:0} to{width:100%} }
+  media(max-width:576px){ .category-btn i{font-size:1.2rem} .category-btn span{font-size:.75rem} }
 
-        /* Header Style */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 5%;
-            background-color: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .menu-icon {
-            font-size: 24px;
-            color: #333;
-            cursor: pointer;
-            display: none;
-        }
+  /* Imagen de bienvenida */
+  .welcome-container {
+    position: relative;
+    margin: 40px auto;
+    max-width: 800px;
+    text-align: center;
+  }
+  .welcome-image {
+    width: 100%;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  }
+  .welcome-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    padding: 24px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 12px;
+    width: 80%;
+  }
+  .welcome-text h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .welcome-text p {
+    font-size: 1.2rem;
+    margin-bottom: 24px;
+  }
+  .btn-explore {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .btn-explore:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    color: white;
+  }
+</style>
 
-        .logo {
-            height: 40px;
-        }
+<h1 class="text-center mt-4">Bienvenido, selecciona una categoría</h1>
 
-        .logo-mobile {
-            display: none;
-        }
+<nav class="category-nav">
+  <div class="category-container">
+    <a href="/Productos/SeleccionMultiple" class="category-btn">
+      <i class="fas fa-layer-group"></i>
+      <span>Todas</span>
+    </a>
+    <a href="/Productos/SeleccionMultiple?categoria=Pizza" class="category-btn">
+      <i class="fas fa-pizza-slice"></i>
+      <span>Pizza</span>
+    </a>
+    <a href="/Productos/SeleccionMultiple?categoria=Cerveza" class="category-btn">
+      <i class="fas fa-beer"></i>
+      <span>Cerveza</span>
+    </a>
+    <a href="/Productos/SeleccionMultiple?categoria=Cocteles" class="category-btn">
+      <i class="fas fa-cocktail"></i>
+      <span>Cocteles</span>
+    </a>
+    <a href="/Productos/SeleccionMultiple?categoria=Bebidas" class="category-btn">
+      <i class="fas fa-glass-whiskey"></i>
+      <span>Bebidas</span>
+    </a>
+    <a href="/Productos/SeleccionMultiple?categoria=Promo" class="category-btn">
+      <i class="fas fa-percentage"></i>
+      <span>Promo</span>
+    </a>
+    <a href="/Productos/SeleccionMultiple?categoria=Sánduches" class="category-btn">
+      <i class="fas fa-hamburger"></i>
+      <span>Sánduches</span>
+    </a>
+    <a href="/Productos/SeleccionMultiple?categoria=Shot" class="category-btn">
+      <i class="fas fa-wine-glass-alt"></i>
+      <span>Shot</span>
+    </a>
+    <a href="/Productos/SeleccionMultiple?categoria=Picadas" class="category-btn">
+      <i class="fas fa-cheese"></i>
+      <span>Picadas</span>
+    </a>
+  </div>
+</nav>
 
-        .cart-icon {
-            display: none;
-        }
+<div class="welcome-container">
+  <img src="/img/welcome-background.jpg" alt="Bienvenido" class="welcome-image" onerror="this.src='https://via.placeholder.com/800x400/28a745/FFFFFF?text=Bienvenido+a+nuestro+menú'">
+  <div class="welcome-text">
+    <h1>Explora Nuestras Categorías</h1>
+    <p>Selecciona una categoría arriba para ver nuestros productos</p>
+    <a href="/Productos/SeleccionMultiple" class="btn btn-explore">Ver Todo el Menú</a>
+  </div>
+</div>
 
-        .user-menu {
-            background-color: #ffcc00;
-            padding: 8px 15px;
-            border-radius: 20px;
-            color: #333;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .user-icon {
-            margin-right: 5px;
-        }
-
-        /* Main Navigation */
-        .main-nav {
-            display: flex;
-            padding: 15px 5%;
-            background-color: white;
-            border-bottom: 1px solid #eee;
-        }
-
-        .main-nav a {
-            margin-right: 30px;
-            text-decoration: none;
-            color: #333;
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        /* Category Navigation */
-        .category-nav {
-            display: flex;
-            justify-content: center;
-            padding: 20px 0;
-            background-color: white;
-            border-bottom: 1px solid #eee;
-            overflow-x: auto;
-        }
-
-        .category-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0 15px;
-            text-decoration: none;
-            color: #333;
-        }
-
-        .category-icon {
-            width: 50px;
-            height: 50px;
-            margin-bottom: 10px;
-            object-fit: contain;
-        }
-
-        .category-text {
-            font-size: 14px;
-            text-align: center;
-        }
-
-        .active-category {
-            color: #ff8c00;
-            border-bottom: 3px solid #ff8c00;
-            padding-bottom: 5px;
-        }
-
-        /* Products Section */
-        .section-title {
-            font-size: 28px;
-            font-weight: bold;
-            color: #333;
-            margin: 30px 5%;
-        }
-
-        .products-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: flex-start;
-            padding: 0 4%;
-            gap: 20px;
-        }
-
-        .product-card {
-            background-color: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            width: calc(20% - 20px);
-            transition: transform 0.3s;
-            cursor: pointer;
-        }
-
-        .product-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .product-img {
-            width: 100%;
-            height: 180px;
-            object-fit: contain;
-            padding: 20px;
-        }
-
-        .product-name {
-            text-align: center;
-            font-weight: bold;
-            padding: 15px;
-            font-size: 16px;
-        }
-
-        /* Mobile Bottom Navigation */
-        .bottom-nav {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            background-color: white;
-            padding: 10px 0;
-            border-top: 1px solid #e0e0e0;
-            z-index: 100;
-        }
-
-        /* Hero Banner with cocktail */
-        .hero-banner {
-            display: none;
-            position: relative;
-        }
-
-        .carousel-container {
-            width: 100%;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .carousel-slide {
-            width: 100%;
-            height: 200px;
-            position: relative;
-        }
-
-        /* Promo section */
-        .promo-section {
-            display: none;
-        }
-        
-        .promo-card {
-            border-radius: 15px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            overflow: hidden;
-            background-color: white;
-            transition: transform 0.3s ease;
-        }
-
-        /* Media Queries for Responsiveness */
-        media (max-width: 1024px) {
-            .product-card {
-                width: calc(25% - 20px);
-            }
-        }
-
-        media (max-width: 768px) {
-            .product-card {
-                width: calc(33.333% - 20px);
-            }
-            
-            .menu-icon {
-                display: block;
-            }
-
-            .main-nav {
-                display: none;
-            }
-        }
-
-                media (max-width: 600px) {
-            /* Switch to mobile layout */
-            body {
-                background-color: white;
-            }
-
-            .header {
-                padding: 15px 20px;
-                box-shadow: none;
-                border-bottom: 1px solid #eee;
-            }
-            
-            .logo {
-                display: none;
-            }
-            
-            .logo-mobile {
-                display: block;
-                font-size: 20px;
-                font-weight: bold;
-                color: #542700;
-            }
-            
-            .user-menu {
-                display: none;
-            }
-
-            .cart-icon {
-                display: block;
-                font-size: 24px;
-            }
-            
-            .category-nav {
-                display: flex;
-                justify-content: space-around;
-                padding: 10px 0;
-                border-bottom: none;
-                background-color: #f9f9f9;
-            }
-            
-            .category-nav a {
-                width: 25%;
-                text-align: center;
-            }
-            
-            .category-item {
-                margin: 0;
-                width: 100%;
-            }
-            
-            .category-icon {
-                width: 30px;
-                height: 30px;
-                margin-bottom: 5px;
-            }
-            
-            .category-text {
-                font-size: 12px;
-            }
-            
-            /* Show hero banner in mobile view */
-            .hero-banner {
-                display: block;
-                width: 100%;
-                margin: 15px 0;
-            }
-            
-            .carousel-container {
-                padding: 0 10px;
-            }
-            
-            .carousel-slide {
-                border-radius: 20px;
-                overflow: hidden;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            }
-            
-            .hero-img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                border-radius: 20px;
-            }
-            
-            /* Mobile layout for promo section */
-            .promo-section {
-                display: block;
-                padding: 20px 0;
-            }
-            
-            .promo-title {
-                font-size: 24px;
-                font-weight: bold;
-                padding: 0 20px;
-                margin-bottom: 20px;
-            }
-            
-            .promo-container {
-                display: flex;
-                justify-content: space-between;
-                padding: 0 20px;
-            }
-            
-            .promo-card {
-                width: 30%;
-                border-radius: 15px;
-                overflow: hidden;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-                transform: scale(1);
-                transition: transform 0.3s ease;
-            }
-            
-            .promo-card:hover {
-                transform: scale(1.05);
-            }
-            
-            .promo-img {
-                width: 100%;
-                height: 100px;
-                object-fit: cover;
-            }
-            
-            .price {
-                text-align: center;
-                font-size: 18px;
-                font-weight: bold;
-                padding: 12px 0;
-                background-color: white;
-            }
-            
-            /* Hide desktop products section in mobile */
-            .section-title, .products-container {
-                display: none;
-            }
-            
-            /* Show bottom navigation in mobile view */
-            .bottom-nav {
-                display: flex;
-                justify-content: space-around;
-                align-items: center;
-                padding: 10px 0;
-            }
-            
-            .bottom-nav-item {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                text-decoration: none;
-                color: #333;
-                font-size: 11px;
-            }
-            
-            .bottom-nav-icon {
-                font-size: 20px;
-                margin-bottom: 3px;
-            }
-            
-            .active {
-                color: #333;
-                font-weight: bold;
-            }
-
-            /* Adjust spacing for bottom nav */
-            .page-content {
-                margin-bottom: 70px;
-            }
-        }
-    </style>
-</head>
-<body>
-        
-    <!-- Mobile Version -->
-    <div class="page-content">
-        <!-- Mobile Icon Navigation -->
-        <div class="category-nav">
-            <a asp-controller="Menu" asp-action="Menu" class="category-item">
-                <div class="category-icon"><i class="fas fa-hamburger"></i></div>
-                <div class="category-text">Menú</div>
-            </a>
-            <a asp-controller="Promos" asp-action="Promos" class="category-item">
-                <div class="category-icon"><i class="fas fa-tags"></i></div>
-                <div class="category-text">Promociones</div>
-            </a>
-            <a asp-controller="Cocteles" asp-action="Cocteles" class="category-item">
-                <div class="category-icon"><i class="fas fa-cocktail"></i></div>
-                <div class="category-text">Cocteles</div>
-            </a>
-            <a asp-controller="MenuRecomendacion" asp-action="Recomendacion" class="category-item">
-                <div class="category-icon"><i class="fas fa-list-alt"></i></div>
-                <div class="category-text">Recomendación</div>
-            </a>
-        </div>
-        
-        <!-- Hero Banner with Cocktail Image (Carousel) -->
-        <div class="hero-banner">
-            <div class="carousel-container">
-                <div class="carousel-slide">
-                    <img src="/api/placeholder/600/300" alt="Cocktail" class="hero-img">
-                </div>
-            </div>
-        </div>
-        
-        <!-- Mobile Promo Section -->
-        <div class="promo-section">
-            <h2 class="promo-title">Promociones</h2>
-            <div class="promo-container">
-                <div class="promo-card">
-                    <img src="/api/placeholder/150/80" alt="Pizza" class="promo-img">
-                    <div class="price">$10</div>
-                </div>
-                <div class="promo-card">
-                    <img src="/api/placeholder/150/80" alt="Sandwich" class="promo-img">
-                    <div class="price">$9</div>
-                </div>
-                <div class="promo-card">
-                    <img src="/api/placeholder/150/80" alt="Bebidas" class="promo-img">
-                    <div class="price">$9</div>
-                </div>
-            </div>
-        </div>
-    </div>
+@section Scripts {
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Destacar la categoría seleccionada si viene de un parámetro
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentCategory = urlParams.get('categoria');
     
-    <!-- Desktop Category Navigation -->
-    <div class="category-nav desktop-category">
-        <a href="#" class="category-item active-category">
-            <img src="/api/placeholder/50/50" alt="Hamburguesas" class="category-icon">
-            <div class="category-text">Hamburguesas</div>
-        </a>
-        <a href="#" class="category-item">
-            <img src="/api/placeholder/50/50" alt="Pollo" class="category-icon">
-            <div class="category-text">Pollo</div>
-        </a>
-        <a href="#" class="category-item">
-            <img src="/api/placeholder/50/50" alt="Para acompañar" class="category-icon">
-            <div class="category-text">Para acompañar</div>
-        </a>
-        <a href="#" class="category-item">
-            <img src="/api/placeholder/50/50" alt="Bebidas" class="category-icon">
-            <div class="category-text">Bebidas</div>
-        </a>
-        <a href="#" class="category-item">
-            <img src="/api/placeholder/50/50" alt="Postres" class="category-icon">
-            <div class="category-text">Postres</div>
-        </a>
-        <a href="#" class="category-item">
-            <img src="/api/placeholder/50/50" alt="Desayunos" class="category-icon">
-            <div class="category-text">Desayunos</div>
-        </a>
-        <a href="#" class="category-item">
-            <img src="/api/placeholder/50/50" alt="McCafé" class="category-icon">
-            <div class="category-text">McCafé</div>
-        </a>
-        <a href="#" class="category-item">
-            <img src="/api/placeholder/50/50" alt="McCombos" class="category-icon">
-            <div class="category-text">McCombos</div>
-        </a>
-        <a href="#" class="category-item">
-            <img src="/api/placeholder/50/50" alt="Cajita Feliz" class="category-icon">
-            <div class="category-text">Cajita Feliz</div>
-        </a>
-    </div>
+    if (currentCategory) {
+      const categoryButtons = document.querySelectorAll('.category-btn');
+      categoryButtons.forEach(btn => {
+        const btnCategory = btn.getAttribute('href').split('=')[1];
+        if (btnCategory === currentCategory) {
+          btn.classList.add('active');
+        }
+      });
+    }
     
-    <!-- Products Section (Desktop Only) -->
-    <h1 class="section-title">Hamburguesas</h1>
-    <div class="products-container">
-        <div class="product-card">
-            <img src="/api/placeholder/200/200" alt="Big Mac" class="product-img">
-            <div class="product-name">Big Mac</div>
-        </div>
-        <div class="product-card">
-            <img src="/api/placeholder/200/200" alt="Cuarto de Libra Con Queso" class="product-img">
-            <div class="product-name">Cuarto de Libra Con Queso</div>
-        </div>
-        <div class="product-card">
-            <img src="/api/placeholder/200/200" alt="Doble Cuarto de Libra con Queso" class="product-img">
-            <div class="product-name">Doble Cuarto de Libra con Queso</div>
-        </div>
-        <div class="product-card">
-            <img src="/api/placeholder/200/200" alt="McNífica" class="product-img">
-            <div class="product-name">McNífica</div>
-        </div>
-        <div class="product-card">
-            <img src="/api/placeholder/200/200" alt="Doble McNífica" class="product-img">
-            <div class="product-name">Doble McNífica</div>
-        </div>
-    </div>
-    
-    <!-- Mobile Bottom Navigation -->
-    <nav class="bottom-nav">
-        <a href="#" class="bottom-nav-item active">
-            <div class="bottom-nav-icon">🏠</div>
-            <div>Inicio</div>
-        </a>
-        <a href="#" class="bottom-nav-item">
-            <div class="bottom-nav-icon">🔍</div>
-            <div>Buscar</div>
-        </a>
-        <a href="#" class="bottom-nav-item">
-            <div class="bottom-nav-icon">🔔</div>
-            <div>Notificaciones</div>
-        </a>
-        <a href="#" class="bottom-nav-item">
-            <div class="bottom-nav-icon">🛒</div>
-            <div>Carrito</div>
-        </a>
-        <a href="#" class="bottom-nav-item">
-            <div class="bottom-nav-icon">👤</div>
-            <div>Perfil</div>
-        </a>
-    </nav>
-</body>
-</html>
+    // Animación suave al hacer scroll a categorías
+    document.querySelectorAll('.category-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        // Guardar la categoría seleccionada en localStorage para que
+        // la página de SeleccionMultiple pueda activar esa pestaña
+        const categoria = this.getAttribute('href').split('=')[1] || 'todas';
+        localStorage.setItem('selectedCategory', categoria);
+      });
+    });
+  });
+</script>
+}

@@ -6,6 +6,7 @@ using ProyectoIdentity.Models.DTOs;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace Proyecto1_MZ_MJ.Controllers
 {
@@ -34,15 +35,43 @@ namespace Proyecto1_MZ_MJ.Controllers
         }
 
         // Método para selección múltiple
-        public async Task<IActionResult> SeleccionMultiple()
+        //public async Task<IActionResult> SeleccionMultiple()
+        //{
+        //    var productos = await _context.Productos.ToListAsync();
+        //    var categorias = productos.Select(p => p.Categoria).Distinct().ToList();
+
+        //    ViewBag.Categorias = categorias;
+
+        //    return View(productos);
+        //}
+        // GET: /Productos/SeleccionMultiple?categoria=Pizza
+        // GET: /Productos/SeleccionMultiple?categoria=Pizza
+        public async Task<IActionResult> SeleccionMultiple(string categoria = null)
         {
-            var productos = await _context.Productos.ToListAsync();
-            var categorias = productos.Select(p => p.Categoria).Distinct().ToList();
+            // Obtener todos los productos
+            var query = _context.Productos.AsQueryable();
+
+            // Filtrar por categoría si se especificó
+            if (!string.IsNullOrEmpty(categoria) && categoria.ToLower() != "todas")
+            {
+                query = query.Where(p => p.Categoria.ToLower() == categoria.ToLower());
+            }
+
+            // Obtener los productos filtrados
+            var productos = await query.ToListAsync();
+
+            // Obtener todas las categorías disponibles para el filtro
+            var categorias = await _context.Productos
+                .Select(p => p.Categoria)
+                .Distinct()
+                .ToListAsync();
 
             ViewBag.Categorias = categorias;
+            ViewBag.CategoriaActual = categoria ?? "todas";
 
             return View(productos);
         }
+
 
         // Método para agregar productos seleccionados al carrito y seguir comprando
         [HttpPost]
@@ -144,29 +173,62 @@ namespace Proyecto1_MZ_MJ.Controllers
 
         // En ProductosController.cs, actualiza este método:
 
-        [HttpPost]
-        public IActionResult ProcesarSeleccionMultiple(List<ProductoSeleccionadoInput> seleccionados)
-        {
-            // Filtramos solo los productos seleccionados y con cantidad > 0
-            var seleccionadosValidos = seleccionados
-                .Where(p => p.Seleccionado && p.Cantidad > 0)
-                .ToList();
+        //[HttpPost]
+        //public IActionResult ProcesarSeleccionMultiple(List<ProductoSeleccionadoInput> seleccionados)
+        //{
+        //    // Filtramos solo los productos seleccionados y con cantidad > 0
+        //    var seleccionadosValidos = seleccionados
+        //        .Where(p => p.Seleccionado && p.Cantidad > 0)
+        //        .ToList();
 
-            if (!seleccionadosValidos.Any())
+        //    if (!seleccionadosValidos.Any())
+        //    {
+        //        TempData["Error"] = "No se seleccionaron productos";
+        //        return RedirectToAction("SeleccionMultiple");
+        //    }
+
+        //    // Guardamos en TempData
+        //    TempData["ProductosSeleccionados"] = System.Text.Json.JsonSerializer.Serialize(seleccionadosValidos);
+
+        //    // Importante: mantener TempData hasta que se use
+        //    TempData.Keep("ProductosSeleccionados");
+
+        //    // Redireccionamos a la selección de punto de recolección
+        //    return RedirectToAction("Seleccionar", "Recoleccion");
+        //}
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ProcesarSeleccionMultiple(List<ProductoSeleccionado> seleccionados)
+        {
+            if (seleccionados == null)
             {
-                TempData["Error"] = "No se seleccionaron productos";
-                return RedirectToAction("SeleccionMultiple");
+                return RedirectToAction("SeleccionMultiple", "Productos");
             }
 
-            // Guardamos en TempData
-            TempData["ProductosSeleccionados"] = System.Text.Json.JsonSerializer.Serialize(seleccionadosValidos);
+            // Filtrar solo los productos seleccionados
+            var productosSeleccionados = seleccionados
+                .Where(s => s.Seleccionado)
+                .ToList();
 
-            // Importante: mantener TempData hasta que se use
-            TempData.Keep("ProductosSeleccionados");
+            if (productosSeleccionados.Count == 0)
+            {
+                // Si no hay productos seleccionados, regresar a la vista
+                return RedirectToAction("SeleccionMultiple", "Productos");
+            }
 
-            // Redireccionamos a la selección de punto de recolección
+            // Crear una lista de objetos serializables
+            var elementosParaGuardar = productosSeleccionados
+                .Select(p => new ElementoCarrito { ProductoId = p.ProductoId, Cantidad = p.Cantidad })
+                .ToList();
+
+            // Serializar la lista para guardarla en TempData
+            TempData["ProductosSeleccionados"] = JsonConvert.SerializeObject(elementosParaGuardar);
+
+            // CORRECCIÓN: Volver al flujo original que dirije a Recoleccion/Seleccionar
             return RedirectToAction("Seleccionar", "Recoleccion");
         }
+
 
         // 2. Modificación al PedidosController para el carrito
         // Ubicación: PedidosController.cs
@@ -204,6 +266,8 @@ namespace Proyecto1_MZ_MJ.Controllers
 
             return View(puntosRecoleccion);
         }
+
+
 
         [HttpPost]
         public async Task<IActionResult> Confirmar(int id)

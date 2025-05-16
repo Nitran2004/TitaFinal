@@ -10,7 +10,7 @@
         <div class="card-body">
             <p class="lead">Selecciona el punto donde recogerás tu pedido:</p>
 
-            <div class="alert alert-info mb-3">
+            <div style="display: none;">
                 <div id="loadingLocation">
                     <i class="fas fa-spinner fa-spin"></i> Obteniendo tu ubicación para calcular distancias...
                 </div>
@@ -18,7 +18,7 @@
                     <i class="fas fa-exclamation-triangle"></i> No se pudo obtener tu ubicación.
                     <button id="retryLocation" class="btn btn-sm btn-warning ms-2">Reintentar</button>
                 </div>
-                <div id="coordsDebug" style="display: block;" class="mt-2">
+                <div id="coordsDebug" style="display: none;" class="mt-2">
                     <strong>Coordenadas:</strong> <span id="coordValues">Calculando...</span>
                 </div>
             </div>
@@ -33,7 +33,8 @@
                                 <p class="card-text">
                                     <strong>Sucursal:</strong> @punto.Sucursal.Nombre<br />
                                     <strong>Dirección:</strong> @punto.Address<br />
-                                    <strong>Descripción:</strong> @punto.Descripcion
+                                    @*                                     <strong>Descripción:</strong> @punto.Descripcion
+                                *@
                                 </p>
                                 <p class="card-text">
                                     <strong>Distancia:</strong>
@@ -133,7 +134,7 @@
                 currentUserLat = userLat;
                 currentUserLng = userLng;
 
-                // Mostrar coordenadas para depuración
+                // Actualizar los valores en el elemento oculto
                 coordValues.textContent = `${userLat}, ${userLng}`;
 
                 console.log(`Actualizando distancias con coordenadas: ${userLat}, ${userLng}`);
@@ -186,7 +187,8 @@
 
                 // Ocultar indicador de carga
                 loadingLocation.style.display = 'none';
-                coordsDebug.style.display = 'block';
+                // Mantener oculto el div de coordenadas
+                coordsDebug.style.display = 'none';
             }
 
             // Función para obtener la ubicación

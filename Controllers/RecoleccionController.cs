@@ -15,19 +15,10 @@ namespace Proyecto1_MZ_MJ.Controllers
             _context = context;
         }
 
+        // En RecoleccionController.cs
         public async Task<IActionResult> Seleccionar()
         {
-            // Verificar si tenemos datos para procesar
-            if (!TempData.ContainsKey("ProductosSeleccionados") && !TempData.ContainsKey("DatosCarrito"))
-            {
-                return RedirectToAction("SeleccionMultiple", "Productos", new { mensaje = "No hay productos seleccionados" });
-            }
-
-            // Mantener los datos en TempData
-            TempData.Keep("ProductosSeleccionados");
-            TempData.Keep("DatosCarrito");
-
-            // Obtener todos los puntos de recolección
+            // Recuperar puntos de recolección
             var puntosRecoleccion = await _context.CollectionPoints
                 .Include(p => p.Sucursal)
                 .ToListAsync();
@@ -35,22 +26,29 @@ namespace Proyecto1_MZ_MJ.Controllers
             // Verificar que existan puntos de recolección
             if (!puntosRecoleccion.Any())
             {
-                // Intentar crear puntos de recolección si no existen
-                await CrearPuntosRecoleccionPorDefecto();
-
-                // Volver a cargar
-                puntosRecoleccion = await _context.CollectionPoints
-                    .Include(p => p.Sucursal)
-                    .ToListAsync();
-
-                if (!puntosRecoleccion.Any())
-                {
-                    return RedirectToAction("Index", "Home", new { mensaje = "No hay puntos de recolección disponibles" });
-                }
+                // Crear puntos por defecto o mostrar mensaje
+                return RedirectToAction("Index", "Home", new { mensaje = "No hay puntos de recolección disponibles" });
             }
 
             return View(puntosRecoleccion);
         }
+
+        //[HttpPost]
+        //public async Task<IActionResult> Confirmar(int id)
+        //{
+        //    // Obtener el punto de recolección
+        //    var puntoRecoleccion = await _context.CollectionPoints
+        //        .Include(p => p.Sucursal)
+        //        .FirstOrDefaultAsync(p => p.Id == id);
+
+        //    if (puntoRecoleccion == null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    ViewBag.PuntoRecoleccionId = id;
+        //    return View(puntoRecoleccion);
+        //}
 
         private async Task CrearPuntosRecoleccionPorDefecto()
         {

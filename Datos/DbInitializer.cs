@@ -12,11 +12,6 @@ namespace ProyectoIdentity.Datos
                 return; // DB ya tiene datos
             }
 
-
-
-
-
-
             var productos = new List<Producto>
             {
                 // PIZZAS
