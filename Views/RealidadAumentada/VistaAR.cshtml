@@ -280,7 +280,123 @@
         // Configurar vista de escritorio
         function setupDesktopView() {
             createVirtualEnvironment();
+
+            // Configurar interacción con mouse para escritorio
+            setupDesktopControls();
+
+            // Mostrar controles para escritorio
+            document.getElementById('object-controls').textContent = 'Clic y arrastrar para mover • Rueda del mouse para escalar';
+            document.getElementById('object-controls').style.display = 'block';
+
+            // Iniciar animación
             animate();
+
+            // Actualizar estado
+            currentAppState = AppState.OBJECT_PLACED;
+            isObjectPlaced = true;
+        }
+
+        // Configurar controles de mouse para escritorio
+        function setupDesktopControls() {
+            const canvas = renderer.domElement;
+
+            // Eliminar eventos existentes
+            canvas.removeEventListener('mousedown', onMouseDown);
+            canvas.removeEventListener('mousemove', onMouseMove);
+            canvas.removeEventListener('mouseup', onMouseUp);
+            canvas.removeEventListener('wheel', onMouseWheel);
+
+            // Configurar eventos de mouse
+            canvas.addEventListener('mousedown', onMouseDown);
+            canvas.addEventListener('mousemove', onMouseMove);
+            canvas.addEventListener('mouseup', onMouseUp);
+            canvas.addEventListener('wheel', onMouseWheel);
+        }
+
+        // Eventos de mouse
+        let isMouseDown = false;
+        let lastMousePosition = { x: 0, y: 0 };
+
+        function onMouseDown(event) {
+            event.preventDefault();
+
+            isMouseDown = true;
+            lastMousePosition.x = event.clientX;
+            lastMousePosition.y = event.clientY;
+
+            // Mostrar indicador de movimiento
+            updateMovementIndicator();
+            showGestureIndicator('✋');
+        }
+
+        function onMouseMove(event) {
+            event.preventDefault();
+
+            if (isMouseDown) {
+                // Calcular el movimiento del mouse
+                const deltaX = event.clientX - lastMousePosition.x;
+                const deltaY = event.clientY - lastMousePosition.y;
+
+                // Mover objeto
+                moveObjectInDesktop(deltaX, deltaY);
+
+                // Actualizar última posición
+                lastMousePosition.x = event.clientX;
+                lastMousePosition.y = event.clientY;
+
+                // Actualizar indicador
+                updateMovementIndicator();
+            }
+        }
+
+        function onMouseUp(event) {
+            event.preventDefault();
+
+            isMouseDown = false;
+
+            // Ocultar indicador de movimiento
+            if (movementIndicator) {
+                movementIndicator.visible = false;
+            }
+        }
+
+        function onMouseWheel(event) {
+            event.preventDefault();
+
+            // Escalar con la rueda del mouse
+            const scaleFactor = event.deltaY < 0 ? 1.1 : 0.9;
+
+            // Aplicar nueva escala al objeto, limitando el tamaño
+            const newScale = cube.scale.x * scaleFactor;
+            const clampedScale = Math.max(0.3, Math.min(2.0, newScale));
+
+            cube.scale.set(clampedScale, clampedScale, clampedScale);
+
+            showGestureIndicator('↔️');
+        }
+
+        // Mover objeto en entorno de escritorio
+        function moveObjectInDesktop(deltaX, deltaY) {
+            // Obtener dirección de la cámara
+            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+            const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+
+            // Proyectar en plano horizontal (Y es hacia arriba en Three.js)
+            forward.y = 0;
+            forward.normalize();
+
+            // Calcular factor de sensibilidad
+            const sensitivity = 0.01;
+
+            // Mover en X (izquierda/derecha)
+            cube.position.add(right.multiplyScalar(deltaX * sensitivity));
+
+            // Mover en Z (adelante/atrás)
+            const forwardMove = forward.clone().multiplyScalar(-deltaY * sensitivity);
+            cube.position.add(forwardMove);
+
+            // Mantener altura constante
+            cube.position.y = 0.5; // Mitad de la altura del cubo (0.3/2 = 0.15) + 0.35 de elevación
         }
 
         // Inicializar Three.js
@@ -468,7 +584,7 @@
             scene.add(gridHelper);
 
             // Mostrar el cubo en escritorio
-            cube.position.set(0, 0.5, 0);
+            cube.position.set(0, 0.5, -2);
             cube.visible = true;
         }
 
@@ -575,20 +691,23 @@
         async function startAR() {
             logDebug('Iniciando AR desde estado', currentAppState);
 
-            // Cambiar estado de la aplicación
+            // Si es escritorio, ir directamente al entorno 3D virtual
+            if (!isMobile) {
+                logDebug('Dispositivo de escritorio detectado, iniciando entorno virtual 3D');
+                setupDesktopView();
+                document.getElementById('start-ar-button').style.display = 'none';
+                document.getElementById('exit-ar-button').style.display = 'block';
+                currentAppState = AppState.OBJECT_PLACED;
+                return;
+            }
+
+            // Cambiar estado de la aplicación (sólo para móvil)
             document.getElementById('ar-status').textContent = 'Solicitando acceso a la cámara...';
             document.getElementById('ar-status').style.display = 'block';
 
-            if (!arSupported || !isMobile) {
-                if (isMobile) {
-                    // Vista 3D simple en móvil sin AR
-                    startMobile3D();
-                } else {
-                    // Ya está funcionando el entorno 3D en escritorio
-                    document.getElementById('start-ar-button').style.display = 'none';
-                    document.getElementById('exit-ar-button').style.display = 'block';
-                    currentAppState = AppState.OBJECT_PLACED; // En escritorio, consideramos que ya está colocado
-                }
+            if (!arSupported) {
+                // Vista 3D simple en móvil sin AR
+                startMobile3D();
                 return;
             }
 
