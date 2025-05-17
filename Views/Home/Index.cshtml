@@ -5,14 +5,26 @@
 
 <style>
   /* --------- Menú de Categorías --------- */
-  .category-nav {
-    position: sticky; top: 0; background: #fff;
-    padding: 8px 0; box-shadow: 0 2px 6px rgba(0,0,0,0.1); z-index: 100;
-  }
-  .category-container {
-    display: flex; overflow-x: auto; gap: 16px; padding: 0 24px;
-    scroll-behavior: smooth;
-  }
+    /* Modificar estos estilos para la barra de categorías */
+    .category-nav {
+        position: sticky;
+        top: 0;
+        background: #fff;
+        padding: 8px 0;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        z-index: 100;
+    }
+
+    .category-container {
+        display: flex;
+        overflow-x: auto;
+        gap: 16px;
+        padding: 0 24px;
+        scroll-behavior: smooth;
+        justify-content: center; /* Añadir esta línea para centrar */
+        margin: 0 auto; /* Añadir esta línea para centrar */
+        max-width: 900px; /* Opcional: puedes ajustar este valor según necesites */
+    }
   .category-container::-webkit-scrollbar { height:6px; }
   .category-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius:3px; }
   .category-btn {
@@ -82,9 +94,128 @@
     box-shadow: 0 6px 16px rgba(0,0,0,0.2);
     color: white;
   }
+  
+  /* Secciones Adicionales */
+  .feature-card {
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+    background-color: #fff;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
+    height: 100%;
+  }
+  .feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+  }
+  .feature-icon {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    color: #28a745;
+  }
+  
+  .category-card {
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    background-color: #fff;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: transform 0.3s;
+    margin-bottom: 20px;
+    height: 100%;
+  }
+  .category-card:hover {
+    transform: translateY(-5px);
+  }
+  .category-card img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 15px;
+  }
+  
+  .promo-section {
+    background-color: #ffca28;
+    padding: 50px 0;
+    margin: 60px 0;
+  }
+  .promo-content {
+    text-align: center;
+  }
+  .promo-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #333;
+  }
+  .promo-text {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    color: #555;
+  }
+  .btn-register {
+    background-color: white;
+    color: #333;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .btn-register:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+  
+  .faq-section {
+    margin: 60px 0;
+  }
+  .faq-item {
+    margin-bottom: 15px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .faq-question {
+    padding: 15px 20px;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .faq-answer {
+    padding: 15px 20px;
+    border-top: 1px solid #e9ecef;
+    display: none;
+  }
+  .faq-answer.active {
+    display: block;
+  }
+  
+  /* Estilo para el título principal de categorías para que no se tape */
+  .main-categories-section {
+    padding-top: 100px; /* Espacio adicional para evitar que se tape con la barra */
+    margin-bottom: 50px;
+  }
+  .main-categories-title {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+    color: #333;
+  }
+  .main-categories-subtitle {
+    font-size: 1.3rem;
+    color: #666;
+    margin-bottom: 40px;
+  }
 </style>
 
 <h1 class="text-center mt-4">Bienvenido, selecciona una categoría</h1>
+
 
 <nav class="category-nav">
   <div class="category-container">
@@ -127,12 +258,206 @@
   </div>
 </nav>
 
+@* <div style="height: 1px;"></div>
+ *@
 <div class="welcome-container">
-  <img src="/img/welcome-background.jpg" alt="Bienvenido" class="welcome-image" onerror="this.src='https://via.placeholder.com/800x400/28a745/FFFFFF?text=Bienvenido+a+nuestro+menú'">
+    <img src="~/images1/cervesa.webp" alt="Bienvenido" class="welcome-image" onerror="this.src='https://via.placeholder.com/800x400/28a745/FFFFFF?text=Bienvenido+a+nuestro+menú'">
   <div class="welcome-text">
-    <h1>Explora Nuestras Categorías</h1>
-    <p>Selecciona una categoría arriba para ver nuestros productos</p>
+    <h1>Disfruta de nuestra variedad de productos</h1>
+    <p>Productos frescos y de la mejor calidad para ti</p>
     <a href="/Productos/SeleccionMultiple" class="btn btn-explore">Ver Todo el Menú</a>
+  </div>
+</div>
+<style>
+.welcome-container {
+  position: relative;
+  margin: 80px auto 40px;
+  max-width: 1000px; /* Aumentado de 800px a 1000px para hacerlo más ancho */
+  text-align: center;
+
+}
+
+.welcome-image {
+  width: 100%;
+  height: 600px; /* Reducido de la altura implícita para hacerlo más pequeño */
+  object-fit: cover; /* Asegura que la imagen cubra bien el espacio */
+        object-position: center 30%; /* Muestra más la parte superior (0%) o inferior (100%) */
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+}
+
+.welcome-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  padding: 20px; /* Reducido de 24px para ajustar el tamaño */
+  background: rgba(0,0,0,0.4);
+  border-radius: 12px;
+  width: 80%;
+}
+
+.welcome-text h1 {
+  font-size: 2.2rem; /* Reducido de 2.5rem */
+  font-weight: 700;
+  margin-bottom: 10px; /* Reducido de 16px */
+}
+
+.welcome-text p {
+  font-size: 1.1rem; /* Reducido de 1.2rem */
+  margin-bottom: 16px; /* Reducido de 24px */
+}
+
+.btn-explore {
+  background: linear-gradient(45deg, #28a745, #20c997);
+  color: white;
+  border: none;
+  padding: 10px 20px; /* Reducido de 12px 24px */
+  border-radius: 8px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: transform 0.3s, box-shadow 0.3s;
+  display: inline-block;
+}
+
+.btn-explore:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+  color: white;
+}
+
+/* Para dispositivos móviles, asegúrate de que se vea bien */
+media (max-width: 768px) {
+  .welcome-container {
+    margin-top: 100px;
+  }
+  
+  .welcome-image {
+    height: 300px; /* Aún más pequeño en móviles */
+  }
+  
+  .welcome-text h1 {
+    font-size: 1.8rem;
+  }
+}
+</style>
+
+<!-- Sección principal "Explora Nuestras Categorías" con espacio adicional para evitar que se tape -->
+<div class="container main-categories-section text-center">
+  <h2 class="main-categories-title">Explora Nuestras Categorías</h2>
+  <p class="main-categories-subtitle">Selecciona una categoría arriba para ver nuestros productos</p>
+  
+  <!-- Categorías destacadas -->
+  <div class="row">
+    <div class="col-md-4 mb-4">
+      <div class="category-card">
+                <img src="~/images1/pizzas.png" alt="Pizzas">
+        <h3>Pizzas</h3>
+        <p>Deliciosas pizzas con ingredientes frescos y de la mejor calidad.</p>
+        <a href="/Productos/SeleccionMultiple?categoria=Pizza" class="btn btn-outline-success">Ver Pizzas</a>
+      </div>
+    </div>
+    <div class="col-md-4 mb-4">
+      <div class="category-card">
+                <img src="~/images1/cervesa.webp" alt="Cervezas">
+        <h3>Cervezas</h3>
+        <p>Gran variedad de cervezas nacionales e importadas para todos los gustos.</p>
+        <a href="/Productos/SeleccionMultiple?categoria=Cerveza" class="btn btn-outline-warning">Ver Cervezas</a>
+      </div>
+    </div>
+    <div class="col-md-4 mb-4">
+      <div class="category-card">
+                <img src="~/images1/sanduches.png" alt="Sánduches">
+        <h3>Sánduches</h3>
+        <p>Deliciosos sánduches preparados con ingredientes frescos y de calidad.</p>
+        <a href="/Productos/SeleccionMultiple?categoria=Sánduches" class="btn btn-outline-danger">Ver Sánduches</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sección similar a "Pide a casa o recoge tu pedido" -->
+<div class="container mt-5 pt-4">
+  <div class="row">
+    <div class="col-md-4 mb-4">
+      <div class="feature-card">
+        <i class="fas fa-home feature-icon"></i>
+        <h3 class="mb-3">Recoge tu pedido</h3>
+        <p>Puedes recogerlo en nuestra sucursal.</p>
+      </div>
+    </div>
+    <div class="col-md-4 mb-4">
+      <div class="feature-card">
+        <i class="fas fa-percentage feature-icon"></i>
+        <h3 class="mb-3">Disfruta de grandes descuentos</h3>
+        <p>Tenemos promociones exclusivas para nuestros clientes registrados. ¡Aprovecha nuestras ofertas!</p>
+      </div>
+    </div>
+    <div class="col-md-4 mb-4">
+      <div class="feature-card">
+        <i class="fas fa-heart feature-icon"></i>
+        <h3 class="mb-3">Una experiencia pensada para ti</h3>
+        <p>Nos preocupamos por ofrecerte la mejor calidad y servicio en cada pedido que realizas.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sección de promoción similar a la franja amarilla -->
+<div class="promo-section">
+  <div class="container">
+    <div class="promo-content">
+      <h3 class="promo-title">Regístrate y disfruta de la experiencia completa</h3>
+      <p class="promo-text">Ofertas, descuentos, compras y muchas, muchas sorpresas</p>
+      <a href="/Cuentas/Registro" class="btn btn-register">Ingresa ya!</a>
+    </div>
+  </div>
+</div>
+
+<!-- Sección de preguntas frecuentes -->
+<div class="container faq-section">
+  <h2 class="text-center mb-5">¿Necesitas alguna razón más?</h2>
+  
+  <div class="faq-item">
+    <div class="faq-question">
+      ¿Qué medios de pago aceptan?
+      <i class="fas fa-chevron-down"></i>
+    </div>
+    <div class="faq-answer">
+      Aceptamos efectivo, tarjetas de crédito y débito, y transferencias bancarias. Todos nuestros métodos de pago son seguros.
+    </div>
+  </div>
+  
+  <div class="faq-item">
+    <div class="faq-question">
+      ¿Cómo puedo cancelar mi pedido?
+      <i class="fas fa-chevron-down"></i>
+    </div>
+    <div class="faq-answer">
+      Para cancelar tu pedido, puedes comunicarte con nuestro servicio de atención al cliente o utilizar la opción de cancelación disponible en tu cuenta.
+    </div>
+  </div>
+  
+  <div class="faq-item">
+    <div class="faq-question">
+      Seguimiento del estado de mi pedido
+      <i class="fas fa-chevron-down"></i>
+    </div>
+    <div class="faq-answer">
+      Una vez realizado tu pedido, puedes hacer seguimiento del estado del mismo a través de nuestra plataforma o contactando a nuestro servicio de atención al cliente.
+    </div>
+  </div>
+  
+  <div class="faq-item">
+    <div class="faq-question">
+      Mi pedido no llegó como esperaba
+      <i class="fas fa-chevron-down"></i>
+    </div>
+    <div class="faq-answer">
+      Si tu pedido no llegó como esperabas, comunícate de inmediato con nuestro servicio de atención al cliente y te ayudaremos a resolver el problema lo más pronto posible.
+    </div>
   </div>
 </div>
 
@@ -160,6 +485,24 @@
         // la página de SeleccionMultiple pueda activar esa pestaña
         const categoria = this.getAttribute('href').split('=')[1] || 'todas';
         localStorage.setItem('selectedCategory', categoria);
+      });
+    });
+    
+    // Funcionalidad de acordeón para las preguntas frecuentes
+    document.querySelectorAll('.faq-question').forEach(question => {
+      question.addEventListener('click', function() {
+        const answer = this.nextElementSibling;
+        const isActive = answer.classList.contains('active');
+        
+        // Cerrar todos los paneles activos
+        document.querySelectorAll('.faq-answer').forEach(item => {
+          item.classList.remove('active');
+        });
+        
+        // Abrir el panel seleccionado (si no estaba ya abierto)
+        if (!isActive) {
+          answer.classList.add('active');
+        }
       });
     });
   });
