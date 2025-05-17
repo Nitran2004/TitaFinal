@@ -5,13 +5,25 @@
 
 <style>
     /* --------- Menú de Categorías --------- */
+    /* Modifica estos estilos para la barra de categorías */
     .category-nav {
-        position: sticky; top: 0; background: #fff;
-        padding: 8px 0; box-shadow: 0 2px 6px rgba(0,0,0,0.1); z-index: 100;
+        position: sticky;
+        top: 0;
+        background: #fff;
+        padding: 8px 0;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        z-index: 100;
     }
+
     .category-container {
-        display: flex; overflow-x: auto; gap: 16px; padding: 0 24px;
+        display: flex;
+        overflow-x: auto;
+        gap: 16px;
+        padding: 0 24px;
         scroll-behavior: smooth;
+        justify-content: center; /* Añadir esta línea para centrar */
+        margin: 0 auto; /* Añadir esta línea para centrar */
+        max-width: 900px; 
     }
     .category-container::-webkit-scrollbar { height:6px; }
     .category-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius:3px; }

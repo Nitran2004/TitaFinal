@@ -196,8 +196,10 @@
                         // Manejar tanto mayúsculas como minúsculas
                         var nombre = item.nombre || item.Nombre;
                         var precio = item.precio || item.Precio;
-                        var calorias = item.calorias || item.Calorias;
-                        
+                        // Por esta línea que maneja explícitamente los valores nulos o undefined:
+                        var calorias = (item.calorias !== undefined && item.calorias !== null) ? item.calorias :
+                            (item.Calorias !== undefined && item.Calorias !== null) ? item.Calorias : 0;
+
                         var row = `
                             <tr>
                                 <td class="fw-medium">${nombre}</td>
@@ -229,8 +231,8 @@
                 // Manejar tanto mayúsculas como minúsculas
                 var nombre = item.nombre || item.Nombre;
                 var precio = item.precio || item.Precio;
-                var calorias = item.calorias || item.Calorias;
-                var categoria = item.categoria || item.Categoria;
+                var calorias = (item.calorias !== undefined && item.calorias !== null) ? item.calorias :
+                    (item.Calorias !== undefined && item.Calorias !== null) ? item.Calorias : 0; var categoria = item.categoria || item.Categoria;
                 var ingredientes = item.ingredientes || item.Ingredientes;
                 var similitud = item.similitud || item.Similitud;
                 
