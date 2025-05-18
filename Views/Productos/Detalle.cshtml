@@ -224,6 +224,25 @@
     }
 
     }
+
+    .btn-ar {
+        background-color: #ff4081;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 15px;
+        margin-top: 15px;
+        font-weight: bold;
+        cursor: pointer;
+        display: block;
+        width: 100%;
+        transition: background-color 0.3s;
+    }
+
+        .btn-ar:hover {
+            background-color: #e91e63;
+        }
+
 </style>
 
 <div class="product-container">
@@ -244,6 +263,10 @@
             <p class="product-description">@Model.Descripcion</p>
 
             <div class="product-price">Precio: $@Model.Precio</div>
+            <button type="button" class="btn-ar" id="view-ar-btn" onclick="location.href='@Url.Action("VistaAR", "RealidadAumentada", new { id = Model.Id })'">
+                Ver en Realidad Aumentada
+                <i class="fas fa-cube ml-2"></i>
+            </button>
           @*   <div class="product-points">Ganas @(Model.Precio * 100) pts</div> *@
 
 @*             <div class="quantity-control">
