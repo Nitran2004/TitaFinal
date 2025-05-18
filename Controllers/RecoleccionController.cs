@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using ProyectoIdentity.Datos;
 using ProyectoIdentity.Models;
+using System.Globalization;
 using System.Text.Json;
 
 namespace Proyecto1_MZ_MJ.Controllers
@@ -87,12 +88,8 @@ namespace Proyecto1_MZ_MJ.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Confirmar(int id, double? userLat, double? userLng, double? distancia)
+        public async Task<IActionResult> Confirmar(int id, double userLat, double userLng, string distancia)
         {
-            // Mantener los datos en TempData
-            TempData.Keep("ProductosSeleccionados");
-            TempData.Keep("DatosCarrito");
-
             // Obtener el punto de recolección
             var puntoRecoleccion = await _context.CollectionPoints
                 .Include(p => p.Sucursal)
@@ -103,34 +100,24 @@ namespace Proyecto1_MZ_MJ.Controllers
                 return NotFound();
             }
 
-            // Pasar todos los valores necesarios a la vista
-            ViewBag.PuntoRecoleccionId = id;
-            ViewBag.UserLat = userLat ?? -0.1857;
-            ViewBag.UserLng = userLng ?? -78.4954;
-
-            // Si se recibió la distancia, usarla; si no, calcularla
-            if (distancia.HasValue)
+            // Obtener la distancia del parámetro y formatearla exactamente como en la vista Seleccionar
+            double distanciaValor;
+            if (!string.IsNullOrEmpty(distancia) && double.TryParse(distancia, NumberStyles.Any, CultureInfo.InvariantCulture, out distanciaValor))
             {
-                ViewBag.Distancia = distancia.Value;
+                ViewBag.Distancia = distanciaValor;
+                // Pasamos la misma cadena de texto formateada que viene de la vista Seleccionar
+                ViewBag.DistanciaFormateada = distancia;
             }
             else
             {
-                // Calcular la distancia si no se pasó
-                double distanciaCalculada = CalcularDistancia(
-                    ViewBag.UserLat,
-                    ViewBag.UserLng,
-                    puntoRecoleccion.Sucursal.Latitud,
-                    puntoRecoleccion.Sucursal.Longitud
-                );
-                ViewBag.Distancia = Math.Round(distanciaCalculada, 2);
+                // Si no se pudo parsear la distancia, la calculamos
+                ViewBag.Distancia = CalcularDistancia(userLat, userLng,
+                    puntoRecoleccion.Sucursal.Latitud, puntoRecoleccion.Sucursal.Longitud);
             }
 
-            // Si estás trabajando con un pedido específico
-            if (TempData.ContainsKey("PedidoTemporalId"))
-            {
-                ViewBag.PedidoId = TempData["PedidoTemporalId"];
-                TempData.Keep("PedidoTemporalId");
-            }
+            ViewBag.UserLat = userLat;
+            ViewBag.UserLng = userLng;
+            ViewBag.PuntoRecoleccionId = id;
 
             return View(puntoRecoleccion);
         }
