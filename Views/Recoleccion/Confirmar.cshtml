@@ -19,8 +19,10 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
+@*  IDPedido
+    IDPuntos
     <p>Pedido ID: @ViewBag.PedidoId</p>
-    <p>Punto ID: @ViewBag.PuntoRecoleccionId</p>
+    <p>Punto ID: @ViewBag.PuntoRecoleccionId</p> *@
     <div class="card">
         <div class="card-header bg-success text-white">
             <h2 class="mb-0">Confirma tu punto de recolección</h2>
@@ -37,8 +39,8 @@
                             <p class="card-text">
                                 <strong>Sucursal:</strong> @Model.Sucursal.Nombre<br />
                                 <strong>Dirección:</strong> @Model.Address<br />
-                                <strong>Descripción:</strong> @Model.Descripcion
-                            </p>
+@*                                 <strong>Descripción:</strong> @Model.Descripcion
+ *@                            </p>
                             <p class="card-text">
                                 <strong>Distancia:</strong>
                                 <span class="@(ViewBag.Distancia < 3 ? "text-success" : (ViewBag.Distancia < 7 ? "text-warning" : "text-danger"))">
@@ -49,13 +51,15 @@
                                     }
                                 </span>
                             </p>
-                            <div class="small text-muted">
+@*                             IDCoordenadas
+                                <div class="small text-muted">
                                 <p>ID Punto: @puntoRecoleccionId</p>
                                 <p id="coordsInfo">Coordenadas calculadas: Usuario (@ViewBag.UserLat, @ViewBag.UserLng), Sucursal (@Model.Sucursal.Latitud, @Model.Sucursal.Longitud)</p>
-                            </div>
+                            </div> *@
                         </div>
                     </div>
                     @*
+                        MAPA
                     <div class="card mb-4">
                     <div class="card-header bg-light">
                     <h5 class="mb-0">Mapa</h5>

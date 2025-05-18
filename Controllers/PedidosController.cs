@@ -1,11 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ProyectoIdentity.Datos;
 using ProyectoIdentity.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using ProyectoIdentity.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
-
+using Newtonsoft.Json;
 
 public class PedidosController : Controller
 {
@@ -188,16 +192,37 @@ public class PedidosController : Controller
         var pedido = new Pedido
         {
             Fecha = DateTime.Now,
-            Total = detalles.Sum(d => d.Cantidad * d.PrecioUnitario),
             SucursalId = sucursalId.Value,
-            Detalles = detalles
+            PedidoProductos = new List<PedidoProducto>()
         };
+
+        // Calcular el total y agregar productos
+        decimal totalCalculado = 0;
+        foreach (var detalle in detalles)
+        {
+            var producto = await _context.Productos.FindAsync(detalle.ProductoId);
+            if (producto != null)
+            {
+                decimal subtotal = detalle.Cantidad * detalle.PrecioUnitario;
+                totalCalculado += subtotal;
+
+                pedido.PedidoProductos.Add(new PedidoProducto
+                {
+                    ProductoId = detalle.ProductoId,
+                    Cantidad = detalle.Cantidad,
+                    Precio = detalle.PrecioUnitario
+                });
+            }
+        }
+
+        pedido.Total = totalCalculado;
 
         _context.Pedidos.Add(pedido);
         await _context.SaveChangesAsync();
 
         return Ok(new { mensaje = "Pedido creado exitosamente", pedido.Id });
     }
+
     [HttpPost]
     public async Task<IActionResult> AgregarSeleccionados(List<ProductoSeleccionadoInput> seleccionados)
     {
@@ -265,7 +290,6 @@ public class PedidosController : Controller
         Response.Cookies.Append("PedidoTemporalId", pedido.Id.ToString(), options);
 
         return RedirectToAction("Seleccionar", "Recoleccion");
-        //return RedirectToAction("Resumen", new { id = pedido.Id });
     }
 
     [Authorize(Roles = "Administrador")]
@@ -280,6 +304,7 @@ public class PedidosController : Controller
 
         return View(pedidos);
     }
+
     public async Task<IActionResult> VerPedidoTemporal()
     {
         int? pedidoId = null;
@@ -403,21 +428,185 @@ public class PedidosController : Controller
         return View("ConfirmarSucursal", sucursal);
     }
 
-    [HttpPost]
     public async Task<IActionResult> ResumenPedido()
     {
-        int? sucursalId = HttpContext.Session.GetInt32("SucursalSeleccionada");
-        if (sucursalId == null) return RedirectToAction("SeleccionarSucursal");
+        // Recuperar los datos serializados
+        var productosJson = TempData["ProductosSeleccionados"] as string;
 
-        var sucursal = await _context.Sucursales.FindAsync(sucursalId);
-        ViewBag.Sucursal = sucursal;
+        if (string.IsNullOrEmpty(productosJson))
+        {
+            return RedirectToAction("SeleccionMultiple", "Productos");
+        }
 
+        // Deserializar los datos
+        var elementosCarrito = JsonConvert.DeserializeObject<List<ElementoCarrito>>(productosJson);
+
+        // Obtener los IDs de productos
+        var productosIds = elementosCarrito.Select(e => e.ProductoId).ToList();
+
+        // Buscar los datos completos de los productos en la base de datos
+        var productos = await _context.Productos
+            .Where(p => productosIds.Contains(p.Id))
+            .ToListAsync();
+
+        // Crear un nuevo pedido
+        var pedido = new Pedido
+        {
+            Fecha = DateTime.Now,
+            Estado = "Pendiente",
+            PedidoProductos = new List<PedidoProducto>()
+        };
+
+        // Obtener el usuario actual si está autenticado
+        if (User.Identity.IsAuthenticated)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            pedido.UsuarioId = userId;
+        }
+
+        // Crear los PedidoProductos
+        decimal totalCalculado = 0;
+        foreach (var producto in productos)
+        {
+            var elemento = elementosCarrito.First(e => e.ProductoId == producto.Id);
+            var subtotal = producto.Precio * elemento.Cantidad;
+            totalCalculado += subtotal;
+
+            pedido.PedidoProductos.Add(new PedidoProducto
+            {
+                ProductoId = producto.Id,
+                Producto = producto,
+                Cantidad = elemento.Cantidad,
+                Precio = producto.Precio
+            });
+        }
+
+        // Asignar el total calculado
+        pedido.Total = totalCalculado;
+
+        // Cargar las sucursales para el dropdown
+        ViewBag.Sucursales = await _context.Sucursales.ToListAsync();
+
+        // Guardar en TempData para procesamiento posterior
+        TempData["PedidoPendiente"] = JsonConvert.SerializeObject(new
+        {
+            ProductosIds = string.Join(",", elementosCarrito.Select(e => e.ProductoId)),
+            Cantidades = string.Join(",", elementosCarrito.Select(e => e.Cantidad))
+        });
+
+        // Preservar los productos seleccionados
+        TempData.Keep("ProductosSeleccionados");
+
+        return View(pedido);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ConfirmarPedido(int? sucursalId, string direccionEntrega = null)
+    {
+        var pedidoJson = TempData["PedidoPendiente"] as string;
+        if (string.IsNullOrEmpty(pedidoJson))
+        {
+            return RedirectToAction("SeleccionMultiple", "Productos");
+        }
+
+        var productosJson = TempData["ProductosSeleccionados"] as string;
+        var elementosCarrito = JsonConvert.DeserializeObject<List<ElementoCarrito>>(productosJson);
+
+        var pedidoData = JsonConvert.DeserializeObject<dynamic>(pedidoJson);
+        var productosIds = ((string)pedidoData.ProductosIds).Split(',').Select(int.Parse).ToList();
+        var cantidades = ((string)pedidoData.Cantidades).Split(',').Select(int.Parse).ToList();
+
+        // Verificar si tenemos una sucursal válida, si no, buscar una por defecto
+        int sucursalIdValor;
+        if (sucursalId.HasValue && sucursalId.Value > 0)
+        {
+            sucursalIdValor = sucursalId.Value;
+        }
+        else
+        {
+            // Buscar una sucursal por defecto
+            var sucursalPorDefecto = await _context.Sucursales.FirstOrDefaultAsync();
+            if (sucursalPorDefecto == null)
+            {
+                // Crear una sucursal si no existe ninguna
+                var nuevaSucursal = new Sucursal
+                {
+                    Nombre = "Verace Pizza",
+                    Direccion = "Av. de los Shyris N35-52",
+                    Latitud = -0.180653,
+                    Longitud = -78.487834
+                };
+                _context.Sucursales.Add(nuevaSucursal);
+                await _context.SaveChangesAsync();
+                sucursalIdValor = nuevaSucursal.Id;
+            }
+            else
+            {
+                sucursalIdValor = sucursalPorDefecto.Id;
+            }
+        }
+
+        // Crear nuevo pedido con la sucursal válida
+        var pedido = new Pedido
+        {
+            Fecha = DateTime.Now,
+            Estado = "Pendiente",
+            SucursalId = sucursalIdValor, // Ahora siempre es un valor int válido, no nullable
+            PedidoProductos = new List<PedidoProducto>()
+        };
+
+        // Asignar usuario
+        if (User.Identity.IsAuthenticated)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            pedido.UsuarioId = userId;
+        }
+
+        // Agregar productos al pedido
+        decimal totalCalculado = 0;
+        for (int i = 0; i < productosIds.Count; i++)
+        {
+            var productoId = productosIds[i];
+            var cantidad = cantidades[i];
+
+            var producto = await _context.Productos.FindAsync(productoId);
+            if (producto != null)
+            {
+                var subtotal = producto.Precio * cantidad;
+                totalCalculado += subtotal;
+
+                pedido.PedidoProductos.Add(new PedidoProducto
+                {
+                    ProductoId = productoId,
+                    Cantidad = cantidad,
+                    Precio = producto.Precio
+                });
+            }
+        }
+
+        // Asignar el total calculado
+        pedido.Total = totalCalculado;
+
+        // Guardar en la base de datos
+        _context.Pedidos.Add(pedido);
+        await _context.SaveChangesAsync();
+
+        // Redirigir a la página de confirmación
+        return RedirectToAction("Resumen", new { id = pedido.Id });
+    }
+
+    public async Task<IActionResult> DetallePedido(int id)
+    {
         var pedido = await _context.Pedidos
             .Include(p => p.PedidoProductos)
             .ThenInclude(pp => pp.Producto)
             .Include(p => p.Sucursal)
-            .OrderByDescending(p => p.Id)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (pedido == null)
+        {
+            return NotFound();
+        }
 
         return View(pedido);
     }
@@ -492,7 +681,7 @@ public class PedidosController : Controller
     }
 
     [HttpPost("crear-con-ubicacion")]
-    [ValidateAntiForgeryToken] // Si estás usando protección CSRF
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> CrearPedidoConUbicacion([FromBody] PedidoConUbicacionDTO datos)
     {
         try
@@ -536,15 +725,17 @@ public class PedidosController : Controller
             {
                 UsuarioId = User.Identity.IsAuthenticated ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null,
                 Fecha = DateTime.Now,
-                Total = 0,
                 SucursalId = sucursal.Id,
                 PedidoProductos = new List<PedidoProducto>()
             };
 
+            // Calculamos el total a mano
+            decimal totalCalculado = 0;
+
             // Agregamos los productos al pedido
             foreach (var producto in productos)
             {
-                pedido.Total += producto.Precio;
+                totalCalculado += producto.Precio;
                 pedido.PedidoProductos.Add(new PedidoProducto
                 {
                     ProductoId = producto.Id,
@@ -552,6 +743,9 @@ public class PedidosController : Controller
                     Precio = producto.Precio
                 });
             }
+
+            // Asignamos el total calculado
+            pedido.Total = totalCalculado;
 
             // Guardamos en sesión la sucursal seleccionada
             HttpContext.Session.SetInt32("SucursalSeleccionada", sucursal.Id);
@@ -594,7 +788,9 @@ public class PedidosController : Controller
         return RedirectToAction("Resumen", new { id = pedidoId });
     }
 
-    // En PedidosController.cs
+    // CORRECCIÓN PARA LÍNEA 524 - Error CS0266: Cannot implicitly convert type 'int?' to 'int'
+    // Método CreateOrder - Verificación de CollectionPointId
+
     [HttpPost]
     [Route("api/orders")]
     public async Task<IActionResult> CreateOrder([FromBody] OrderRequest request)
@@ -604,6 +800,8 @@ public class PedidosController : Controller
             return BadRequest("No se especificaron productos para el pedido");
         }
 
+        // Verificar si CollectionPointId es mayor que cero
+        // Usar cast explícito o valor por defecto si es necesario
         if (request.CollectionPointId <= 0)
         {
             return BadRequest("No se especificó un punto de recolección válido");
@@ -618,16 +816,36 @@ public class PedidosController : Controller
         };
 
         // Buscar punto de recolección
+        // Aquí asumo que CollectionPointId es un entero normal, no nullable
         var puntoRecoleccion = await _context.CollectionPoints.FindAsync(request.CollectionPointId);
         if (puntoRecoleccion == null)
         {
             return NotFound("Punto de recolección no encontrado");
         }
 
+        // CORRECCIÓN PARA LÍNEA 791 y 793 - Error CS1061: 'int' does not contain a definition for 'HasValue'/'Value'
+        // Verificar si la propiedad SucursalId en puntoRecoleccion es nullable
+
+        // Versión para si puntoRecoleccion.SucursalId es un int (no nullable)
         pedido.SucursalId = puntoRecoleccion.SucursalId;
 
+        // O si tienes que verificar si es válido (mayor que 0)
+        if (puntoRecoleccion.SucursalId > 0)
+        {
+            pedido.SucursalId = puntoRecoleccion.SucursalId;
+        }
+        else
+        {
+            // Buscar una sucursal alternativa
+            var sucursal = await _context.Sucursales.FirstOrDefaultAsync();
+            if (sucursal == null)
+            {
+                return BadRequest("No hay sucursales disponibles para asignar al pedido");
+            }
+            pedido.SucursalId = sucursal.Id;
+        }
 
-        // Agregar productos al pedido
+        // Resto del código del método...
         decimal total = 0;
         foreach (var item in request.Cart)
         {
@@ -887,82 +1105,10 @@ public class PedidosController : Controller
         return pedido.Id;
     }
 
-
-
-    //[HttpPost]
-    //public async Task<IActionResult> AgregarSeleccionados(List<ProductoSeleccionadoInput> seleccionados, int? puntoRecoleccionId = null)
-    //{
-    //    var seleccionadosValidos = seleccionados
-    //        .Where(p => p.Seleccionado && p.Cantidad > 0)
-    //        .ToList();
-
-    //    if (!seleccionadosValidos.Any())
-    //    {
-    //        return BadRequest("Datos inválidos");
-    //    }
-
-    //    // Obtener la primera sucursal directamente de la base de datos
-    //    var sucursal = await _context.Sucursales.FirstOrDefaultAsync();
-    //    if (sucursal == null)
-    //    {
-    //        // Crear una sucursal si no existe ninguna
-    //        sucursal = new Sucursal
-    //        {
-    //            Nombre = "Verace Pizza",
-    //            Direccion = "Av. de los Shyris N35-52",
-    //            Latitud = -0.180653,
-    //            Longitud = -78.487834
-    //        };
-    //        _context.Sucursales.Add(sucursal);
-    //        await _context.SaveChangesAsync();
-    //    }
-
-    //    var pedido = new Pedido
-    //    {
-    //        Fecha = DateTime.Now,
-    //        SucursalId = sucursal.Id,
-    //        PedidoProductos = new List<PedidoProducto>()
-    //    };
-
-    //    decimal total = 0;
-
-    //    foreach (var item in seleccionadosValidos)
-    //    {
-    //        var producto = await _context.Productos.FindAsync(item.ProductoId);
-    //        if (producto != null)
-    //        {
-    //            decimal subtotal = producto.Precio * item.Cantidad;
-    //            total += subtotal;
-
-    //            pedido.PedidoProductos.Add(new PedidoProducto
-    //            {
-    //                ProductoId = producto.Id,
-    //                Cantidad = item.Cantidad,
-    //                Precio = producto.Precio
-    //            });
-    //        }
-    //    }
-
-    //    pedido.Total = total;
-
-    //    _context.Pedidos.Add(pedido);
-    //    await _context.SaveChangesAsync();
-
-    //    // Guardar ID del pedido en una cookie por 30 minutos
-    //    CookieOptions options = new CookieOptions
-    //    {
-    //        Expires = DateTimeOffset.Now.AddMinutes(30)
-    //    };
-    //    Response.Cookies.Append("PedidoTemporalId", pedido.Id.ToString(), options);
-
-    //    // Si se proporciona un punto de recolección, redirigir directamente a ese punto
-    //    if (puntoRecoleccionId.HasValue)
-    //    {
-    //        return RedirectToAction("Confirmar", "Recoleccion", new { id = puntoRecoleccionId.Value, pedidoId = pedido.Id });
-    //    }
-
-    //    // Si no hay punto de recolección, seguir con el flujo normal
-    //    return RedirectToAction("Seleccionar", "Recoleccion");
-    //}
-
+    // Definición de clase auxiliar ElementoCarrito para deserialización
+    public class ElementoCarrito
+    {
+        public int ProductoId { get; set; }
+        public int Cantidad { get; set; }
+    }
 }

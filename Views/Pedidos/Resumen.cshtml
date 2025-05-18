@@ -6,17 +6,24 @@
     decimal total = 0;
     if (Model.PedidoProductos != null && Model.PedidoProductos.Any())
     {
-        // Usar cast explícito en cada elemento del Sum
-        total = Model.PedidoProductos.Sum(p => (decimal)(p.Precio * p.Cantidad));
-    }
-    else
-    {
-        // Usar Model.Total directamente si está disponible
-        var modelTotal = Model.Total;
-        if (modelTotal != null)
+        // Usar un enfoque más seguro para calcular el total con conversión explícita
+        foreach (var item in Model.PedidoProductos)
         {
-            total = (decimal)modelTotal;
+            // Asegurar que tanto Precio como Cantidad se manejan correctamente si son nullables
+            decimal precio = item.Precio.HasValue ? item.Precio.Value : 0m;
+            int cantidad = item.Cantidad.HasValue ? item.Cantidad.Value : 0;
+
+            // O si prefieres un enfoque más directo con casting:
+            // decimal precio = item.Precio ?? 0m;
+            // int cantidad = item.Cantidad ?? 0;
+
+            total += precio * cantidad;
         }
+    }
+    else if (Model.Total != null)
+    {
+        // Usar conversión explícita para Model.Total
+        total = (decimal)Model.Total;
     }
 
     // Evaluar valores nullable de forma segura
@@ -35,9 +42,16 @@
 
 <div class="container mt-4">
     <div class="card">
-        <div class="card-header bg-dark text-white">
-            <h2 class="mb-0">Resumen del Pedido</h2>
+        <style>
+            .card-header h2 {
+                color: white !important;
+            }
+        </style>
+
+        <div class="card-header bg-dark">
+            <h2 class="mb-0" style="color: white !important;">Resumen del Pedido</h2>
         </div>
+
         <div class="card-body">
             <div class="row mb-3">
                 <div class="col-md-6">
