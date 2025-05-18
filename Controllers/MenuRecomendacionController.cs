@@ -20,8 +20,6 @@ namespace ProyectoIdentity.Controllers
         {
             // Pizzas
             new Plato { Nombre = "Margarita", Precio = 8, Calorias = 250, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, tomate cherry, albahaca" },
-            new Plato { Nombre = "Napolitana", Precio = 10, Calorias = 280, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, tomate, anchoas" },
-            new Plato { Nombre = "Vegetariana", Precio = 12, Calorias = 240, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, pimientos, champiñones, cebolla, aceitunas" },
             new Plato { Nombre = "Pepperoni", Precio = 9, Calorias = 300, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, pepperoni" },
             new Plato { Nombre = "Hawaiana", Precio = 11, Calorias = 320, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, jamón, piña" },
             new Plato { Nombre = "Veggie Lovers", Precio = 12, Calorias = 260, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, pimientos, champiñones, cebolla" },
@@ -135,12 +133,17 @@ namespace ProyectoIdentity.Controllers
                 {
                     var ingredientesLower = ingredientes.ToLower();
 
+                    // Lista de filtros posibles para ingredientes
+
+                    // Filtros de carne
                     if (ingredientesLower.Contains("sin carne"))
                     {
                         filtrado = filtrado.Where(item =>
                             !item.Ingredientes.ToLower().Contains("carne") &&
                             !item.Ingredientes.ToLower().Contains("jamón") &&
-                            !item.Ingredientes.ToLower().Contains("pepperoni")
+                            !item.Ingredientes.ToLower().Contains("pepperoni") &&
+                            !item.Ingredientes.ToLower().Contains("tocino") &&
+                            !item.Ingredientes.ToLower().Contains("salami")
                         ).ToList();
                     }
                     else if (ingredientesLower.Contains("con carne"))
@@ -148,10 +151,146 @@ namespace ProyectoIdentity.Controllers
                         filtrado = filtrado.Where(item =>
                             item.Ingredientes.ToLower().Contains("carne") ||
                             item.Ingredientes.ToLower().Contains("jamón") ||
-                            item.Ingredientes.ToLower().Contains("pepperoni")
+                            item.Ingredientes.ToLower().Contains("pepperoni") ||
+                            item.Ingredientes.ToLower().Contains("tocino") ||
+                            item.Ingredientes.ToLower().Contains("salami")
                         ).ToList();
                     }
-                    else
+
+                    // Filtros de queso
+                    if (ingredientesLower.Contains("sin queso"))
+                    {
+                        filtrado = filtrado.Where(item =>
+                            !item.Ingredientes.ToLower().Contains("queso") &&
+                            !item.Ingredientes.ToLower().Contains("mozzarella") &&
+                            !item.Ingredientes.ToLower().Contains("cheddar") &&
+                            !item.Ingredientes.ToLower().Contains("parmesano") &&
+                            !item.Ingredientes.ToLower().Contains("gorgonzola")
+                        ).ToList();
+                    }
+                    else if (ingredientesLower.Contains("con queso"))
+                    {
+                        filtrado = filtrado.Where(item =>
+                            item.Ingredientes.ToLower().Contains("queso") ||
+                            item.Ingredientes.ToLower().Contains("mozzarella") ||
+                            item.Ingredientes.ToLower().Contains("cheddar") ||
+                            item.Ingredientes.ToLower().Contains("parmesano") ||
+                            item.Ingredientes.ToLower().Contains("gorgonzola")
+                        ).ToList();
+                    }
+
+                    // Filtros de tomate
+                    if (ingredientesLower.Contains("sin tomate"))
+                    {
+                        filtrado = filtrado.Where(item =>
+                            !item.Ingredientes.ToLower().Contains("tomate")
+                        ).ToList();
+                    }
+                    else if (ingredientesLower.Contains("con tomate"))
+                    {
+                        filtrado = filtrado.Where(item =>
+                            item.Ingredientes.ToLower().Contains("tomate")
+                        ).ToList();
+                    }
+
+                    // Filtros de champiñones
+                    if (ingredientesLower.Contains("sin champiñones") || ingredientesLower.Contains("sin champinones") || ingredientesLower.Contains("sin hongos"))
+                    {
+                        filtrado = filtrado.Where(item =>
+                            !item.Ingredientes.ToLower().Contains("champiñones") &&
+                            !item.Ingredientes.ToLower().Contains("hongos")
+                        ).ToList();
+                    }
+                    else if (ingredientesLower.Contains("con champiñones") || ingredientesLower.Contains("con champinones") || ingredientesLower.Contains("con hongos"))
+                    {
+                        filtrado = filtrado.Where(item =>
+                            item.Ingredientes.ToLower().Contains("champiñones") ||
+                            item.Ingredientes.ToLower().Contains("hongos")
+                        ).ToList();
+                    }
+
+                    // Filtros de cebolla
+                    if (ingredientesLower.Contains("sin cebolla"))
+                    {
+                        filtrado = filtrado.Where(item =>
+                            !item.Ingredientes.ToLower().Contains("cebolla")
+                        ).ToList();
+                    }
+                    else if (ingredientesLower.Contains("con cebolla"))
+                    {
+                        filtrado = filtrado.Where(item =>
+                            item.Ingredientes.ToLower().Contains("cebolla")
+                        ).ToList();
+                    }
+
+                    // Filtros de piña (importante para pizzas hawaianas)
+                    if (ingredientesLower.Contains("sin piña") || ingredientesLower.Contains("sin pina"))
+                    {
+                        filtrado = filtrado.Where(item =>
+                            !item.Ingredientes.ToLower().Contains("piña")
+                        ).ToList();
+                    }
+                    else if (ingredientesLower.Contains("con piña") || ingredientesLower.Contains("con pina"))
+                    {
+                        filtrado = filtrado.Where(item =>
+                            item.Ingredientes.ToLower().Contains("piña")
+                        ).ToList();
+                    }
+
+                    // Filtros de picante
+                    if (ingredientesLower.Contains("sin picante"))
+                    {
+                        filtrado = filtrado.Where(item =>
+                            !item.Ingredientes.ToLower().Contains("picante") &&
+                            !item.Ingredientes.ToLower().Contains("chile") &&
+                            !item.Ingredientes.ToLower().Contains("jalapeños")
+                        ).ToList();
+                    }
+                    else if (ingredientesLower.Contains("con picante") || ingredientesLower.Contains("picante"))
+                    {
+                        filtrado = filtrado.Where(item =>
+                            item.Ingredientes.ToLower().Contains("picante") ||
+                            item.Ingredientes.ToLower().Contains("chile") ||
+                            item.Ingredientes.ToLower().Contains("jalapeños")
+                        ).ToList();
+                    }
+
+                    // Filtros vegetarianos
+                    if (ingredientesLower.Contains("vegetariano") || ingredientesLower.Contains("vegetariana"))
+                    {
+                        filtrado = filtrado.Where(item =>
+                            !item.Ingredientes.ToLower().Contains("carne") &&
+                            !item.Ingredientes.ToLower().Contains("jamón") &&
+                            !item.Ingredientes.ToLower().Contains("pepperoni") &&
+                            !item.Ingredientes.ToLower().Contains("tocino") &&
+                            !item.Ingredientes.ToLower().Contains("salami")
+                        ).ToList();
+                    }
+
+                    // Si no se encuentra ninguno de los filtros específicos anteriores, se utiliza el TF-IDF
+                    else if (!ingredientesLower.Contains("sin carne") &&
+                             !ingredientesLower.Contains("con carne") &&
+                             !ingredientesLower.Contains("sin queso") &&
+                             !ingredientesLower.Contains("con queso") &&
+                             !ingredientesLower.Contains("sin tomate") &&
+                             !ingredientesLower.Contains("con tomate") &&
+                             !ingredientesLower.Contains("sin champiñones") &&
+                             !ingredientesLower.Contains("sin champinones") &&
+                             !ingredientesLower.Contains("sin hongos") &&
+                             !ingredientesLower.Contains("con champiñones") &&
+                             !ingredientesLower.Contains("con champinones") &&
+                             !ingredientesLower.Contains("con hongos") &&
+                             !ingredientesLower.Contains("sin cebolla") &&
+                             !ingredientesLower.Contains("con cebolla") &&
+                             !ingredientesLower.Contains("sin piña") &&
+                             !ingredientesLower.Contains("sin pina") &&
+                             !ingredientesLower.Contains("con piña") &&
+                             !ingredientesLower.Contains("con pina") &&
+                             !ingredientesLower.Contains("sin picante") &&
+                             !ingredientesLower.Contains("con picante") &&
+                             !ingredientesLower.Contains("picante") &&
+                             !ingredientesLower.Contains("vegetariano") &&
+                             !ingredientesLower.Contains("vegetariana"))
                     {
                         // Implementar TF-IDF para búsqueda por ingredientes específicos
                         Console.WriteLine("Aplicando TF-IDF...");

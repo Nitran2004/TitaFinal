@@ -152,7 +152,7 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Productos" asp-action="SeleccionMultiple">
-                                <i class="fas fa-cart-plus"></i> Selección múltiple
+                                <i></i> Productos
                             </a>
                         </li>
                         @if (User.IsInRole("Administrador"))
@@ -180,7 +180,12 @@
                         <!-- Nuevo enlace para recomendación de menú -->
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="MenuRecomendacion" asp-action="Recomendacion">
-                                <i class="fas fa-robot"></i> Recomendaciones IA
+                                <i></i> Recomendaciones IA
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="" asp-action="">
+                                <i></i> Cupones
                             </a>
                         </li>
                     </ul>
