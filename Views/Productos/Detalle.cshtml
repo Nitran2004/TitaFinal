@@ -224,25 +224,6 @@
     }
 
     }
-
-    .btn-ar {
-        background-color: #ff4081;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        padding: 10px 15px;
-        margin-top: 15px;
-        font-weight: bold;
-        cursor: pointer;
-        display: block;
-        width: 100%;
-        transition: background-color 0.3s;
-    }
-
-        .btn-ar:hover {
-            background-color: #e91e63;
-        }
-
 </style>
 
 <div class="product-container">
@@ -263,21 +244,17 @@
             <p class="product-description">@Model.Descripcion</p>
 
             <div class="product-price">Precio: $@Model.Precio</div>
-            <div class="product-points">Ganas @(Model.Precio * 100) pts</div>
+          @*   <div class="product-points">Ganas @(Model.Precio * 100) pts</div> *@
 
-            <div class="quantity-control">
+@*             <div class="quantity-control">
                 <button type="button" class="quantity-btn" id="decrease-btn">-</button>
                 <input type="number" id="cantidad" value="1" min="1" class="quantity-input" />
                 <button type="button" class="quantity-btn" id="increase-btn">+</button>
-            </div>
+            </div> *@
 
-            <button type="button" class="btn-cart" id="add-to-cart-btn">
+@*             <button type="button" class="btn-cart" id="add-to-cart-btn">
                 Añadir al carrito
-            </button>
-            <button type="button" class="btn-ar" id="view-ar-btn" onclick="location.href='@Url.Action("VistaAR", "RealidadAumentada", new { id = Model.Id })'">
-                Ver en Realidad Aumentada
-                <i class="fas fa-cube ml-2"></i>
-            </button>
+            </button> *@
         </div>
     </div>
 
@@ -350,57 +327,57 @@
 
 <script>
     // Control de cantidad
-    document.getElementById('decrease-btn').addEventListener('click', function () {
-        var input = document.getElementById('cantidad');
-        var value = parseInt(input.value);
-        if (value > 1) {
-            input.value = value - 1;
-        }
-    });
+    // document.getElementById('decrease-btn').addEventListener('click', function () {
+    //     var input = document.getElementById('cantidad');
+    //     var value = parseInt(input.value);
+    //     if (value > 1) {
+    //         input.value = value - 1;
+    //     }
+    // });
 
-    document.getElementById('increase-btn').addEventListener('click', function () {
-        var input = document.getElementById('cantidad');
-        var value = parseInt(input.value);
-        input.value = value + 1;
-    });
+    // document.getElementById('increase-btn').addEventListener('click', function () {
+    //     var input = document.getElementById('cantidad');
+    //     var value = parseInt(input.value);
+    //     input.value = value + 1;
+    // });
 
     // Añadir al carrito
-    document.getElementById('add-to-cart-btn').addEventListener('click', function () {
-        var cantidad = parseInt(document.getElementById('cantidad').value);
-        var productId = '@Model.Id';
-        var productName = '@Model.Nombre';
-        var productPrice = @Model.Precio;
+    // document.getElementById('add-to-cart-btn').addEventListener('click', function () {
+    //     var cantidad = parseInt(document.getElementById('cantidad').value);
+    //     var productId = '@Model.Id';
+    //     var productName = '@Model.Nombre';
+    //     var productPrice = @Model.Precio;
 
-        // Obtener carrito actual
-        var carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+    //     // Obtener carrito actual
+    //     var carrito = JSON.parse(localStorage.getItem('carrito')) || [];
 
-        // Verificar si el producto ya está en el carrito
-        var existingIndex = carrito.findIndex(item => item.id === productId);
+    //     // Verificar si el producto ya está en el carrito
+    //     var existingIndex = carrito.findIndex(item => item.id === productId);
 
-        if (existingIndex >= 0) {
-            // Si ya existe, aumentar cantidad
-            carrito[existingIndex].cantidad += cantidad;
-        } else {
-            // Si no existe, añadir nuevo
-            carrito.push({
-                id: productId,
-                nombre: productName,
-                precio: productPrice,
-                cantidad: cantidad
-            });
-        }
+    //     if (existingIndex >= 0) {
+    //         // Si ya existe, aumentar cantidad
+    //         carrito[existingIndex].cantidad += cantidad;
+    //     } else {
+    //         // Si no existe, añadir nuevo
+    //         carrito.push({
+    //             id: productId,
+    //             nombre: productName,
+    //             precio: productPrice,
+    //             cantidad: cantidad
+    //         });
+    //     }
 
-        // Guardar carrito actualizado
-        localStorage.setItem('carrito', JSON.stringify(carrito));
+    //     // Guardar carrito actualizado
+    //     localStorage.setItem('carrito', JSON.stringify(carrito));
 
-        // Actualizar contador carrito (si existe la función)
-        if (window.actualizarContadorCarrito) {
-            window.actualizarContadorCarrito();
-        }
+    //     // Actualizar contador carrito (si existe la función)
+    //     if (window.actualizarContadorCarrito) {
+    //         window.actualizarContadorCarrito();
+    //     }
 
-        // Notificar al usuario
-        alert(cantidad + ' ' + productName + ' añadido(s) al carrito');
-    });
+    //     // Notificar al usuario
+    //     alert(cantidad + ' ' + productName + ' añadido(s) al carrito');
+    // });
 
     // Acordeón
     document.querySelectorAll('.accordion-header').forEach(function (header) {

@@ -19,8 +19,6 @@ namespace ProyectoIdentity.Controllers
         {
             // Pizzas
             new Plato { Nombre = "Margarita", Precio = 8, Calorias = 250, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, tomate cherry, albahaca" },
-            new Plato { Nombre = "Napolitana", Precio = 10, Calorias = 280, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, tomate, anchoas" },
-            new Plato { Nombre = "Vegetariana", Precio = 12, Calorias = 240, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, pimientos, champiñones, cebolla, aceitunas" },
             new Plato { Nombre = "Pepperoni", Precio = 9, Calorias = 300, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, pepperoni" },
             new Plato { Nombre = "Hawaiana", Precio = 11, Calorias = 320, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, jamón, piña" },
             new Plato { Nombre = "Veggie Lovers", Precio = 12, Calorias = 260, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, pimientos, champiñones, cebolla" },
@@ -47,18 +45,40 @@ namespace ProyectoIdentity.Controllers
             new Plato { Nombre = "Agua mineral", Precio = 1.5m, Calorias = 0, Categoria = "Bebidas", Ingredientes = "Agua mineral con gas natural" },
             new Plato { Nombre = "Limonada", Precio = 3.5m, Calorias = 80, Categoria = "Bebidas", Ingredientes = "Limón, agua, azúcar" },
             new Plato { Nombre = "Limonada Rosa", Precio = 3.5m, Calorias = 90, Categoria = "Bebidas", Ingredientes = "Limón, agua, azúcar, frutos rojos" },
-            
-            // Añade más categorías según sea necesario
-            
-            // Categoría Cerveza
-            new Plato { Nombre = "Jarro Cerveza", Precio = 4, Calorias = 150, Categoria = "Cerveza", Ingredientes = "Cerveza artesanal" },
-            new Plato { Nombre = "Pinta Cerveza", Precio = 6, Calorias = 200, Categoria = "Cerveza", Ingredientes = "Cerveza artesanal" },
-            
-            // Categoría Promos
-            new Plato { Nombre = "Promo Pilas", Precio = 16, Calorias = 750, Categoria = "Promos", Ingredientes = "Pizza mediana, 2 bebidas, postre" },
-            new Plato { Nombre = "Promo Lovers", Precio = 20, Calorias = 1000, Categoria = "Promos", Ingredientes = "Pizza grande, 2 bebidas, postre, pan de ajo" }
-            
-            // Puedes añadir el resto de los datos del archivo original aquí
+            new Plato { Nombre = "Té caliente", Precio = 1.5m, Calorias = 5, Categoria = "Bebidas", Ingredientes = "Té aromático. Variedades: negro, verde, manzanilla o frutos rojos" },
+            new Plato { Nombre = "Coca-Cola", Precio = 2m, Calorias = 150, Categoria = "Bebidas", Ingredientes = "Refresco carbonatado clásico" },
+            new Plato { Nombre = "Fanta", Precio = 2m, Calorias = 160, Categoria = "Bebidas", Ingredientes = "Refresco con sabor a naranja" },
+            new Plato { Nombre = "Fioravanti", Precio = 2m, Calorias = 155, Categoria = "Bebidas", Ingredientes = "Tradicional soda ecuatoriana con sabor a fresa" },
+            new Plato { Nombre = "Sprite", Precio = 2m, Calorias = 140, Categoria = "Bebidas", Ingredientes = "Refresco con sabor a lima-limón" },
+            new Plato { Nombre = "Café americano", Precio = 1.5m, Calorias = 5, Categoria = "Bebidas", Ingredientes = "Café filtrado de granos ecuatorianos" },
+            new Plato { Nombre = "Capuccino", Precio = 2m, Calorias = 120, Categoria = "Bebidas", Ingredientes = "Espresso, leche vaporizada y espuma de leche" },
+            new Plato { Nombre = "Iced Coffee", Precio = 2.5m, Calorias = 150, Categoria = "Bebidas", Ingredientes = "Café frío con leche, hielo y vainilla" },
+
+            // Promos
+            new Plato { Nombre = "Promo Pilas", Precio = 16m, Calorias = 1800, Categoria = "Promos", Ingredientes = "1 pizza mediana a elección + 4 cervezas nacionales" },
+            new Plato { Nombre = "Promo Lovers", Precio = 20m, Calorias = 1600, Categoria = "Promos", Ingredientes = "1 pizza mediana especial + 2 cócteles + postre para compartir" },
+            new Plato { Nombre = "Promo King", Precio = 24m, Calorias = 2400, Categoria = "Promos", Ingredientes = "1 pizza familiar + 6 cervezas nacionales + nachos con queso" },
+            new Plato { Nombre = "Promo Sanduchera", Precio = 10m, Calorias = 900, Categoria = "Promos", Ingredientes = "2 sánduches a elección + 2 bebidas no alcohólicas" },
+            new Plato { Nombre = "Promo Piqueo", Precio = 18m, Calorias = 1500, Categoria = "Promos", Ingredientes = "Tabla de picadas + 4 cervezas nacionales" },
+
+            // Sánduches
+            new Plato { Nombre = "Tradicional", Precio = 5m, Calorias = 380, Categoria = "Sánduches", Ingredientes = "Jamón, queso, lechuga, tomate y mayonesa casera en pan artesanal" },
+            new Plato { Nombre = "Carne Mechada", Precio = 5m, Calorias = 450, Categoria = "Sánduches", Ingredientes = "Carne mechada, queso derretido, cebolla caramelizada y salsa BBQ" },
+            new Plato { Nombre = "Veggie", Precio = 5m, Calorias = 350, Categoria = "Sánduches", Ingredientes = "Aguacate, queso fresco, tomate, rúcula y pesto en pan integral" },
+
+            // Shots
+            new Plato { Nombre = "Shot de tequila", Precio = 3m, Calorias = 98, Categoria = "Shots", Ingredientes = "Tequila José Cuervo, limón y sal" },
+            new Plato { Nombre = "Shot de aguardiente", Precio = 3m, Calorias = 97, Categoria = "Shots", Ingredientes = "Aguardiente colombiano Antioqueño, licor anisado" },
+            new Plato { Nombre = "Shot de Jager", Precio = 6m, Calorias = 103, Categoria = "Shots", Ingredientes = "Licor de hierbas alemán Jägermeister" },
+            new Plato { Nombre = "Jager Bomb", Precio = 10m, Calorias = 210, Categoria = "Shots", Ingredientes = "Jägermeister sumergido en bebida energética" },
+
+            // Picadas
+            new Plato { Nombre = "Nachos Cheddar", Precio = 5m, Calorias = 480, Categoria = "Picadas", Ingredientes = "Nachos de maíz, queso cheddar fundido y jalapeños" },
+            new Plato { Nombre = "Nachos Verace", Precio = 5m, Calorias = 520, Categoria = "Picadas", Ingredientes = "Nachos, mezcla de quesos, guacamole, pico de gallo y crema agria" },
+            new Plato { Nombre = "Bread Sticks", Precio = 5m, Calorias = 420, Categoria = "Picadas", Ingredientes = "Bastones de pan con ajo y queso parmesano, salsa de tomate" },
+            new Plato { Nombre = "Bread Sticks Verace", Precio = 8m, Calorias = 490, Categoria = "Picadas", Ingredientes = "Bastones de pan con hierbas, queso parmesano y dip de provolone" }
+
+
         };
 
         // Página principal

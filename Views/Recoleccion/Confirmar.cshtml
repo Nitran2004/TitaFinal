@@ -3,12 +3,26 @@
     ViewData["Title"] = "Confirmar Punto de Recolección";
 
     // Valores por defecto para Quito si no hay coordenadas
-    if (ViewBag.UserLat == null) { ViewBag.UserLat = -0.1857; }
-    if (ViewBag.UserLng == null) { ViewBag.UserLng = -78.4954; }
-    if (ViewBag.Distancia == null) { ViewBag.Distancia = 3.5; }
+    if (ViewBag.UserLat == null)
+    {
+        ViewBag.UserLat = -0.1857;
+    }
+
+    if (ViewBag.UserLng == null)
+    {
+        ViewBag.UserLng = -78.4954;
+    }
+
+    if (ViewBag.Distancia == null)
+    {
+        ViewBag.Distancia = 3.5;
+    }
 
     // Es crucial obtener el ID del punto de recolección
     int puntoRecoleccionId = ViewBag.PuntoRecoleccionId ?? 0;
+
+    // Formatear la distancia para que siempre muestre el punto decimal
+    string distanciaFormateada = string.Format("{0:0.00}", ViewBag.Distancia);
 }
 <div class="container mt-4">
     <!-- Mostrar mensajes de error si existen -->
@@ -19,10 +33,11 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
-@*  IDPedido
-    IDPuntos
-    <p>Pedido ID: @ViewBag.PedidoId</p>
-    <p>Punto ID: @ViewBag.PuntoRecoleccionId</p> *@
+
+    @* IDPedido IDPuntos *@
+    @* <p>Pedido ID: @ViewBag.PedidoId</p> *@
+    @* <p>Punto ID: @ViewBag.PuntoRecoleccionId</p> *@
+
     <div class="card">
         <div class="card-header bg-success text-white">
             <h2 class="mb-0">Confirma tu punto de recolección</h2>
@@ -39,27 +54,26 @@
                             <p class="card-text">
                                 <strong>Sucursal:</strong> @Model.Sucursal.Nombre<br />
                                 <strong>Dirección:</strong> @Model.Address<br />
-@*                                 <strong>Descripción:</strong> @Model.Descripcion
- *@                            </p>
+                                @* <strong>Descripción:</strong> @Model.Descripcion *@
+                            </p>
                             <p class="card-text">
                                 <strong>Distancia:</strong>
                                 <span class="@(ViewBag.Distancia < 3 ? "text-success" : (ViewBag.Distancia < 7 ? "text-warning" : "text-danger"))">
-                                    @ViewBag.Distancia km
+                                    @ViewBag.DistanciaFormateada km
                                     @if (ViewBag.Distancia < 3)
                                     {
                                         <i class="fas fa-check-circle"></i>
                                     }
                                 </span>
                             </p>
-@*                             IDCoordenadas
-                                <div class="small text-muted">
-                                <p>ID Punto: @puntoRecoleccionId</p>
-                                <p id="coordsInfo">Coordenadas calculadas: Usuario (@ViewBag.UserLat, @ViewBag.UserLng), Sucursal (@Model.Sucursal.Latitud, @Model.Sucursal.Longitud)</p>
+                            @* <div class="small text-muted">
+                            <p>ID Punto: @puntoRecoleccionId</p>
+                            <p id="coordsInfo">Coordenadas calculadas: Usuario (@ViewBag.UserLat, @ViewBag.UserLng), Sucursal (@Model.Sucursal.Latitud, @Model.Sucursal.Longitud)</p>
                             </div> *@
                         </div>
                     </div>
-                    @*
-                        MAPA
+
+                    @* MAPA
                     <div class="card mb-4">
                     <div class="card-header bg-light">
                     <h5 class="mb-0">Mapa</h5>
@@ -72,6 +86,7 @@
                     </div>
                     </div> *@
                 </div>
+
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-header bg-light">
@@ -97,6 +112,7 @@
                     </div>
                 </div>
             </div>
+
             <div class="mt-4 d-flex justify-content-between">
                 <a href="@Url.Action("Seleccionar", "Recoleccion")" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left"></i> Elegir otro punto
@@ -105,8 +121,7 @@
                 <!-- Formulario para finalizar el pedido -->
                 @if (puntoRecoleccionId > 0)
                 {
-                    <form asp-action="FinalizarPedido" asp-controller="Recoleccion" method="post"
-                          onsubmit="return confirmarFinalizacion();">
+                    <form asp-action="FinalizarPedido" asp-controller="Recoleccion" method="post" onsubmit="return confirmarFinalizacion();">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="puntoRecoleccionId" value="@puntoRecoleccionId" />
                         <button type="submit" class="btn btn-success" id="btnFinalizar">
@@ -126,118 +141,53 @@
 </div>
 
 @section Scripts {
-    <!-- Incluir Leaflet para el mapa -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+          integrity="sha256-sA+e2Zb65p6RnhOd0qztjH4P7ZYtY62nLk9gCN1lvT8=" crossorigin="" />
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+            integrity="sha256-nPLb6D5CKbqq9cXbY3FdP1q1OxGBs1OgglxIG6QtkWw=" crossorigin=""></script>
 
     <script>
-        // Función para confirmar antes de finalizar
         function confirmarFinalizacion() {
-            // Deshabilitar el botón para evitar doble clic
-            const btn = document.getElementById('btnFinalizar');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
-
-            return true; // Permitir el envío del formulario
+            return confirm("¿Estás seguro de que deseas confirmar este pedido?");
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
-            // Código del mapa (igual que antes)
-            const defaultLat = -0.1857;
-            const defaultLng = -78.4954;
-
-            let userLat = @ViewBag.UserLat;
-            let userLng = @ViewBag.UserLng;
-            let sucursalLat = @Model.Sucursal.Latitud;
-            let sucursalLng = @Model.Sucursal.Longitud;
-
-            // Validar coordenadas
-            if (isNaN(userLat) || isNaN(userLng) || Math.abs(userLat) > 90 || Math.abs(userLng) > 180) {
-                console.warn("Coordenadas de usuario inválidas, usando valores por defecto");
-                userLat = defaultLat;
-                userLng = defaultLng;
-            }
-
-            if (isNaN(sucursalLat) || isNaN(sucursalLng) || Math.abs(sucursalLat) > 90 || Math.abs(sucursalLng) > 180) {
-                console.warn("Coordenadas de sucursal inválidas, usando valores por defecto");
-                sucursalLat = -0.180653;
-                sucursalLng = -78.467834;
-            }
-
-            console.log("Coordenadas para el mapa:");
-            console.log("Usuario:", userLat, userLng);
-            console.log("Sucursal:", sucursalLat, sucursalLng);
-
+        document.addEventListener("DOMContentLoaded", function () {
             try {
-                // Crear mapa
-                const map = L.map('mapa').setView([
-                    (userLat + sucursalLat) / 2,
-                    (userLng + sucursalLng) / 2
-                ], 13);
+                var userLat = parseFloat('@ViewBag.UserLat');
+                var userLng = parseFloat('@ViewBag.UserLng');
+                var sucursalLat = parseFloat('@Model.Sucursal.Latitud');
+                var sucursalLng = parseFloat('@Model.Sucursal.Longitud');
 
-                // Añadir capa de mapa
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                }).addTo(map);
+                if (!isNaN(userLat) && !isNaN(userLng) && !isNaN(sucursalLat) && !isNaN(sucursalLng)) {
+                    var map = L.map('mapa').setView([userLat, userLng], 13);
 
-                // Añadir marcador para el usuario
-                const userMarker = L.marker([userLat, userLng])
-                    .addTo(map)
-                    .bindPopup('Tu ubicación')
-                    .openPopup();
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 18,
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(map);
 
-                // Añadir marcador para la sucursal
-                const sucursalMarker = L.marker([sucursalLat, sucursalLng])
-                    .addTo(map)
-                    .bindPopup('@Model.Sucursal.Nombre');
+                    var userMarker = L.marker([userLat, userLng]).addTo(map)
+                        .bindPopup("Tu ubicación").openPopup();
 
-                // Añadir línea entre los dos puntos
-                const polyline = L.polyline([
-                    [userLat, userLng],
-                    [sucursalLat, sucursalLng]
-                ], { color: 'blue' }).addTo(map);
+                    var sucursalMarker = L.marker([sucursalLat, sucursalLng]).addTo(map)
+                        .bindPopup("Sucursal: @Model.Sucursal.Nombre");
 
-                // Ajustar la vista para que se vean ambos marcadores
-                map.fitBounds(polyline.getBounds());
+                    var latlngs = [
+                        [userLat, userLng],
+                        [sucursalLat, sucursalLng]
+                    ];
 
-                // Etiqueta con la distancia
-                const midPoint = [
-                    (userLat + sucursalLat) / 2,
-                    (userLng + sucursalLng) / 2
-                ];
-
-                L.marker(midPoint, {
-                    icon: L.divIcon({
-                        className: 'distance-label',
-                        html: '<div style="background: white; padding: 5px; border-radius: 5px; border: 1px solid #ccc; font-weight: bold;">' +
-                            '@ViewBag.Distancia km</div>',
-                        iconSize: [80, 30],
-                        iconAnchor: [40, 15]
-                    })
-                }).addTo(map);
+                    var polyline = L.polyline(latlngs, { color: 'blue' }).addTo(map);
+                    map.fitBounds(polyline.getBounds());
+                } else {
+                    throw new Error("Datos de coordenadas no válidos");
+                }
             } catch (error) {
                 console.error("Error al cargar el mapa:", error);
-                document.getElementById('mapa').style.display = 'none';
-                document.getElementById('mapError').style.display = 'block';
-            }
-
-            // Función para calcular la distancia
-            function calcularDistancia(lat1, lon1, lat2, lon2) {
-                const toRad = function (deg) {
-                    return deg * (Math.PI / 180);
-                };
-
-                const R = 6371; // Radio de la Tierra en kilómetros
-                const dLat = toRad(lat2 - lat1);
-                const dLon = toRad(lon2 - lon1);
-
-                const a =
-                    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                return R * c;
+                document.getElementById("mapError").style.display = "block";
             }
         });
     </script>

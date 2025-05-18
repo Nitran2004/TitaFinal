@@ -538,7 +538,7 @@ namespace ProyectoIdentity.Datos
                     Categoria = "Bebidas",
                     Descripcion = "Agua natural purificada, refrescante.",
                     Imagen = File.ReadAllBytes("wwwroot/images1/aguasingas.jpg"),
-                    InfoNutricional = "Volumen:500ml|Calorías:0Kcal - 0%|Carbohidratos:0g - 0%|Proteínas:0g - 0%|Grasas:0g - 0%|Sodio:5mg - 0%|Azúcares:0g - 0%|Minerales:Contiene",
+                    InfoNutricional = "Volumen:500ml|Calorías:1Kcal - 0%|Carbohidratos:0g - 0%|Proteínas:0g - 0%|Grasas:0g - 0%|Sodio:5mg - 0%|Azúcares:0g - 0%|Minerales:Contiene",
                     Alergenos = "Sin alérgenos"
                 },
 

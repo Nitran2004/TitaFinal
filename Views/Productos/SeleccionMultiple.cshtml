@@ -5,13 +5,25 @@
 
 <style>
     /* --------- Menú de Categorías --------- */
+    /* Modifica estos estilos para la barra de categorías */
     .category-nav {
-        position: sticky; top: 0; background: #fff;
-        padding: 8px 0; box-shadow: 0 2px 6px rgba(0,0,0,0.1); z-index: 100;
+        position: sticky;
+        top: 0;
+        background: #fff;
+        padding: 8px 0;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        z-index: 100;
     }
+
     .category-container {
-        display: flex; overflow-x: auto; gap: 16px; padding: 0 24px;
+        display: flex;
+        overflow-x: auto;
+        gap: 16px;
+        padding: 0 24px;
         scroll-behavior: smooth;
+        justify-content: center; /* Añadir esta línea para centrar */
+        margin: 0 auto; /* Añadir esta línea para centrar */
+        max-width: 900px; 
     }
     .category-container::-webkit-scrollbar { height:6px; }
     .category-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius:3px; }
@@ -98,6 +110,35 @@
     }
     .add-to-cart-btn:disabled { background:#adb5bd; cursor:not-allowed; }
     .add-to-cart-btn:hover:not(:disabled) { background:#218838; }
+    /* Estilos adicionales para el botón de detalle */
+    .btn-info {
+        background-color: #17a2b8;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 5px 10px;
+        font-size: 0.85rem;
+        transition: background-color 0.2s, transform 0.2s;
+        display: inline-block;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+        .btn-info:hover {
+            background-color: #138496;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+    /* Ajuste del espacio entre el botón y los controles */
+    .product-controls {
+        margin-top: 8px; /* Reducido de 12px */
+    }
+
+    /* Opcional: Hacer que el botón sea más visible */
+    .btn-info i {
+        margin-right: 5px;
+    }
 </style>
 
 <h1 class="text-center mt-4">@(string.IsNullOrEmpty(ViewBag.CategoriaActual) || ViewBag.CategoriaActual.ToLower() == "todas" ? "Todos nuestros productos" : ViewBag.CategoriaActual)</h1>
@@ -132,6 +173,9 @@
                 <div class="card-body">
                     <div class="product-name">@p.Nombre</div>
                     <div class="product-price">$@p.Precio</div>
+                    <a href="@Url.Action("Detalle", "Productos", new { id = p.Id })" class="btn btn-info btn-sm mb-2">
+                        <i class="fas fa-eye"></i> Ver Detalle
+                    </a>
                     <div class="product-controls">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input producto-checkbox"
