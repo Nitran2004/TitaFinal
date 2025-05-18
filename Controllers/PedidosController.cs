@@ -305,6 +305,9 @@ public class PedidosController : Controller
         return View(pedidos);
     }
 
+
+    //[Authorize(Roles = "Administrador,Registrado,Caja")]
+
     public async Task<IActionResult> VerPedidoTemporal()
     {
         int? pedidoId = null;
@@ -427,6 +430,8 @@ public class PedidosController : Controller
 
         return View("ConfirmarSucursal", sucursal);
     }
+
+    [Authorize(Roles = "Administrador,Registrado,Caja")]
 
     public async Task<IActionResult> ResumenPedido()
     {

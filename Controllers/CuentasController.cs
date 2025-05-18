@@ -103,9 +103,9 @@ namespace ProyectoIdentity.Controllers
             }
 
             //Para la creacion de los registrado
-            if (!await _roleManager.RoleExistsAsync("Lector 15 libros"))
+            if (!await _roleManager.RoleExistsAsync("Cajero"))
             {
-                await _roleManager.CreateAsync(new IdentityRole("Lector 15 libros"));
+                await _roleManager.CreateAsync(new IdentityRole("Cajero"));
             }
 
             //Para seleccion de rol
@@ -125,8 +125,8 @@ namespace ProyectoIdentity.Controllers
 
             listaRoles.Add(new SelectListItem()
             {
-                Value = "Lector 15 libros",
-                Text = "Lector 15 libros"
+                Value = "Cajero",
+                Text = "Cajero"
             });
 
             ViewData["ReturnUrl"] = returnurl;
@@ -171,9 +171,9 @@ namespace ProyectoIdentity.Controllers
                     {
                         await _userManager.AddToRoleAsync(usuario, "Administrador");
                     }
-                    else if (rgViewModel.RolSeleccionado == "Lector 15 libros")
+                    else if (rgViewModel.RolSeleccionado == "Cajero")
                     {
-                        await _userManager.AddToRoleAsync(usuario, "Lector 15 libros");
+                        await _userManager.AddToRoleAsync(usuario, "Cajero");
                     }
                     else
                     {
@@ -193,7 +193,7 @@ namespace ProyectoIdentity.Controllers
     {
         new SelectListItem { Value = "Registrado", Text = "Registrado" },
         new SelectListItem { Value = "Administrador", Text = "Administrador" },
-        new SelectListItem { Value = "Lector 15 libros", Text = "Lector 15 libros" }
+        new SelectListItem { Value = "Cajero", Text = "Cajero" }
 
     };
 
