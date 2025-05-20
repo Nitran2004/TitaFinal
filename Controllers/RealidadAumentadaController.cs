@@ -31,6 +31,7 @@ namespace ProyectoIdentity.Controllers
             // Pasar el producto a la vista para uso futuro
             ViewBag.ProductoId = id;
             ViewBag.ProductoNombre = producto.Nombre;
+            ViewBag.ProductoPrecio = producto.Precio;
 
             return View();
         }
