@@ -8,42 +8,42 @@ namespace ProyectoIdentity.Controllers
     {
         private readonly ApplicationDbContext _context;
 
-        public RealidadAumentadaController(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        public RealidadAumentadaController(ApplicationDbContext context) => _context = context;
 
-        // GET: RealidadAumentada/VistaAR/5
         public async Task<IActionResult> VistaAR(int? id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            // Obtener el producto (aunque por ahora mostraremos siempre el mismo cubo)
             var producto = await _context.Productos.FindAsync(id);
-            if (producto == null)
-            {
-                return NotFound();
-            }
+            if (producto == null) return NotFound();
 
-            // Pasar el producto a la vista para uso futuro
             ViewBag.ProductoId = id;
             ViewBag.ProductoNombre = producto.Nombre;
             ViewBag.ProductoPrecio = producto.Precio;
 
+            // Determinar qué modelo 3D debe usarse según el nombre del producto
+            ViewBag.ModeloPath = DeterminarModelo3D(producto.Nombre);
+
             return View();
         }
 
-        // Acción para cargar modelos 3D (para implementación futura)
-        public IActionResult GetModel3D(int id)
+        private string DeterminarModelo3D(string nombreProducto)
         {
-            // Por ahora retorna siempre el mismo modelo de cubo
-            // En el futuro, podría retornar diferentes modelos según el producto
-            var modelPath = "/models/red-cube.glb";
+            if (string.IsNullOrEmpty(nombreProducto)) return "";
 
-            return Json(new { modelPath = modelPath });
+            // Normalizar el nombre para comparación
+            string nombreNormalizado = nombreProducto.ToLower().Trim();
+
+            // Switch para asignar modelo según el nombre del producto
+            switch (nombreNormalizado)
+            {
+                case "pepperoni":
+                    return "/models3d/pizza1.glb";
+                case "mi champ":
+                    return "/models3d/pizza2.glb";
+                default:
+                    return ""; // Cadena vacía indica usar el cubo rojo por defecto
+            }
         }
     }
 }

@@ -1,26 +1,16 @@
 ﻿@{
-    ViewData["Title"] = "Vista de Realidad Aumentada";
-    Layout = null; // Quitar el layout para eliminar el footer y tener pantalla completa
+    ViewData["Title"] = "Vista AR";
+    Layout = null;
 }
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>@ViewData["Title"]</title>
-
-    <!-- Three.js -->
+    <title>@ViewData["Title"] - @ViewBag.ProductoNombre</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-    <!-- GLTFLoader para cargar modelos 3D -->
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
-
-    <!-- Font Awesome para iconos -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-
     <style>
         * {
             margin: 0;
@@ -28,19 +18,16 @@
             box-sizing: border-box;
         }
 
-        html, body {
-            margin: 0;
-            padding: 0;
+        body {
             overflow: hidden;
-            font-family: Arial, sans-serif;
+            font-family: sans-serif;
             width: 100%;
             height: 100%;
             position: fixed;
-            overscroll-behavior: none;
             touch-action: none;
             user-select: none;
             -webkit-user-select: none;
-            background-color: #000;
+            background: #000;
         }
 
         #ar-container {
@@ -49,1124 +36,705 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #000;
         }
 
-        #start-ar-button {
+        .btn {
             position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 15px 30px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            font-size: 18px;
-            cursor: pointer;
-            z-index: 2000;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-
-            #start-ar-button:hover {
-                background-color: #45a049;
-                transform: translateX(-50%) scale(1.05);
-            }
-
-        #exit-ar-button {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            padding: 10px 20px;
-            background-color: rgba(255, 255, 255, 0.9);
-            color: #333;
+            padding: 12px 20px;
+            background: #4CAF50;
+            color: #fff;
             border: none;
             border-radius: 20px;
             font-size: 16px;
             cursor: pointer;
-            z-index: 2000;
+            z-index: 100;
+        }
+
+        #start-btn {
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #exit-btn {
+            top: 20px;
+            right: 20px;
             display: none;
+            background: rgba(255,255,255,0.8);
+            color: #333;
         }
 
         #ar-info {
             position: absolute;
             top: 20px;
             left: 20px;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 10px 15px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            padding: 10px;
             border-radius: 10px;
             font-size: 14px;
-            z-index: 1000;
+            z-index: 10;
+        }
+
+        #ar-status, #controls, #gesture, #distance, #surface, #loading {
+            position: absolute;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+            z-index: 10;
         }
 
         #ar-status {
-            position: absolute;
-            bottom: 100px;
+            bottom: 90px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 16px;
-            text-align: center;
-            z-index: 1000;
-            display: none;
         }
 
-        /* Retículo para AR (ya no necesitamos este estilo CSS aquí, ya que usaremos Three.js para el retículo) */
-        #distance-indicator {
-            position: absolute;
-            left: 50%;
-            top: 60%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 15px;
-            font-size: 14px;
-            text-align: center;
-            z-index: 999;
-            display: none;
-        }
-
-        #surface-quality {
-            position: absolute;
-            left: 50%;
-            top: 70%;
-            transform: translateX(-50%);
-            padding: 6px 12px;
-            border-radius: 15px;
-            font-size: 14px;
-            text-align: center;
-            z-index: 999;
-            display: none;
-        }
-
-        #object-controls {
-            position: absolute;
+        #controls {
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 20px;
-            font-size: 14px;
-            text-align: center;
-            z-index: 1000;
-            display: none;
+            font-size: 13px;
         }
 
-        #gesture-indicator {
-            position: absolute;
+        #gesture {
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
+            transform: translate(-50%,-50%);
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
-            width: 80px;
-            height: 80px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 30px;
-            z-index: 999;
+            font-size: 28px;
             opacity: 0;
             transition: opacity 0.3s;
+        }
+
+        #distance {
+            left: 50%;
+            top: 60%;
+            transform: translateX(-50%);
+        }
+
+        #surface {
+            left: 50%;
+            top: 70%;
+            transform: translateX(-50%);
+        }
+
+        #loading {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
         }
     </style>
 </head>
 <body>
     <div id="ar-container">
         <div id="ar-info">
-            <div id="device-type">Detectando dispositivo...</div>
-            <div id="mode-type">Modo: Cargando...</div>
-            <div id="product-info">Producto: @ViewBag.ProductoNombre - $@Html.Raw(ViewBag.ProductoPrecio ?? "N/A")</div>
+            <div>Producto: @ViewBag.ProductoNombre - $@ViewBag.ProductoPrecio</div>
+            <div id="device-info">Detectando dispositivo...</div>
+            <div id="model-info">@(string.IsNullOrEmpty(ViewBag.ModeloPath) ? "Modelo: Por defecto" : "Modelo: Personalizado")</div>
         </div>
-
         <div id="ar-status">Mueve el dispositivo para detectar superficies</div>
-
-        <button id="start-ar-button">Iniciar Realidad Aumentada</button>
-        <button id="exit-ar-button" onclick="exitAR()">Salir</button>
-
-        <div id="distance-indicator">Distancia: -- cm</div>
-        <div id="surface-quality"></div>
-        <div id="object-controls">Arrastra para mover • Pellizca para acercar/alejar</div>
-        <div id="gesture-indicator"></div>
-        <div id="debug-overlay"></div>
+        <div id="loading">Cargando modelo 3D...</div>
+        <button id="start-btn" class="btn">Iniciar Realidad Aumentada</button>
+        <button id="exit-btn" class="btn">Salir</button>
+        <div id="distance">Distancia: -- cm</div>
+        <div id="surface"></div>
+        <div id="controls">Arrastra para mover • Pellizca para escalar</div>
+        <div id="gesture"></div>
     </div>
 
     <script>
-        // Variables globales para el sistema AR
-        const AppState = {
-            INITIAL: 'initial',
-            AR_ACTIVE: 'ar_active',
-            OBJECT_PLACED: 'object_placed'
-        };
-
+        // Variables principales
         let scene, camera, renderer;
-        let arSession = null;
-        let arSupported = false;
-        let hitTestSource = null;
-        let hitTestSourceRequested = false;
+        let object3D; // Referencia al objeto 3D principal (modelo o cubo)
+        let modelReady = false; // Indica si el modelo está listo
         let reticle;
-        let cube;
-        let isARActive = false;
-        let isMobile = false;
-        let productId = @ViewBag.ProductoId;
-        let productName = '@ViewBag.ProductoNombre';
+        let arSession = null, hitTestSource = null;
+        let isARActive = false, isObjectPlaced = false;
+        let isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-        // Variables para manipulación del objeto
-        let isObjectPlaced = false;
-        let isMovingObject = false;
-        let isScalingObject = false;
-        let lastTouchPosition = { x: 0, y: 0 };
-        let initialTouchDistance = 0;
-        let initialObjectDistance = 0;
-        let objectPlane = new THREE.Plane();
-        let movementIndicator;
+        // Obtener la ruta del modelo del ViewBag
+        const modelPath = '@ViewBag.ModeloPath';
+        const productName = '@ViewBag.ProductoNombre';
 
-        // Control de estados de la aplicación
-        let currentAppState = AppState.INITIAL;
+        // Referencias DOM
+        const startBtn = document.getElementById('start-btn');
+        const exitBtn = document.getElementById('exit-btn');
+        const deviceInfo = document.getElementById('device-info');
+        const arStatus = document.getElementById('ar-status');
+        const controls = document.getElementById('controls');
+        const gesture = document.getElementById('gesture');
+        const distance = document.getElementById('distance');
+        const surface = document.getElementById('surface');
+        const loading = document.getElementById('loading');
 
-        // Desactivar debugging
-        const DEBUG = false;
+        // Inicialización
+        window.addEventListener('DOMContentLoaded', init);
+        window.addEventListener('resize', onResize);
+        startBtn.addEventListener('click', startAR);
+        exitBtn.addEventListener('click', exitAR);
 
-        // Registrar cambios de estado y acciones importantes
-        function logDebug(...args) {
-            if (DEBUG) {
-                console.log(`[${new Date().toISOString().substr(11, 8)}]`, ...args);
-            }
-        }
+        function init() {
+            deviceInfo.textContent = isMobile ? 'Dispositivo móvil' : 'Escritorio';
 
-        // Detectar si es dispositivo móvil
-        function detectDevice() {
-            isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            document.getElementById('device-type').textContent = isMobile ? 'Dispositivo móvil detectado' : 'Dispositivo de escritorio detectado';
-
-            logDebug("Dispositivo detectado:", isMobile ? "Móvil" : "Escritorio");
-
-            // Verificar soporte WebXR
-            if ('xr' in navigator) {
-                navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
-                    arSupported = supported;
-                    document.getElementById('mode-type').textContent =
-                        isMobile && arSupported ? 'Modo: AR disponible' :
-                        isMobile ? 'Modo: Vista 3D (AR no disponible)' :
-                        'Modo: Entorno 3D virtual';
-
-                    logDebug("WebXR soportado:", supported);
-
-                    // Si es escritorio, iniciar animación pasiva automáticamente
-                    if (!isMobile) {
-                        setupDesktopView();
-                    }
-                });
-            } else {
-                document.getElementById('mode-type').textContent =
-                    isMobile ? 'Modo: Vista 3D' : 'Modo: Entorno 3D virtual';
-
-                logDebug("WebXR no disponible en el navegador");
-
-                // Si es escritorio, iniciar animación pasiva automáticamente
-                if (!isMobile) {
-                    setupDesktopView();
-                }
-            }
-        }
-
-        // Configurar vista de escritorio
-        function setupDesktopView() {
-            createVirtualEnvironment();
-
-            // Configurar interacción con mouse para escritorio
-            setupDesktopControls();
-
-            // Mostrar controles para escritorio
-            document.getElementById('object-controls').textContent = 'Clic y arrastrar para mover • Rueda del mouse para escalar';
-            document.getElementById('object-controls').style.display = 'block';
-
-            // Iniciar animación
-            animate();
-
-            // Actualizar estado
-            currentAppState = AppState.OBJECT_PLACED;
-            isObjectPlaced = true;
-        }
-
-        // Configurar controles de mouse para escritorio
-        function setupDesktopControls() {
-            const canvas = renderer.domElement;
-
-            // Eliminar eventos existentes
-            canvas.removeEventListener('mousedown', onMouseDown);
-            canvas.removeEventListener('mousemove', onMouseMove);
-            canvas.removeEventListener('mouseup', onMouseUp);
-            canvas.removeEventListener('wheel', onMouseWheel);
-
-            // Configurar eventos de mouse
-            canvas.addEventListener('mousedown', onMouseDown);
-            canvas.addEventListener('mousemove', onMouseMove);
-            canvas.addEventListener('mouseup', onMouseUp);
-            canvas.addEventListener('wheel', onMouseWheel);
-        }
-
-        // Eventos de mouse
-        let isMouseDown = false;
-        let lastMousePosition = { x: 0, y: 0 };
-
-        function onMouseDown(event) {
-            event.preventDefault();
-
-            isMouseDown = true;
-            lastMousePosition.x = event.clientX;
-            lastMousePosition.y = event.clientY;
-
-            // Mostrar indicador de movimiento
-            updateMovementIndicator();
-            showGestureIndicator('✋');
-        }
-
-        function onMouseMove(event) {
-            event.preventDefault();
-
-            if (isMouseDown) {
-                // Calcular el movimiento del mouse
-                const deltaX = event.clientX - lastMousePosition.x;
-                const deltaY = event.clientY - lastMousePosition.y;
-
-                // Mover objeto
-                moveObjectInDesktop(deltaX, deltaY);
-
-                // Actualizar última posición
-                lastMousePosition.x = event.clientX;
-                lastMousePosition.y = event.clientY;
-
-                // Actualizar indicador
-                updateMovementIndicator();
-            }
-        }
-
-        function onMouseUp(event) {
-            event.preventDefault();
-
-            isMouseDown = false;
-
-            // Ocultar indicador de movimiento
-            if (movementIndicator) {
-                movementIndicator.visible = false;
-            }
-        }
-
-        function onMouseWheel(event) {
-            event.preventDefault();
-
-            // Escalar con la rueda del mouse
-            const scaleFactor = event.deltaY < 0 ? 1.1 : 0.9;
-
-            // Aplicar nueva escala al objeto, limitando el tamaño
-            const newScale = cube.scale.x * scaleFactor;
-            const clampedScale = Math.max(0.3, Math.min(2.0, newScale));
-
-            cube.scale.set(clampedScale, clampedScale, clampedScale);
-
-            showGestureIndicator('↔️');
-        }
-
-        // Mover objeto en entorno de escritorio
-        function moveObjectInDesktop(deltaX, deltaY) {
-            // Obtener dirección de la cámara
-            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-            const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-
-            // Proyectar en plano horizontal (Y es hacia arriba en Three.js)
-            forward.y = 0;
-            forward.normalize();
-
-            // Calcular factor de sensibilidad
-            const sensitivity = 0.01;
-
-            // Mover en X (izquierda/derecha)
-            cube.position.add(right.multiplyScalar(deltaX * sensitivity));
-
-            // Mover en Z (adelante/atrás)
-            const forwardMove = forward.clone().multiplyScalar(-deltaY * sensitivity);
-            cube.position.add(forwardMove);
-
-            // Mantener altura constante
-            cube.position.y = 0.5; // Mitad de la altura del cubo (0.3/2 = 0.15) + 0.35 de elevación
-        }
-
-        // Inicializar Three.js
-        function initThreeJS() {
+            // Inicializar Three.js
             scene = new THREE.Scene();
-
-            // Configurar cámara
-            camera = new THREE.PerspectiveCamera(
-                75,
-                window.innerWidth / window.innerHeight,
-                0.1,
-                1000
-            );
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
             camera.position.set(0, 1.6, 3);
 
-            // Configurar renderer
-            renderer = new THREE.WebGLRenderer({
-                antialias: true,
-                alpha: true
-            });
+            renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.shadowMap.enabled = true;
             renderer.xr.enabled = true;
-
             document.getElementById('ar-container').appendChild(renderer.domElement);
 
-            // Crear el cubo rojo
-            createRedCube();
+            // Luces
+            scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(1, 2, 1);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
 
-            // Configurar iluminación
-            setupLighting();
-
-            // Si es escritorio, crear entorno virtual
-            if (!isMobile) {
-                createVirtualEnvironment();
-            }
+            // Crear objeto 3D según el tipo de producto
+            createObject3D();
 
             // Crear retículo para AR
             createReticle();
 
-            // Crear indicador de movimiento
-            createMovementIndicator();
-        }
-
-        // Crear indicador de movimiento
-        function createMovementIndicator() {
-            // Grupo para contener todos los elementos del indicador
-            movementIndicator = new THREE.Group();
-
-            // Crear anillo indicador
-            const ringGeometry = new THREE.RingGeometry(0.2, 0.22, 32);
-            const ringMaterial = new THREE.MeshBasicMaterial({
-                color: 0xffff00,
-                side: THREE.DoubleSide,
-                transparent: true,
-                opacity: 0.7
-            });
-            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-            movementIndicator.add(ring);
-
-            // Crear flechas direccionales (cuatro flechas)
-            const arrowSize = 0.05;
-            const arrowShape = new THREE.Shape();
-
-            // Dibujar flecha
-            arrowShape.moveTo(0, arrowSize * 2);
-            arrowShape.lineTo(arrowSize, 0);
-            arrowShape.lineTo(-arrowSize, 0);
-            arrowShape.lineTo(0, arrowSize * 2);
-
-            const arrowGeometry = new THREE.ShapeGeometry(arrowShape);
-            const arrowMaterial = new THREE.MeshBasicMaterial({
-                color: 0xffff00,
-                side: THREE.DoubleSide,
-                transparent: true,
-                opacity: 0.9
-            });
-
-            // Flecha hacia arriba
-            const arrowUp = new THREE.Mesh(arrowGeometry, arrowMaterial);
-            arrowUp.position.set(0, 0.28, 0);
-            movementIndicator.add(arrowUp);
-
-            // Flecha hacia abajo
-            const arrowDown = new THREE.Mesh(arrowGeometry, arrowMaterial);
-            arrowDown.rotation.z = Math.PI;
-            arrowDown.position.set(0, -0.28, 0);
-            movementIndicator.add(arrowDown);
-
-            // Flecha hacia la derecha
-            const arrowRight = new THREE.Mesh(arrowGeometry, arrowMaterial);
-            arrowRight.rotation.z = -Math.PI / 2;
-            arrowRight.position.set(0.28, 0, 0);
-            movementIndicator.add(arrowRight);
-
-            // Flecha hacia la izquierda
-            const arrowLeft = new THREE.Mesh(arrowGeometry, arrowMaterial);
-            arrowLeft.rotation.z = Math.PI / 2;
-            arrowLeft.position.set(-0.28, 0, 0);
-            movementIndicator.add(arrowLeft);
-
-            // Círculo central
-            const circleGeometry = new THREE.CircleGeometry(0.15, 32);
-            const circleMaterial = new THREE.MeshBasicMaterial({
-                color: 0xffff00,
-                transparent: true,
-                opacity: 0.3
-            });
-            const circle = new THREE.Mesh(circleGeometry, circleMaterial);
-            movementIndicator.add(circle);
-
-            // Inicialmente invisible
-            movementIndicator.visible = false;
-
-            // Añadir al escenario
-            scene.add(movementIndicator);
-
-            // Animación pulsante
-            function animatePulse() {
-                if (movementIndicator.visible) {
-                    const scale = 1 + Math.sin(Date.now() * 0.005) * 0.1;
-                    ring.scale.set(scale, scale, 1);
+            // Si es escritorio, iniciar vista 3D en cuanto el modelo esté listo
+            if (!isMobile) {
+                if (modelReady) {
+                    startDesktopView();
+                } else {
+                    // Si el modelo aún no está listo, esperar a que cargue
+                    const checkInterval = setInterval(() => {
+                        if (modelReady) {
+                            startDesktopView();
+                            clearInterval(checkInterval);
+                        }
+                    }, 100);
                 }
-                requestAnimationFrame(animatePulse);
             }
 
-            animatePulse();
+            // Verificar soporte WebXR
+            if ('xr' in navigator) {
+                navigator.xr.isSessionSupported('immersive-ar')
+                    .then(supported => {
+                        if (isMobile && !supported) startMobile3D();
+                    });
+            } else if (isMobile) {
+                startMobile3D();
+            }
         }
 
-        // Crear cubo rojo
-        function createRedCube() {
-            const geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
-            const material = new THREE.MeshStandardMaterial({
-                color: 0xff0000,
-                metalness: 0.1,
-                roughness: 0.5
-            });
-            cube = new THREE.Mesh(geometry, material);
-            cube.castShadow = true;
-            cube.receiveShadow = true;
-            cube.visible = false; // Oculto inicialmente
-            scene.add(cube);
+        function createObject3D() {
+            if (modelPath && modelPath !== '') {
+                // Mostrar indicador de carga
+                loading.style.display = 'block';
+
+                // Cargar modelo GLB correspondiente
+                const loader = new THREE.GLTFLoader();
+                loader.load(
+                    modelPath,
+                    function(gltf) {
+                        // Éxito al cargar el modelo
+                        object3D = gltf.scene;
+
+                        // Ajustar tamaño y posición según el modelo específico
+                        switch(productName.toLowerCase()) {
+                            case "pepperoni":
+                                object3D.scale.set(0.5, 0.5, 0.5);
+                                break;
+                            case "mi champ":
+                                object3D.scale.set(0.4, 0.4, 0.4);
+                                break;
+                            default:
+                                object3D.scale.set(0.5, 0.5, 0.5);
+                        }
+
+                        // Asegurarse de que reciba sombras
+                        object3D.traverse(function(child) {
+                            if (child.isMesh) {
+                                child.castShadow = true;
+                                child.receiveShadow = true;
+                            }
+                        });
+
+                        object3D.visible = false;
+                        scene.add(object3D);
+
+                        // Marcar como cargado
+                        modelReady = true;
+                        loading.style.display = 'none';
+
+                        // Si estamos en escritorio, iniciar la vista
+                        if (!isMobile && !isARActive) {
+                            startDesktopView();
+                        }
+                    },
+                    // Progreso
+                    function(xhr) {
+                        const percent = Math.floor((xhr.loaded / xhr.total) * 100);
+                        loading.textContent = `Cargando modelo 3D: ${percent}%`;
+                    },
+                    // Error
+                    function(error) {
+                        console.error('Error al cargar el modelo:', error);
+                        loading.style.display = 'none';
+                        // Crear cubo por defecto si hay error
+                        createDefaultCube();
+                    }
+                );
+            } else {
+                // Si no hay modelo específico, crear cubo rojo por defecto
+                createDefaultCube();
+            }
         }
 
-        // Configurar iluminación
-        function setupLighting() {
-            // Luz ambiental
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-            scene.add(ambientLight);
+        function createDefaultCube() {
+            // Crear cubo rojo por defecto
+            object3D = new THREE.Mesh(
+                new THREE.BoxGeometry(0.3, 0.3, 0.3),
+                new THREE.MeshStandardMaterial({
+                    color: 0xff0000,
+                    metalness: 0.1,
+                    roughness: 0.5
+                })
+            );
+            object3D.castShadow = true;
+            object3D.receiveShadow = true;
+            object3D.visible = false;
+            scene.add(object3D);
 
-            // Luz direccional (simula el sol)
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(1, 2, 1);
-            directionalLight.castShadow = true;
-            directionalLight.shadow.camera.near = 0.1;
-            directionalLight.shadow.camera.far = 50;
-            directionalLight.shadow.camera.left = -10;
-            directionalLight.shadow.camera.right = 10;
-            directionalLight.shadow.camera.top = 10;
-            directionalLight.shadow.camera.bottom = -10;
-            scene.add(directionalLight);
+            // Marcar como listo
+            modelReady = true;
         }
 
-        // Crear entorno virtual para escritorio
-        function createVirtualEnvironment() {
-            // Cielo
-            scene.background = new THREE.Color(0x87CEEB); // Azul cielo
-
-            // Suelo
-            const floorGeometry = new THREE.PlaneGeometry(20, 20);
-            const floorMaterial = new THREE.MeshStandardMaterial({
-                color: 0x3a7b3c, // Verde césped
-                roughness: 0.8
-            });
-            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-            floor.rotation.x = -Math.PI / 2;
-            floor.receiveShadow = true;
-            scene.add(floor);
-
-            // Cuadrícula para mejor referencia visual
-            const gridHelper = new THREE.GridHelper(20, 20, 0x000000, 0x000000);
-            gridHelper.material.opacity = 0.2;
-            gridHelper.material.transparent = true;
-            scene.add(gridHelper);
-
-            // Mostrar el cubo en escritorio
-            cube.position.set(0, 0.5, -2);
-            cube.visible = true;
-        }
-
-        // Crear retículo para AR
         function createReticle() {
-            // Grupo para contener todos los elementos del retículo
             reticle = new THREE.Group();
 
             // Anillo principal
-            const ringGeometry = new THREE.RingGeometry(0.05, 0.07, 32);
-            const ringMaterial = new THREE.MeshBasicMaterial({
-                color: 0x0099ff,
-                side: THREE.DoubleSide,
-                transparent: true,
-                opacity: 0.8
-            });
-            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+            const ring = new THREE.Mesh(
+                new THREE.RingGeometry(0.05, 0.07, 24),
+                new THREE.MeshBasicMaterial({
+                    color: 0x0099ff, side: THREE.DoubleSide,
+                    transparent: true, opacity: 0.8
+                })
+            );
             reticle.add(ring);
 
             // Anillo exterior pulsante
-            const outerRingGeometry = new THREE.RingGeometry(0.08, 0.09, 32);
-            const outerRingMaterial = new THREE.MeshBasicMaterial({
-                color: 0xffffff,
-                side: THREE.DoubleSide,
-                transparent: true,
-                opacity: 0.5
-            });
-            const outerRing = new THREE.Mesh(outerRingGeometry, outerRingMaterial);
+            const outerRing = new THREE.Mesh(
+                new THREE.RingGeometry(0.08, 0.09, 24),
+                new THREE.MeshBasicMaterial({
+                    color: 0xffffff, side: THREE.DoubleSide,
+                    transparent: true, opacity: 0.5
+                })
+            );
             reticle.add(outerRing);
 
             // Líneas cruzadas
             const lineMaterial = new THREE.LineBasicMaterial({
-                color: 0xffffff,
-                transparent: true,
-                opacity: 0.8
+                color: 0xffffff, transparent: true, opacity: 0.8
             });
 
-            // Línea horizontal
-            const horizontalPoints = [];
-            horizontalPoints.push(new THREE.Vector3(-0.05, 0, 0));
-            horizontalPoints.push(new THREE.Vector3(0.05, 0, 0));
-            const horizontalGeometry = new THREE.BufferGeometry().setFromPoints(horizontalPoints);
-            const horizontalLine = new THREE.Line(horizontalGeometry, lineMaterial);
-            reticle.add(horizontalLine);
+            const hLine = new THREE.Line(
+                new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(-0.05, 0, 0),
+                    new THREE.Vector3(0.05, 0, 0)
+                ]),
+                lineMaterial
+            );
+            reticle.add(hLine);
 
-            // Línea vertical
-            const verticalPoints = [];
-            verticalPoints.push(new THREE.Vector3(0, -0.05, 0));
-            verticalPoints.push(new THREE.Vector3(0, 0.05, 0));
-            const verticalGeometry = new THREE.BufferGeometry().setFromPoints(verticalPoints);
-            const verticalLine = new THREE.Line(verticalGeometry, lineMaterial);
-            reticle.add(verticalLine);
+            const vLine = new THREE.Line(
+                new THREE.BufferGeometry().setFromPoints([
+                    new THREE.Vector3(0, -0.05, 0),
+                    new THREE.Vector3(0, 0.05, 0)
+                ]),
+                lineMaterial
+            );
+            reticle.add(vLine);
 
-            // Flecha indicadora de normal del plano
-            const arrowGeometry = new THREE.ConeGeometry(0.02, 0.05, 16);
-            const arrowMaterial = new THREE.MeshBasicMaterial({
-                color: 0xff0000,
-                transparent: true,
-                opacity: 0.9
-            });
-            const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
-            arrow.position.set(0, 0, 0.08);
-            arrow.rotation.x = Math.PI / 2;
-            reticle.add(arrow);
-
-            // Plano semitransparente para visualizar orientación
-            const planeGeometry = new THREE.PlaneGeometry(0.15, 0.15);
-            const planeMaterial = new THREE.MeshBasicMaterial({
-                color: 0x00ff00,
-                transparent: true,
-                opacity: 0.2,
-                side: THREE.DoubleSide
-            });
-            const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+            // Plano semitransparente
+            const plane = new THREE.Mesh(
+                new THREE.PlaneGeometry(0.15, 0.15),
+                new THREE.MeshBasicMaterial({
+                    color: 0x00ff00, transparent: true,
+                    opacity: 0.2, side: THREE.DoubleSide
+                })
+            );
             reticle.add(plane);
 
-            // Cuadrícula para mostrar el plano detectado
-            const gridHelper = new THREE.GridHelper(0.3, 5, 0xffffff, 0xffffff);
-            gridHelper.material.opacity = 0.3;
-            gridHelper.material.transparent = true;
-            gridHelper.position.set(0, -0.001, 0);  // Ligeramente por debajo del plano
-            reticle.add(gridHelper);
-
-            // Rotación inicial para que quede paralelo al suelo
-            reticle.rotation.x = -Math.PI / 2;
-
-            // Oculto inicialmente
+            reticle.rotation.x = -Math.PI/2;
             reticle.visible = false;
-
-            // Añadir al escenario
             scene.add(reticle);
 
-            // Animación de pulso para el anillo exterior
-            function animatePulse() {
-                const scale = 1 + Math.sin(Date.now() * 0.005) * 0.2;
-                outerRing.scale.set(scale, scale, 1);
-
-                requestAnimationFrame(animatePulse);
+            // Animación pulsante simplificada
+            function pulse() {
+                if (reticle.visible) {
+                    const scale = 1 + Math.sin(Date.now() * 0.005) * 0.2;
+                    outerRing.scale.set(scale, scale, 1);
+                }
+                requestAnimationFrame(pulse);
             }
-            animatePulse();
+            pulse();
         }
 
-        // Iniciar AR
-        async function startAR() {
-            logDebug('Iniciando AR desde estado', currentAppState);
-
-            // Si es escritorio, ir directamente al entorno 3D virtual
-            if (!isMobile) {
-                logDebug('Dispositivo de escritorio detectado, iniciando entorno virtual 3D');
-                setupDesktopView();
-                document.getElementById('start-ar-button').style.display = 'none';
-                document.getElementById('exit-ar-button').style.display = 'block';
-                currentAppState = AppState.OBJECT_PLACED;
+        function startDesktopView() {
+            // Verificar que el modelo esté listo
+            if (!modelReady) {
+                setTimeout(startDesktopView, 100);
                 return;
             }
 
-            // Cambiar estado de la aplicación (sólo para móvil)
-            document.getElementById('ar-status').textContent = 'Solicitando acceso a la cámara...';
-            document.getElementById('ar-status').style.display = 'block';
+            // Fondo y suelo simplificados
+            scene.background = new THREE.Color(0x87CEEB);
+            const floor = new THREE.Mesh(
+                new THREE.PlaneGeometry(20, 20),
+                new THREE.MeshStandardMaterial({color: 0x3a7b3c, roughness: 0.8})
+            );
+            floor.rotation.x = -Math.PI/2;
+            floor.receiveShadow = true;
+            scene.add(floor);
 
-            if (!arSupported) {
-                // Vista 3D simple en móvil sin AR
+            // Posicionar objeto
+            object3D.position.set(0, 0.5, -2);
+            object3D.visible = true;
+
+            // Configurar interacción
+            const canvas = renderer.domElement;
+            canvas.addEventListener('mousedown', onMouseDown);
+            canvas.addEventListener('mousemove', onMouseMove);
+            canvas.addEventListener('mouseup', onMouseUp);
+            canvas.addEventListener('wheel', onMouseWheel);
+
+            controls.textContent = 'Clic y arrastrar para mover • Rueda para escalar';
+            controls.style.display = 'block';
+            startBtn.style.display = 'none';
+            exitBtn.style.display = 'block';
+
+            // Iniciar animación
+            animate();
+        }
+
+        // Variables para interacción con ratón
+        let isMouseDown = false;
+        let lastMousePos = {x: 0, y: 0};
+
+        function onMouseDown(e) {
+            isMouseDown = true;
+            lastMousePos.x = e.clientX;
+            lastMousePos.y = e.clientY;
+            showGesture('✋');
+        }
+
+        function onMouseMove(e) {
+            if (!isMouseDown) return;
+            const dx = e.clientX - lastMousePos.x;
+            const dy = e.clientY - lastMousePos.y;
+
+            // Mover objeto
+            const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+            right.y = 0;
+            right.normalize();
+            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+            forward.y = 0;
+            forward.normalize();
+
+            object3D.position.add(right.multiplyScalar(dx * 0.01));
+            object3D.position.add(forward.multiplyScalar(-dy * 0.01));
+            object3D.position.y = 0.5;
+
+            lastMousePos.x = e.clientX;
+            lastMousePos.y = e.clientY;
+        }
+
+        function onMouseUp() {
+            isMouseDown = false;
+        }
+
+        function onMouseWheel(e) {
+            const factor = e.deltaY < 0 ? 1.1 : 0.9;
+            const newScale = object3D.scale.x * factor;
+            const scale = Math.max(0.1, Math.min(2.0, newScale));
+            object3D.scale.set(scale, scale, scale);
+            showGesture('↔️');
+        }
+
+        function startMobile3D() {
+            // Esperar a que el modelo esté listo
+            if (!modelReady) {
+                setTimeout(startMobile3D, 100);
+                return;
+            }
+
+            // Vista simplificada para móviles sin AR
+            object3D.position.set(0, 0, -2);
+            object3D.visible = true;
+
+            const canvas = renderer.domElement;
+            let touchStart = null;
+
+            canvas.addEventListener('touchstart', e => {
+                touchStart = e.touches[0];
+            });
+
+            canvas.addEventListener('touchmove', e => {
+                if (!touchStart) return;
+                const touch = e.touches[0];
+                const dx = touch.pageX - touchStart.pageX;
+                const dy = touch.pageY - touchStart.pageY;
+                object3D.rotation.y += dx * 0.01;
+                object3D.rotation.x += dy * 0.01;
+                touchStart = touch;
+            });
+
+            startBtn.style.display = 'none';
+            exitBtn.style.display = 'block';
+            animate();
+        }
+
+        async function startAR() {
+            // Verificar que el modelo esté listo
+            if (!modelReady) {
+                loading.style.display = 'block';
+                loading.textContent = 'Esperando a que el modelo termine de cargar...';
+                setTimeout(startAR, 500);
+                return;
+            }
+
+            if (!isMobile) {
+                startDesktopView();
+                return;
+            }
+
+            arStatus.textContent = 'Solicitando acceso a la cámara...';
+            arStatus.style.display = 'block';
+
+            if (!('xr' in navigator)) {
                 startMobile3D();
                 return;
             }
 
             try {
-                // Ocultar botón de inicio y mostrar botón de salir inmediatamente
-                document.getElementById('start-ar-button').style.display = 'none';
-                document.getElementById('exit-ar-button').style.display = 'block';
+                const supported = await navigator.xr.isSessionSupported('immersive-ar');
+                if (!supported) {
+                    startMobile3D();
+                    return;
+                }
 
-                // Solicitar sesión AR
+                startBtn.style.display = 'none';
+                exitBtn.style.display = 'block';
+
+                // Configurar sesión AR
                 const sessionInit = {
                     requiredFeatures: ['hit-test'],
-                    optionalFeatures: ['dom-overlay'],
+                    optionalFeatures: ['dom-overlay']
                 };
 
-                // Configurar overlay si es posible
-                if (navigator.xr && sessionInit.optionalFeatures.includes('dom-overlay')) {
-                    sessionInit.domOverlay = { root: document.getElementById('ar-container') };
-                    logDebug('DOM Overlay configurado');
+                if (sessionInit.optionalFeatures.includes('dom-overlay')) {
+                    sessionInit.domOverlay = {root: document.getElementById('ar-container')};
                 }
 
-                logDebug('Solicitando sesión AR con configuración:', sessionInit);
                 arSession = await navigator.xr.requestSession('immersive-ar', sessionInit);
 
-                // Configurar para pantalla completa adecuada
-                document.body.style.backgroundColor = 'transparent';
-
-                logDebug('Configurando renderer para XR');
+                // Configurar renderer y eventos
                 renderer.xr.setReferenceSpaceType('local');
                 await renderer.xr.setSession(arSession);
-
-                // Configurar hit test
-                arSession.addEventListener('select', onSelect);
-
-                // Manejar eventos de sesión AR
+                arSession.addEventListener('select', onARSelect);
                 arSession.addEventListener('end', onARSessionEnd);
 
-                // Mostrar UI de AR
-                document.getElementById('ar-status').textContent = 'Mueve el dispositivo para detectar superficies';
-                document.getElementById('ar-status').style.display = 'block';
-
-                // Actualizar estado global
+                arStatus.textContent = 'Mueve el dispositivo para detectar superficies';
                 isARActive = true;
-                currentAppState = AppState.AR_ACTIVE;
-                updateDebugOverlay();
 
-                // Iniciar el loop de renderizado AR
-                renderer.setAnimationLoop(render);
-
-                logDebug("Sesión AR iniciada correctamente");
+                // Iniciar loop de renderizado
+                renderer.setAnimationLoop(renderAR);
 
             } catch (error) {
-                logDebug('Error iniciando AR:', error);
-                document.getElementById('ar-status').textContent = 'No se pudo acceder a la cámara. Verifica los permisos.';
-                document.getElementById('ar-status').style.display = 'block';
-
-                // Restaurar botón de inicio si hay error
-                document.getElementById('start-ar-button').style.display = 'block';
-                document.getElementById('exit-ar-button').style.display = 'none';
-
-                setTimeout(() => {
-                    document.getElementById('ar-status').style.display = 'none';
-                }, 3000);
+                console.error('Error al iniciar AR:', error);
+                arStatus.textContent = 'Error: No se pudo acceder a la cámara';
+                setTimeout(() => {arStatus.style.display = 'none';}, 3000);
+                startBtn.style.display = 'block';
+                exitBtn.style.display = 'none';
             }
         }
 
-        // Manejar el fin de la sesión AR
         function onARSessionEnd() {
-            logDebug("Sesión AR finalizada desde evento 'end'");
-
-            // Si la sesión AR termina (por ejemplo, al presionar atrás en Android)
             isARActive = false;
-            hitTestSourceRequested = false;
-            hitTestSource = null;
+            exitBtn.style.display = 'block';
 
-            // Asegurarse de que el botón de salir siga visible
-            document.getElementById('exit-ar-button').style.display = 'block';
-
-            // Verificar si ya se colocó el objeto
-            if (cube.visible) {
-                logDebug("Objeto ya colocado, pasando a modo manipulación");
-                // Si el objeto ya estaba colocado, permitir manipulación
-                currentAppState = AppState.OBJECT_PLACED;
-                document.getElementById('object-controls').style.display = 'block';
-                setupObjectManipulation();
-
-                // Restaurar animación sin AR
+            if (object3D.visible) {
+                controls.style.display = 'block';
+                setupTouchHandlers();
                 animate();
             } else {
-                logDebug("Sesión AR terminada sin objeto colocado, manteniendo UI de AR");
-                // Mantener en estado AR_ACTIVE aunque la sesión haya terminado
-                // para permitir reintentar con el botón de salir siempre visible
-                document.getElementById('ar-status').textContent = 'Sesión AR interrumpida. Usa el botón Salir para volver.';
-                document.getElementById('ar-status').style.display = 'block';
-            }
-
-            updateDebugOverlay();
-        }
-
-        // Manejar cambios de visibilidad del documento
-        function handleVisibilityChange() {
-            logDebug("Cambio de visibilidad:", document.visibilityState);
-
-            if (document.visibilityState === 'visible') {
-                if (cube.visible && !isARActive) {
-                    logDebug("Documento visible: restaurando manipulación");
-                    // Restaurar manipulación si el objeto ya estaba colocado
-                    currentAppState = AppState.OBJECT_PLACED;
-                    document.getElementById('object-controls').style.display = 'block';
-                    setupObjectManipulation();
-                    animate();
-                    updateDebugOverlay();
-                }
+                arStatus.textContent = 'Sesión AR interrumpida';
+                arStatus.style.display = 'block';
             }
         }
 
-        // Manejar eventos de pérdida de foco
-        function handleBlur() {
-            logDebug("Ventana perdió el foco");
-        }
+        function onARSelect() {
+            if (!reticle.visible || object3D.visible) return;
 
-        // Manejar eventos de recuperación de foco
-        function handleFocus() {
-            logDebug("Ventana recuperó el foco");
+            // Colocar objeto en posición del retículo
+            const position = new THREE.Vector3();
+            const quaternion = new THREE.Quaternion();
+            const scale = new THREE.Vector3();
 
-            if (cube.visible && !isARActive) {
-                logDebug("Recuperación de foco: restaurando manipulación");
-                // Restaurar manipulación si el objeto ya estaba colocado
-                currentAppState = AppState.OBJECT_PLACED;
-                document.getElementById('object-controls').style.display = 'block';
-                setupObjectManipulation();
-                animate();
-                updateDebugOverlay();
-            }
-        }
+            reticle.matrix.decompose(position, quaternion, scale);
+            object3D.position.copy(position);
+            object3D.position.y += 0.15;
 
-        // Actualizar overlay de debug
-        function updateDebugOverlay() {
-            if (!DEBUG) return;
+            // Orientar según superficie
+            const normalVector = new THREE.Vector3(0, 0, 1).applyQuaternion(quaternion);
+            const upVector = new THREE.Vector3(0, 1, 0);
+            const angle = Math.acos(normalVector.dot(upVector)) * (180/Math.PI);
 
-            const overlay = document.getElementById('debug-overlay');
-            overlay.style.display = 'block';
-
-            overlay.innerHTML = `
-                Estado: ${currentAppState}<br>
-                AR activa: ${isARActive}<br>
-                Objeto colocado: ${isObjectPlaced}<br>
-                Moviendo: ${isMovingObject}<br>
-                Escalando: ${isScalingObject}<br>
-                Sesión AR: ${arSession ? 'activa' : 'no activa'}<br>
-                Hit test requerido: ${hitTestSourceRequested}<br>
-                Navegador: ${navigator.userAgent.substr(0, 50)}...
-            `;
-        }
-
-        // Vista 3D para móvil sin AR
-        function startMobile3D() {
-            // Configurar controles táctiles simples
-            let touchStart = null;
-
-            renderer.domElement.addEventListener('touchstart', (e) => {
-                touchStart = e.touches[0];
-            });
-
-            renderer.domElement.addEventListener('touchmove', (e) => {
-                if (!touchStart) return;
-
-                const touchCurrent = e.touches[0];
-                const deltaX = touchCurrent.pageX - touchStart.pageX;
-                const deltaY = touchCurrent.pageY - touchStart.pageY;
-
-                cube.rotation.y += deltaX * 0.01;
-                cube.rotation.x += deltaY * 0.01;
-
-                touchStart = touchCurrent;
-            });
-
-            // Mostrar el cubo
-            cube.position.set(0, 0, -2);
-            cube.visible = true;
-
-            document.getElementById('start-ar-button').style.display = 'none';
-            document.getElementById('exit-ar-button').style.display = 'block';
-
-            animate();
-        }
-
-        // Manejador de selección en AR (cuando el usuario toca la pantalla)
-        function onSelect() {
-            logDebug("Evento select detectado, estado:", currentAppState);
-
-            if (reticle.visible && !cube.visible && currentAppState === AppState.AR_ACTIVE) {
-                logDebug("Colocando objeto en la posición del retículo");
-
-                // Obtener la posición y orientación del retículo
-                const position = new THREE.Vector3();
-                const quaternion = new THREE.Quaternion();
-                const scale = new THREE.Vector3();
-
-                reticle.matrix.decompose(position, quaternion, scale);
-
-                // Colocar el cubo en la posición del retículo con la misma orientación
-                cube.position.copy(position);
-
-                // Elevar ligeramente el cubo sobre la superficie
-                cube.position.y += 0.15;
-
-                // Si la superficie es vertical (ángulo cercano a 90 grados)
-                const normalVector = new THREE.Vector3(0, 0, 1);
-                normalVector.applyQuaternion(quaternion);
-                const upVector = new THREE.Vector3(0, 1, 0);
-                const angle = Math.acos(normalVector.dot(upVector)) * (180 / Math.PI);
-
-                logDebug("Ángulo de la superficie:", angle.toFixed(2) + "°");
-
-                // Si la superficie es más vertical que horizontal
-                if (angle > 45 && angle < 135) {
-                    logDebug("Superficie vertical detectada, ajustando orientación");
-                    // Rotar el cubo para que se "pegue" a la pared
-                    cube.quaternion.copy(quaternion);
-                    // Y luego ajustar la posición para que esté justo frente a la superficie
-                    const offset = new THREE.Vector3(0, 0, 0.15);
-                    offset.applyQuaternion(quaternion);
-                    cube.position.add(offset);
-                }
-
-                cube.visible = true;
-
-                // Animación de aparición
-                cube.scale.set(0.1, 0.1, 0.1);
-                animateScale(cube, { x: 1, y: 1, z: 1 }, 300);
-
-                // Guardar el plano en el que se colocó el objeto
-                // Para cálculos futuros de movimiento
-                objectPlane.setFromNormalAndCoplanarPoint(
-                    normalVector,
-                    cube.position
-                );
-
-                // Marcar que el objeto ha sido colocado
-                isObjectPlaced = true;
-                currentAppState = AppState.OBJECT_PLACED;
-                updateDebugOverlay();
-
-                // Ocultar indicadores de AR
-                document.getElementById('ar-status').textContent = 'Objeto colocado. Ahora puedes manipularlo.';
-                setTimeout(() => {
-                    document.getElementById('ar-status').style.display = 'none';
-                }, 3000);
-                document.getElementById('distance-indicator').style.display = 'none';
-                document.getElementById('surface-quality').style.display = 'none';
-
-                // Mostrar controles de objeto
-                document.getElementById('object-controls').style.display = 'block';
-
-                // Configurar eventos táctiles para manipulación
-                setupObjectManipulation();
-
-                logDebug("Objeto colocado exitosamente, estado actual:", currentAppState);
-            }
-        }
-
-        // Configurar manipulación del objeto
-        function setupObjectManipulation() {
-            // Solo configurar manipulación si el objeto está colocado
-            if (currentAppState !== AppState.OBJECT_PLACED) {
-                logDebug("No se configura manipulación: estado incorrecto", currentAppState);
-                return;
+            if (angle > 45 && angle < 135) {
+                object3D.quaternion.copy(quaternion);
+                const offset = new THREE.Vector3(0, 0, 0.15).applyQuaternion(quaternion);
+                object3D.position.add(offset);
             }
 
-            logDebug("Configurando manipulación del objeto");
+            // Mostrar objeto con animación
+            object3D.visible = true;
+            // Guardamos la escala original
+            const originalScale = {
+                x: object3D.scale.x,
+                y: object3D.scale.y,
+                z: object3D.scale.z
+            };
+            // Escalamos a cero temporalmente
+            object3D.scale.set(
+                originalScale.x * 0.1,
+                originalScale.y * 0.1,
+                originalScale.z * 0.1
+            );
+            // Animamos para volver a la escala original
+            animateScale(object3D, originalScale, 300);
 
+            // Actualizar estado
+            isObjectPlaced = true;
+            arStatus.style.display = 'none';
+            distance.style.display = 'none';
+            surface.style.display = 'none';
+            controls.style.display = 'block';
+
+            // Configurar manipulación
+            setupTouchHandlers();
+        }
+
+        // Variables para manipulación táctil
+        let isMoving = false, isScaling = false;
+        let lastTouch = {x:0, y:0};
+        let initialDistance = 0, initialScale = 0;
+
+        function setupTouchHandlers() {
             const canvas = renderer.domElement;
 
-            // Eliminar eventos existentes para evitar duplicados
             canvas.removeEventListener('touchstart', onTouchStart);
             canvas.removeEventListener('touchmove', onTouchMove);
             canvas.removeEventListener('touchend', onTouchEnd);
 
-            // Evento de inicio de toque
-            canvas.addEventListener('touchstart', onTouchStart, { passive: false });
-            canvas.addEventListener('touchmove', onTouchMove, { passive: false });
-            canvas.addEventListener('touchend', onTouchEnd, { passive: false });
+            canvas.addEventListener('touchstart', onTouchStart);
+            canvas.addEventListener('touchmove', onTouchMove);
+            canvas.addEventListener('touchend', onTouchEnd);
 
-            logDebug("Manipulación del objeto configurada");
-
-            // Mostrar instrucciones de manipulación
-            showGestureIndicator('👆');
-            setTimeout(() => {
-                showGestureIndicator('👋');
-            }, 1500);
-            setTimeout(() => {
-                showGestureIndicator('👌');
-            }, 3000);
+            // Mostrar gestos
+            showGesture('👆');
+            setTimeout(() => showGesture('👋'), 1500);
+            setTimeout(() => showGesture('👌'), 3000);
         }
 
-        // Mostrar indicador de gesto
-        function showGestureIndicator(emoji) {
-            const indicator = document.getElementById('gesture-indicator');
-            indicator.textContent = emoji;
-            indicator.style.opacity = '0.8';
+        function onTouchStart(e) {
+            e.preventDefault();
 
-            setTimeout(() => {
-                indicator.style.opacity = '0';
-            }, 1000);
+            if (e.touches.length === 2) {
+                isScaling = true;
+                isMoving = false;
+
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                initialDistance = Math.hypot(
+                    touch2.clientX - touch1.clientX,
+                    touch2.clientY - touch1.clientY
+                );
+                initialScale = object3D.scale.x;
+
+                showGesture('↔️');
+
+            } else if (e.touches.length === 1) {
+                isMoving = true;
+                isScaling = false;
+
+                const touch = e.touches[0];
+                lastTouch.x = touch.clientX;
+                lastTouch.y = touch.clientY;
+
+                showGesture('✋');
+            }
         }
 
-        // Evento de inicio de toque
-        function onTouchStart(event) {
-            event.preventDefault();
+        function onTouchMove(e) {
+            e.preventDefault();
 
-            // Solo procesar toques si el objeto está colocado
-            if (currentAppState !== AppState.OBJECT_PLACED || !cube.visible) return;
+            if (isScaling && e.touches.length === 2) {
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
 
-            // Verificar si es multitoque (escalar) o toque simple (mover)
-            if (event.touches.length === 2) {
-                // Dos dedos - escalar (zoom)
-                isScalingObject = true;
-                isMovingObject = false;
-
-                // Calcular distancia inicial entre los dedos
-                const touch1 = event.touches[0];
-                const touch2 = event.touches[1];
-                initialTouchDistance = Math.hypot(
+                const currentDistance = Math.hypot(
                     touch2.clientX - touch1.clientX,
                     touch2.clientY - touch1.clientY
                 );
 
-                // Calcular tamaño inicial del objeto
-                initialObjectDistance = cube.scale.x; // Asumiendo escala uniforme
+                const factor = currentDistance / initialDistance;
+                const newScale = initialScale * factor;
+                const scale = Math.max(0.2, Math.min(2.0, newScale));
 
-                // Mostrar indicador de escala
-                showGestureIndicator('↔️');
+                object3D.scale.set(scale, scale, scale);
 
-            } else if (event.touches.length === 1) {
-                // Un dedo - mover
-                isMovingObject = true;
-                isScalingObject = false;
+            } else if (isMoving && e.touches.length === 1) {
+                const touch = e.touches[0];
+                const dx = touch.clientX - lastTouch.x;
+                const dy = touch.clientY - lastTouch.y;
 
-                // Guardar posición inicial del toque
-                const touch = event.touches[0];
-                lastTouchPosition.x = touch.clientX;
-                lastTouchPosition.y = touch.clientY;
+                // Mover en el espacio 3D
+                const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+                const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
 
-                // Posicionar y mostrar el indicador de movimiento
-                updateMovementIndicator();
+                const distance = camera.position.distanceTo(object3D.position);
+                const sensitivity = distance * 0.003;
 
-                // Mostrar indicador de movimiento
-                showGestureIndicator('✋');
+                object3D.position.add(right.multiplyScalar(dx * sensitivity));
+                object3D.position.add(up.multiplyScalar(-dy * sensitivity));
+
+                lastTouch.x = touch.clientX;
+                lastTouch.y = touch.clientY;
             }
         }
 
-        // Actualizar indicador de movimiento
-        function updateMovementIndicator() {
-            if (!movementIndicator || !cube.visible) return;
-
-            // Posicionar el indicador justo encima del cubo
-            movementIndicator.position.copy(cube.position);
-            movementIndicator.position.y += 0.3; // Elevarlo un poco sobre el cubo
-
-            // Hacer el indicador visible y mirando a la cámara
-            movementIndicator.visible = isMovingObject;
-            movementIndicator.quaternion.copy(camera.quaternion);
+        function onTouchEnd() {
+            isMoving = isScaling = false;
         }
 
-        // Evento de movimiento de toque
-        function onTouchMove(event) {
-            event.preventDefault();
-
-            if (!isObjectPlaced || !cube.visible) return;
-
-            // Si estamos escalando (dos dedos)
-            if (isScalingObject && event.touches.length === 2) {
-                const touch1 = event.touches[0];
-                const touch2 = event.touches[1];
-
-                // Calcular nueva distancia entre dedos
-                const currentTouchDistance = Math.hypot(
-                    touch2.clientX - touch1.clientX,
-                    touch2.clientY - touch1.clientY
-                );
-
-                // Calcular factor de escala
-                const scaleFactor = currentTouchDistance / initialTouchDistance;
-
-                // Aplicar nueva escala al objeto, limitando el tamaño
-                const newScale = initialObjectDistance * scaleFactor;
-                const clampedScale = Math.max(0.3, Math.min(2.0, newScale));
-                cube.scale.set(clampedScale, clampedScale, clampedScale);
-
-            // Si estamos moviendo (un dedo)
-            } else if (isMovingObject && event.touches.length === 1) {
-                const touch = event.touches[0];
-
-                // Calcular el movimiento del dedo
-                const deltaX = touch.clientX - lastTouchPosition.x;
-                const deltaY = touch.clientY - lastTouchPosition.y;
-
-                // Convertir movimiento de pantalla a movimiento 3D
-                moveObjectOnPlane(deltaX, deltaY);
-
-                // Actualizar última posición
-                lastTouchPosition.x = touch.clientX;
-                lastTouchPosition.y = touch.clientY;
-
-                // Actualizar posición del indicador de movimiento
-                updateMovementIndicator();
-            }
+        function showGesture(emoji) {
+            gesture.textContent = emoji;
+            gesture.style.opacity = '0.8';
+            setTimeout(() => {gesture.style.opacity = '0';}, 1000);
         }
 
-        // Mover objeto en el plano detectado
-        function moveObjectOnPlane(deltaX, deltaY) {
-            // Obtener el tamaño de la pantalla
-            const width = renderer.domElement.clientWidth;
-            const height = renderer.domElement.clientHeight;
-
-            // Calcular dirección de movimiento relativa a la cámara
-            const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-            const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
-
-            // Ajustar la dirección 'up' para que sea paralela al plano
-            up.projectOnPlane(objectPlane.normal).normalize();
-
-            // Ajustar la dirección 'right' para que sea paralela al plano
-            right.projectOnPlane(objectPlane.normal).normalize();
-
-            // Calcular factor de sensibilidad basado en la distancia a la cámara
-            const distance = camera.position.distanceTo(cube.position);
-            const sensitivity = distance * 0.003;
-
-            // Aplicar movimiento
-            cube.position.add(right.multiplyScalar(deltaX * sensitivity));
-            cube.position.add(up.multiplyScalar(-deltaY * sensitivity));
-
-            // Asegurarse de que permanezca en el plano original
-            const distanceToPlane = objectPlane.distanceToPoint(cube.position);
-            if (Math.abs(distanceToPlane) > 0.01) {
-                const correction = objectPlane.normal.clone().multiplyScalar(-distanceToPlane);
-                cube.position.add(correction);
-            }
-        }
-
-        // Evento de fin de toque
-        function onTouchEnd(event) {
-            event.preventDefault();
-
-            // Restablecer estados
-            isMovingObject = false;
-            isScalingObject = false;
-
-            // Ocultar indicador de movimiento
-            if (movementIndicator) {
-                movementIndicator.visible = false;
-            }
-        }
-
-        // Animación de escala
-        function animateScale(object, targetScale, duration) {
-            const startScale = {
+        function animateScale(object, target, duration) {
+            const start = {
                 x: object.scale.x,
                 y: object.scale.y,
                 z: object.scale.z
@@ -1177,312 +745,159 @@
                 const elapsed = Date.now() - startTime;
                 const progress = Math.min(elapsed / duration, 1);
 
-                object.scale.x = startScale.x + (targetScale.x - startScale.x) * progress;
-                object.scale.y = startScale.y + (targetScale.y - startScale.y) * progress;
-                object.scale.z = startScale.z + (targetScale.z - startScale.z) * progress;
+                object.scale.x = start.x + (target.x - start.x) * progress;
+                object.scale.y = start.y + (target.y - start.y) * progress;
+                object.scale.z = start.z + (target.z - start.z) * progress;
 
-                if (progress < 1) {
-                    requestAnimationFrame(update);
-                }
+                if (progress < 1) requestAnimationFrame(update);
             }
 
             update();
         }
 
-        // Loop de renderizado para AR
-        function render(timestamp, frame) {
-            if (frame && isARActive) {
-                const referenceSpace = renderer.xr.getReferenceSpace();
-                const session = renderer.xr.getSession();
+        function renderAR(timestamp, frame) {
+            if (!frame || !isARActive) return;
 
-                // Fase de escaneo y colocación
-                if (currentAppState === AppState.AR_ACTIVE) {
-                    // Si el objeto aún no ha sido colocado, seguir con el hit test
-                    if (hitTestSourceRequested === false) {
-                        session.requestReferenceSpace('viewer').then((referenceSpace) => {
-                            session.requestHitTestSource({ space: referenceSpace }).then((source) => {
-                                hitTestSource = source;
-                                logDebug('Hit test source creado');
-                            }).catch(error => {
-                                logDebug('Error creando hit test source:', error);
-                            });
-                        }).catch(error => {
-                            logDebug('Error obteniendo reference space:', error);
+            const session = renderer.xr.getSession();
+            const referenceSpace = renderer.xr.getReferenceSpace();
+
+            // Solicitar hit test source si es necesario
+            if (!hitTestSource) {
+                session.requestReferenceSpace('viewer').then(viewerSpace => {
+                    session.requestHitTestSource({space: viewerSpace})
+                        .then(source => {
+                            hitTestSource = source;
                         });
+                });
 
-                        session.addEventListener('end', () => {
-                            hitTestSourceRequested = false;
-                            hitTestSource = null;
-                            logDebug('Hit test source limpiado al terminar sesión');
-                        });
+                session.addEventListener('end', () => {
+                    hitTestSource = null;
+                });
+            }
 
-                        hitTestSourceRequested = true;
-                        logDebug('Hit test source solicitado');
-                    }
+            // Procesar hit test
+            if (hitTestSource) {
+                const hitTestResults = frame.getHitTestResults(hitTestSource);
 
-                    if (hitTestSource) {
-                        try {
-                            const hitTestResults = frame.getHitTestResults(hitTestSource);
+                if (hitTestResults.length > 0 && !object3D.visible) {
+                    const hit = hitTestResults[0];
+                    const pose = hit.getPose(referenceSpace);
 
-                            if (hitTestResults.length > 0 && !cube.visible) {
-                                const hit = hitTestResults[0];
-                                const pose = hit.getPose(referenceSpace);
+                    if (pose) {
+                        // Actualizar indicadores
+                        const position = pose.transform.position;
+                        const distanceVal = Math.sqrt(
+                            position.x * position.x +
+                            position.y * position.y +
+                            position.z * position.z
+                        );
 
-                                if (!pose) {
-                                    logDebug('No se pudo obtener pose del hit test');
-                                    return;
-                                }
+                        distance.style.display = 'block';
+                        distance.textContent = `Distancia: ${(distanceVal * 100).toFixed(0)} cm`;
 
-                                // Obtener la posición y orientación del hit test
-                                const position = pose.transform.position;
-                                const orientation = pose.transform.orientation;
+                        surface.style.display = 'block';
 
-                                // Calcular distancia a la superficie
-                                const distance = Math.sqrt(
-                                    position.x * position.x +
-                                    position.y * position.y +
-                                    position.z * position.z
-                                );
+                        // Evaluar calidad de superficie
+                        const normalVector = new THREE.Vector3(0, 0, 1);
+                        normalVector.applyQuaternion(new THREE.Quaternion(
+                            pose.transform.orientation.x,
+                            pose.transform.orientation.y,
+                            pose.transform.orientation.z,
+                            pose.transform.orientation.w
+                        ));
 
-                                // Mostrar indicador de distancia
-                                const distanceEl = document.getElementById('distance-indicator');
-                                distanceEl.style.display = 'block';
-                                const distanceCm = (distance * 100).toFixed(0);
-                                distanceEl.textContent = `Distancia: ${distanceCm} cm`;
+                        const upVector = new THREE.Vector3(0, 1, 0);
+                        const angle = Math.acos(normalVector.dot(upVector)) * (180/Math.PI);
 
-                                // Evaluar calidad de la superficie
-                                const surfaceQualityEl = document.getElementById('surface-quality');
-                                surfaceQualityEl.style.display = 'block';
+                        let quality = 'buena';
+                        let color = '#4CAF50';
 
-                                // Calidad basada en ángulo y distancia
-                                let quality = 'buena';
-                                let color = '#4CAF50'; // Verde por defecto
-
-                                // Verificar si la superficie es más o menos horizontal
-                                // Calculando el ángulo entre el vector normal de la superficie y el vector "hacia arriba"
-                                const normalVector = new THREE.Vector3(0, 0, 1);
-                                normalVector.applyQuaternion(new THREE.Quaternion(
-                                    orientation.x,
-                                    orientation.y,
-                                    orientation.z,
-                                    orientation.w
-                                ));
-
-                                const upVector = new THREE.Vector3(0, 1, 0);
-                                const angle = Math.acos(normalVector.dot(upVector)) * (180 / Math.PI);
-
-                                // Ajustar calidad según el ángulo (para superficies horizontales y verticales)
-                                if ((angle < 20 || angle > 160) || (angle > 70 && angle < 110)) {
-                                    // Superficie horizontal o vertical (buena)
-                                    if (distance > 2) {
-                                        quality = 'demasiado lejos';
-                                        color = '#FFC107'; // Amarillo
-                                    }
-                                } else {
-                                    // Superficie inclinada (menos ideal)
-                                    quality = 'inclinada';
-                                    color = '#FF9800'; // Naranja
-
-                                    if (distance > 1.5) {
-                                        quality = 'inclinada y lejos';
-                                        color = '#F44336'; // Rojo
-                                    }
-                                }
-
-                                surfaceQualityEl.textContent = `Superficie: ${quality}`;
-                                surfaceQualityEl.style.backgroundColor = color;
-                                surfaceQualityEl.style.color = 'white';
-
-                                // Actualizar el retículo
-                                reticle.visible = true;
-
-                                // Aplicar la matriz de transformación completa al retículo
-                                reticle.matrix.fromArray(pose.transform.matrix);
-                                reticle.matrix.decompose(reticle.position, reticle.quaternion, reticle.scale);
-
-                                // Ajustar el tamaño basado en la distancia
-                                const scaleFactor = Math.max(0.5, Math.min(1.5, distance));
-                                reticle.scale.set(scaleFactor, scaleFactor, scaleFactor);
-
-                                // Cambiar color según calidad
-                                reticle.children.forEach(child => {
-                                    if (child.material && child.material.color) {
-                                        // El plano semitransparente (índice 4) cambia de color según calidad
-                                        if (child === reticle.children[4]) {
-                                            child.material.color.set(color);
-                                        }
-                                    }
-                                });
-                            } else if (hitTestResults.length === 0) {
-                                if (reticle.visible) {
-                                    logDebug('No se detectaron superficies, ocultando retículo');
-                                }
-                                reticle.visible = false;
-                                document.getElementById('distance-indicator').style.display = 'none';
-                                document.getElementById('surface-quality').style.display = 'none';
+                        if ((angle < 20 || angle > 160) || (angle > 70 && angle < 110)) {
+                            if (distanceVal > 2) {
+                                quality = 'lejos';
+                                color = '#FFC107';
                             }
-                        } catch (error) {
-                            logDebug('Error en el hit test:', error);
+                        } else {
+                            quality = 'inclinada';
+                            color = '#FF9800';
+
+                            if (distanceVal > 1.5) {
+                                quality = 'inadecuada';
+                                color = '#F44336';
+                            }
                         }
+
+                        surface.textContent = `Superficie: ${quality}`;
+                        surface.style.backgroundColor = color;
+
+                        // Actualizar retículo
+                        reticle.visible = true;
+                        reticle.matrix.fromArray(pose.transform.matrix);
+                        reticle.matrix.decompose(
+                            reticle.position,
+                            reticle.quaternion,
+                            reticle.scale
+                        );
                     }
+                } else if (hitTestResults.length === 0 && reticle.visible) {
+                    reticle.visible = false;
+                    distance.style.display = 'none';
+                    surface.style.display = 'none';
                 }
             }
 
-            // Rotación del cubo solo si no está siendo manipulado
-            if (cube.visible && !isMovingObject && !isScalingObject) {
-                cube.rotation.y += 0.01;
+            // Rotación automática del objeto
+            if (object3D.visible && !isMoving && !isScaling) {
+                object3D.rotation.y += 0.01;
             }
 
             renderer.render(scene, camera);
         }
 
-        // Loop de animación para entorno 3D (no AR)
         function animate() {
             requestAnimationFrame(animate);
 
-            // Rotación del cubo
-            if (cube.visible) {
-                cube.rotation.y += 0.01;
-                cube.rotation.x += 0.005;
+            if (object3D && object3D.visible && !isMoving && !isScaling) {
+                object3D.rotation.y += 0.01;
             }
 
             renderer.render(scene, camera);
         }
 
-        // Salir de AR
+        function onResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
         function exitAR() {
-            console.log("Función exitAR llamada, estado actual:", currentAppState);
-
-            // Limpiar recursos según el estado actual
-            if (currentAppState === AppState.INITIAL) {
-                // No hay nada que limpiar en el estado inicial
-                window.location.href = '@Url.Action("Detalle", "Productos", new { id = ViewBag.ProductoId })';
-                return;
-            }
-
-            // Eliminar todos los event listeners
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            window.removeEventListener('blur', handleBlur);
-            window.removeEventListener('focus', handleFocus);
-
-            // Eliminar eventos de manipulación
+            // Limpiar eventos
             const canvas = renderer.domElement;
             canvas.removeEventListener('touchstart', onTouchStart);
             canvas.removeEventListener('touchmove', onTouchMove);
             canvas.removeEventListener('touchend', onTouchEnd);
+            canvas.removeEventListener('mousedown', onMouseDown);
+            canvas.removeEventListener('mousemove', onMouseMove);
+            canvas.removeEventListener('mouseup', onMouseUp);
+            canvas.removeEventListener('wheel', onMouseWheel);
 
-            // Si hay una sesión AR activa, finalizarla
+            // Finalizar sesión AR si existe
             if (arSession) {
-                document.getElementById('ar-status').textContent = 'Cerrando sesión AR...';
-                document.getElementById('ar-status').style.display = 'block';
+                arStatus.textContent = 'Cerrando sesión AR...';
+                arStatus.style.display = 'block';
 
                 try {
-                    // Finalizar la sesión AR
-                    arSession.end().then(() => {
-                        console.log('Sesión AR finalizada correctamente desde exitAR');
-                    }).catch(error => {
-                        console.error('Error al finalizar la sesión AR:', error);
-                    }).finally(() => {
-                        cleanupAndExit();
-                    });
-                } catch (error) {
-                    console.error('Error intentando finalizar la sesión AR:', error);
-                    cleanupAndExit();
+                    arSession.end();
+                } catch (e) {
+                    console.error('Error al finalizar sesión AR:', e);
                 }
-            } else {
-                cleanupAndExit();
             }
-        }
 
-        // Función para limpiar y salir
-        function cleanupAndExit() {
-            // Detener el loop de animación
+            // Detener animación y limpiar
             renderer.setAnimationLoop(null);
 
-            // Liberar recursos
-            arSession = null;
-            isARActive = false;
-            isObjectPlaced = false;
-            currentAppState = AppState.INITIAL;
-
-            // Ocultar controles
-            document.getElementById('object-controls').style.display = 'none';
-            document.getElementById('exit-ar-button').style.display = 'none';
-
-            // Volver a la página de detalle del producto
+            // Volver a la página de detalle
             window.location.href = '@Url.Action("Detalle", "Productos", new { id = ViewBag.ProductoId })';
-        }
-
-        // Manejar redimensionamiento de ventana
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // Event listener para el botón de inicio
-        document.addEventListener('DOMContentLoaded', function() {
-            // Inicializar la aplicación cuando el DOM esté listo
-            init();
-        });
-
-        // Inicialización general
-        function init() {
-            logDebug('Inicializando aplicación...');
-
-            // Detectar dispositivo
-            detectDevice();
-
-            // Inicializar Three.js
-            initThreeJS();
-
-            // Configurar listeners para la interfaz
-            setupEventListeners();
-
-            // Iniciar en modo pasivo
-            document.getElementById('ar-status').style.display = 'none';
-
-            logDebug('Aplicación inicializada en estado:', currentAppState);
-        }
-
-        // Configurar escuchadores de eventos
-        function setupEventListeners() {
-            // Botón de inicio AR
-            document.getElementById('start-ar-button').addEventListener('click', startAR);
-
-            // Botón de salir
-            document.getElementById('exit-ar-button').addEventListener('click', exitAR);
-
-            // Eventos para manejar cambios de estado en Android
-            document.addEventListener('visibilitychange', handleVisibilityChange);
-            window.addEventListener('blur', handleBlur);
-            window.addEventListener('focus', handleFocus);
-
-            // Gestos para el retorno de Android
-            window.addEventListener('popstate', handlePopState);
-
-            logDebug('Event listeners configurados');
-        }
-
-        // Manejar evento de navegación del historial (botón atrás)
-        function handlePopState(event) {
-            logDebug('Evento popstate detectado (botón atrás)', event);
-
-            // Si estamos en modo AR, manejarlo especialmente
-            if (currentAppState === AppState.AR_ACTIVE) {
-                event.preventDefault();
-
-                // Si la sesión AR está activa, esto debería activar el onARSessionEnd
-                if (arSession) {
-                    try {
-                        arSession.end();
-                    } catch (error) {
-                        logDebug('Error finalizando sesión AR desde popstate:', error);
-                    }
-                }
-
-                return false;
-            }
         }
     </script>
 </body>
