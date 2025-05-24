@@ -150,7 +150,6 @@
         <div id="controls">Arrastra para mover • Pellizca para escalar</div>
         <div id="gesture"></div>
     </div>
-
     <script>
         // Variables principales
         let scene, camera, renderer;
@@ -160,6 +159,8 @@
         let arSession = null, hitTestSource = null;
         let isARActive = false, isObjectPlaced = false;
         let isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        // Variable para controlar si la rotación automática está activa
+        let autoRotate = false; // Cambiado a false para evitar rotación automática
 
         // Obtener la ruta del modelo del ViewBag
         const modelPath = '@ViewBag.ModeloPath';
@@ -235,7 +236,6 @@
                 startMobile3D();
             }
         }
-
         function createObject3D() {
             if (modelPath && modelPath !== '') {
                 // Mostrar indicador de carga
@@ -389,120 +389,307 @@
             }
             pulse();
         }
+function startDesktopView() {
+    // Verificar que el modelo esté listo
+    if (!modelReady) {
+        setTimeout(startDesktopView, 100);
+        return;
+    }
 
-        function startDesktopView() {
-            // Verificar que el modelo esté listo
-            if (!modelReady) {
-                setTimeout(startDesktopView, 100);
-                return;
-            }
+    // Fondo y suelo simplificados
+    scene.background = new THREE.Color(0x87CEEB);
+    const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(20, 20),
+        new THREE.MeshStandardMaterial({color: 0x3a7b3c, roughness: 0.8})
+    );
+    floor.rotation.x = -Math.PI/2;
+    floor.receiveShadow = true;
+    scene.add(floor);
 
-            // Fondo y suelo simplificados
-            scene.background = new THREE.Color(0x87CEEB);
-            const floor = new THREE.Mesh(
-                new THREE.PlaneGeometry(20, 20),
-                new THREE.MeshStandardMaterial({color: 0x3a7b3c, roughness: 0.8})
+    // Posicionar objeto más cercano y a una altura adecuada
+    object3D.position.set(0, 0.8, -1);
+    object3D.visible = true;
+
+    // Configurar interacción con más eventos
+    const canvas = renderer.domElement;
+    canvas.addEventListener('mousedown', onMouseDown);
+    canvas.addEventListener('mousemove', onMouseMove);
+    canvas.addEventListener('mouseup', onMouseUp);
+    canvas.addEventListener('wheel', onMouseWheel);
+    canvas.addEventListener('contextmenu', onContextMenu); // Prevenir menú contextual
+    
+    // Actualizar instrucciones
+    controls.textContent = 'Clic izquierdo: rotar • Clic derecho: mover • Rueda: escalar';
+    controls.style.display = 'block';
+    startBtn.style.display = 'none';
+    exitBtn.style.display = 'block';
+
+    // Iniciar animación
+    animate();
+}
+// Función para crear la mesa
+function createTable() {
+    // Crear la superficie de la mesa
+    const tableTopGeometry = new THREE.BoxGeometry(3, 0.1, 2);
+    const tableTopMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x8B4513,  // Marrón oscuro para la madera
+        roughness: 0.5, 
+        metalness: 0.1
+    });
+    const tableTop = new THREE.Mesh(tableTopGeometry, tableTopMaterial);
+    tableTop.position.set(0, 0.75, -1); // Posición ajustada para la mesa
+    tableTop.receiveShadow = true;
+    tableTop.castShadow = true;
+    scene.add(tableTop);
+
+    // Crear las patas de la mesa
+    const legGeometry = new THREE.BoxGeometry(0.1, 0.75, 0.1);
+    const legMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x6B3E14,  // Marrón más oscuro para las patas
+        roughness: 0.7, 
+        metalness: 0.1 
+    });
+
+    // Posiciones de las patas (en las cuatro esquinas)
+    const legPositions = [
+        { x: -1.4, z: -1.9 },
+        { x: 1.4, z: -1.9 },
+        { x: -1.4, z: -0.1 },
+        { x: 1.4, z: -0.1 }
+    ];
+
+    // Crear las cuatro patas
+    legPositions.forEach(pos => {
+        const leg = new THREE.Mesh(legGeometry, legMaterial);
+        leg.position.set(pos.x, 0.375, pos.z); // Mitad de la altura de la pata
+        leg.castShadow = true;
+        leg.receiveShadow = true;
+        scene.add(leg);
+    });
+
+    // Agregar un suelo bajo la mesa
+    const floorGeometry = new THREE.PlaneGeometry(20, 20);
+    const floorMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x808080,  // Gris para el suelo
+        roughness: 0.9
+    });
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = 0;
+    floor.receiveShadow = true;
+    scene.add(floor);
+    
+    // Mejorar la iluminación para la mesa
+    // Luz direccional adicional desde arriba para mostrar mejor la mesa
+    const topLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    topLight.position.set(0, 5, 0);
+    topLight.castShadow = true;
+    topLight.shadow.mapSize.width = 1024;
+    topLight.shadow.mapSize.height = 1024;
+    scene.add(topLight);
+    
+    // Luz ambiental más suave
+    scene.remove(scene.children.find(child => child instanceof THREE.AmbientLight));
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+}
+
+// Variables para interacción con ratón
+let isMouseDown = false;
+let isDragging = false;
+let isRotating = false;
+let lastMousePos = {x: 0, y: 0};
+
+function onMouseDown(e) {
+    isMouseDown = true;
+    lastMousePos.x = e.clientX;
+    lastMousePos.y = e.clientY;
+    
+    // Botón izquierdo: rotación
+    if (e.button === 0) {
+        isRotating = true;
+        isDragging = false;
+        showGesture('🔄');
+    } 
+    // Botón derecho: movimiento
+    else if (e.button === 2) {
+        isDragging = true;
+        isRotating = false;
+        showGesture('✋');
+        
+        // Prevenir menú contextual al hacer clic derecho
+        e.preventDefault();
+    }
+}
+
+function onMouseMove(e) {
+    if (!isMouseDown) return;
+    
+    const dx = e.clientX - lastMousePos.x;
+    const dy = e.clientY - lastMousePos.y;
+    
+    // Si estamos rotando
+    if (isRotating) {
+        // Rotar alrededor del eje Y (izquierda/derecha)
+        object3D.rotation.y += dx * 0.01;
+        
+        // Rotar alrededor del eje X (arriba/abajo)
+        object3D.rotation.x += dy * 0.01;
+    } 
+    // Si estamos moviendo
+    else if (isDragging) {
+        // Mover objeto
+        const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+        right.y = 0;
+        right.normalize();
+        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+        forward.y = 0;
+        forward.normalize();
+
+        object3D.position.add(right.multiplyScalar(dx * 0.01));
+        object3D.position.add(forward.multiplyScalar(-dy * 0.01));
+        object3D.position.y = 0.5;
+    }
+    
+    lastMousePos.x = e.clientX;
+    lastMousePos.y = e.clientY;
+}
+
+function onMouseUp() {
+    isMouseDown = false;
+    isRotating = false;
+    isDragging = false;
+}
+//PILAS
+function onMouseWheel(e) {
+    // Aumentar sensibilidad y rango del zoom
+    const factor = e.deltaY < 0 ? 1.2 : 0.8; // Más sensible (antes 1.1/0.9)
+    const newScale = object3D.scale.x * factor;
+    // Aumentar el rango máximo de escala (antes 2.0)
+    const scale = Math.max(0.1, Math.min(5.0, newScale)); 
+    object3D.scale.set(scale, scale, scale);
+    showGesture('↔️');
+}
+
+// Añadir prevención del menú contextual
+function onContextMenu(e) {
+    e.preventDefault();
+    return false;
+}
+function startMobile3D() {
+    // Esperar a que el modelo esté listo
+    if (!modelReady) {
+        setTimeout(startMobile3D, 100);
+        return;
+    }
+
+    // Crear mesa en lugar del fondo negro
+    scene.background = new THREE.Color(0x87CEEB);
+    createTable();
+
+    // Vista simplificada para móviles sin AR
+    // Ajustar posición para que esté sobre la mesa
+    object3D.position.set(0, 0.8, -1);
+    object3D.visible = true;
+
+    const canvas = renderer.domElement;
+    let touchStart = null;
+    let isTwoFingerGesture = false;
+    let initialRotation = 0;
+    let initialTouchDistance = 0;
+    let initialScale = 1;
+
+    canvas.addEventListener('touchstart', e => {
+        e.preventDefault();
+        
+        // Detección de gestos con dos dedos para escalar/rotar
+        if (e.touches.length === 2) {
+            isTwoFingerGesture = true;
+            
+            // Calcular distancia inicial entre dedos para escalar
+            const touch1 = e.touches[0];
+            const touch2 = e.touches[1];
+            initialTouchDistance = Math.hypot(
+                touch2.clientX - touch1.clientX,
+                touch2.clientY - touch1.clientY
             );
-            floor.rotation.x = -Math.PI/2;
-            floor.receiveShadow = true;
-            scene.add(floor);
-
-            // Posicionar objeto
-            object3D.position.set(0, 0.5, -2);
-            object3D.visible = true;
-
-            // Configurar interacción
-            const canvas = renderer.domElement;
-            canvas.addEventListener('mousedown', onMouseDown);
-            canvas.addEventListener('mousemove', onMouseMove);
-            canvas.addEventListener('mouseup', onMouseUp);
-            canvas.addEventListener('wheel', onMouseWheel);
-
-            controls.textContent = 'Clic y arrastrar para mover • Rueda para escalar';
-            controls.style.display = 'block';
-            startBtn.style.display = 'none';
-            exitBtn.style.display = 'block';
-
-            // Iniciar animación
-            animate();
-        }
-
-        // Variables para interacción con ratón
-        let isMouseDown = false;
-        let lastMousePos = {x: 0, y: 0};
-
-        function onMouseDown(e) {
-            isMouseDown = true;
-            lastMousePos.x = e.clientX;
-            lastMousePos.y = e.clientY;
-            showGesture('✋');
-        }
-
-        function onMouseMove(e) {
-            if (!isMouseDown) return;
-            const dx = e.clientX - lastMousePos.x;
-            const dy = e.clientY - lastMousePos.y;
-
-            // Mover objeto
-            const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-            right.y = 0;
-            right.normalize();
-            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-            forward.y = 0;
-            forward.normalize();
-
-            object3D.position.add(right.multiplyScalar(dx * 0.01));
-            object3D.position.add(forward.multiplyScalar(-dy * 0.01));
-            object3D.position.y = 0.5;
-
-            lastMousePos.x = e.clientX;
-            lastMousePos.y = e.clientY;
-        }
-
-        function onMouseUp() {
-            isMouseDown = false;
-        }
-
-        function onMouseWheel(e) {
-            const factor = e.deltaY < 0 ? 1.1 : 0.9;
-            const newScale = object3D.scale.x * factor;
-            const scale = Math.max(0.1, Math.min(2.0, newScale));
-            object3D.scale.set(scale, scale, scale);
+            initialScale = object3D.scale.x;
+            
+            // Calcular ángulo inicial para rotación
+            initialRotation = Math.atan2(
+                touch2.clientY - touch1.clientY,
+                touch2.clientX - touch1.clientX
+            );
+            
             showGesture('↔️');
+        } 
+        // Gesto con un dedo para rotar
+        else if (e.touches.length === 1) {
+            isTwoFingerGesture = false;
+            touchStart = e.touches[0];
+            showGesture('🔄');
         }
+    });
 
-        function startMobile3D() {
-            // Esperar a que el modelo esté listo
-            if (!modelReady) {
-                setTimeout(startMobile3D, 100);
-                return;
-            }
-
-            // Vista simplificada para móviles sin AR
-            object3D.position.set(0, 0, -2);
-            object3D.visible = true;
-
-            const canvas = renderer.domElement;
-            let touchStart = null;
-
-            canvas.addEventListener('touchstart', e => {
-                touchStart = e.touches[0];
-            });
-
-            canvas.addEventListener('touchmove', e => {
-                if (!touchStart) return;
-                const touch = e.touches[0];
-                const dx = touch.pageX - touchStart.pageX;
-                const dy = touch.pageY - touchStart.pageY;
-                object3D.rotation.y += dx * 0.01;
-                object3D.rotation.x += dy * 0.01;
-                touchStart = touch;
-            });
-
-            startBtn.style.display = 'none';
-            exitBtn.style.display = 'block';
-            animate();
+canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    
+    // Manejo de gestos con dos dedos
+    if (isTwoFingerGesture && e.touches.length === 2) {
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        
+        // Escalar basado en la distancia entre dedos
+        const currentTouchDistance = Math.hypot(
+            touch2.clientX - touch1.clientX,
+            touch2.clientY - touch1.clientY
+        );
+        const scaleFactor = currentTouchDistance / initialTouchDistance;
+        const newScale = initialScale * scaleFactor;
+        // Aumentar rango máximo de escala de 2.0 a 5.0
+        const scale = Math.max(0.2, Math.min(5.0, newScale));
+        object3D.scale.set(scale, scale, scale);
+            
+            // Rotar basado en el cambio de ángulo entre dedos
+            const currentRotation = Math.atan2(
+                touch2.clientY - touch1.clientY,
+                touch2.clientX - touch1.clientX
+            );
+            const rotationDelta = currentRotation - initialRotation;
+            object3D.rotation.z += rotationDelta * 0.5;
+            initialRotation = currentRotation;
         }
+        // Manejo de gesto con un dedo
+        else if (!isTwoFingerGesture && e.touches.length === 1 && touchStart) {
+            const touch = e.touches[0];
+            const dx = touch.clientX - touchStart.clientX;
+            const dy = touch.clientY - touchStart.clientY;
+            
+            // Rotar el objeto basado en el movimiento del dedo
+            object3D.rotation.y += dx * 0.01;
+            object3D.rotation.x += dy * 0.01;
+            
+            touchStart = touch;
+        }
+    });
+
+    canvas.addEventListener('touchend', e => {
+        if (e.touches.length === 0) {
+            isTwoFingerGesture = false;
+            touchStart = null;
+        } else if (e.touches.length === 1) {
+            isTwoFingerGesture = false;
+            touchStart = e.touches[0];
+        }
+    });
+
+    // Actualizar instrucciones
+    controls.textContent = 'Un dedo: rotar • Dos dedos: escalar/girar';
+    controls.style.display = 'block';
+    
+    startBtn.style.display = 'none';
+    exitBtn.style.display = 'block';
+    animate();
+}
 
         async function startAR() {
             // Verificar que el modelo esté listo
@@ -583,17 +770,18 @@
             }
         }
 
-        function onARSelect() {
-            if (!reticle.visible || object3D.visible) return;
+function onARSelect() {
+    if (!reticle.visible || object3D.visible) return;
 
-            // Colocar objeto en posición del retículo
-            const position = new THREE.Vector3();
-            const quaternion = new THREE.Quaternion();
-            const scale = new THREE.Vector3();
+    // Colocar objeto en posición del retículo
+    const position = new THREE.Vector3();
+    const quaternion = new THREE.Quaternion();
+    const scale = new THREE.Vector3();
 
-            reticle.matrix.decompose(position, quaternion, scale);
-            object3D.position.copy(position);
-            object3D.position.y += 0.15;
+    reticle.matrix.decompose(position, quaternion, scale);
+    object3D.position.copy(position);
+    // Ajustar altura ligeramente para elevarlo sobre la superficie
+    object3D.position.y += 0.05;
 
             // Orientar según superficie
             const normalVector = new THREE.Vector3(0, 0, 1).applyQuaternion(quaternion);
@@ -633,7 +821,6 @@
             // Configurar manipulación
             setupTouchHandlers();
         }
-
         // Variables para manipulación táctil
         let isMoving = false, isScaling = false;
         let lastTouch = {x:0, y:0};
@@ -754,7 +941,6 @@
 
             update();
         }
-
         function renderAR(timestamp, frame) {
             if (!frame || !isARActive) return;
 
@@ -846,8 +1032,8 @@
                 }
             }
 
-            // Rotación automática del objeto
-            if (object3D.visible && !isMoving && !isScaling) {
+            // Rotación automática del objeto solo si está configurado para ello
+            if (object3D.visible && autoRotate && !isMoving && !isScaling) {
                 object3D.rotation.y += 0.01;
             }
 
@@ -857,7 +1043,8 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            if (object3D && object3D.visible && !isMoving && !isScaling) {
+            // Rotación automática del objeto solo si está configurado para ello
+            if (object3D && object3D.visible && autoRotate && !isMoving && !isScaling) {
                 object3D.rotation.y += 0.01;
             }
 
@@ -870,35 +1057,36 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        function exitAR() {
-            // Limpiar eventos
-            const canvas = renderer.domElement;
-            canvas.removeEventListener('touchstart', onTouchStart);
-            canvas.removeEventListener('touchmove', onTouchMove);
-            canvas.removeEventListener('touchend', onTouchEnd);
-            canvas.removeEventListener('mousedown', onMouseDown);
-            canvas.removeEventListener('mousemove', onMouseMove);
-            canvas.removeEventListener('mouseup', onMouseUp);
-            canvas.removeEventListener('wheel', onMouseWheel);
+function exitAR() {
+    // Limpiar eventos
+    const canvas = renderer.domElement;
+    canvas.removeEventListener('touchstart', onTouchStart);
+    canvas.removeEventListener('touchmove', onTouchMove);
+    canvas.removeEventListener('touchend', onTouchEnd);
+    canvas.removeEventListener('mousedown', onMouseDown);
+    canvas.removeEventListener('mousemove', onMouseMove);
+    canvas.removeEventListener('mouseup', onMouseUp);
+    canvas.removeEventListener('wheel', onMouseWheel);
+    canvas.removeEventListener('contextmenu', onContextMenu);
 
-            // Finalizar sesión AR si existe
-            if (arSession) {
-                arStatus.textContent = 'Cerrando sesión AR...';
-                arStatus.style.display = 'block';
+    // Finalizar sesión AR si existe
+    if (arSession) {
+        arStatus.textContent = 'Cerrando sesión AR...';
+        arStatus.style.display = 'block';
 
-                try {
-                    arSession.end();
-                } catch (e) {
-                    console.error('Error al finalizar sesión AR:', e);
-                }
-            }
-
-            // Detener animación y limpiar
-            renderer.setAnimationLoop(null);
-
-            // Volver a la página de detalle
-            window.location.href = '@Url.Action("Detalle", "Productos", new { id = ViewBag.ProductoId })';
+        try {
+            arSession.end();
+        } catch (e) {
+            console.error('Error al finalizar sesión AR:', e);
         }
+    }
+
+    // Detener animación y limpiar
+    renderer.setAnimationLoop(null);
+
+    // Volver a la página de detalle
+    window.location.href = '@Url.Action("Detalle", "Productos", new { id = ViewBag.ProductoId })';
+}
     </script>
 </body>
 </html>

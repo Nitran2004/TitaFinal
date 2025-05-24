@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using ProyectoIdentity.Datos;
 using ProyectoIdentity.Models;
@@ -36,6 +37,8 @@ builder.Services.AddControllers()
     });
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
+
 
 // Configuración de Identity
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
@@ -91,6 +94,9 @@ builder.Services.AddTransient<IEmailSender, MailJetEmailSender>();
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
+builder.Logging.AddEventSourceLogger();
+
+builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 // Construcción de la aplicación
 var app = builder.Build();
@@ -108,8 +114,17 @@ using (var scope = app.Services.CreateScope())
     DbInitializer.Initialize(context);
     RecompensasInitializer.Initialize(context);
 }
-app.UseHttpsRedirection();
+///// app.UseHttpsRedirection();
+
 app.UseStaticFiles();
+var provider = new FileExtensionContentTypeProvider();
+provider.Mappings[".glb"] = "model/gltf-binary";
+
+// Usa archivos estáticos con la configuración personalizada
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = provider
+});
 app.UseRouting();
 
 // Middleware de CORS, sesión y autenticación
