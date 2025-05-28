@@ -240,3 +240,55 @@ img.non-responsive-image {
 .button-spacing {
     margin-top: 20px; /* Ajusta el valor según sea necesario */
 }
+
+
+/* ? AGREGA ESTOS ESTILOS al final de tu archivo site.css o directamente en las vistas */
+
+/* Estilos para botones outline que se ven correctamente */
+.btn-outline-secondary {
+    color: #6c757d !important;
+    border-color: #6c757d !important;
+    background-color: transparent !important;
+    border-width: 2px !important;
+}
+
+    .btn-outline-secondary:hover {
+        color: #fff !important;
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+    }
+
+.btn-outline-primary {
+    color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    background-color: transparent !important;
+    border-width: 2px !important;
+}
+
+    .btn-outline-primary:hover {
+        color: #fff !important;
+        background-color: #0d6efd !important;
+        border-color: #0d6efd !important;
+    }
+
+/* Estilos específicos para botones de navegación */
+.navigation-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 10px 20px !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    margin: 5px !important;
+}
+
+    .navigation-btn i {
+        margin-right: 8px !important;
+    }
+
+    .navigation-btn:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+        text-decoration: none !important;
+    }

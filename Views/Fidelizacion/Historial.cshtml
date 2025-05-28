@@ -29,7 +29,7 @@
             <div class="card text-center border-success">
                 <div class="card-body">
                     <i class="fas fa-shopping-cart fa-2x text-success mb-2"></i>
-                    <h4 class="text-success">@Model.TotalPedidosRealizados</h4>
+                    <h4 class="text-success">@Model.Pedidos.Count</h4>
                     <small class="text-muted">Pedidos Realizados</small>
                 </div>
             </div>
@@ -38,7 +38,7 @@
             <div class="card text-center border-info">
                 <div class="card-body">
                     <i class="fas fa-dollar-sign fa-2x text-info mb-2"></i>
-                    <h4 class="text-info">$@(Model.TotalGastado.ToString("F2"))</h4>
+                    <h4 class="text-info">$@(Model.Pedidos.Sum(p => p.Total).ToString("F2"))</h4>
                     <small class="text-muted">Total Gastado</small>
                 </div>
             </div>
@@ -47,7 +47,7 @@
             <div class="card text-center border-warning">
                 <div class="card-body">
                     <i class="fas fa-star fa-2x text-warning mb-2"></i>
-                    <h4 class="text-warning">@Model.TotalPuntosGanados</h4>
+                    <h4 class="text-warning">@Model.TransaccionesPuntos.Where(t => t.Puntos > 0).Sum(t => t.Puntos)</h4>
                     <small class="text-muted">Puntos Ganados</small>
                 </div>
             </div>
@@ -56,36 +56,36 @@
             <div class="card text-center border-danger">
                 <div class="card-body">
                     <i class="fas fa-gift fa-2x text-danger mb-2"></i>
-                    <h4 class="text-danger">@Model.TotalRecompensasCanjeadas</h4>
+                    <h4 class="text-danger">@Model.CanjesRecompensas.Count</h4>
                     <small class="text-muted">Recompensas Canjeadas</small>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Navegación por pestañas -->
+    <!-- Navegación por pestañas CON BOOTSTRAP JS -->
     <div class="card">
         <div class="card-header">
-            <ul class="nav nav-tabs card-header-tabs" id="historialTabs" role="tablist">
+            <!-- ✅ Pestañas mejoradas con Bootstrap que funciona -->
+            <ul class="nav nav-pills nav-fill" id="historialTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="pedidos-tab" data-bs-toggle="tab" data-bs-target="#pedidos" type="button" role="tab">
-                        <i class="fas fa-shopping-bag"></i> Mis Pedidos (@Model.Pedidos.Count)
-                    </button>
-                </li>
-                <!-- ✅ NUEVA PESTAÑA: Mis Canjes -->
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="mis-canjes-tab" data-bs-toggle="tab" data-bs-target="#mis-canjes" type="button" role="tab">
-                        <i class="fas fa-ticket-alt"></i> Mis Canjes (@Model.CanjesConCodigos.Count)
+                    <button class="nav-link active" id="pedidos-tab" onclick="showTab('pedidos')" type="button">
+                        <i class="fas fa-shopping-bag me-2"></i>Mis Pedidos (@Model.Pedidos.Count)
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="canjes-tab" data-bs-toggle="tab" data-bs-target="#canjes" type="button" role="tab">
-                        <i class="fas fa-gift"></i> Recompensas Canjeadas (@Model.CanjesRecompensas.Count)
+                    <button class="nav-link" id="mis-canjes-tab" onclick="showTab('mis-canjes')" type="button">
+                        <i class="fas fa-ticket-alt me-2"></i>Mis Canjes (@Model.CanjesRecompensas.GroupBy(c => new { c.FechaCanje.Date, c.FechaCanje.Hour, c.FechaCanje.Minute }).Count())
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="transacciones-tab" data-bs-toggle="tab" data-bs-target="#transacciones" type="button" role="tab">
-                        <i class="fas fa-exchange-alt"></i> Movimientos de Puntos (@Model.TransaccionesPuntos.Count)
+                    <button class="nav-link" id="canjes-tab" onclick="showTab('canjes')" type="button">
+                        <i class="fas fa-gift me-2"></i>Recompensas (@Model.CanjesRecompensas.Count)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="transacciones-tab" onclick="showTab('transacciones')" type="button">
+                        <i class="fas fa-exchange-alt me-2"></i>Movimientos (@Model.TransaccionesPuntos.Count)
                     </button>
                 </li>
             </ul>
@@ -95,7 +95,7 @@
             <div class="tab-content" id="historialTabsContent">
 
                 <!-- TAB: MIS PEDIDOS -->
-                <div class="tab-pane fade show active" id="pedidos" role="tabpanel">
+                <div class="tab-pane show active" id="pedidos" role="tabpanel">
                     @if (Model.Pedidos.Any())
                     {
                         <div class="row">
@@ -144,7 +144,7 @@
                                             </div>
 
                                             <div class="text-end">
-                                                <a href="@Url.Action("Resumen", "Pedidos", new { id = pedido.Id })" class="btn btn-sm btn-outline-primary">
+                                                <a href="@Url.Action("DetallePedido", "Fidelizacion", new { id = pedido.Id })" class="btn btn-sm btn-outline-primary">
                                                     <i class="fas fa-eye"></i> Ver Detalle
                                                 </a>
                                             </div>
@@ -167,69 +167,131 @@
                     }
                 </div>
 
-                <!-- ✅ NUEVA PESTAÑA: MIS CANJES CON CÓDIGOS -->
-                <div class="tab-pane fade" id="mis-canjes" role="tabpanel">
-                    @if (Model.CanjesConCodigos.Any())
+                <!-- ✅ PESTAÑA MIS CANJES MEJORADA - Inspirada en ResumenCanjeMultiple -->
+                <div class="tab-pane" id="mis-canjes" role="tabpanel">
+                    @{
+                        // Agrupar canjes por fecha/hora para simular códigos de canje
+                        var canjesAgrupados = Model.CanjesRecompensas
+                            .GroupBy(c => new { 
+                                Fecha = c.FechaCanje.Date, 
+                                Hora = c.FechaCanje.Hour, 
+                                Minuto = c.FechaCanje.Minute 
+                            })
+                            .Select(g => new {
+                                FechaCanje = g.First().FechaCanje,
+                                CanjesIndividuales = g.ToList(),
+                                TotalPuntosUtilizados = g.Sum(c => c.PuntosUtilizados),
+                                CantidadRecompensas = g.Count(),
+                                ValorTotalAhorrado = g.Sum(c => c.ProductoRecompensa?.PrecioOriginal ?? 0),
+                                CodigoCanje = $"CJM-{g.First().FechaCanje:yyyyMMdd}-{g.First().FechaCanje:HHmm}"
+                            })
+                            .OrderByDescending(c => c.FechaCanje)
+                            .ToList();
+                    }
+
+                    @if (canjesAgrupados.Any())
                     {
                         <div class="row">
-                            @foreach (var canjeGrupo in Model.CanjesConCodigos)
+                            @foreach (var canjeGrupo in canjesAgrupados)
                             {
-                                <div class="col-md-6 mb-3">
-                                    <div class="card border-left-success">
-                                        <div class="card-body">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <div>
-                                                    <h6 class="card-title">
-                                                        <i class="fas fa-ticket-alt text-success"></i>
-                                                        @if (canjeGrupo.EsCanjeMultiple)
-                                                        {
-                                                            <span>Canje Múltiple</span>
-                                                        }
-                                                        else
-                                                        {
-                                                            <span>Canje Individual</span>
-                                                        }
-                                                    </h6>
-                                                    <p class="text-muted mb-1">
-                                                        <i class="fas fa-calendar"></i> @canjeGrupo.FechaCanje.ToString("dd/MM/yyyy HH:mm")
-                                                    </p>
-                                                    <p class="text-muted mb-1">
-                                                        <i class="fas fa-barcode"></i> <strong>@canjeGrupo.CodigoCanje</strong>
-                                                    </p>
+                                <div class="col-lg-6 mb-4">
+                                    <!-- Card inspirado en ResumenCanjeMultiple -->
+                                    <div class="card shadow border-0" style="border-radius: 15px; overflow: hidden;">
+                                        <div class="card-header text-center py-3" style="background: linear-gradient(135deg, #28a745, #20c997); color: white;">
+                                            <div class="canje-header">
+                                                <i class="fas fa-ticket-alt fa-2x mb-2"></i>
+                                                <h6 class="mb-1">¡Canje Realizado!</h6>
+                                                <p class="mb-0 opacity-75">@canjeGrupo.CantidadRecompensas recompensa(s) canjeada(s)</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="card-body p-3">
+                                            <!-- Resumen del canje -->
+                                            <div class="row text-center mb-3">
+                                                <div class="col-4">
+                                                    <div class="stat-mini">
+                                                        <i class="fas fa-gift text-success mb-1"></i>
+                                                        <div class="fw-bold text-success">@canjeGrupo.CantidadRecompensas</div>
+                                                        <small class="text-muted">Items</small>
+                                                    </div>
                                                 </div>
-                                                <div class="text-end">
-                                                    <span class="badge bg-success">@canjeGrupo.EstadoCanje</span>
-                                                    <h5 class="text-danger mt-1">-@canjeGrupo.TotalPuntosUtilizados pts</h5>
-                                                    <small class="text-muted">@canjeGrupo.CantidadRecompensas recompensa(s)</small>
+                                                <div class="col-4">
+                                                    <div class="stat-mini">
+                                                        <i class="fas fa-star text-danger mb-1"></i>
+                                                        <div class="fw-bold text-danger">-@canjeGrupo.TotalPuntosUtilizados</div>
+                                                        <small class="text-muted">Puntos</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-4">
+                                                    <div class="stat-mini">
+                                                        <i class="fas fa-dollar-sign text-info mb-1"></i>
+                                                        <div class="fw-bold text-info">$@canjeGrupo.ValorTotalAhorrado.ToString("F2")</div>
+                                                        <small class="text-muted">Ahorrado</small>
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            <!-- Recompensas canjeadas en este grupo -->
-                                            <div class="mt-2">
-                                                <small class="text-muted"><strong>Recompensas canjeadas:</strong></small>
-                                                <ul class="list-unstyled mb-2">
-                                                    @foreach (var canje in canjeGrupo.CanjesDelGrupo.Take(3))
-                                                    {
-                                                        <li class="small d-flex align-items-center mb-1">
-                                                            @if (canje.ProductoRecompensa?.Producto?.Imagen != null)
-                                                            {
-                                                                <img src="@canje.ProductoRecompensa.Producto.Imagen" alt="@canje.ProductoRecompensa.Nombre"
-                                                                     class="me-2 rounded" style="width: 20px; height: 20px; object-fit: cover;">
-                                                            }
-                                                            • @canje.ProductoRecompensa?.Nombre
-                                                            <span class="text-danger ms-1">(-@canje.PuntosUtilizados pts)</span>
-                                                        </li>
-                                                    }
-                                                    @if (canjeGrupo.CanjesDelGrupo.Count > 3)
-                                                    {
-                                                        <li class="small text-muted">... y @(canjeGrupo.CanjesDelGrupo.Count - 3) más</li>
-                                                    }
-                                                </ul>
+                                            <!-- Información del canje -->
+                                            <div class="canje-info bg-light rounded p-2 mb-3">
+                                                <div class="row">
+                                                    <div class="col-6">
+                                                        <div class="info-item-small">
+                                                            <i class="fas fa-calendar-alt text-primary"></i>
+                                                            <span><strong>Fecha:</strong><br><small>@canjeGrupo.FechaCanje.ToString("dd/MM/yyyy HH:mm")</small></span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <div class="info-item-small">
+                                                            <i class="fas fa-barcode text-warning"></i>
+                                                            <span><strong>Código:</strong><br><code class="small">@canjeGrupo.CodigoCanje</code></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
 
-                                            <div class="text-end">
-                                                <a href="@Url.Action("VerCanjesTemporal", "Fidelizacion")" class="btn btn-sm btn-outline-success">
-                                                    <i class="fas fa-eye"></i> Ver Detalle Completo
+                                            <!-- Lista de productos canjeados -->
+                                            <div class="productos-canjeados">
+                                                <h6 class="mb-2"><i class="fas fa-list text-primary"></i> Productos Canjeados:</h6>
+                                                @foreach (var canje in canjeGrupo.CanjesIndividuales)
+                                                {
+                                                    <div class="producto-canje-item mb-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="me-2">
+                                                                @if (canje.ProductoRecompensa?.Producto?.Imagen != null && canje.ProductoRecompensa.Producto.Imagen.Length > 0)
+                                                                {
+                                                                    <img src="data:image/jpeg;base64,@Convert.ToBase64String(canje.ProductoRecompensa.Producto.Imagen)" 
+                                                                         alt="@canje.ProductoRecompensa.Nombre" 
+                                                                         class="rounded" 
+                                                                         style="width: 40px; height: 40px; object-fit: cover;" />
+                                                                }
+                                                                else
+                                                                {
+                                                                    <div class="placeholder-mini rounded d-flex align-items-center justify-content-center" 
+                                                                         style="width: 40px; height: 40px; background: #f8f9fa;">
+                                                                        <i class="fas fa-utensils text-muted"></i>
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                            <div class="flex-grow-1">
+                                                                <div class="fw-bold">@canje.ProductoRecompensa?.Nombre</div>
+                                                                <div class="d-flex justify-content-between align-items-center">
+                                                                    <small class="text-muted">
+                                                                        <span class="badge bg-secondary">@canje.ProductoRecompensa?.Categoria</span>
+                                                                        Valor: $@canje.ProductoRecompensa?.PrecioOriginal.ToString("F2")
+                                                                    </small>
+                                                                    <div class="text-danger fw-bold">-@canje.PuntosUtilizados pts</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+
+                                            <!-- Botón para ver detalle completo -->
+                                            <div class="text-center mt-3">
+                                                <a href="@Url.Action("DetalleCanje", "Fidelizacion", new { codigo = canjeGrupo.CodigoCanje })" 
+                                                   class="btn btn-success btn-sm">
+                                                    <i class="fas fa-eye me-1"></i>Ver Detalle Completo
                                                 </a>
                                             </div>
                                         </div>
@@ -251,8 +313,8 @@
                     }
                 </div>
 
-                <!-- TAB: RECOMPENSAS CANJEADAS (Original - mantenido para compatibilidad) -->
-                <div class="tab-pane fade" id="canjes" role="tabpanel">
+                <!-- TAB: RECOMPENSAS CANJEADAS (Tabla simple) -->
+                <div class="tab-pane" id="canjes" role="tabpanel">
                     @if (Model.CanjesRecompensas.Any())
                     {
                         <div class="table-responsive">
@@ -274,7 +336,7 @@
                                                 <div class="d-flex align-items-center">
                                                     @if (canje.ProductoRecompensa?.Producto?.Imagen != null && canje.ProductoRecompensa.Producto.Imagen.Length > 0)
                                                     {
-                                                        <img src="@canje.ProductoRecompensa.Imagen" alt="@canje.ProductoRecompensa.Nombre"
+                                                        <img src="data:image/jpeg;base64,@Convert.ToBase64String(canje.ProductoRecompensa.Producto.Imagen)" alt="@canje.ProductoRecompensa.Nombre"
                                                              class="me-2 rounded" style="width: 40px; height: 40px; object-fit: cover;">
                                                     }
                                                     <div>
@@ -312,7 +374,7 @@
                 </div>
 
                 <!-- TAB: MOVIMIENTOS DE PUNTOS -->
-                <div class="tab-pane fade" id="transacciones" role="tabpanel">
+                <div class="tab-pane" id="transacciones" role="tabpanel">
                     @if (Model.TransaccionesPuntos.Any())
                     {
                         <div class="table-responsive">
@@ -396,6 +458,80 @@
 </div>
 
 <style>
+    /* ✅ Estilos para pestañas visibles */
+    .nav-pills .nav-link {
+        background-color: #f8f9fa !important;
+        color: #495057 !important;
+        border: 1px solid #dee2e6 !important;
+        margin: 0 2px !important;
+        border-radius: 8px !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .nav-pills .nav-link:hover {
+        background-color: #e9ecef !important;
+        color: #212529 !important;
+        transform: translateY(-2px) !important;
+    }
+
+    .nav-pills .nav-link.active {
+        background-color: #007bff !important;
+        color: white !important;
+        border-color: #007bff !important;
+        box-shadow: 0 4px 8px rgba(0,123,255,0.3) !important;
+    }
+
+    /* Estilos para pestañas ocultas/visibles */
+    .tab-pane {
+        display: none;
+    }
+
+    .tab-pane.show {
+        display: block;
+    }
+
+    .tab-pane.active {
+        display: block;
+    }
+
+    /* Estilos inspirados en ResumenCanjeMultiple */
+    .canje-header i {
+        animation: bounce 2s infinite;
+    }
+
+    keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-10px); }
+        60% { transform: translateY(-5px); }
+    }
+
+    .stat-mini {
+        padding: 0.5rem;
+        transition: transform 0.2s ease;
+    }
+
+    .stat-mini:hover {
+        transform: translateY(-2px);
+    }
+
+    .info-item-small {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .info-item-small i {
+        width: 20px;
+    }
+
+    .producto-canje-item {
+        background: #f8f9fa;
+        padding: 8px;
+        border-radius: 8px;
+        border-left: 3px solid #28a745;
+    }
+
     .border-left-primary {
         border-left: 4px solid #007bff !important;
     }
@@ -424,4 +560,46 @@
     .badge {
         font-size: 0.75em;
     }
+
+    code {
+        background: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.8em;
+    }
 </style>
+
+<script>
+    // ✅ JavaScript simple para manejar las pestañas sin Bootstrap JS
+    function showTab(tabName) {
+        // Ocultar todas las pestañas
+        const allTabs = document.querySelectorAll('.tab-pane');
+        allTabs.forEach(tab => {
+            tab.classList.remove('show', 'active');
+        });
+
+        // Remover clase active de todos los botones
+        const allButtons = document.querySelectorAll('.nav-link');
+        allButtons.forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        // Mostrar la pestaña seleccionada
+        const selectedTab = document.getElementById(tabName);
+        if (selectedTab) {
+            selectedTab.classList.add('show', 'active');
+        }
+
+        // Activar el botón correspondiente
+        const selectedButton = document.getElementById(tabName + '-tab');
+        if (selectedButton) {
+            selectedButton.classList.add('active');
+        }
+    }
+
+    // Inicializar la primera pestaña al cargar
+    document.addEventListener('DOMContentLoaded', function() {
+        showTab('pedidos');
+    });
+</script>
