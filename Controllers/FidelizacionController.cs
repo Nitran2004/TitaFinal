@@ -404,6 +404,19 @@ namespace ProyectoIdentity.Controllers
                 .OrderByDescending(h => h.FechaCanje)
                 .ToListAsync();
 
+            // ✅ DEBUG: Verificar qué datos tenemos
+            Console.WriteLine($"DEBUG: Usuario ID: {userId}");
+            Console.WriteLine($"DEBUG: Total canjes encontrados: {canjes.Count}");
+
+            foreach (var canje in canjes)
+            {
+                Console.WriteLine($"DEBUG: Canje ID: {canje.Id}, Puntos: {canje.PuntosUtilizados}, Producto: {canje.ProductoRecompensa?.Nombre}");
+                if (canje.ProductoRecompensa?.Producto != null)
+                {
+                    Console.WriteLine($"DEBUG: Producto tiene imagen: {canje.ProductoRecompensa.Producto.Imagen != null}");
+                }
+            }
+
             // Agrupar canjes por fecha y hora (canjes múltiples del mismo momento)
             var canjesAgrupados = canjes
                 .GroupBy(c => new {
@@ -423,6 +436,12 @@ namespace ProyectoIdentity.Controllers
                 .OrderByDescending(c => c.FechaCanje)
                 .ToList();
 
+            // ✅ DEBUG: Verificar datos agrupados
+            Console.WriteLine($"DEBUG: Grupos de canjes: {canjesAgrupados.Count}");
+            foreach (var grupo in canjesAgrupados)
+            {
+                Console.WriteLine($"DEBUG: Grupo - Código: {grupo.CodigoCanje}, Productos: {grupo.CantidadRecompensas}, Puntos: {grupo.TotalPuntosUtilizados}");
+            }
             var model = new MisCanjesViewModel
             {
                 Usuario = usuario,
@@ -523,6 +542,68 @@ namespace ProyectoIdentity.Controllers
         public static int CalcularPuntosAGanar(decimal precio)
         {
             return (int)(precio * PUNTOS_POR_DOLAR);
+        }
+
+        // Nueva acción para mostrar detalle de un canje específico
+        public async Task<IActionResult> DetalleCanje(string codigo)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return RedirectToAction("Acceso", "Cuentas");
+
+            if (string.IsNullOrEmpty(codigo))
+            {
+                TempData["Error"] = "Código de canje no válido";
+                return RedirectToAction("MisCanjes");
+            }
+
+            var usuario = await _context.AppUsuario.FindAsync(userId);
+            if (usuario == null) return NotFound();
+
+            // Obtener canjes por código (agrupados por fecha/hora)
+            var canjes = await _context.HistorialCanjes
+                .Include(h => h.ProductoRecompensa)
+                    .ThenInclude(pr => pr.Producto)
+                .Where(h => h.UsuarioId == userId)
+                .OrderByDescending(h => h.FechaCanje)
+                .ToListAsync();
+
+            // Agrupar canjes y buscar el que coincida con el código
+            var canjesAgrupados = canjes
+                .GroupBy(c => new {
+                    Fecha = c.FechaCanje.Date,
+                    Hora = c.FechaCanje.Hour,
+                    Minuto = c.FechaCanje.Minute
+                })
+                .Select(group => new {
+                    CodigoCanje = GenerarCodigoCanjePorFecha(group.First().FechaCanje, group.First().Id),
+                    FechaCanje = group.First().FechaCanje,
+                    CanjesIndividuales = group.ToList(),
+                    TotalPuntosUtilizados = group.Sum(c => c.PuntosUtilizados),
+                    CantidadRecompensas = group.Count(),
+                    ValorTotalAhorrado = group.Sum(c => c.ProductoRecompensa?.PrecioOriginal ?? 0)
+                })
+                .FirstOrDefault(c => c.CodigoCanje == codigo);
+
+            if (canjesAgrupados == null)
+            {
+                TempData["Error"] = "No se encontró el canje especificado";
+                return RedirectToAction("MisCanjes");
+            }
+
+            // Crear el modelo similar al ResumenCanjeMultiple
+            var model = new ResumenCanjesMultiplesViewModel
+            {
+                Usuario = usuario,
+                TotalPuntosUtilizados = canjesAgrupados.TotalPuntosUtilizados,
+                CantidadRecompensas = canjesAgrupados.CantidadRecompensas,
+                PuntosRestantes = usuario.PuntosFidelidad ?? 0,
+                FechaCanje = canjesAgrupados.FechaCanje,
+                CodigoCanje = canjesAgrupados.CodigoCanje,
+                CanjesRealizados = canjesAgrupados.CanjesIndividuales,
+                ValorTotalAhorrado = canjesAgrupados.ValorTotalAhorrado
+            };
+
+            return View(model);
         }
     }
 
