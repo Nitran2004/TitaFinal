@@ -1,0 +1,272 @@
+﻿@model ProyectoIdentity.Models.MisCanjesViewModel
+@{
+    ViewData["Title"] = "Mis Canjes Realizados";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-12 col-lg-10">
+            
+            <!-- Header -->
+            <div class="card shadow-lg border-0 mb-4" style="border-radius: 20px; overflow: hidden;">
+                <div class="card-header text-center py-4" style="background: linear-gradient(135deg, #dc3545, #fd7e14); color: white;">
+                    <div class="celebration-header">
+                        <i class="fas fa-history fa-3x mb-3"></i>
+                        <h2 class="mb-1">Mis Canjes Realizados</h2>
+                        <p class="mb-0 opacity-75">Historial completo de recompensas canjeadas</p>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <!-- Resumen general -->
+                    <div class="row text-center mb-4">
+                        <div class="col-md-4">
+                            <div class="stat-card">
+                                <i class="fas fa-clipboard-list fa-2x text-primary mb-2"></i>
+                                <h3 class="text-primary">@Model.CanjesAgrupados.Count</h3>
+                                <small class="text-muted">Canjes realizados</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card">
+                                <i class="fas fa-gift fa-2x text-success mb-2"></i>
+                                <h3 class="text-success">@Model.CanjesAgrupados.Sum(c => c.CantidadRecompensas)</h3>
+                                <small class="text-muted">Recompensas obtenidas</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card">
+                                <i class="fas fa-star fa-2x text-info mb-2"></i>
+                                <h3 class="text-info">@Model.PuntosActuales</h3>
+                                <small class="text-muted">Puntos actuales</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de canjes -->
+            @if (Model.CanjesAgrupados.Any())
+            {
+                <div class="canjes-timeline">
+                    @foreach (var canjeGrupo in Model.CanjesAgrupados)
+                    {
+                        <div class="card shadow-sm mb-4 border-0" style="border-radius: 15px; overflow: hidden;">
+                            <!-- Header del canje grupal -->
+                            <div class="card-header" style="background: linear-gradient(45deg, #f8f9fa, #e9ecef);">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <h5 class="mb-1">
+                                            <i class="fas fa-calendar-alt text-primary me-2"></i>
+                                            @canjeGrupo.FechaCanje.ToString("dd/MM/yyyy HH:mm")
+                                        </h5>
+                                        <small class="text-muted">Código: <code>@canjeGrupo.CodigoCanje</code></small>
+                                    </div>
+                                    <div class="col-md-6 text-md-end">
+                                        <div class="canje-stats">
+                                            <span class="badge bg-danger me-2">-@canjeGrupo.TotalPuntosUtilizados pts</span>
+                                            <span class="badge bg-success me-2">@canjeGrupo.CantidadRecompensas items</span>
+                                            <span class="badge bg-info">$@canjeGrupo.ValorTotalAhorrado.ToString("F2")</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Detalles de productos canjeados -->
+                            <div class="card-body p-3">
+                                <div class="row">
+                                    @foreach (var canje in canjeGrupo.CanjesIndividuales)
+                                    {
+                                        <div class="col-md-6 col-lg-4 mb-3">
+                                            <div class="producto-canje-card">
+                                                <div class="d-flex align-items-start">
+                                                    <!-- Imagen del producto -->
+                                                    <div class="producto-imagen me-3">
+                                                        @if (canje.ProductoRecompensa?.Producto?.Imagen != null && canje.ProductoRecompensa.Producto.Imagen.Length > 0)
+                                                        {
+                                                            <img src="data:image/jpeg;base64,@Convert.ToBase64String(canje.ProductoRecompensa.Producto.Imagen)" 
+                                                                 alt="@canje.ProductoRecompensa.Nombre" 
+                                                                 class="rounded" 
+                                                                 style="width: 50px; height: 50px; object-fit: cover;" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="placeholder-image rounded d-flex align-items-center justify-content-center" 
+                                                                 style="width: 50px; height: 50px; background: #f8f9fa;">
+                                                                <i class="fas fa-utensils text-muted"></i>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                    
+                                                    <!-- Información del producto -->
+                                                    <div class="flex-grow-1">
+                                                        <h6 class="mb-1 text-truncate">@canje.ProductoRecompensa?.Nombre</h6>
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <small class="text-muted">
+                                                                <span class="badge bg-secondary">@canje.ProductoRecompensa?.Categoria</span>
+                                                            </small>
+                                                            <div class="text-end">
+                                                                <div class="text-danger fw-bold small">-@canje.PuntosUtilizados pts</div>
+                                                                <small class="text-success">$@canje.ProductoRecompensa?.PrecioOriginal.ToString("F2")</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                
+                                <!-- Botón para ver detalle completo -->
+                                <div class="text-center mt-3">
+                                    <button class="btn btn-outline-primary btn-sm" 
+                                            onclick="toggleDetalle('@canjeGrupo.CodigoCanje')">
+                                        <i class="fas fa-eye me-1"></i> Ver Detalle Completo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <!-- Mensaje cuando no hay canjes -->
+                <div class="text-center py-5">
+                    <i class="fas fa-gift fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">No has realizado canjes aún</h4>
+                    <p class="text-muted">¡Empieza a canjear recompensas con tus puntos!</p>
+                    <a href="@Url.Action("Recompensas", "Fidelizacion")" class="btn btn-primary">
+                        <i class="fas fa-star me-2"></i>Ver Recompensas
+                    </a>
+                </div>
+            }
+
+            <!-- Botones de acción -->
+            <div class="action-buttons mt-4">
+                <div class="row g-2">
+                    <div class="col-md-3 col-6">
+                        <a href="@Url.Action("Recompensas", "Fidelizacion")" class="btn btn-success w-100 rounded-pill">
+                            <i class="fas fa-gift me-2"></i>Más Recompensas
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="@Url.Action("MisPuntos", "Fidelizacion")" class="btn btn-primary w-100 rounded-pill">
+                            <i class="fas fa-star me-2"></i>Mis Puntos
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="@Url.Action("Historial", "Fidelizacion")" class="btn btn-outline-secondary w-100 rounded-pill">
+                            <i class="fas fa-history me-2"></i>Historial Completo
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="@Url.Action("SeleccionMultiple", "Productos")" class="btn btn-outline-info w-100 rounded-pill">
+                            <i class="fas fa-shopping-cart me-2"></i>Nuevo Pedido
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stat-card {
+        padding: 1rem;
+        transition: transform 0.2s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .producto-canje-card {
+        padding: 0.75rem;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+        height: 100%;
+    }
+
+    .producto-canje-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .canjes-timeline {
+        position: relative;
+    }
+
+    .canjes-timeline::before {
+        content: '';
+        position: absolute;
+        left: 20px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, #007bff, #28a745);
+        z-index: 0;
+    }
+
+    .canjes-timeline .card {
+        position: relative;
+        z-index: 1;
+        margin-left: 40px;
+    }
+
+    .canjes-timeline .card::before {
+        content: '';
+        position: absolute;
+        left: -29px;
+        top: 20px;
+        width: 12px;
+        height: 12px;
+        background: #007bff;
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    code {
+        background: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.85em;
+    }
+
+    .btn {
+        transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    media (max-width: 768px) {
+        .canjes-timeline {
+            margin-left: 0;
+        }
+        
+        .canjes-timeline::before {
+            display: none;
+        }
+        
+        .canjes-timeline .card {
+            margin-left: 0;
+        }
+        
+        .canjes-timeline .card::before {
+            display: none;
+        }
+    }
+</style>
+
+<script>
+    function toggleDetalle(codigo) {
+        // Aquí podrías implementar funcionalidad adicional si es necesario
+        console.log('Mostrando detalle para canje:', codigo);
+    }
+</script>

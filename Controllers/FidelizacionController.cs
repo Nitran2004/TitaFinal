@@ -386,13 +386,68 @@ namespace ProyectoIdentity.Controllers
             return View(model);
         }
 
+
+        // Método para mostrar todos los canjes del usuario
+        public async Task<IActionResult> MisCanjes()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return RedirectToAction("Acceso", "Cuentas");
+
+            var usuario = await _context.AppUsuario.FindAsync(userId);
+            if (usuario == null) return NotFound();
+
+            // Obtener todos los canjes del usuario agrupados por código de canje
+            var canjes = await _context.HistorialCanjes
+                .Include(h => h.ProductoRecompensa)
+                    .ThenInclude(pr => pr.Producto)
+                .Where(h => h.UsuarioId == userId)
+                .OrderByDescending(h => h.FechaCanje)
+                .ToListAsync();
+
+            // Agrupar canjes por fecha y hora (canjes múltiples del mismo momento)
+            var canjesAgrupados = canjes
+                .GroupBy(c => new {
+                    Fecha = c.FechaCanje.Date,
+                    Hora = c.FechaCanje.Hour,
+                    Minuto = c.FechaCanje.Minute
+                })
+                .Select(group => new CanjeAgrupadoViewModel
+                {
+                    FechaCanje = group.First().FechaCanje,
+                    CanjesIndividuales = group.ToList(),
+                    TotalPuntosUtilizados = group.Sum(c => c.PuntosUtilizados),
+                    CantidadRecompensas = group.Count(),
+                    ValorTotalAhorrado = group.Sum(c => c.ProductoRecompensa?.PrecioOriginal ?? 0),
+                    CodigoCanje = GenerarCodigoCanjePorFecha(group.First().FechaCanje, group.First().Id)
+                })
+                .OrderByDescending(c => c.FechaCanje)
+                .ToList();
+
+            var model = new MisCanjesViewModel
+            {
+                Usuario = usuario,
+                CanjesAgrupados = canjesAgrupados,
+                PuntosActuales = usuario.PuntosFidelidad ?? 0
+            };
+
+            return View(model);
+        }
+
+        // Método auxiliar para generar código de canje por fecha
+        private string GenerarCodigoCanjePorFecha(DateTime fecha, int canjeId)
+        {
+            var fechaStr = fecha.ToString("yyyyMMdd");
+            var tiempo = fecha.ToString("HHmm");
+            return $"CJM-{fechaStr}-{tiempo}";
+        }
+
         // Método auxiliar para generar código de canje múltiple
         private string GenerarCodigoCanjeMultiple()
-{
-    var fecha = DateTime.Now.ToString("yyyyMMdd");
-    var random = new Random().Next(1000, 9999);
-    return $"CJM-{fecha}-{random}";
-}
+        {
+            var fecha = DateTime.Now.ToString("yyyyMMdd");
+            var random = new Random().Next(1000, 9999);
+            return $"CJM-{fecha}-{random}";
+        }
 
         private string GenerarCodigoCanje(int canjeId)
         {
