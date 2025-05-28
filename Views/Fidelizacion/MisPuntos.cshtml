@@ -1,0 +1,217 @@
+﻿@model MisPuntosViewModel
+@{
+    ViewData["Title"] = "Mis Puntos de Fidelidad";
+}
+
+<style>
+    .puntos-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .puntos-numero {
+        font-size: 4rem;
+        font-weight: bold;
+        text-align: center;
+        margin: 1rem 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .puntos-texto {
+        text-align: center;
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .datos-personales {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .datos-personales h3 {
+        color: #495057;
+        border-bottom: 2px solid #28a745;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .dato-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .dato-item:last-child {
+        border-bottom: none;
+    }
+
+    .dato-icono {
+        width: 40px;
+        color: #6c757d;
+        text-align: center;
+        margin-right: 1rem;
+    }
+
+    .dato-contenido {
+        flex: 1;
+    }
+
+    .dato-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.25rem;
+    }
+
+    .dato-valor {
+        color: #6c757d;
+    }
+
+    .btn-actualizar {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        border: none;
+        border-radius: 25px;
+        padding: 0.75rem 2rem;
+        color: white;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+        width: 100%;
+    }
+
+    .btn-actualizar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        color: white;
+    }
+
+    .progress-bar-container {
+        background: rgba(255,255,255,0.2);
+        border-radius: 10px;
+        height: 10px;
+        margin: 1rem 0;
+    }
+
+    .progress-bar-fill {
+        background: linear-gradient(90deg, #28a745, #20c997);
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+
+    media (max-width: 768px) {
+        .puntos-numero {
+            font-size: 3rem;
+        }
+        
+        .puntos-container {
+            padding: 1.5rem;
+        }
+        
+        .datos-personales {
+            padding: 1rem;
+        }
+    }
+</style>
+
+<div class="container mt-4">
+    <!-- Encabezado con puntos -->
+    <div class="puntos-container">
+        <h1 class="text-center mb-3">
+            <i class="fas fa-star"></i> Mis Puntos de Fidelidad
+        </h1>
+        <div class="puntos-texto">Tus Puntos son:</div>
+        <div class="puntos-numero">@Model.PuntosActuales</div>
+        
+        <!-- Barra de progreso hacia próxima recompensa -->
+        <div class="progress-bar-container">
+            @{
+                int proximaRecompensa = 2500; // Puedes calcular esto dinámicamente
+                double porcentaje = Math.Min(100, (double)Model.PuntosActuales / proximaRecompensa * 100);
+            }
+            <div class="progress-bar-fill" style="width: @porcentaje%"></div>
+        </div>
+        <div class="text-center">
+            <small>Te faltan @Math.Max(0, proximaRecompensa - Model.PuntosActuales) puntos para tu próxima recompensa</small>
+        </div>
+    </div>
+
+    <!-- Datos Personales -->
+    <div class="datos-personales">
+        <h3>Datos Personales</h3>
+        
+        <div class="dato-item">
+            <div class="dato-icono">
+                <i class="fas fa-id-card"></i>
+            </div>
+            <div class="dato-contenido">
+                <div class="dato-label">Identificación:</div>
+                <div class="dato-valor">@(Model.Usuario.CodigoPais ?? "No especificado")</div>
+            </div>
+        </div>
+
+        <div class="dato-item">
+            <div class="dato-icono">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="dato-contenido">
+                <div class="dato-label">Nombre Completo:</div>
+                <div class="dato-valor">@(Model.Usuario.Nombre ?? "No especificado")</div>
+            </div>
+        </div>
+
+        <div class="dato-item">
+            <div class="dato-icono">
+                <i class="fas fa-phone"></i>
+            </div>
+            <div class="dato-contenido">
+                <div class="dato-label">Número de teléfono:</div>
+                <div class="dato-valor">@(Model.Usuario.Telefono ?? "No especificado")</div>
+            </div>
+        </div>
+
+        <div class="dato-item">
+            <div class="dato-icono">
+                <i class="fas fa-calendar"></i>
+            </div>
+            <div class="dato-contenido">
+                <div class="dato-label">Fecha de nacimiento:</div>
+                <div class="dato-valor">@(Model.Usuario.FechaNacimiento?.ToString("yyyy-MM-dd") ?? "No especificado")</div>
+            </div>
+        </div>
+
+        <div class="dato-item">
+            <div class="dato-icono">
+                <i class="fas fa-envelope"></i>
+            </div>
+            <div class="dato-contenido">
+                <div class="dato-label">Correo Electrónico:</div>
+                <div class="dato-valor">@(Model.Usuario.Email ?? "No especificado")</div>
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-actualizar" onclick="location.href='@Url.Action("EditarPerfil", "Usuarios", new { id = Model.Usuario.Id })'">
+            Actualizar Datos
+        </button>
+    </div>
+
+    <!-- Botones de navegación -->
+    <div class="row mt-4">
+        <div class="col-md-6 mb-3">
+            <a href="@Url.Action("Recompensas", "Fidelizacion")" class="btn btn-primary btn-lg w-100">
+                <i class="fas fa-gift"></i> Ver Recompensas
+            </a>
+        </div>
+        <div class="col-md-6 mb-3">
+            <a href="@Url.Action("Historial", "Fidelizacion")" class="btn btn-info btn-lg w-100">
+                <i class="fas fa-history"></i> Ver Historial
+            </a>
+        </div>
+    </div>
+</div>

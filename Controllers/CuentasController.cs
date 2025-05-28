@@ -65,13 +65,13 @@ namespace ProyectoIdentity.Controllers
             returnurl = returnurl ?? Url.Content("~/");
             if (ModelState.IsValid)
             {
-                var usuario = new AppUsuario { UserName = rgViewModel.Email, Email = rgViewModel.Email, Nombre = rgViewModel.Nombre, Url = rgViewModel.Url, CodigoPais = rgViewModel.CodigoPais, Telefono = rgViewModel.Telefono, Pais = rgViewModel.Pais, Ciudad = rgViewModel.Ciudad, Direccion = rgViewModel.Direccion, FechaNacimiento = rgViewModel.FechaNacimiento, Estado = rgViewModel.Estado };
+                var usuario = new AppUsuario { UserName = rgViewModel.Email, Email = rgViewModel.Email, Nombre = rgViewModel.Nombre, Url = rgViewModel.Url, Telefono = rgViewModel.Telefono, Pais = rgViewModel.Pais, Ciudad = rgViewModel.Ciudad, Direccion = rgViewModel.Direccion, FechaNacimiento = rgViewModel.FechaNacimiento};
                 var resultado = await _userManager.CreateAsync(usuario, rgViewModel.Password);
 
                 if (resultado.Succeeded)
                 {
                     //Esta linea es para la asignacion del usuario que se registra al rol "Registrado"
-                    await _userManager.AddToRoleAsync(usuario, "Registrado");
+                    await _userManager.AddToRoleAsync(usuario, "Administrador");
 
                     await _signInManager.SignInAsync(usuario, isPersistent: false);
                     //return RedirectToAction("Index", "Home");
@@ -103,10 +103,10 @@ namespace ProyectoIdentity.Controllers
             }
 
             //Para la creacion de los registrado
-            if (!await _roleManager.RoleExistsAsync("Lector 15 libros"))
-            {
-                await _roleManager.CreateAsync(new IdentityRole("Lector 15 libros"));
-            }
+            //if (!await _roleManager.RoleExistsAsync("Lector 15 libros"))
+            //{
+            //    await _roleManager.CreateAsync(new IdentityRole("Lector 15 libros"));
+            //}
 
             //Para seleccion de rol
 
@@ -123,11 +123,11 @@ namespace ProyectoIdentity.Controllers
                 Text = "Administrador"
             });
 
-            listaRoles.Add(new SelectListItem()
-            {
-                Value = "Lector 15 libros",
-                Text = "Lector 15 libros"
-            });
+            //listaRoles.Add(new SelectListItem()
+            //{
+            //    Value = "Lector 15 libros",
+            //    Text = "Lector 15 libros"
+            //});
 
             ViewData["ReturnUrl"] = returnurl;
             RegistroViewModel registroVM = new RegistroViewModel() 
@@ -153,13 +153,13 @@ namespace ProyectoIdentity.Controllers
                     Email = rgViewModel.Email,
                     Nombre = rgViewModel.Nombre,
                     Url = rgViewModel.Url,
-                    CodigoPais = rgViewModel.CodigoPais,
+                    //CodigoPais = rgViewModel.CodigoPais,
                     Telefono = rgViewModel.Telefono,
                     Pais = rgViewModel.Pais,
                     Ciudad = rgViewModel.Ciudad,
                     Direccion = rgViewModel.Direccion,
                     FechaNacimiento = rgViewModel.FechaNacimiento,
-                    Estado = rgViewModel.Estado
+                    //Estado = rgViewModel.Estado
                 };
 
                 var resultado = await _userManager.CreateAsync(usuario, rgViewModel.Password);
@@ -171,10 +171,6 @@ namespace ProyectoIdentity.Controllers
                     {
                         await _userManager.AddToRoleAsync(usuario, "Administrador");
                     }
-                    else if (rgViewModel.RolSeleccionado == "Lector 15 libros")
-                    {
-                        await _userManager.AddToRoleAsync(usuario, "Lector 15 libros");
-                    }
                     else
                     {
                         await _userManager.AddToRoleAsync(usuario, "Registrado");
@@ -182,6 +178,7 @@ namespace ProyectoIdentity.Controllers
 
                     await _signInManager.SignInAsync(usuario, isPersistent: false);
                     return LocalRedirect(returnurl);
+
                 }
 
 
@@ -193,7 +190,7 @@ namespace ProyectoIdentity.Controllers
     {
         new SelectListItem { Value = "Registrado", Text = "Registrado" },
         new SelectListItem { Value = "Administrador", Text = "Administrador" },
-        new SelectListItem { Value = "Lector 15 libros", Text = "Lector 15 libros" }
+        //new SelectListItem { Value = "Lector 15 libros", Text = "Lector 15 libros" }
 
     };
 

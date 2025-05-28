@@ -236,7 +236,8 @@ namespace ProyectoIdentity.Migrations
 
                     b.Property<string>("Address")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("Descripcion")
                         .HasColumnType("nvarchar(max)");
@@ -249,7 +250,8 @@ namespace ProyectoIdentity.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("SucursalId")
                         .HasColumnType("int");
@@ -275,18 +277,16 @@ namespace ProyectoIdentity.Migrations
                     b.Property<int>("ProductoRecompensaId")
                         .HasColumnType("int");
 
-                    b.Property<int>("PuntosCanjeados")
+                    b.Property<int>("PuntosUtilizados")
                         .HasColumnType("int");
 
                     b.Property<string>("UsuarioId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ProductoRecompensaId");
-
-                    b.HasIndex("UsuarioId");
 
                     b.ToTable("HistorialCanjes", (string)null);
                 });
@@ -309,7 +309,10 @@ namespace ProyectoIdentity.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("Estado")
-                        .HasColumnType("nvarchar(max)");
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("Pendiente");
 
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("datetime2");
@@ -324,13 +327,15 @@ namespace ProyectoIdentity.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("UsuarioId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("PuntoRecoleccionId");
 
                     b.HasIndex("SucursalId");
+
+                    b.HasIndex("UsuarioId");
 
                     b.ToTable("Pedidos");
                 });
@@ -373,6 +378,7 @@ namespace ProyectoIdentity.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
                     b.Property<int?>("Cantidad")
+                        .IsRequired()
                         .HasColumnType("int");
 
                     b.Property<int>("PedidoId")
@@ -384,6 +390,9 @@ namespace ProyectoIdentity.Migrations
                     b.Property<int>("ProductoId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ProductoId1")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("Total")
                         .HasColumnType("decimal(18,2)");
 
@@ -392,6 +401,8 @@ namespace ProyectoIdentity.Migrations
                     b.HasIndex("PedidoId");
 
                     b.HasIndex("ProductoId");
+
+                    b.HasIndex("ProductoId1");
 
                     b.ToTable("PedidoProductos");
                 });
@@ -411,10 +422,12 @@ namespace ProyectoIdentity.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Categoria")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Descripcion")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<byte[]>("Imagen")
                         .HasColumnType("varbinary(max)");
@@ -423,7 +436,9 @@ namespace ProyectoIdentity.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")
-                        .HasColumnType("nvarchar(max)");
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int?>("PedidoId")
                         .HasColumnType("int");
@@ -450,12 +465,11 @@ namespace ProyectoIdentity.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
                     b.Property<string>("Categoria")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("Imagen")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<byte[]>("Imagen")
+                        .HasColumnType("varbinary(max)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -465,7 +479,7 @@ namespace ProyectoIdentity.Migrations
                     b.Property<decimal>("PrecioOriginal")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("ProductoId")
+                    b.Property<int?>("ProductoId")
                         .HasColumnType("int");
 
                     b.Property<int>("PuntosNecesarios")
@@ -487,20 +501,66 @@ namespace ProyectoIdentity.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
                     b.Property<string>("Direccion")
-                        .HasColumnType("nvarchar(max)");
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
-                    b.Property<double>("Latitud")
-                        .HasColumnType("float");
+                    b.Property<decimal>("Latitud")
+                        .HasColumnType("decimal(10,8)");
 
-                    b.Property<double>("Longitud")
-                        .HasColumnType("float");
+                    b.Property<decimal>("Longitud")
+                        .HasColumnType("decimal(11,8)");
 
                     b.Property<string>("Nombre")
-                        .HasColumnType("nvarchar(max)");
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
                     b.ToTable("Sucursales");
+                });
+
+            modelBuilder.Entity("ProyectoIdentity.Models.TransaccionPuntos", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("Fecha")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<int?>("PedidoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Puntos")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RecompensaId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("UsuarioId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId", "Fecha");
+
+                    b.ToTable("TransaccionesPuntos", (string)null);
                 });
 
             modelBuilder.Entity("ProyectoIdentity.Models.UsuarioPuntos", b =>
@@ -511,16 +571,23 @@ namespace ProyectoIdentity.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("PuntosAcumulados")
+                    b.Property<int>("PuntosActuales")
                         .HasColumnType("int");
+
+                    b.Property<int>("PuntosGanados")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PuntosGastados")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UltimaActualizacion")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("UsuarioId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("UsuarioId");
 
                     b.ToTable("UsuarioPuntos", (string)null);
                 });
@@ -530,34 +597,46 @@ namespace ProyectoIdentity.Migrations
                     b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUser");
 
                     b.Property<string>("Ciudad")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<int>("CodigoPais")
-                        .HasColumnType("int");
+                    b.Property<string>("CodigoPais")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("Direccion")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
-                    b.Property<bool>("Estado")
-                        .HasColumnType("bit");
+                    b.Property<string>("Estado")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<DateTime>("FechaNacimiento")
+                    b.Property<DateTime?>("FechaNacimiento")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Nombre")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Pais")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("Password")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("PuntosFidelidad")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.Property<string>("Telefono")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Url")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasIndex("PuntosFidelidad");
 
                     b.HasDiscriminator().HasValue("AppUsuario");
                 });
@@ -618,7 +697,7 @@ namespace ProyectoIdentity.Migrations
                     b.HasOne("ProyectoIdentity.Models.Sucursal", "Sucursal")
                         .WithMany()
                         .HasForeignKey("SucursalId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Sucursal");
@@ -632,15 +711,7 @@ namespace ProyectoIdentity.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "Usuario")
-                        .WithMany()
-                        .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("ProductoRecompensa");
-
-                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("ProyectoIdentity.Models.Pedido", b =>
@@ -652,8 +723,13 @@ namespace ProyectoIdentity.Migrations
                     b.HasOne("ProyectoIdentity.Models.Sucursal", "Sucursal")
                         .WithMany()
                         .HasForeignKey("SucursalId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("ProyectoIdentity.Models.AppUsuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("PuntoRecoleccion");
 
@@ -688,10 +764,14 @@ namespace ProyectoIdentity.Migrations
                         .IsRequired();
 
                     b.HasOne("ProyectoIdentity.Models.Producto", "Producto")
-                        .WithMany("PedidoProductos")
+                        .WithMany()
                         .HasForeignKey("ProductoId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("ProyectoIdentity.Models.Producto", null)
+                        .WithMany("PedidoProductos")
+                        .HasForeignKey("ProductoId1");
 
                     b.Navigation("Pedido");
 
@@ -712,21 +792,18 @@ namespace ProyectoIdentity.Migrations
                     b.HasOne("ProyectoIdentity.Models.Producto", "Producto")
                         .WithMany()
                         .HasForeignKey("ProductoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Producto");
                 });
 
-            modelBuilder.Entity("ProyectoIdentity.Models.UsuarioPuntos", b =>
+            modelBuilder.Entity("ProyectoIdentity.Models.TransaccionPuntos", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "Usuario")
+                    b.HasOne("ProyectoIdentity.Models.AppUsuario", null)
                         .WithMany()
                         .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("ProyectoIdentity.Models.Pedido", b =>

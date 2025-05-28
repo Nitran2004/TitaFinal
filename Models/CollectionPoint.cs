@@ -28,5 +28,7 @@ namespace ProyectoIdentity.Models
         // Relación con sucursal
         public int SucursalId { get; set; }
         public Sucursal Sucursal { get; set; }
+
+
     }
 }

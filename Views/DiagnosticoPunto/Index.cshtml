@@ -1,0 +1,267 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Diagnóstico de Sistema de Puntos</title>
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            color: black;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+            .data-table th, .data-table td {
+                padding: 8px;
+                text-align: left;
+                border-bottom: 1px solid #ddd;
+            }
+
+            .data-table th {
+                background-color: #f8f9fa;
+            }
+
+        .warning-box {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Diagnóstico del Sistema de Puntos</h1>
+
+        <div class="warning-box">
+            <strong>⚠️ Importante:</strong> Antes de hacer cambios, haz un respaldo de tu base de datos.
+            Estas operaciones pueden ser irreversibles.
+        </div>
+
+        <!-- Sección de Diagnóstico -->
+        <div class="section">
+            <h2>📊 Diagnóstico Actual</h2>
+            <p>Revisa el estado actual de los puntos en tu sistema:</p>
+            <button class="button btn-primary" onclick="diagnosticar()">🔍 Diagnosticar Estado Actual</button>
+            <div id="diagnostico-resultado"></div>
+        </div>
+
+        <!-- Sección de Soluciones -->
+        <div class="section">
+            <h2>🛠️ Opciones de Solución</h2>
+
+            <div style="margin-bottom: 20px;">
+                <h3>Opción 1: Limpiar Todo (Empezar de Cero)</h3>
+                <p><strong>Esto eliminará:</strong> Todos los puntos de usuarios, todas las transacciones, todo el historial de canjes.</p>
+                <button class="button btn-danger" onclick="limpiarTodo()">🗑️ Limpiar Todos los Puntos</button>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h3>Opción 2: Convertir a Nueva Escala</h3>
+                <p><strong>Esto convertirá:</strong> Los puntos existentes de la escala 175:1 a la nueva escala 30:1.</p>
+                <button class="button btn-warning" onclick="convertirEscala()">🔄 Convertir a Nueva Escala</button>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h3>Opción 3: Ajuste Manual por Usuario</h3>
+                <p><strong>Para casos específicos:</strong> Ajustar puntos de un usuario individual.</p>
+                <input type="text" id="usuario-id" placeholder="ID del Usuario" style="margin-right: 10px;">
+                <input type="number" id="nuevos-puntos" placeholder="Nuevos Puntos" style="margin-right: 10px;">
+                <button class="button btn-primary" onclick="ajustarUsuario()">✏️ Ajustar Usuario</button>
+            </div>
+
+            <div id="resultado-operacion"></div>
+        </div>
+    </div>
+
+    <script>
+        async function diagnosticar() {
+            try {
+                const response = await fetch('/DiagnosticoPuntos/DiagnosticarPuntos');
+                const data = await response.json();
+
+                let html = '<div class="result success"><h3>📋 Resultado del Diagnóstico:</h3>';
+
+                // Resumen de transacciones
+                html += '<h4>Resumen de Transacciones:</h4>';
+                if (data.resumenTransacciones && data.resumenTransacciones.length > 0) {
+                    html += '<table class="data-table"><tr><th>Tipo</th><th>Cantidad</th><th>Total Puntos</th></tr>';
+                    data.resumenTransacciones.forEach(item => {
+                        html += `<tr><td>${item.tipo}</td><td>${item.cantidad}</td><td>${item.totalPuntos}</td></tr>`;
+                    });
+                    html += '</table>';
+                }
+
+                // Usuarios con puntos
+                html += '<h4>Usuarios con Puntos:</h4>';
+                if (data.usuariosConPuntos && data.usuariosConPuntos.length > 0) {
+                    html += '<table class="data-table"><tr><th>Email</th><th>Puntos</th></tr>';
+                    data.usuariosConPuntos.forEach(user => {
+                        html += `<tr><td>${user.email || 'Sin email'}</td><td>${user.puntosFidelidad}</td></tr>`;
+                    });
+                    html += '</table>';
+                }
+
+                // Últimas transacciones
+                html += '<h4>Últimas 20 Transacciones:</h4>';
+                if (data.transaccionesPuntos && data.transaccionesPuntos.length > 0) {
+                    html += '<table class="data-table"><tr><th>Usuario</th><th>Puntos</th><th>Tipo</th><th>Descripción</th><th>Fecha</th></tr>';
+                    data.transaccionesPuntos.forEach(trans => {
+                        html += `<tr><td>${trans.usuarioId.substring(0, 8)}...</td><td>${trans.puntos}</td><td>${trans.tipo}</td><td>${trans.descripcion}</td><td>${new Date(trans.fecha).toLocaleDateString()}</td></tr>`;
+                    });
+                    html += '</table>';
+                }
+
+                html += '</div>';
+                document.getElementById('diagnostico-resultado').innerHTML = html;
+            } catch (error) {
+                document.getElementById('diagnostico-resultado').innerHTML =
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function limpiarTodo() {
+            if (!confirm('⚠️ ¿Estás COMPLETAMENTE seguro? Esto eliminará TODOS los puntos y transacciones. Esta acción NO se puede deshacer.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/DiagnosticoPuntos/LimpiarTodosPuntos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('resultado-operacion').innerHTML =
+                        `<div class="result success">✅ ${result.message}</div>`;
+                } else {
+                    document.getElementById('resultado-operacion').innerHTML =
+                        `<div class="result error">❌ ${result.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('resultado-operacion').innerHTML =
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function convertirEscala() {
+            if (!confirm('¿Confirmas convertir todos los puntos de la escala 175:1 a la nueva escala 30:1?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/DiagnosticoPuntos/ConvertirPuntosANuevaEscala', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('resultado-operacion').innerHTML =
+                        `<div class="result success">✅ ${result.message}<br>
+                                Usuarios afectados: ${result.usuariosAfectados}<br>
+                                Transacciones afectadas: ${result.transaccionesAfectadas}<br>
+                                Canjes afectados: ${result.canjesAfectados}</div>`;
+                } else {
+                    document.getElementById('resultado-operacion').innerHTML =
+                        `<div class="result error">❌ ${result.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('resultado-operacion').innerHTML =
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function ajustarUsuario() {
+            const usuarioId = document.getElementById('usuario-id').value;
+            const nuevosPuntos = document.getElementById('nuevos-puntos').value;
+
+            if (!usuarioId || !nuevosPuntos) {
+                alert('Por favor completa ambos campos');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/DiagnosticoPuntos/AjustarPuntosUsuario?usuarioId=${usuarioId}&nuevoPuntaje=${nuevosPuntos}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('resultado-operacion').innerHTML =
+                        `<div class="result success">✅ ${result.message}<br>
+                                Puntos anteriores: ${result.puntosAnteriores}<br>
+                                Puntos nuevos: ${result.puntosNuevos}<br>
+                                Diferencia: ${result.diferencia}</div>`;
+
+                    // Limpiar campos
+                    document.getElementById('usuario-id').value = '';
+                    document.getElementById('nuevos-puntos').value = '';
+                } else {
+                    document.getElementById('resultado-operacion').innerHTML =
+                        `<div class="result error">❌ ${result.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('resultado-operacion').innerHTML =
+                    `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

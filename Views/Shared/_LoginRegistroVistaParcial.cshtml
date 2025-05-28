@@ -2,55 +2,129 @@
 @inject SignInManager<IdentityUser> SignInManager
 @inject UserManager<IdentityUser> UserManager
 
-<ul class="navbar-nav ml-auto">
+<ul class="navbar-nav ms-auto">
     @if (SignInManager.IsSignedIn(User))
     {
         @if (User.IsInRole("Administrador"))
         {
             <li class="nav-item">
-                <a class="nav-link bold-link" asp-area="" asp-controller="Cuentas" asp-action="RegistroAdministrador"><strong>Tu rol es Administrador->> Registro Administrador</strong></a>
+                <a class="nav-link text-white" asp-area="" asp-controller="Cuentas" asp-action="RegistroAdministrador">
+                    <strong>Tu rol es Administrador → Registro Administrador</strong>
+                </a>
             </li>
         }
         else
         {
             <li class="nav-item">
-                <a class="nav-link">Tu rol es: Desarrollador</a>
+                <span class="nav-link text-white">Tu rol es: Registrado</span>
             </li>
         }
 
+        <!-- Enlace a Mis Puntos -->
+        <li class="nav-item">
+            <a class="nav-link text-white" asp-controller="Fidelizacion" asp-action="MisPuntos">
+                <i class="fas fa-star text-warning"></i> Mis Puntos
+            </a>
+        </li>
+
         <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDropdown" role="button"
+               data-bs-toggle="dropdown" aria-expanded="false">
                 Mi cuenta
             </a>
             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                <li class="nav-item">
-                    <a class="nav-link" style="color: black;" href="#">Hola, @UserManager.GetUserName(User)</a>
+                <li>
+                    <span class="dropdown-item-text">Hola, @UserManager.GetUserName(User)</span>
+                </li>
+                <!-- Mostrar puntos aquí -->
+                <li>
+                    <div class="dropdown-item-text bg-success text-white text-center" style="border-radius: 5px; margin: 5px;">
+                        <i class="fas fa-coins"></i> <span id="puntos-usuario">--- pts</span>
+                    </div>
                 </li>
                 <li>
                     <hr class="dropdown-divider">
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" style="color: black;" asp-area="" asp-controller="Usuarios" asp-action="EditarPerfil" asp-route-id="@UserManager.GetUserId(User)">Editar Perfil</a>
+                <li>
+                    <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="MisPuntos">
+                        <i class="fas fa-star text-warning"></i> Ver Mis Puntos
+                    </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" style="color: black;" asp-area="" asp-controller="Usuarios" asp-action="CambiarPassword">Cambiar Contraseña</a>
+                <li>
+                    <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="Recompensas">
+                        <i class="fas fa-gift text-info"></i> Mis Recompensas
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="Historial">
+                        <i class="fas fa-history text-secondary"></i> Historial Completo
+                    </a>
+                </li>
+
+                <!-- ✅ NUEVO: Sección de Acciones Rápidas -->
+                <li>
+                    <hr class="dropdown-divider">
+                </li>
+                <li>
+                    <h6 class="dropdown-header">
+                        <i class="fas fa-bolt text-primary"></i> Acciones Rápidas
+                    </h6>
+                </li>
+                <li>
+                    <a class="dropdown-item" asp-controller="Pedidos" asp-action="VerPedidoTemporal">
+                        <i class="fas fa-shopping-bag text-success"></i> Ver Mi Pedido
+                    </a>
+                </li>
+                <!-- ✅ NUEVO: Ver Mi Canje -->
+                <li>
+                    <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="VerCanjesTemporal">
+                        <i class="fas fa-gift text-danger"></i> Ver Mi Canje
+                    </a>
+                </li>
+                <li>
+                    <hr class="dropdown-divider">
+                </li>
+                <li>
+                    <a class="dropdown-item" asp-area="" asp-controller="Usuarios" asp-action="EditarPerfil"
+                       asp-route-id="@UserManager.GetUserId(User)">Editar Perfil</a>
+                </li>
+                <li>
+                    <a class="dropdown-item" asp-area="" asp-controller="Usuarios" asp-action="CambiarPassword">
+                        Cambiar Contraseña
+                    </a>
                 </li>
             </ul>
         </li>
-
         <li class="nav-item">
-            <form id="logoutForm" method="post" class="form-inline" asp-controller="Cuentas" asp-action="SalirAplicacion">
-                <button type="submit" class="btn">Salir</button>
+            <form id="logoutForm" method="post" class="d-inline" asp-controller="Cuentas" asp-action="SalirAplicacion">
+                <button type="submit" class="btn btn-outline-light">Salir</button>
             </form>
         </li>
     }
     else
     {
         <li class="nav-item">
-            <a class="nav-link bold-link" asp-area="" asp-controller="Cuentas" asp-action="Registro">Registro</a>
+            <a class="nav-link text-white" asp-area="" asp-controller="Cuentas" asp-action="Registro">Registro</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link bold-link" asp-area="" asp-controller="Cuentas" asp-action="Acceso">Iniciar Sesión</a>
+            <a class="nav-link text-white" asp-area="" asp-controller="Cuentas" asp-action="Acceso">Iniciar Sesión</a>
         </li>
     }
 </ul>
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <script>
+        // Cargar puntos del usuario al inicializar
+        document.addEventListener('DOMContentLoaded', function () {
+            fetch('@Url.Action("ObtenerPuntos", "Fidelizacion")')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('puntos-usuario').textContent = data.puntos + ' pts';
+                })
+                .catch(error => {
+                    document.getElementById('puntos-usuario').textContent = '0 pts';
+                });
+        });
+    </script>
+}

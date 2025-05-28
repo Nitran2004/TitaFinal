@@ -8,15 +8,17 @@ namespace ProyectoIdentity.Models
 {
     public class UsuarioPuntos
     {
-        [Key]
         public int Id { get; set; }
 
         [Required]
-        public string UsuarioId { get; set; }
+        public string UsuarioId { get; set; } = string.Empty;
 
-        public int PuntosAcumulados { get; set; }
+        public int PuntosActuales { get; set; } = 0;
 
-        [ForeignKey("UsuarioId")]
-        public virtual IdentityUser Usuario { get; set; }
+        public int PuntosGanados { get; set; } = 0;
+
+        public int PuntosGastados { get; set; } = 0;
+
+        public DateTime UltimaActualizacion { get; set; } = DateTime.Now;
     }
 }

@@ -12,9 +12,10 @@ namespace ProyectoIdentity.Models
     /// </summary>
     public class CarritoItem
     {
-        public string Id { get; set; }
-        public string Nombre { get; set; }
+        public string Id { get; set; } = string.Empty;
+        public string Nombre { get; set; } = string.Empty;
         public decimal Precio { get; set; }
         public int Cantidad { get; set; }
+        public string? Imagen { get; set; }
     }
 }

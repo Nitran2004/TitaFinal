@@ -1,0 +1,427 @@
+﻿@model ProyectoIdentity.Models.HistorialCompletoViewModel
+@{
+    ViewData["Title"] = "Mi Historial Completo";
+}
+
+<div class="container mt-4">
+    <!-- Header con información del usuario -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2><i class="fas fa-user-circle"></i> Mi Historial de Fidelidad</h2>
+                            <p class="mb-0">Hola @Model.Usuario.Nombre, aquí tienes tu actividad completa</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <h3 class="mb-0">@Model.PuntosActuales <small>puntos actuales</small></h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas resumen -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <i class="fas fa-shopping-cart fa-2x text-success mb-2"></i>
+                    <h4 class="text-success">@Model.TotalPedidosRealizados</h4>
+                    <small class="text-muted">Pedidos Realizados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-info">
+                <div class="card-body">
+                    <i class="fas fa-dollar-sign fa-2x text-info mb-2"></i>
+                    <h4 class="text-info">$@(Model.TotalGastado.ToString("F2"))</h4>
+                    <small class="text-muted">Total Gastado</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-warning">
+                <div class="card-body">
+                    <i class="fas fa-star fa-2x text-warning mb-2"></i>
+                    <h4 class="text-warning">@Model.TotalPuntosGanados</h4>
+                    <small class="text-muted">Puntos Ganados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center border-danger">
+                <div class="card-body">
+                    <i class="fas fa-gift fa-2x text-danger mb-2"></i>
+                    <h4 class="text-danger">@Model.TotalRecompensasCanjeadas</h4>
+                    <small class="text-muted">Recompensas Canjeadas</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegación por pestañas -->
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" id="historialTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="pedidos-tab" data-bs-toggle="tab" data-bs-target="#pedidos" type="button" role="tab">
+                        <i class="fas fa-shopping-bag"></i> Mis Pedidos (@Model.Pedidos.Count)
+                    </button>
+                </li>
+                <!-- ✅ NUEVA PESTAÑA: Mis Canjes -->
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="mis-canjes-tab" data-bs-toggle="tab" data-bs-target="#mis-canjes" type="button" role="tab">
+                        <i class="fas fa-ticket-alt"></i> Mis Canjes (@Model.CanjesConCodigos.Count)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="canjes-tab" data-bs-toggle="tab" data-bs-target="#canjes" type="button" role="tab">
+                        <i class="fas fa-gift"></i> Recompensas Canjeadas (@Model.CanjesRecompensas.Count)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="transacciones-tab" data-bs-toggle="tab" data-bs-target="#transacciones" type="button" role="tab">
+                        <i class="fas fa-exchange-alt"></i> Movimientos de Puntos (@Model.TransaccionesPuntos.Count)
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body">
+            <div class="tab-content" id="historialTabsContent">
+
+                <!-- TAB: MIS PEDIDOS -->
+                <div class="tab-pane fade show active" id="pedidos" role="tabpanel">
+                    @if (Model.Pedidos.Any())
+                    {
+                        <div class="row">
+                            @foreach (var pedido in Model.Pedidos)
+                            {
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-left-primary">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-receipt"></i> Pedido #@pedido.Id
+                                                    </h6>
+                                                    <p class="text-muted mb-1">
+                                                        <i class="fas fa-calendar"></i> @pedido.Fecha.ToString("dd/MM/yyyy HH:mm")
+                                                    </p>
+                                                    <p class="text-muted mb-1">
+                                                        <i class="fas fa-map-marker-alt"></i> @pedido.Sucursal?.Nombre
+                                                    </p>
+                                                </div>
+                                                <div class="text-end">
+                                                    <span class="badge bg-@(pedido.Estado == "Entregado" ? "success" : pedido.Estado == "Preparándose" ? "warning" : "info")">
+                                                        @pedido.Estado
+                                                    </span>
+                                                    <h5 class="text-primary mt-1">$@pedido.Total.ToString("F2")</h5>
+                                                    <small class="text-success">+@((int)(pedido.Total * 30)) pts</small>
+                                                </div>
+                                            </div>
+
+                                            <!-- Productos del pedido -->
+                                            <div class="mt-2">
+                                                <small class="text-muted"><strong>Productos:</strong></small>
+                                                <ul class="list-unstyled mb-2">
+                                                    @if (pedido.PedidoProductos != null && pedido.PedidoProductos.Any())
+                                                    {
+                                                        @foreach (var item in pedido.PedidoProductos.Take(3))
+                                                        {
+                                                            <li class="small">• @item.Producto?.Nombre <span class="text-muted">(x@item.Cantidad)</span></li>
+                                                        }
+                                                        @if (pedido.PedidoProductos.Count > 3)
+                                                        {
+                                                            <li class="small text-muted">... y @(pedido.PedidoProductos.Count - 3) más</li>
+                                                        }
+                                                    }
+                                                </ul>
+                                            </div>
+
+                                            <div class="text-end">
+                                                <a href="@Url.Action("Resumen", "Pedidos", new { id = pedido.Id })" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-eye"></i> Ver Detalle
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Aún no has realizado ningún pedido</h5>
+                            <p class="text-muted">¡Haz tu primer pedido y comienza a ganar puntos!</p>
+                            <a href="@Url.Action("SeleccionMultiple", "Productos")" class="btn btn-primary">
+                                <i class="fas fa-shopping-cart"></i> Hacer Pedido
+                            </a>
+                        </div>
+                    }
+                </div>
+
+                <!-- ✅ NUEVA PESTAÑA: MIS CANJES CON CÓDIGOS -->
+                <div class="tab-pane fade" id="mis-canjes" role="tabpanel">
+                    @if (Model.CanjesConCodigos.Any())
+                    {
+                        <div class="row">
+                            @foreach (var canjeGrupo in Model.CanjesConCodigos)
+                            {
+                                <div class="col-md-6 mb-3">
+                                    <div class="card border-left-success">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <h6 class="card-title">
+                                                        <i class="fas fa-ticket-alt text-success"></i>
+                                                        @if (canjeGrupo.EsCanjeMultiple)
+                                                        {
+                                                            <span>Canje Múltiple</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>Canje Individual</span>
+                                                        }
+                                                    </h6>
+                                                    <p class="text-muted mb-1">
+                                                        <i class="fas fa-calendar"></i> @canjeGrupo.FechaCanje.ToString("dd/MM/yyyy HH:mm")
+                                                    </p>
+                                                    <p class="text-muted mb-1">
+                                                        <i class="fas fa-barcode"></i> <strong>@canjeGrupo.CodigoCanje</strong>
+                                                    </p>
+                                                </div>
+                                                <div class="text-end">
+                                                    <span class="badge bg-success">@canjeGrupo.EstadoCanje</span>
+                                                    <h5 class="text-danger mt-1">-@canjeGrupo.TotalPuntosUtilizados pts</h5>
+                                                    <small class="text-muted">@canjeGrupo.CantidadRecompensas recompensa(s)</small>
+                                                </div>
+                                            </div>
+
+                                            <!-- Recompensas canjeadas en este grupo -->
+                                            <div class="mt-2">
+                                                <small class="text-muted"><strong>Recompensas canjeadas:</strong></small>
+                                                <ul class="list-unstyled mb-2">
+                                                    @foreach (var canje in canjeGrupo.CanjesDelGrupo.Take(3))
+                                                    {
+                                                        <li class="small d-flex align-items-center mb-1">
+                                                            @if (canje.ProductoRecompensa?.Producto?.Imagen != null)
+                                                            {
+                                                                <img src="@canje.ProductoRecompensa.Producto.Imagen" alt="@canje.ProductoRecompensa.Nombre"
+                                                                     class="me-2 rounded" style="width: 20px; height: 20px; object-fit: cover;">
+                                                            }
+                                                            • @canje.ProductoRecompensa?.Nombre
+                                                            <span class="text-danger ms-1">(-@canje.PuntosUtilizados pts)</span>
+                                                        </li>
+                                                    }
+                                                    @if (canjeGrupo.CanjesDelGrupo.Count > 3)
+                                                    {
+                                                        <li class="small text-muted">... y @(canjeGrupo.CanjesDelGrupo.Count - 3) más</li>
+                                                    }
+                                                </ul>
+                                            </div>
+
+                                            <div class="text-end">
+                                                <a href="@Url.Action("VerCanjesTemporal", "Fidelizacion")" class="btn btn-sm btn-outline-success">
+                                                    <i class="fas fa-eye"></i> Ver Detalle Completo
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-ticket-alt fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No has realizado ningún canje aún</h5>
+                            <p class="text-muted">¡Acumula puntos y canjea increíbles recompensas!</p>
+                            <a href="@Url.Action("Recompensas", "Fidelizacion")" class="btn btn-success">
+                                <i class="fas fa-gift"></i> Ver Recompensas
+                            </a>
+                        </div>
+                    }
+                </div>
+
+                <!-- TAB: RECOMPENSAS CANJEADAS (Original - mantenido para compatibilidad) -->
+                <div class="tab-pane fade" id="canjes" role="tabpanel">
+                    @if (Model.CanjesRecompensas.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th><i class="fas fa-gift"></i> Recompensa</th>
+                                        <th><i class="fas fa-tag"></i> Categoría</th>
+                                        <th><i class="fas fa-star"></i> Puntos Usados</th>
+                                        <th><i class="fas fa-calendar"></i> Fecha Canje</th>
+                                        <th><i class="fas fa-dollar-sign"></i> Valor Original</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var canje in Model.CanjesRecompensas)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    @if (canje.ProductoRecompensa?.Producto?.Imagen != null && canje.ProductoRecompensa.Producto.Imagen.Length > 0)
+                                                    {
+                                                        <img src="@canje.ProductoRecompensa.Imagen" alt="@canje.ProductoRecompensa.Nombre"
+                                                             class="me-2 rounded" style="width: 40px; height: 40px; object-fit: cover;">
+                                                    }
+                                                    <div>
+                                                        <strong>@canje.ProductoRecompensa?.Nombre</strong>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@canje.ProductoRecompensa?.Categoria</span>
+                                            </td>
+                                            <td>
+                                                <span class="text-danger fw-bold">-@canje.PuntosUtilizados pts</span>
+                                            </td>
+                                            <td>@canje.FechaCanje.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>
+                                                <span class="text-success">$@(canje.ProductoRecompensa?.PrecioOriginal.ToString("F2") ?? "0.00")</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-gift fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No has canjeado recompensas aún</h5>
+                            <p class="text-muted">¡Acumula más puntos y canjea increíbles recompensas!</p>
+                            <a href="@Url.Action("Recompensas", "Fidelizacion")" class="btn btn-success">
+                                <i class="fas fa-gift"></i> Ver Recompensas
+                            </a>
+                        </div>
+                    }
+                </div>
+
+                <!-- TAB: MOVIMIENTOS DE PUNTOS -->
+                <div class="tab-pane fade" id="transacciones" role="tabpanel">
+                    @if (Model.TransaccionesPuntos.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th><i class="fas fa-exchange-alt"></i> Tipo</th>
+                                        <th><i class="fas fa-star"></i> Puntos</th>
+                                        <th><i class="fas fa-info-circle"></i> Descripción</th>
+                                        <th><i class="fas fa-calendar"></i> Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var transaccion in Model.TransaccionesPuntos)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @if (transaccion.Tipo == "Ganancia")
+                                                {
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-plus"></i> Ganancia
+                                                    </span>
+                                                }
+                                                else if (transaccion.Tipo == "Canje")
+                                                {
+                                                    <span class="badge bg-danger">
+                                                        <i class="fas fa-minus"></i> Canje
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-info">
+                                                        <i class="fas fa-edit"></i> @transaccion.Tipo
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="fw-bold @(transaccion.Puntos > 0 ? "text-success" : "text-danger")">
+                                                    @(transaccion.Puntos > 0 ? "+" : "")@transaccion.Puntos pts
+                                                </span>
+                                            </td>
+                                            <td>@transaccion.Descripcion</td>
+                                            <td>@transaccion.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No hay movimientos de puntos</h5>
+                            <p class="text-muted">Realiza pedidos para comenzar a ganar puntos</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="row mt-4">
+        <div class="col-md-4 mb-2">
+            <a href="@Url.Action("MisPuntos", "Fidelizacion")" class="btn btn-primary w-100">
+                <i class="fas fa-star"></i> Ver Mis Puntos
+            </a>
+        </div>
+        <div class="col-md-4 mb-2">
+            <a href="@Url.Action("Recompensas", "Fidelizacion")" class="btn btn-success w-100">
+                <i class="fas fa-gift"></i> Ver Recompensas
+            </a>
+        </div>
+        <div class="col-md-4 mb-2">
+            <a href="@Url.Action("SeleccionMultiple", "Productos")" class="btn btn-info w-100">
+                <i class="fas fa-shopping-cart"></i> Hacer Pedido
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .border-left-primary {
+        border-left: 4px solid #007bff !important;
+    }
+
+    .border-left-success {
+        border-left: 4px solid #28a745 !important;
+    }
+
+    .tab-content {
+        min-height: 400px;
+    }
+
+    .card-body {
+        transition: transform 0.2s;
+    }
+
+    .card:hover .card-body {
+        transform: translateY(-2px);
+    }
+
+    .table th {
+        border-top: none;
+        font-weight: 600;
+    }
+
+    .badge {
+        font-size: 0.75em;
+    }
+</style>

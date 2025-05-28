@@ -1,6 +1,8 @@
 ﻿@model ProyectoIdentity.Models.Producto
 @{
     ViewData["Title"] = Model.Nombre;
+    // Calcular puntos que ganará (175 puntos por dólar)
+    int puntosAGanar = (int)(Model.Precio * 175);
 }
 
 <style>
@@ -58,9 +60,30 @@
     }
 
     .product-points {
-        color: #555;
+        background: linear-gradient(45deg, #28a745, #20c997);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 20px;
+        font-size: 1.1em;
+        font-weight: bold;
         margin-bottom: 20px;
-        font-size: 0.95em;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        animation: pulse 2s infinite;
+    }
+
+    keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+    }
+
+    .points-breakdown {
+        background: #f8f9fa;
+        border-left: 4px solid #28a745;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 0 10px 10px 0;
     }
 
     .quantity-control {
@@ -215,16 +238,6 @@
                 border-bottom: none;
             }
 
-    /* Responsive */
-    media (max-width: 768px) {
-        .product-header
-
-    {
-        flex-direction: column;
-    }
-
-    }
-
     .btn-ar {
         background-color: #ff4081;
         color: white;
@@ -243,6 +256,12 @@
             background-color: #e91e63;
         }
 
+    /* Responsive */
+    media (max-width: 768px) {
+        .product-header {
+            flex-direction: column;
+        }
+    }
 </style>
 
 <div class="product-container">
@@ -263,21 +282,25 @@
             <p class="product-description">@Model.Descripcion</p>
 
             <div class="product-price">Precio: $@Model.Precio</div>
+            
+            <!-- Mostrar puntos que ganará -->
+            <div class="product-points">
+                <i class="fas fa-star"></i> ¡Ganas @puntosAGanar puntos con este producto!
+            </div>
+            
+            <!-- Desglose de puntos -->
+            <div class="points-breakdown">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle"></i> <strong>Desglose de puntos:</strong><br>
+                    $@Model.Precio × 175 puntos por dólar = @puntosAGanar puntos<br>
+                    <em>Cada dólar que gastes te da 175 puntos de fidelidad</em>
+                </small>
+            </div>
+
             <button type="button" class="btn-ar" id="view-ar-btn" onclick="location.href='@Url.Action("VistaAR", "RealidadAumentada", new { id = Model.Id })'">
                 Ver en Realidad Aumentada
                 <i class="fas fa-cube ml-2"></i>
             </button>
-          @*   <div class="product-points">Ganas @(Model.Precio * 100) pts</div> *@
-
-@*             <div class="quantity-control">
-                <button type="button" class="quantity-btn" id="decrease-btn">-</button>
-                <input type="number" id="cantidad" value="1" min="1" class="quantity-input" />
-                <button type="button" class="quantity-btn" id="increase-btn">+</button>
-            </div> *@
-
-@*             <button type="button" class="btn-cart" id="add-to-cart-btn">
-                Añadir al carrito
-            </button> *@
         </div>
     </div>
 
@@ -349,59 +372,6 @@
 </div>
 
 <script>
-    // Control de cantidad
-    // document.getElementById('decrease-btn').addEventListener('click', function () {
-    //     var input = document.getElementById('cantidad');
-    //     var value = parseInt(input.value);
-    //     if (value > 1) {
-    //         input.value = value - 1;
-    //     }
-    // });
-
-    // document.getElementById('increase-btn').addEventListener('click', function () {
-    //     var input = document.getElementById('cantidad');
-    //     var value = parseInt(input.value);
-    //     input.value = value + 1;
-    // });
-
-    // Añadir al carrito
-    // document.getElementById('add-to-cart-btn').addEventListener('click', function () {
-    //     var cantidad = parseInt(document.getElementById('cantidad').value);
-    //     var productId = '@Model.Id';
-    //     var productName = '@Model.Nombre';
-    //     var productPrice = @Model.Precio;
-
-    //     // Obtener carrito actual
-    //     var carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-
-    //     // Verificar si el producto ya está en el carrito
-    //     var existingIndex = carrito.findIndex(item => item.id === productId);
-
-    //     if (existingIndex >= 0) {
-    //         // Si ya existe, aumentar cantidad
-    //         carrito[existingIndex].cantidad += cantidad;
-    //     } else {
-    //         // Si no existe, añadir nuevo
-    //         carrito.push({
-    //             id: productId,
-    //             nombre: productName,
-    //             precio: productPrice,
-    //             cantidad: cantidad
-    //         });
-    //     }
-
-    //     // Guardar carrito actualizado
-    //     localStorage.setItem('carrito', JSON.stringify(carrito));
-
-    //     // Actualizar contador carrito (si existe la función)
-    //     if (window.actualizarContadorCarrito) {
-    //         window.actualizarContadorCarrito();
-    //     }
-
-    //     // Notificar al usuario
-    //     alert(cantidad + ' ' + productName + ' añadido(s) al carrito');
-    // });
-
     // Acordeón
     document.querySelectorAll('.accordion-header').forEach(function (header) {
         header.addEventListener('click', function () {

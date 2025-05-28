@@ -2,7 +2,8 @@
 {
     public class OrderRequest
     {
-        public List<CartItem> Cart { get; set; }
+        public List<CartItem> Cart { get; set; } = new List<CartItem>();  // ✅ Solo una propiedad Cart
+
         public int CollectionPointId { get; set; }
     }
     public class CartItem

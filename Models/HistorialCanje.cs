@@ -8,22 +8,18 @@ namespace ProyectoIdentity.Models
 {
     public class HistorialCanje
     {
-        [Key]
         public int Id { get; set; }
 
         [Required]
-        public string UsuarioId { get; set; }
+        public string UsuarioId { get; set; } = string.Empty;
 
         public int ProductoRecompensaId { get; set; }
 
-        public int PuntosCanjeados { get; set; }
+        public int PuntosUtilizados { get; set; }
 
-        public DateTime FechaCanje { get; set; }
+        public DateTime FechaCanje { get; set; } = DateTime.Now;
 
-        [ForeignKey("UsuarioId")]
-        public virtual IdentityUser Usuario { get; set; }
-
-        [ForeignKey("ProductoRecompensaId")]
-        public virtual ProductoRecompensa ProductoRecompensa { get; set; }
+        // Navegación
+        public virtual ProductoRecompensa? ProductoRecompensa { get; set; }
     }
 }

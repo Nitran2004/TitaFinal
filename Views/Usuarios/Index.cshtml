@@ -26,6 +26,7 @@
                                     <th>@Html.DisplayNameFor(m => Model.First().Telefono)</th>
                                     <th>@Html.DisplayNameFor(m => Model.First().Rol)</th>
                                     <th>Contraseña</th> <!-- Cambiado para evitar problemas con la propiedad Password -->
+                                    <th>@Html.DisplayNameFor(m => Model.First().PuntosFidelidad)</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -37,6 +38,7 @@
                                         <td>@Html.DisplayFor(m => item.Email)</td>
                                         <td>@Html.DisplayFor(m => item.Telefono)</td>
                                         <td>@Html.DisplayFor(m => item.Rol)</td>
+                                        <td>@Html.DisplayFor(m => item.PuntosFidelidad)</td>
                                         <td>@Html.DisplayFor(m => item.PasswordHash)</td>
                                         <td>
                                             <div class="text-center">

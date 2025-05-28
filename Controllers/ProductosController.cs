@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Proyecto1_MZ_MJ.Controllers
 {
@@ -46,6 +47,9 @@ namespace Proyecto1_MZ_MJ.Controllers
         //}
         // GET: /Productos/SeleccionMultiple?categoria=Pizza
         // GET: /Productos/SeleccionMultiple?categoria=Pizza
+
+        [Authorize(Roles = "Administrador, Registrado")]
+
         public async Task<IActionResult> SeleccionMultiple(string categoria = null)
         {
             // Obtener todos los productos
@@ -72,6 +76,7 @@ namespace Proyecto1_MZ_MJ.Controllers
             return View(productos);
         }
 
+        ////[Authorize(Roles = "Administrador, Registrado")]
 
         // Método para agregar productos seleccionados al carrito y seguir comprando
         [HttpPost]
@@ -197,36 +202,55 @@ namespace Proyecto1_MZ_MJ.Controllers
         //    return RedirectToAction("Seleccionar", "Recoleccion");
         //}
 
+        // En ProductosController.cs - Método corregido
+        //[Authorize(Roles = "Administrador,Registrado")] // Sin espacios después de la coma
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult ProcesarSeleccionMultiple(List<ProductoSeleccionado> seleccionados)
         {
-            if (seleccionados == null)
+            try
             {
-                return RedirectToAction("SeleccionMultiple", "Productos");
+                if (seleccionados == null || !seleccionados.Any())
+                {
+                    TempData["Error"] = "No se recibieron productos para procesar";
+                    return RedirectToAction("SeleccionMultiple");
+                }
+
+                // Filtrar solo los productos seleccionados
+                var productosSeleccionados = seleccionados
+                    .Where(s => s.Seleccionado && s.Cantidad > 0)
+                    .ToList();
+
+                if (productosSeleccionados.Count == 0)
+                {
+                    TempData["Error"] = "No se seleccionaron productos válidos";
+                    return RedirectToAction("SeleccionMultiple");
+                }
+
+                // Crear una lista de objetos serializables
+                var elementosParaGuardar = productosSeleccionados
+                    .Select(p => new ElementoCarrito
+                    {
+                        ProductoId = p.ProductoId,
+                        Cantidad = p.Cantidad
+                    })
+                    .ToList();
+
+                // Serializar la lista para guardarla en TempData
+                TempData["ProductosSeleccionados"] = JsonConvert.SerializeObject(elementosParaGuardar);
+
+                // Mantener los datos en TempData hasta que se usen
+                TempData.Keep("ProductosSeleccionados");
+
+                // Redireccionar correctamente a Recoleccion/Seleccionar
+                return RedirectToAction("Seleccionar", "Recoleccion");
             }
-
-            // Filtrar solo los productos seleccionados
-            var productosSeleccionados = seleccionados
-                .Where(s => s.Seleccionado)
-                .ToList();
-
-            if (productosSeleccionados.Count == 0)
+            catch (Exception ex)
             {
-                // Si no hay productos seleccionados, regresar a la vista
-                return RedirectToAction("SeleccionMultiple", "Productos");
+                // Log del error para debugging
+                TempData["Error"] = "Ocurrió un error al procesar la selección: " + ex.Message;
+                return RedirectToAction("SeleccionMultiple");
             }
-
-            // Crear una lista de objetos serializables
-            var elementosParaGuardar = productosSeleccionados
-                .Select(p => new ElementoCarrito { ProductoId = p.ProductoId, Cantidad = p.Cantidad })
-                .ToList();
-
-            // Serializar la lista para guardarla en TempData
-            TempData["ProductosSeleccionados"] = JsonConvert.SerializeObject(elementosParaGuardar);
-
-            // CORRECCIÓN: Volver al flujo original que dirije a Recoleccion/Seleccionar
-            return RedirectToAction("Seleccionar", "Recoleccion");
         }
 
 

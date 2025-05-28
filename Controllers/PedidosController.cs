@@ -165,67 +165,21 @@ public class PedidosController : Controller
         return RedirectToAction("Resumen", new { id = pedido.Id });
     }
 
-    [HttpPost]
-    public async Task<IActionResult> CrearPedido([FromBody] List<PedidoDetalle> detalles)
-    {
-        if (detalles == null || !detalles.Any())
-            return BadRequest("Carrito vacío");
 
-        // Obtenemos la sucursal seleccionada de la sesión
-        var sucursalId = HttpContext.Session.GetInt32("SucursalSeleccionada");
 
-        // Si no hay sucursal seleccionada, intentamos obtener la primera sucursal
-        if (sucursalId == null)
-        {
-            var primeraSucursal = await _context.Sucursales.FirstOrDefaultAsync();
-            if (primeraSucursal != null)
-            {
-                sucursalId = primeraSucursal.Id;
-                HttpContext.Session.SetInt32("SucursalSeleccionada", sucursalId.Value);
-            }
-            else
-            {
-                return BadRequest("No se ha seleccionado una sucursal y no hay sucursales disponibles.");
-            }
-        }
-
-        var pedido = new Pedido
-        {
-            Fecha = DateTime.Now,
-            SucursalId = sucursalId.Value,
-            PedidoProductos = new List<PedidoProducto>()
-        };
-
-        // Calcular el total y agregar productos
-        decimal totalCalculado = 0;
-        foreach (var detalle in detalles)
-        {
-            var producto = await _context.Productos.FindAsync(detalle.ProductoId);
-            if (producto != null)
-            {
-                decimal subtotal = detalle.Cantidad * detalle.PrecioUnitario;
-                totalCalculado += subtotal;
-
-                pedido.PedidoProductos.Add(new PedidoProducto
-                {
-                    ProductoId = detalle.ProductoId,
-                    Cantidad = detalle.Cantidad,
-                    Precio = detalle.PrecioUnitario
-                });
-            }
-        }
-
-        pedido.Total = totalCalculado;
-
-        _context.Pedidos.Add(pedido);
-        await _context.SaveChangesAsync();
-
-        return Ok(new { mensaje = "Pedido creado exitosamente", pedido.Id });
-    }
+    // REEMPLAZA tu método AgregarSeleccionados con este:
 
     [HttpPost]
     public async Task<IActionResult> AgregarSeleccionados(List<ProductoSeleccionadoInput> seleccionados)
     {
+        // ✅ AGREGAR LOGS DE DEBUG
+        Console.WriteLine($"[DEBUG] AgregarSeleccionados - Usuario autenticado: {User.Identity.IsAuthenticated}");
+        if (User.Identity.IsAuthenticated)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Console.WriteLine($"[DEBUG] AgregarSeleccionados - UsuarioId: {userId}");
+        }
+
         var seleccionadosValidos = seleccionados
             .Where(p => p.Seleccionado && p.Cantidad > 0)
             .ToList();
@@ -255,8 +209,11 @@ public class PedidosController : Controller
         {
             Fecha = DateTime.Now,
             SucursalId = sucursal.Id,
-            PedidoProductos = new List<PedidoProducto>()
+            PedidoProductos = new List<PedidoProducto>(),
+            UsuarioId = User.Identity.IsAuthenticated ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null // ✅ AGREGAR ESTA LÍNEA
         };
+
+        Console.WriteLine($"[DEBUG] AgregarSeleccionados - Pedido creado con UsuarioId: {pedido.UsuarioId}");
 
         decimal total = 0;
 
@@ -281,6 +238,19 @@ public class PedidosController : Controller
 
         _context.Pedidos.Add(pedido);
         await _context.SaveChangesAsync();
+
+        Console.WriteLine($"[DEBUG] AgregarSeleccionados - Pedido guardado. Total: {total}");
+
+        // ✅ AGREGAR PUNTOS AL USUARIO SI ESTÁ AUTENTICADO
+        if (User.Identity.IsAuthenticated && total > 0)
+        {
+            Console.WriteLine($"[DEBUG] AgregarSeleccionados - Llamando AgregarPuntosAUsuario");
+            await AgregarPuntosAUsuario(pedido.UsuarioId, total);
+        }
+        else
+        {
+            Console.WriteLine($"[DEBUG] AgregarSeleccionados - NO se agregaron puntos - Autenticado: {User.Identity.IsAuthenticated}, Total: {total}");
+        }
 
         // Guardar ID del pedido en una cookie por 30 minutos
         CookieOptions options = new CookieOptions
@@ -503,6 +473,8 @@ public class PedidosController : Controller
     [HttpPost]
     public async Task<IActionResult> ConfirmarPedido(int? sucursalId, string direccionEntrega = null)
     {
+        Console.WriteLine($"[DEBUG] ConfirmarPedido - Usuario autenticado: {User.Identity.IsAuthenticated}");
+
         var pedidoJson = TempData["PedidoPendiente"] as string;
         if (string.IsNullOrEmpty(pedidoJson))
         {
@@ -551,16 +523,12 @@ public class PedidosController : Controller
         {
             Fecha = DateTime.Now,
             Estado = "Pendiente",
-            SucursalId = sucursalIdValor, // Ahora siempre es un valor int válido, no nullable
-            PedidoProductos = new List<PedidoProducto>()
+            SucursalId = sucursalIdValor,
+            PedidoProductos = new List<PedidoProducto>(),
+            UsuarioId = User.Identity.IsAuthenticated ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null // ✅ AGREGAR ESTA LÍNEA
         };
 
-        // Asignar usuario
-        if (User.Identity.IsAuthenticated)
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            pedido.UsuarioId = userId;
-        }
+        Console.WriteLine($"[DEBUG] ConfirmarPedido - Pedido creado con UsuarioId: {pedido.UsuarioId}");
 
         // Agregar productos al pedido
         decimal totalCalculado = 0;
@@ -590,6 +558,19 @@ public class PedidosController : Controller
         // Guardar en la base de datos
         _context.Pedidos.Add(pedido);
         await _context.SaveChangesAsync();
+
+        Console.WriteLine($"[DEBUG] ConfirmarPedido - Pedido guardado. Total: {totalCalculado}");
+
+        // ✅ AGREGAR PUNTOS AL USUARIO SI ESTÁ AUTENTICADO
+        if (User.Identity.IsAuthenticated && totalCalculado > 0)
+        {
+            Console.WriteLine($"[DEBUG] ConfirmarPedido - Llamando AgregarPuntosAUsuario");
+            await AgregarPuntosAUsuario(pedido.UsuarioId, totalCalculado);
+        }
+        else
+        {
+            Console.WriteLine($"[DEBUG] ConfirmarPedido - NO se agregaron puntos - Autenticado: {User.Identity.IsAuthenticated}, Total: {totalCalculado}");
+        }
 
         // Redirigir a la página de confirmación
         return RedirectToAction("Resumen", new { id = pedido.Id });
@@ -800,8 +781,6 @@ public class PedidosController : Controller
             return BadRequest("No se especificaron productos para el pedido");
         }
 
-        // Verificar si CollectionPointId es mayor que cero
-        // Usar cast explícito o valor por defecto si es necesario
         if (request.CollectionPointId <= 0)
         {
             return BadRequest("No se especificó un punto de recolección válido");
@@ -812,31 +791,24 @@ public class PedidosController : Controller
         {
             Fecha = DateTime.Now,
             Estado = "Preparándose",
-            PedidoProductos = new List<PedidoProducto>()
+            PedidoProductos = new List<PedidoProducto>(),
+            UsuarioId = User.Identity.IsAuthenticated ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null
         };
 
         // Buscar punto de recolección
-        // Aquí asumo que CollectionPointId es un entero normal, no nullable
         var puntoRecoleccion = await _context.CollectionPoints.FindAsync(request.CollectionPointId);
         if (puntoRecoleccion == null)
         {
             return NotFound("Punto de recolección no encontrado");
         }
 
-        // CORRECCIÓN PARA LÍNEA 791 y 793 - Error CS1061: 'int' does not contain a definition for 'HasValue'/'Value'
-        // Verificar si la propiedad SucursalId en puntoRecoleccion es nullable
-
-        // Versión para si puntoRecoleccion.SucursalId es un int (no nullable)
-        pedido.SucursalId = puntoRecoleccion.SucursalId;
-
-        // O si tienes que verificar si es válido (mayor que 0)
+        // Asignar sucursal
         if (puntoRecoleccion.SucursalId > 0)
         {
             pedido.SucursalId = puntoRecoleccion.SucursalId;
         }
         else
         {
-            // Buscar una sucursal alternativa
             var sucursal = await _context.Sucursales.FirstOrDefaultAsync();
             if (sucursal == null)
             {
@@ -845,7 +817,7 @@ public class PedidosController : Controller
             pedido.SucursalId = sucursal.Id;
         }
 
-        // Resto del código del método...
+        // Agregar productos al pedido
         decimal total = 0;
         foreach (var item in request.Cart)
         {
@@ -870,35 +842,107 @@ public class PedidosController : Controller
         _context.Pedidos.Add(pedido);
         await _context.SaveChangesAsync();
 
-        // Devolver el ID del pedido creado
+        // AGREGAR PUNTOS AL USUARIO SI ESTÁ AUTENTICADO
+        if (User.Identity.IsAuthenticated && total > 0)
+        {
+            await AgregarPuntosAUsuario(pedido.UsuarioId, total);
+        }
+
         return Ok(new { id = pedido.Id });
     }
 
     [HttpPost]
+    public async Task<IActionResult> CrearPedidoAPI([FromBody] List<PedidoDetalle> detalles)
+    {
+        if (detalles == null || !detalles.Any())
+            return BadRequest("Carrito vacío");
+
+        var sucursalId = HttpContext.Session.GetInt32("SucursalSeleccionada");
+
+        if (sucursalId == null)
+        {
+            var primeraSucursal = await _context.Sucursales.FirstOrDefaultAsync();
+            if (primeraSucursal != null)
+            {
+                sucursalId = primeraSucursal.Id;
+                HttpContext.Session.SetInt32("SucursalSeleccionada", sucursalId.Value);
+            }
+            else
+            {
+                return BadRequest("No se ha seleccionado una sucursal y no hay sucursales disponibles.");
+            }
+        }
+
+        var pedido = new Pedido
+        {
+            Fecha = DateTime.Now,
+            SucursalId = sucursalId.Value,
+            PedidoProductos = new List<PedidoProducto>(),
+            UsuarioId = User.Identity.IsAuthenticated ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null
+        };
+
+        decimal totalCalculado = 0;
+        foreach (var detalle in detalles)
+        {
+            var producto = await _context.Productos.FindAsync(detalle.ProductoId);
+            if (producto != null)
+            {
+                decimal subtotal = detalle.Cantidad * detalle.PrecioUnitario;
+                totalCalculado += subtotal;
+
+                pedido.PedidoProductos.Add(new PedidoProducto
+                {
+                    ProductoId = detalle.ProductoId,
+                    Cantidad = detalle.Cantidad,
+                    Precio = detalle.PrecioUnitario
+                });
+            }
+        }
+
+        pedido.Total = totalCalculado;
+        _context.Pedidos.Add(pedido);
+        await _context.SaveChangesAsync();
+
+        // AGREGAR PUNTOS AL USUARIO SI ESTÁ AUTENTICADO
+        if (User.Identity.IsAuthenticated && totalCalculado > 0)
+        {
+            await AgregarPuntosAUsuario(pedido.UsuarioId, totalCalculado);
+        }
+
+        return Ok(new { mensaje = "Pedido creado exitosamente", pedido.Id });
+    }
+
+    // Actualizar ProcesarSeleccionMultiple
+    [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ProcesarSeleccionMultiple(List<ProductoSeleccionadoInput> seleccionados)
     {
+        // AGREGAR ESTOS LOGS AL INICIO:
+        Console.WriteLine($"[DEBUG] Usuario autenticado: {User.Identity.IsAuthenticated}");
+        if (User.Identity.IsAuthenticated)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Console.WriteLine($"[DEBUG] UsuarioId obtenido: {userId}");
+            Console.WriteLine($"[DEBUG] UserName: {User.Identity.Name}");
+        }
+
         if (seleccionados == null)
         {
             return RedirectToAction("SeleccionMultiple", "Productos");
         }
 
-        // Filtrar solo los productos que han sido seleccionados y tienen cantidad > 0
         var seleccionadosValidos = seleccionados
             .Where(p => p.Seleccionado && p.Cantidad > 0)
             .ToList();
 
         if (!seleccionadosValidos.Any())
         {
-            // Si no hay productos seleccionados válidos, redirigir de vuelta
             return RedirectToAction("SeleccionMultiple", "Productos");
         }
 
-        // Obtener la sucursal (asumimos que existe al menos una)
         var sucursal = await _context.Sucursales.FirstOrDefaultAsync();
         if (sucursal == null)
         {
-            // Crear una sucursal predeterminada si no existe ninguna
             sucursal = new Sucursal
             {
                 Nombre = "Verace Pizza",
@@ -910,16 +954,15 @@ public class PedidosController : Controller
             await _context.SaveChangesAsync();
         }
 
-        // Crear el pedido
         var pedido = new Pedido
         {
             Fecha = DateTime.Now,
             SucursalId = sucursal.Id,
             PedidoProductos = new List<PedidoProducto>(),
-            Estado = "Preparándose"
+            Estado = "Preparándose",
+            UsuarioId = User.Identity.IsAuthenticated ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null
         };
 
-        // Agregar productos al pedido
         decimal total = 0;
         foreach (var item in seleccionadosValidos)
         {
@@ -939,18 +982,21 @@ public class PedidosController : Controller
         }
 
         pedido.Total = total;
-
         _context.Pedidos.Add(pedido);
         await _context.SaveChangesAsync();
 
-        // Guardar ID del pedido en una cookie
+        // AGREGAR PUNTOS AL USUARIO SI ESTÁ AUTENTICADO
+        if (User.Identity.IsAuthenticated && total > 0)
+        {
+            await AgregarPuntosAUsuario(pedido.UsuarioId, total);
+        }
+
         CookieOptions options = new CookieOptions
         {
             Expires = DateTimeOffset.Now.AddMinutes(30)
         };
         Response.Cookies.Append("PedidoTemporalId", pedido.Id.ToString(), options);
 
-        // Redirigir a la página de resumen del pedido
         return RedirectToAction("Resumen", new { id = pedido.Id });
     }
 
@@ -993,7 +1039,8 @@ public class PedidosController : Controller
                 Fecha = DateTime.Now,
                 SucursalId = sucursal.Id,
                 PedidoProductos = new List<PedidoProducto>(),
-                Estado = "Preparándose"
+                Estado = "Preparándose",
+                UsuarioId = User.Identity.IsAuthenticated ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null // ← ESTA LÍNEA ES CRÍTICA
             };
 
             decimal total = 0;
@@ -1055,55 +1102,6 @@ public class PedidosController : Controller
         return RedirectToAction("Seleccionar", "Recoleccion");
     }
 
-    private async Task<int> CrearPedidoDesdeCarrito(string pedidoJson, int sucursalId)
-    {
-        var itemsCarrito = System.Text.Json.JsonSerializer.Deserialize<List<CarritoItem>>(pedidoJson);
-
-        var pedido = new Pedido
-        {
-            Fecha = DateTime.Now,
-            SucursalId = sucursalId,
-            PedidoProductos = new List<PedidoProducto>(),
-            Estado = "Preparándose"
-        };
-
-        _context.Pedidos.Add(pedido);
-        await _context.SaveChangesAsync();
-
-        decimal total = 0;
-
-        foreach (var item in itemsCarrito)
-        {
-            if (int.TryParse(item.Id, out int productoId))
-            {
-                var producto = await _context.Productos.FindAsync(productoId);
-                if (producto != null)
-                {
-                    decimal subtotal = item.Precio * item.Cantidad;
-                    total += subtotal;
-
-                    var pedidoProducto = new PedidoProducto
-                    {
-                        PedidoId = pedido.Id,
-                        ProductoId = productoId,
-                        Cantidad = item.Cantidad,
-                        Precio = item.Precio
-                    };
-
-                    _context.PedidoProductos.Add(pedidoProducto);
-                }
-            }
-        }
-
-        pedido.Total = total;
-        _context.Update(pedido);
-        await _context.SaveChangesAsync();
-
-        // Indicar que se debe limpiar el carrito
-        TempData["LimpiarCarrito"] = true;
-
-        return pedido.Id;
-    }
 
     // Definición de clase auxiliar ElementoCarrito para deserialización
     public class ElementoCarrito
@@ -1111,4 +1109,152 @@ public class PedidosController : Controller
         public int ProductoId { get; set; }
         public int Cantidad { get; set; }
     }
+
+    // Agregar este método al PedidosController existente
+
+    public async Task<IActionResult> CrearPedido([FromBody] List<PedidoDetalle> detalles)
+    {
+        // ✅ 1. LOGS AL INICIO para verificar autenticación
+        Console.WriteLine($"[DEBUG] CrearPedido iniciado");
+        Console.WriteLine($"[DEBUG] Usuario autenticado: {User.Identity.IsAuthenticated}");
+        if (User.Identity.IsAuthenticated)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Console.WriteLine($"[DEBUG] UsuarioId obtenido: {userId}");
+            Console.WriteLine($"[DEBUG] UserName: {User.Identity.Name}");
+        }
+
+        if (detalles == null || !detalles.Any())
+            return BadRequest("Carrito vacío");
+
+        // Obtenemos la sucursal seleccionada de la sesión
+        var sucursalId = HttpContext.Session.GetInt32("SucursalSeleccionada");
+
+        // Si no hay sucursal seleccionada, intentamos obtener la primera sucursal
+        if (sucursalId == null)
+        {
+            var primeraSucursal = await _context.Sucursales.FirstOrDefaultAsync();
+            if (primeraSucursal != null)
+            {
+                sucursalId = primeraSucursal.Id;
+                HttpContext.Session.SetInt32("SucursalSeleccionada", sucursalId.Value);
+            }
+            else
+            {
+                return BadRequest("No se ha seleccionado una sucursal y no hay sucursales disponibles.");
+            }
+        }
+
+        var pedido = new Pedido
+        {
+            Fecha = DateTime.Now,
+            SucursalId = sucursalId.Value,
+            PedidoProductos = new List<PedidoProducto>(),
+            UsuarioId = User.Identity.IsAuthenticated ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null
+        };
+
+        // ✅ 2. LOG DESPUÉS de crear el pedido para verificar UsuarioId
+        Console.WriteLine($"[DEBUG] Pedido creado con UsuarioId: {pedido.UsuarioId}");
+
+        // Calcular el total y agregar productos
+        decimal totalCalculado = 0;
+        foreach (var detalle in detalles)
+        {
+            var producto = await _context.Productos.FindAsync(detalle.ProductoId);
+            if (producto != null)
+            {
+                decimal subtotal = detalle.Cantidad * detalle.PrecioUnitario;
+                totalCalculado += subtotal;
+
+                pedido.PedidoProductos.Add(new PedidoProducto
+                {
+                    ProductoId = detalle.ProductoId,
+                    Cantidad = detalle.Cantidad,
+                    Precio = detalle.PrecioUnitario
+                });
+            }
+        }
+
+        pedido.Total = totalCalculado;
+        Console.WriteLine($"[DEBUG] Total calculado: {totalCalculado}");
+
+        _context.Pedidos.Add(pedido);
+        await _context.SaveChangesAsync();
+        Console.WriteLine("[DEBUG] Pedido guardado en BD");
+
+        // **AGREGAR PUNTOS AL USUARIO SI ESTÁ AUTENTICADO**
+        if (User.Identity.IsAuthenticated && totalCalculado > 0)
+        {
+            Console.WriteLine($"[DEBUG] Llamando AgregarPuntosAUsuario con UsuarioId: {pedido.UsuarioId}, Total: {totalCalculado}");
+            await AgregarPuntosAUsuario(pedido.UsuarioId, totalCalculado);
+        }
+        else
+        {
+            Console.WriteLine($"[DEBUG] NO se agregaron puntos - Autenticado: {User.Identity.IsAuthenticated}, Total: {totalCalculado}");
+        }
+
+        Console.WriteLine($"[DEBUG] CrearPedido terminado exitosamente");
+        return Ok(new { mensaje = "Pedido creado exitosamente", pedido.Id });
+
+        // ❌ NUNCA pongas código después del return - NO se ejecutará
+    }
+
+    // Método privado para agregar puntos al usuario
+    private async Task AgregarPuntosAUsuario(string usuarioId, decimal totalPedido)
+    {
+        Console.WriteLine($"[DEBUG] AgregarPuntosAUsuario iniciado - UsuarioId: {usuarioId}, Total: {totalPedido}");
+
+        if (string.IsNullOrEmpty(usuarioId))
+        {
+            Console.WriteLine("[DEBUG] UsuarioId es null o vacío - SALIENDO");
+            return;
+        }
+
+        var usuario = await _context.AppUsuario.FindAsync(usuarioId);
+        if (usuario == null)
+        {
+            Console.WriteLine($"[DEBUG] Usuario no encontrado con ID: {usuarioId} - SALIENDO");
+            return;
+        }
+
+        Console.WriteLine($"[DEBUG] Usuario encontrado: {usuario.Email}, Puntos actuales: {usuario.PuntosFidelidad}");
+
+        // Calcular puntos ganados (30 puntos por dólar)
+        int puntosGanados = (int)(totalPedido * 30);
+        Console.WriteLine($"[DEBUG] Puntos a agregar: {puntosGanados}");
+
+        // Agregar puntos al usuario
+        int puntosAnteriores = usuario.PuntosFidelidad ?? 0;
+        usuario.PuntosFidelidad = puntosAnteriores + puntosGanados;
+
+        Console.WriteLine($"[DEBUG] Puntos anteriores: {puntosAnteriores}, Nuevos puntos: {usuario.PuntosFidelidad}");
+
+        try
+        {
+            // Crear registro de transacción de puntos
+            var transaccion = new TransaccionPuntos
+            {
+                UsuarioId = usuarioId,
+                Puntos = puntosGanados,
+                Tipo = "Ganancia",
+                Descripcion = $"Puntos ganados por pedido - Total: ${totalPedido:F2}",
+                Fecha = DateTime.Now
+            };
+
+            _context.TransaccionesPuntos.Add(transaccion);
+
+            // Guardar cambios
+            await _context.SaveChangesAsync();
+
+            Console.WriteLine("[DEBUG] ✅ Cambios guardados exitosamente en la base de datos");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Error al guardar en la base de datos: {ex.Message}");
+            Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+        }
+    }
+
+
+
 }

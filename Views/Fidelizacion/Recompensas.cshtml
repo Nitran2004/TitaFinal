@@ -1,0 +1,590 @@
+﻿@model RecompensasViewModel
+@{
+    ViewData["Title"] = "Programa de Recompensas";
+}
+
+<style>
+    .puntos-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: sticky;
+        top: 10px;
+        z-index: 100;
+    }
+
+    .puntos-disponibles {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 0.5rem 0;
+    }
+
+    .progress-container {
+        background: rgba(255,255,255,0.2);
+        border-radius: 20px;
+        height: 30px;
+        margin: 1rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff, #5f27cd);
+        border-radius: 20px;
+        transition: width 0.5s ease;
+        position: relative;
+    }
+
+    .recompensas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+
+    .recompensa-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        position: relative;
+        border: 2px solid transparent;
+    }
+
+    .recompensa-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    }
+
+    .recompensa-card.selected {
+        border: 2px solid #28a745;
+        background: #f8fff9;
+        transform: translateY(-3px);
+    }
+
+    .recompensa-card.no-disponible {
+        opacity: 0.6;
+        filter: grayscale(0.5);
+    }
+
+    .recompensa-imagen {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: #888;
+    }
+
+    .recompensa-contenido {
+        padding: 1.5rem;
+    }
+
+    .recompensa-titulo {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        color: #333;
+    }
+
+    .recompensa-descripcion {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .recompensa-puntos {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .puntos-requeridos {
+        font-size: 1.1rem;
+        font-weight: bold;
+        color: #667eea;
+    }
+
+    .estado-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .disponible-badge {
+        background: #28a745;
+        color: white;
+    }
+
+    .faltan-puntos-badge {
+        background: #ffc107;
+        color: #212529;
+    }
+
+    .seleccionado-badge {
+        background: #28a745;
+        color: white;
+    }
+
+    .recompensa-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 1rem;
+    }
+
+    .quantity-control {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .quantity-btn {
+        background: #e9ecef;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .quantity-btn:hover:not(:disabled) {
+        background: #28a745;
+        color: white;
+    }
+
+    .quantity-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .quantity-input {
+        width: 50px;
+        text-align: center;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        padding: 4px;
+        font-weight: bold;
+    }
+
+    .checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .recompensa-checkbox {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+
+    /* Carrito flotante */
+    .cart-container {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        padding: 20px;
+        min-width: 300px;
+        z-index: 1000;
+        transition: all 0.3s ease;
+        border: 2px solid #28a745;
+    }
+
+    .cart-container.hidden {
+        opacity: 0;
+        transform: translateY(100px);
+        pointer-events: none;
+    }
+
+    .cart-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+
+    .cart-summary {
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+    .cart-total-puntos {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #e83e8c;
+    }
+
+    .cart-items-count {
+        background: #28a745;
+        color: white;
+        border-radius: 12px;
+        padding: 4px 8px;
+        font-size: 0.8rem;
+        margin-left: 10px;
+    }
+
+    .cart-status {
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .cart-status.valid {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .cart-status.invalid {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .btn-canjear-multiple {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-canjear-multiple.enabled {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        color: white;
+    }
+
+    .btn-canjear-multiple.enabled:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+    }
+
+    .btn-canjear-multiple.disabled {
+        background: #e9ecef;
+        color: #6c757d;
+        cursor: not-allowed;
+    }
+
+    media (max-width: 768px) {
+        .recompensas-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .cart-container {
+            right: 15px;
+            left: 15px;
+            min-width: auto;
+        }
+    }
+</style>
+
+<div class="container mt-4">
+    <!-- Header con puntos disponibles -->
+    <div class="puntos-header">
+        <h1><i class="fas fa-gift"></i> Programa de Recompensas</h1>
+        <div class="puntos-disponibles" id="puntos-disponibles">@Model.PuntosUsuario pts</div>
+        <p>Selecciona las recompensas que deseas canjear</p>
+        
+        <!-- Barra de progreso -->
+        <div class="progress-container">
+            @{
+                int maxPuntos = 6000;
+                double porcentajeTotal = Math.Min(100, (double)Model.PuntosUsuario / maxPuntos * 100);
+            }
+            <div class="progress-bar" style="width: @porcentajeTotal%"></div>
+        </div>
+    </div>
+
+    <!-- Mensajes de estado -->
+    @if (TempData["Exito"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> @TempData["Exito"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Formulario para canje múltiple -->
+    <form asp-action="CanjearMultiplesRecompensas" method="post" id="form-canje-multiple">
+        @Html.AntiForgeryToken()
+
+        <!-- Grid de recompensas -->
+        <div class="recompensas-grid">
+            @for (int i = 0; i < Model.ProductosRecompensa.Count; i++)
+            {
+                var recompensa = Model.ProductosRecompensa[i];
+                bool puedeComprar = Model.PuntosUsuario >= recompensa.PuntosNecesarios;
+                int puntosFaltantes = Math.Max(0, recompensa.PuntosNecesarios - Model.PuntosUsuario);
+                
+                <div class="recompensa-card @(!puedeComprar ? "no-disponible" : "")" 
+                     data-id="@recompensa.Id" 
+                     data-puntos="@recompensa.PuntosNecesarios"
+                     data-nombre="@recompensa.Nombre">
+                    
+                    <div class="recompensa-imagen">
+                        @if (recompensa.Producto?.Imagen != null && recompensa.Producto.Imagen.Length > 0)
+                        {
+                            <img src="data:image/jpeg;base64,@Convert.ToBase64String(recompensa.Producto.Imagen)" alt="@recompensa.Nombre" class="recompensa-imagen" />
+                        }
+                        else
+                        {
+                            <i class="fas fa-utensils"></i>
+                        }
+                    </div>
+                    
+                    <div class="recompensa-contenido">
+                        <h3 class="recompensa-titulo">@recompensa.Nombre</h3>
+                        <p class="recompensa-descripcion">
+                            @recompensa.Categoria - Valor original: $@recompensa.PrecioOriginal.ToString("F2")
+                        </p>
+                        
+                        <div class="recompensa-puntos">
+                            <span class="puntos-requeridos">@recompensa.PuntosNecesarios pts</span>
+                            @if (puedeComprar)
+                            {
+                                <span class="estado-badge disponible-badge">Disponible</span>
+                            }
+                            else
+                            {
+                                <span class="estado-badge faltan-puntos-badge">Te faltan @puntosFaltantes pts</span>
+                            }
+                        </div>
+                        
+                        <!-- Controles de selección -->
+                        <div class="recompensa-controls">
+                            <div class="checkbox-container">
+                                <input type="checkbox" 
+                                       class="recompensa-checkbox" 
+                                       id="chk-@recompensa.Id" 
+                                       name="recompensasSeleccionadas[@i].Seleccionada"
+                                       value="true" 
+                                       data-id="@recompensa.Id"
+                                       @(!puedeComprar ? "disabled" : "") />
+                                <label for="chk-@recompensa.Id" class="mb-0">
+                                    <strong>Seleccionar</strong>
+                                </label>
+                                <input type="hidden" name="recompensasSeleccionadas[@i].RecompensaId" value="@recompensa.Id" />
+                            </div>
+                            
+                            <div class="quantity-control">
+                                <button type="button" class="quantity-btn decrease-btn" data-id="@recompensa.Id" @(!puedeComprar ? "disabled" : "")>−</button>
+                                <input type="number" 
+                                       class="quantity-input" 
+                                       name="recompensasSeleccionadas[@i].Cantidad"
+                                       value="1" 
+                                       min="1" 
+                                       max="10" 
+                                       data-id="@recompensa.Id"
+                                       @(!puedeComprar ? "disabled" : "") />
+                                <button type="button" class="quantity-btn increase-btn" data-id="@recompensa.Id" @(!puedeComprar ? "disabled" : "")>+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </form>
+
+    <!-- Carrito flotante -->
+    <div class="cart-container hidden" id="cart-container">
+        <div class="cart-header">
+            <h5 class="mb-0">
+                <i class="fas fa-shopping-cart"></i> Carrito de Recompensas
+                <span class="cart-items-count" id="cart-count">0</span>
+            </h5>
+        </div>
+        
+        <div class="cart-summary">
+            <div class="cart-total-puntos" id="cart-total">0 pts</div>
+            <small class="text-muted">Total a canjear</small>
+        </div>
+        
+        <div class="cart-status valid" id="cart-status">
+            <i class="fas fa-check-circle"></i> Tienes suficientes puntos
+        </div>
+        
+        <button type="submit" 
+                class="btn-canjear-multiple enabled" 
+                id="btn-canjear" 
+                form="form-canje-multiple"
+                onclick="return confirmarCanje()">
+            <i class="fas fa-gift"></i> Canjear Recompensas
+        </button>
+        
+        <div class="text-center mt-2">
+            <small class="text-muted">Puntos restantes: <span id="puntos-restantes">@Model.PuntosUsuario</span></small>
+        </div>
+    </div>
+
+    <!-- Información adicional -->
+    <div class="siguiente-nivel">
+        <h3><i class="fas fa-info-circle"></i> ¿Cómo ganar más puntos?</h3>
+        <p>Ganas <strong>30 puntos por cada dólar</strong> que gastes en tus pedidos.</p>
+        <p>¡Sigue pidiendo tus platillos favoritos para acumular más puntos!</p>
+        
+        <div class="row mt-3">
+            <div class="col-md-6 mb-2">
+                <a href="@Url.Action("SeleccionMultiple", "Productos")" class="btn btn-primary btn-lg w-100">
+                    <i class="fas fa-shopping-cart"></i> Hacer Pedido
+                </a>
+            </div>
+            <div class="col-md-6 mb-2">
+                <a href="@Url.Action("MisPuntos", "Fidelizacion")" class="btn btn-info btn-lg w-100">
+                    <i class="fas fa-star"></i> Ver Mis Puntos
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const PUNTOS_USUARIO = @Model.PuntosUsuario;
+    const checkboxes = document.querySelectorAll('.recompensa-checkbox');
+    const quantityInputs = document.querySelectorAll('.quantity-input');
+    const decreaseBtns = document.querySelectorAll('.decrease-btn');
+    const increaseBtns = document.querySelectorAll('.increase-btn');
+    const cartContainer = document.getElementById('cart-container');
+    const cartTotal = document.getElementById('cart-total');
+    const cartCount = document.getElementById('cart-count');
+    const cartStatus = document.getElementById('cart-status');
+    const btnCanjear = document.getElementById('btn-canjear');
+    const puntosRestantes = document.getElementById('puntos-restantes');
+
+    function actualizarCarrito() {
+        let totalPuntos = 0;
+        let totalItems = 0;
+        let recompensasSeleccionadas = [];
+
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked && !checkbox.disabled) {
+                const id = checkbox.dataset.id;
+                const card = checkbox.closest('.recompensa-card');
+                const puntosPorItem = parseInt(card.dataset.puntos);
+                const cantidad = parseInt(document.querySelector(`input[data-id="${id}"].quantity-input`).value);
+                
+                totalPuntos += puntosPorItem * cantidad;
+                totalItems += cantidad;
+                
+                recompensasSeleccionadas.push({
+                    id: id,
+                    nombre: card.dataset.nombre,
+                    puntos: puntosPorItem,
+                    cantidad: cantidad
+                });
+                
+                card.classList.add('selected');
+            } else {
+                const card = checkbox.closest('.recompensa-card');
+                card.classList.remove('selected');
+            }
+        });
+
+        // Actualizar UI del carrito
+        cartTotal.textContent = totalPuntos + ' pts';
+        cartCount.textContent = totalItems;
+        puntosRestantes.textContent = PUNTOS_USUARIO - totalPuntos;
+
+        // Validar si tiene suficientes puntos
+        const tieneSuficientesPuntos = totalPuntos <= PUNTOS_USUARIO;
+        
+        if (totalItems === 0) {
+            cartContainer.classList.add('hidden');
+        } else {
+            cartContainer.classList.remove('hidden');
+            
+            if (tieneSuficientesPuntos) {
+                cartStatus.className = 'cart-status valid';
+                cartStatus.innerHTML = '<i class="fas fa-check-circle"></i> Tienes suficientes puntos';
+                btnCanjear.className = 'btn-canjear-multiple enabled';
+                btnCanjear.disabled = false;
+            } else {
+                cartStatus.className = 'cart-status invalid';
+                cartStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Puntos insuficientes';
+                btnCanjear.className = 'btn-canjear-multiple disabled';
+                btnCanjear.disabled = true;
+            }
+        }
+    }
+
+    // Event listeners para checkboxes
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', actualizarCarrito);
+    });
+
+    // Event listeners para cantidad
+    quantityInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            let value = parseInt(this.value) || 1;
+            this.value = Math.min(Math.max(value, 1), 10);
+            actualizarCarrito();
+        });
+    });
+
+    // Botones de incremento/decremento
+    decreaseBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (this.disabled) return;
+            const input = document.querySelector(`input[data-id="${this.dataset.id}"].quantity-input`);
+            input.value = Math.max(1, parseInt(input.value) - 1);
+            actualizarCarrito();
+        });
+    });
+
+    increaseBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (this.disabled) return;
+            const input = document.querySelector(`input[data-id="${this.dataset.id}"].quantity-input`);
+            input.value = Math.min(10, parseInt(input.value) + 1);
+            actualizarCarrito();
+        });
+    });
+
+    // Inicializar
+    actualizarCarrito();
+});
+
+function confirmarCanje() {
+    const totalItems = parseInt(document.getElementById('cart-count').textContent);
+    const totalPuntos = document.getElementById('cart-total').textContent;
+    
+    return confirm(`¿Estás seguro de canjear ${totalItems} recompensa(s) por ${totalPuntos}?`);
+}
+</script>
