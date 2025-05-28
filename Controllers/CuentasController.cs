@@ -71,7 +71,7 @@ namespace ProyectoIdentity.Controllers
                 if (resultado.Succeeded)
                 {
                     //Esta linea es para la asignacion del usuario que se registra al rol "Registrado"
-                    await _userManager.AddToRoleAsync(usuario, "Administrador");
+                    await _userManager.AddToRoleAsync(usuario, "Registrado");
 
                     await _signInManager.SignInAsync(usuario, isPersistent: false);
                     //return RedirectToAction("Index", "Home");

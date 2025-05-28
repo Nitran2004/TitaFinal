@@ -148,16 +148,6 @@
         
         <div class="dato-item">
             <div class="dato-icono">
-                <i class="fas fa-id-card"></i>
-            </div>
-            <div class="dato-contenido">
-                <div class="dato-label">Identificación:</div>
-                <div class="dato-valor">@(Model.Usuario.CodigoPais ?? "No especificado")</div>
-            </div>
-        </div>
-
-        <div class="dato-item">
-            <div class="dato-icono">
                 <i class="fas fa-user"></i>
             </div>
             <div class="dato-contenido">
@@ -173,16 +163,6 @@
             <div class="dato-contenido">
                 <div class="dato-label">Número de teléfono:</div>
                 <div class="dato-valor">@(Model.Usuario.Telefono ?? "No especificado")</div>
-            </div>
-        </div>
-
-        <div class="dato-item">
-            <div class="dato-icono">
-                <i class="fas fa-calendar"></i>
-            </div>
-            <div class="dato-contenido">
-                <div class="dato-label">Fecha de nacimiento:</div>
-                <div class="dato-valor">@(Model.Usuario.FechaNacimiento?.ToString("yyyy-MM-dd") ?? "No especificado")</div>
             </div>
         </div>
 

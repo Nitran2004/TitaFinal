@@ -605,6 +605,157 @@ namespace ProyectoIdentity.Controllers
 
             return View(model);
         }
+
+
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> AdminCanjesIndex()
+        {
+            try
+            {
+                // Consulta super simple sin Include problemático
+                var todosLosCanjes = await _context.HistorialCanjes.ToListAsync();
+
+                // Obtener IDs únicos de usuarios
+                var usuariosIds = todosLosCanjes.Select(c => c.UsuarioId).Distinct().ToList();
+
+                // Obtener usuarios por separado
+                var todosLosUsuarios = await _context.AppUsuario
+                    .Where(u => usuariosIds.Contains(u.Id))
+                    .ToListAsync();
+
+                // Procesar en memoria para evitar problemas de EF
+                var usuariosConCanjes = new List<UsuarioCanjesIndexViewModel>();
+
+                foreach (var usuario in todosLosUsuarios)
+                {
+                    var canjesDelUsuario = todosLosCanjes.Where(c => c.UsuarioId == usuario.Id).ToList();
+
+                    if (canjesDelUsuario.Any())
+                    {
+                        usuariosConCanjes.Add(new UsuarioCanjesIndexViewModel
+                        {
+                            UsuarioId = usuario.Id,
+                            UserName = usuario.UserName ?? "Sin username",
+                            Nombre = usuario.Nombre ?? "Sin nombre",
+                            Email = usuario.Email ?? "Sin email",
+                            PuntosFidelidad = usuario.PuntosFidelidad ?? 0,
+                            TotalCanjes = canjesDelUsuario.Count,
+                            UltimoCanje = canjesDelUsuario.Max(c => c.FechaCanje),
+                            TotalPuntosUtilizados = canjesDelUsuario.Sum(c => c.PuntosUtilizados)
+                        });
+                    }
+                }
+
+                // Ordenar por último canje
+                usuariosConCanjes = usuariosConCanjes.OrderByDescending(u => u.UltimoCanje).ToList();
+
+                // Estadísticas
+                var estadisticas = new EstadisticasGeneralesViewModel
+                {
+                    TotalUsuarios = usuariosConCanjes.Count,
+                    TotalCanjes = usuariosConCanjes.Sum(u => u.TotalCanjes),
+                    TotalPuntosUtilizados = usuariosConCanjes.Sum(u => u.TotalPuntosUtilizados),
+                    UsuarioMasActivo = usuariosConCanjes.OrderByDescending(u => u.TotalCanjes).FirstOrDefault()?.Nombre ?? "N/A"
+                };
+
+                var model = new AdminCanjesIndexViewModel
+                {
+                    Usuarios = usuariosConCanjes,
+                    Estadisticas = estadisticas
+                };
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Error al cargar datos: " + ex.Message;
+
+                // Modelo vacío en caso de error
+                return View(new AdminCanjesIndexViewModel
+                {
+                    Usuarios = new List<UsuarioCanjesIndexViewModel>(),
+                    Estadisticas = new EstadisticasGeneralesViewModel
+                    {
+                        TotalUsuarios = 0,
+                        TotalCanjes = 0,
+                        TotalPuntosUtilizados = 0,
+                        UsuarioMasActivo = "N/A"
+                    }
+                });
+            }
+        }
+
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> AdminCanjesDetalle(string usuarioId)
+        {
+            if (string.IsNullOrEmpty(usuarioId))
+            {
+                TempData["Error"] = "ID de usuario no válido";
+                return RedirectToAction("AdminCanjesIndex");
+            }
+
+            try
+            {
+                // Obtener usuario
+                var usuario = await _context.AppUsuario.FindAsync(usuarioId);
+                if (usuario == null)
+                {
+                    TempData["Error"] = "Usuario no encontrado";
+                    return RedirectToAction("AdminCanjesIndex");
+                }
+
+                // Obtener canjes del usuario sin Include problemático
+                var canjesUsuario = await _context.HistorialCanjes
+                    .Where(h => h.UsuarioId == usuarioId)
+                    .OrderByDescending(h => h.FechaCanje)
+                    .ToListAsync();
+
+                // Obtener IDs de productos recompensa
+                var productosRecompensaIds = canjesUsuario.Select(c => c.ProductoRecompensaId).Distinct().ToList();
+
+                // Obtener productos recompensa por separado
+                var productosRecompensa = await _context.ProductosRecompensa
+                    .Include(pr => pr.Producto)
+                    .Where(pr => productosRecompensaIds.Contains(pr.Id))
+                    .ToListAsync();
+
+                // Crear modelo combinando datos en memoria
+                var historialCanjes = canjesUsuario.Select(h =>
+                {
+                    var productoRecompensa = productosRecompensa.FirstOrDefault(pr => pr.Id == h.ProductoRecompensaId);
+
+                    return new CanjeDetalleViewModel
+                    {
+                        Id = h.Id,
+                        ProductoRecompensaId = h.ProductoRecompensaId,
+                        NombreProducto = productoRecompensa?.Nombre ?? "Producto eliminado",
+                        CategoriaProducto = productoRecompensa?.Categoria ?? "N/A",
+                        PuntosUtilizados = h.PuntosUtilizados,
+                        FechaCanje = h.FechaCanje,
+                        PrecioOriginal = productoRecompensa?.PrecioOriginal ?? 0,
+                        CodigoCanje = GenerarCodigoCanjePorFecha(h.FechaCanje, h.Id)
+                    };
+                }).ToList();
+
+                var model = new AdminCanjesDetalleViewModel
+                {
+                    Usuario = usuario,
+                    HistorialCanjes = historialCanjes,
+                    TotalCanjes = canjesUsuario.Count,
+                    TotalPuntosUtilizados = canjesUsuario.Sum(c => c.PuntosUtilizados),
+                    TotalValorAhorrado = historialCanjes.Sum(h => h.PrecioOriginal)
+                };
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Error al cargar detalle: " + ex.Message;
+                return RedirectToAction("AdminCanjesIndex");
+            }
+        }
+
+
     }
 
 }

@@ -1,0 +1,246 @@
+﻿@model ProyectoIdentity.Models.AdminCanjesDetalleViewModel
+@{
+    ViewData["Title"] = "Detalle de Canjes - " + Model.Usuario.Nombre;
+}
+
+<div class="container-fluid mt-4">
+    <!-- Botón volver -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <a href="@Url.Action("AdminCanjesIndex", "Fidelizacion")" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Volver al Índice
+            </a>
+        </div>
+    </div>
+
+    <!-- Información del usuario -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow border-0" style="border-radius: 15px;">
+                <div class="card-header text-center py-4" style="background: linear-gradient(135deg, #28a745, #20c997); color: white; border-radius: 15px 15px 0 0;">
+                    <h2 class="mb-1">
+                        <i class="fas fa-user-circle me-3"></i>
+                        Historial de Canjes
+                    </h2>
+                    <p class="mb-0 opacity-75">Usuario: @Model.Usuario.Nombre (@Model.Usuario.UserName)</p>
+                </div>
+                
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="info-item">
+                                <i class="fas fa-envelope text-primary"></i>
+                                <div>
+                                    <strong>Email:</strong>
+                                    <div>@Model.Usuario.Email</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-item">
+                                <i class="fas fa-star text-warning"></i>
+                                <div>
+                                    <strong>Puntos Actuales:</strong>
+                                    <div class="text-warning fw-bold">@Model.Usuario.PuntosFidelidad pts</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-item">
+                                <i class="fas fa-receipt text-info"></i>
+                                <div>
+                                    <strong>Total Canjes:</strong>
+                                    <div class="text-info fw-bold">@Model.TotalCanjes</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="info-item">
+                                <i class="fas fa-dollar-sign text-success"></i>
+                                <div>
+                                    <strong>Valor Ahorrado:</strong>
+                                    <div class="text-success fw-bold">$@Model.TotalValorAhorrado.ToString("F2")</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white text-center">
+                <div class="card-body">
+                    <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                    <h4>@Model.TotalCanjes</h4>
+                    <p class="mb-0">Canjes Realizados</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-danger text-white text-center">
+                <div class="card-body">
+                    <i class="fas fa-star fa-2x mb-2"></i>
+                    <h4>@Model.TotalPuntosUtilizados</h4>
+                    <p class="mb-0">Puntos Utilizados</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white text-center">
+                <div class="card-body">
+                    <i class="fas fa-money-bill-wave fa-2x mb-2"></i>
+                    <h4>$@Model.TotalValorAhorrado.ToString("F2")</h4>
+                    <p class="mb-0">Total Ahorrado</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla del historial de canjes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history text-primary me-2"></i>
+                        Historial Completo de Canjes
+                        <span class="badge bg-primary ms-2">@Model.HistorialCanjes.Count registros</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID Canje</th>
+                                    <th>Producto Recompensa ID</th>
+                                    <th>Producto</th>
+                                    <th>Categoría</th>
+                                    <th>Puntos Utilizados</th>
+                                    <th>Valor Original</th>
+                                    <th>Fecha Canje</th>
+                                    <th>Código Canje</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var canje in Model.HistorialCanjes)
+                                {
+                                    <tr>
+                                        <td>
+                                            <code>#@canje.Id</code>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">@canje.ProductoRecompensaId</span>
+                                        </td>
+                                        <td>
+                                            <strong>@canje.NombreProducto</strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">@canje.CategoriaProducto</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-danger">-@canje.PuntosUtilizados pts</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">$@canje.PrecioOriginal.ToString("F2")</span>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <div>@canje.FechaCanje.ToString("dd/MM/yyyy")</div>
+                                                <small class="text-muted">@canje.FechaCanje.ToString("HH:mm:ss")</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <code class="bg-warning text-dark px-2 py-1 rounded">@canje.CodigoCanje</code>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.HistorialCanjes.Any())
+    {
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="alert alert-warning text-center">
+                    <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                    <h4>No hay canjes registrados</h4>
+                    <p>Este usuario aún no ha realizado ningún canje.</p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 1rem;
+        border-radius: 10px;
+        background: #f8f9fa;
+        margin-bottom: 1rem;
+        transition: transform 0.2s ease;
+    }
+    
+    .info-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .info-item i {
+        font-size: 1.5rem;
+        width: 30px;
+    }
+    
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.9rem;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+    }
+    
+    code {
+        background: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+    
+    .card {
+        transition: transform 0.2s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+    }
+    
+    media (max-width: 768px) {
+        .info-item {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+    }
+</style>

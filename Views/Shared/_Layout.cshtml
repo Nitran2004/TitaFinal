@@ -176,7 +176,14 @@
                         @if (User.IsInRole("Administrador"))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-white" asp-controller="Pedidos" asp-action="ResumenAdmin">Ver Pedidos</a>
+                                <a class="nav-link text-white" asp-controller="Pedidos" asp-action="ResumenAdmin">Resumen de Pedidos</a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Fidelizacion" asp-action="AdminCanjesIndex">
+                                    <i ></i>
+                                    Resumen de Canjes
+                                </a>
                             </li>
                         }
                         <li class="nav-item">
@@ -208,42 +215,6 @@
             @RenderBody()
         </main>
     </div>
-
-    <!-- Barra de navegación inferior para móviles -->
-@*     <nav class="mobile-footer-nav">
-        <ul class="nav-container">
-            <li class="nav-item-mobile">
-                <a href="/Home/Index" class="nav-link-mobile active">
-                    <i class="bi bi-house-fill" style="color: black;"></i>
-                    <span style="color:black;">Inicio</span>
-                </a>
-            </li>
-            <li class="nav-item-mobile">
-                <a href="/Cupones/Cupones" class="nav-link-mobile">
-                    <i class="bi bi-tag-fill" style="color: black;"></i>
-                    <span style="color:black;">Cupones</span>
-                </a>
-            </li>
-            <li class="nav-item-mobile">
-                <a href="/Pedidos/Pedidos" class="nav-link-mobile">
-                    <i class="bi bi-list" style="color: black;"></i>
-                    <span style="color:black;">Pedidos</span>
-                </a>
-            </li>
-            <li class="nav-item-mobile">
-                <a href="/Recompensas/Recompensas" class="nav-link-mobile">
-                    <i class="bi bi-trophy" style="color: black;"></i>
-                    <span style="color:black;">Recompensas</span>
-                </a>
-            </li>
-            <li class="nav-item-mobile">
-                <a href="/Cuenta/Cuenta" class="nav-link-mobile">
-                    <i class="bi bi-person" style="color: black;"></i>
-                    <span style="color:black;">Cuenta</span>
-                </a>
-            </li>
-        </ul>
-    </nav> *@
 
     <footer class="border-top footer text-muted">
         <div class="container">
