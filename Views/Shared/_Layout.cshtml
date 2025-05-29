@@ -195,7 +195,69 @@
                                 Mis Canjes
                             </a>
                         </li>
+                        <!-- En el dropdown de administración para Administradores y Cajeros -->
+                        @if (User.IsInRole("Administrador") || User.IsInRole("Cajero"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cogs me-2"></i>Administración
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <!-- Otros enlaces de admin... -->
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Cupones" asp-action="EscanearQR">
+                                            <i class="fas fa-qrcode text-purple"></i> Escanear Cupones QR
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="AdminCanjesIndex">
+                                            <i class="fas fa-users-cog text-purple"></i> Gestión de Canjes
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
 
+                        <!-- Botón flotante alternativo para móviles (solo admin/cajero) -->
+                        @if (User.IsInRole("Administrador") || User.IsInRole("Cajero"))
+                        {
+                            <div class="floating-qr-scanner d-lg-none">
+                                <a href="@Url.Action("EscanearQR", "Cupones")" class="btn btn-scan-floating">
+                                    <i class="fas fa-qrcode fa-2x"></i>
+                                </a>
+                            </div>
+                        }
+
+                        <style>
+                            .floating-qr-scanner {
+                                position: fixed;
+                                bottom: 80px;
+                                right: 20px;
+                                z-index: 1000;
+                            }
+
+                            .btn-scan-floating {
+                                width: 60px;
+                                height: 60px;
+                                border-radius: 50%;
+                                background: linear-gradient(45deg, #6f42c1, #5a2d91);
+                                color: white;
+                                border: none;
+                                box-shadow: 0 4px 15px rgba(111, 66, 193, 0.4);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                transition: all 0.3s ease;
+                            }
+
+                                .btn-scan-floating:hover {
+                                    background: linear-gradient(45deg, #5a2d91, #6f42c1);
+                                    color: white;
+                                    transform: scale(1.1);
+                                    box-shadow: 0 6px 20px rgba(111, 66, 193, 0.6);
+                                }
+                        </style>
 
                         <!-- Nuevo enlace para recomendación de menú -->
                         <li class="nav-item">
@@ -204,8 +266,9 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-white" asp-area="" asp-controller="" asp-action="">
-                                <i></i> Cupones
+                            <a class="nav-link" asp-controller="Cupones" asp-action="Index">
+                                <i class="fas fa-tags text-warning me-2"></i>
+                                Cupones
                             </a>
                         </li>
                     </ul>

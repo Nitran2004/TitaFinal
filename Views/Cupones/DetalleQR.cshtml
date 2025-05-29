@@ -1,0 +1,294 @@
+﻿@model ProyectoIdentity.Models.CuponViewModel
+@{
+    ViewData["Title"] = "Detalle de Cupón - " + Model.Nombre;
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            
+            <!-- Header del cupón -->
+            <div class="card shadow-lg border-0 mb-4" style="border-radius: 20px; overflow: hidden;">
+                <div class="card-header text-center py-4" style="background: linear-gradient(135deg, #28a745, #20c997); color: white;">
+                    <div class="cupon-header">
+                        <i class="fas fa-ticket-alt fa-3x mb-3"></i>
+                        <h3 class="mb-1">Detalle de Cupón</h3>
+                        <p class="mb-0 opacity-75">@Model.Nombre</p>
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    <!-- Imagen del cupón -->
+                    @if (Model.ImagenCupon != null)
+                    {
+                        <div class="cupon-imagen">
+                            <img src="data:image/jpeg;base64,@Convert.ToBase64String(Model.ImagenCupon)" 
+                                 alt="@Model.Nombre" 
+                                 class="w-100" 
+                                 style="max-height: 300px; object-fit: cover;">
+                        </div>
+                    }
+
+                    <!-- Información del cupón -->
+                    <div class="p-4">
+                        <div class="cupon-info mb-4">
+                            <h4 class="text-center mb-3">@Model.Nombre</h4>
+                            <p class="text-center text-muted mb-4">@Model.Descripcion</p>
+                            
+                            <!-- Detalles del cupón -->
+                            <div class="row text-center mb-4">
+                                <div class="col-4">
+                                    <div class="info-stat">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-percentage fa-2x text-danger"></i>
+                                        </div>
+                                        <h5 class="text-danger">@Model.TextoDescuento</h5>
+                                        <small class="text-muted">Descuento</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="info-stat">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-calendar-day fa-2x text-primary"></i>
+                                        </div>
+                                        <h6 class="text-primary">@Model.DiasAplicables</h6>
+                                        <small class="text-muted">Días válidos</small>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="info-stat">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-clock fa-2x text-warning"></i>
+                                        </div>
+                                        <h6 class="text-warning">@Model.FechaFin.ToString("dd/MM")</h6>
+                                        <small class="text-muted">Válido hasta</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Estado del cupón -->
+                            <div class="text-center mb-4">
+                                @if (Model.EsValidoHoy)
+                                {
+                                    <span class="badge bg-success p-3 fs-6">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        ¡VÁLIDO HOY!
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning p-3 fs-6">
+                                        <i class="fas fa-clock me-2"></i>
+                                        No válido hoy
+                                    </span>
+                                }
+                            </div>
+
+                            <!-- Productos aplicables -->
+                            @if (!string.IsNullOrEmpty(Model.ProductosNombres))
+                            {
+                                <div class="productos-aplicables mb-4">
+                                    <h6><i class="fas fa-list-ul text-info me-2"></i>Productos incluidos:</h6>
+                                    <div class="bg-light p-3 rounded">
+                                        <small>@Model.ProductosNombres</small>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QR Code -->
+            <div class="card shadow border-0 mb-4" style="border-radius: 15px;">
+                <div class="card-header bg-dark text-white text-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-qrcode me-2"></i>
+                        Código QR
+                    </h5>
+                </div>
+                <div class="card-body text-center p-4">
+                    <!-- QR Code generado -->
+                    <div class="qr-container mb-3">
+                        <div id="qrcode" class="mx-auto"></div>
+                    </div>
+                    
+                    <!-- Código del cupón -->
+                    <div class="codigo-cupon mb-3">
+                        <h6>Código del cupón:</h6>
+                        <code class="fs-5 p-2 bg-light rounded">@Model.CodigoQR</code>
+                    </div>
+                    
+                    <!-- Instrucciones -->
+                    <div class="instrucciones">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Muestra este QR al personal autorizado para aplicar tu descuento
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instrucciones de uso -->
+            <div class="alert alert-info border-0" style="border-radius: 15px;">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-lightbulb fa-2x text-info me-3 mt-1"></i>
+                    <div>
+                        <h6 class="alert-heading">¿Cómo usar tu cupón?</h6>
+                        <ol class="mb-0 small">
+                            <li>Muestra este código QR al personal de Verace Pizza</li>
+                            <li>Selecciona los productos incluidos en la promoción</li>
+                            <li>El personal escaneará el código y aplicará tu descuento</li>
+                            <li>¡Disfruta de tu promoción especial!</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="action-buttons">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <a href="@Url.Action("Index")" class="btn btn-outline-secondary w-100 rounded-pill">
+                            <i class="fas fa-arrow-left me-2"></i>Volver
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <button onclick="compartirCupon()" class="btn btn-primary w-100 rounded-pill">
+                            <i class="fas fa-share-alt me-2"></i>Compartir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .cupon-header i {
+        animation: pulse 2s infinite;
+    }
+
+    keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+
+    .info-stat {
+        padding: 1rem 0;
+        transition: transform 0.3s ease;
+    }
+
+    .info-stat:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-icon {
+        margin-bottom: 0.5rem;
+    }
+
+    .qr-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 200px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+    }
+
+    .codigo-cupon code {
+        letter-spacing: 2px;
+        font-size: 1.1rem;
+    }
+
+    .productos-aplicables {
+        border-left: 4px solid #17a2b8;
+        padding-left: 1rem;
+    }
+
+    /* Estilos para botones outline que se ven correctamente */
+    .btn-outline-secondary {
+        color: #6c757d !important;
+        border-color: #6c757d !important;
+        background-color: transparent !important;
+        border-width: 2px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        padding: 10px 20px !important;
+        text-decoration: none !important;
+    }
+
+    .btn-outline-secondary:hover {
+        color: #fff !important;
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+        text-decoration: none !important;
+        transform: translateY(-2px) !important;
+    }
+
+    .btn {
+        transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    media (max-width: 768px) {
+        .card-body {
+            padding: 1rem !important;
+        }
+        
+        .qr-container {
+            min-height: 150px;
+            padding: 15px;
+        }
+    }
+</style>
+
+<!-- Incluir biblioteca QR Code -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Generar código QR
+        const qr = new QRious({
+            element: document.createElement('canvas'),
+            value: '@Model.CodigoQR',
+            size: 200,
+            level: 'M'
+        });
+        
+        // Insertar el QR en el contenedor
+        const qrContainer = document.getElementById('qrcode');
+        qrContainer.appendChild(qr.canvas);
+        
+        // Estilos adicionales para el canvas
+        qr.canvas.style.border = '3px solid #28a745';
+        qr.canvas.style.borderRadius = '10px';
+        qr.canvas.style.boxShadow = '0 4px 15px rgba(40, 167, 69, 0.3)';
+    });
+
+    function compartirCupon() {
+        if (navigator.share) {
+            navigator.share({
+                title: '@Model.Nombre',
+                text: '@Model.Descripcion',
+                url: window.location.href
+            }).catch(console.error);
+        } else {
+            // Fallback para navegadores que no soportan Web Share API
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(function() {
+                alert('¡Enlace del cupón copiado al portapapeles!');
+            }).catch(function(err) {
+                console.error('Error al copiar:', err);
+                // Mostrar el enlace para copiar manualmente
+                prompt('Copia este enlace para compartir:', url);
+            });
+        }
+    }
+</script>

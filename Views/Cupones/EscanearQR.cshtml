@@ -1,0 +1,517 @@
+﻿@model ProyectoIdentity.Models.EscanearQRViewModel
+@{
+    ViewData["Title"] = "Escanear Código QR";
+}
+
+<div class="container-fluid mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            
+            <!-- Header -->
+            <div class="card shadow-lg border-0 mb-4" style="border-radius: 20px; overflow: hidden;">
+                <div class="card-header text-center py-4" style="background: linear-gradient(135deg, #6f42c1, #5a2d91); color: white;">
+                    <div class="scanner-header">
+                        <i class="fas fa-qrcode fa-3x mb-3" style="animation: scan 2s infinite;"></i>
+                        <h2 class="mb-1">Escáner de Cupones QR</h2>
+                        <p class="mb-0 opacity-75">Escanea códigos QR para aplicar descuentos</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Panel de Escáner -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card shadow border-0 h-100">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-camera me-2"></i>
+                                Escáner de Cámara
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Área del escáner -->
+                            <div class="scanner-container mb-3">
+                                <div id="camera-container">
+                                    <video id="qr-video" class="w-100" style="border-radius: 10px; max-height: 300px;"></video>
+                                    <div class="scanner-overlay">
+                                        <div class="scanner-line"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Controles de cámara -->
+                                <div class="camera-controls mt-3 text-center">
+                                    <button id="start-camera" class="btn btn-success me-2">
+                                        <i class="fas fa-play me-1"></i>Iniciar Cámara
+                                    </button>
+                                    <button id="stop-camera" class="btn btn-danger me-2" disabled>
+                                        <i class="fas fa-stop me-1"></i>Detener
+                                    </button>
+                                    <button id="switch-camera" class="btn btn-info" disabled>
+                                        <i class="fas fa-sync-alt me-1"></i>Cambiar Cámara
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Entrada manual alternativa -->
+                            <div class="manual-input">
+                                <h6><i class="fas fa-keyboard me-2"></i>O ingresa el código manualmente:</h6>
+                                <div class="input-group">
+                                    <input type="text" id="manual-code" class="form-control" 
+                                           placeholder="Ingresa el código del cupón">
+                                    <button class="btn btn-outline-primary" onclick="procesarCodigoManual()">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel de Información del Cupón -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card shadow border-0 h-100">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-ticket-alt me-2"></i>
+                                Información del Cupón
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="cupon-info" class="cupon-info-container">
+                                <!-- Estado inicial -->
+                                <div class="text-center py-4" id="waiting-state">
+                                    <i class="fas fa-qrcode fa-4x text-muted mb-3"></i>
+                                    <h5 class="text-muted">Esperando código QR...</h5>
+                                    <p class="text-muted">Escanea un código QR o ingresa el código manualmente</p>
+                                </div>
+
+                                <!-- Información del cupón encontrado -->
+                                <div id="cupon-details" style="display: none;">
+                                    <div class="cupon-header-info mb-3">
+                                        <h4 id="cupon-nombre" class="text-success"></h4>
+                                        <p id="cupon-descripcion" class="text-muted"></p>
+                                    </div>
+
+                                    <div class="cupon-stats mb-3">
+                                        <div class="row text-center">
+                                            <div class="col-6">
+                                                <div class="stat-box">
+                                                    <i class="fas fa-percentage fa-2x text-danger mb-2"></i>
+                                                    <h5 id="cupon-descuento" class="text-danger">-</h5>
+                                                    <small>Descuento</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="stat-box">
+                                                    <i class="fas fa-calendar-check fa-2x text-success mb-2"></i>
+                                                    <h5 class="text-success">VÁLIDO</h5>
+                                                    <small>Estado</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Productos aplicables -->
+                                    <div class="productos-aplicables">
+                                        <h6><i class="fas fa-list-ul me-2"></i>Productos aplicables:</h6>
+                                        <div id="productos-list" class="productos-container">
+                                            <!-- Se llenarán dinámicamente -->
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Estado de error -->
+                                <div id="error-state" style="display: none;" class="text-center py-4">
+                                    <i class="fas fa-exclamation-triangle fa-4x text-warning mb-3"></i>
+                                    <h5 class="text-warning">Cupón no válido</h5>
+                                    <p id="error-message" class="text-muted"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel de Aplicación del Cupón -->
+            <div class="row" id="aplicar-cupon-panel" style="display: none;">
+                <div class="col-12">
+                    <div class="card shadow border-0">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">
+                                <i class="fas fa-shopping-cart me-2"></i>
+                                Aplicar Cupón al Pedido
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="aplicar-cupon-form">
+                                <div class="row">
+                                    <!-- Selección de sucursal -->
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            <i class="fas fa-map-marker-alt me-1"></i>Sucursal
+                                        </label>
+                                        <select class="form-select" id="sucursal-select" required>
+                                            <option value="">Seleccionar sucursal...</option>
+                                            <!-- Se llenarán dinámicamente -->
+                                        </select>
+                                    </div>
+
+                                    <!-- Cliente (opcional) -->
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">
+                                            <i class="fas fa-user me-1"></i>Cliente (opcional)
+                                        </label>
+                                        <input type="text" class="form-control" id="cliente-input" 
+                                               placeholder="Email o nombre del cliente">
+                                    </div>
+                                </div>
+
+                                <!-- Productos seleccionados -->
+                                <div class="productos-pedido mb-3">
+                                    <h6><i class="fas fa-shopping-bag me-2"></i>Productos del pedido:</h6>
+                                    <div id="productos-pedido-container">
+                                        <!-- Se llenarán dinámicamente -->
+                                    </div>
+                                </div>
+
+                                <!-- Resumen del pedido -->
+                                <div class="resumen-pedido bg-light p-3 rounded">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="resumen-item">
+                                                <span>Subtotal:</span>
+                                                <strong id="subtotal-amount">$0.00</strong>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="resumen-item text-success">
+                                                <span>Descuento:</span>
+                                                <strong id="descuento-amount">-$0.00</strong>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="resumen-item">
+                                                <span>Total:</span>
+                                                <strong id="total-amount" class="fs-5 text-primary">$0.00</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Botones de acción -->
+                                <div class="text-center mt-4">
+                                    <button type="button" class="btn btn-secondary me-2" onclick="cancelarAplicacion()">
+                                        <i class="fas fa-times me-1"></i>Cancelar
+                                    </button>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-check me-1"></i>Aplicar Cupón y Crear Pedido
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    keyframes scan {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+
+    .scanner-container {
+        position: relative;
+        background: #f8f9fa;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    #camera-container {
+        position: relative;
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+        border-radius: 10px;
+    }
+
+    .scanner-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border: 2px solid #28a745;
+        border-radius: 10px;
+        pointer-events: none;
+    }
+
+    .scanner-line {
+        position: absolute;
+        top: 50%;
+        left: 10%;
+        right: 10%;
+        height: 2px;
+        background: #28a745;
+        transform: translateY(-50%);
+        animation: scanLine 2s ease-in-out infinite;
+    }
+
+    keyframes scanLine {
+        0%, 100% { opacity: 0; }
+        50% { opacity: 1; }
+    }
+
+    .stat-box {
+        padding: 1rem;
+        border-radius: 10px;
+        background: #f8f9fa;
+        transition: transform 0.3s ease;
+    }
+
+    .stat-box:hover {
+        transform: translateY(-3px);
+    }
+
+    .productos-container {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .producto-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .producto-item:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+    }
+
+    .producto-item.selected {
+        background: #d4edda;
+        border-left: 4px solid #28a745;
+    }
+
+    .cantidad-input {
+        width: 60px;
+        text-align: center;
+    }
+
+    .resumen-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    /* Responsive */
+    media (max-width: 768px) {
+        .col-lg-6 {
+            margin-bottom: 1rem;
+        }
+        
+        #qr-video {
+            max-height: 200px;
+        }
+    }
+</style>
+
+<!-- Librerías necesarias -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
+
+<script>
+    let stream = null;
+    let video = null;
+    let canvas = null;
+    let context = null;
+    let scanning = false;
+    let cuponActual = null;
+    let productosDisponibles = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        video = document.getElementById('qr-video');
+        canvas = document.createElement('canvas');
+        context = canvas.getContext('2d');
+        
+        // Event listeners
+        document.getElementById('start-camera').addEventListener('click', startCamera);
+        document.getElementById('stop-camera').addEventListener('click', stopCamera);
+        document.getElementById('aplicar-cupon-form').addEventListener('submit', aplicarCupon);
+        
+        // Cargar sucursales
+        cargarSucursales();
+    });
+
+    async function startCamera() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment' } 
+            });
+            video.srcObject = stream;
+            video.play();
+            
+            document.getElementById('start-camera').disabled = true;
+            document.getElementById('stop-camera').disabled = false;
+            document.getElementById('switch-camera').disabled = false;
+            
+            scanning = true;
+            scanQR();
+        } catch (error) {
+            console.error('Error al acceder a la cámara:', error);
+            alert('No se pudo acceder a la cámara. Por favor, verifica los permisos.');
+        }
+    }
+
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+        scanning = false;
+        
+        document.getElementById('start-camera').disabled = false;
+        document.getElementById('stop-camera').disabled = true;
+        document.getElementById('switch-camera').disabled = true;
+    }
+
+    function scanQR() {
+        if (!scanning || !video.videoWidth || !video.videoHeight) {
+            if (scanning) {
+                requestAnimationFrame(scanQR);
+            }
+            return;
+        }
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        
+        if (code) {
+            console.log('QR Code detectado:', code.data);
+            procesarCodigoQR(code.data);
+            stopCamera();
+        } else {
+            requestAnimationFrame(scanQR);
+        }
+    }
+
+    function procesarCodigoManual() {
+        const codigo = document.getElementById('manual-code').value.trim();
+        if (codigo) {
+            procesarCodigoQR(codigo);
+        }
+    }
+
+    async function procesarCodigoQR(codigo) {
+        try {
+            const response = await fetch('@Url.Action("ProcesarQR")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                },
+                body: JSON.stringify({ CodigoQR: codigo })
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                mostrarInformacionCupon(result);
+            } else {
+                mostrarError(result.message);
+            }
+        } catch (error) {
+            console.error('Error al procesar QR:', error);
+            mostrarError('Error al procesar el código QR');
+        }
+    }
+
+    function mostrarInformacionCupon(data) {
+        cuponActual = data.cupon;
+        productosDisponibles = data.productosAplicables;
+        
+        // Ocultar estados anteriores
+        document.getElementById('waiting-state').style.display = 'none';
+        document.getElementById('error-state').style.display = 'none';
+        
+        // Mostrar información del cupón
+        document.getElementById('cupon-details').style.display = 'block';
+        document.getElementById('cupon-nombre').textContent = cuponActual.nombre;
+        document.getElementById('cupon-descripcion').textContent = cuponActual.descripcion;
+        document.getElementById('cupon-descuento').textContent = cuponActual.textDescuento;
+        
+        // Mostrar productos aplicables
+        const productosContainer = document.getElementById('productos-list');
+        productosContainer.innerHTML = '';
+        
+        productosDisponibles.forEach(producto => {
+            const div = document.createElement('div');
+            div.className = 'producto-item';
+            div.innerHTML = `
+                <div>
+                    <strong>${producto.nombre}</strong>
+                    <br><small class="text-muted">${producto.categoria} - $${producto.precio}</small>
+                </div>
+                <div>
+                    <input type="number" class="form-control cantidad-input" 
+                           min="0" max="10" value="0" 
+                           onchange="actualizarProductoPedido(${producto.id}, this.value, '${producto.nombre}', ${producto.precio})">
+                </div>
+            `;
+            productosContainer.appendChild(div);
+        });
+        
+        // Mostrar panel de aplicación
+        document.getElementById('aplicar-cupon-panel').style.display = 'block';
+    }
+
+    function mostrarError(mensaje) {
+        document.getElementById('waiting-state').style.display = 'none';
+        document.getElementById('cupon-details').style.display = 'none';
+        document.getElementById('error-state').style.display = 'block';
+        document.getElementById('error-message').textContent = mensaje;
+        document.getElementById('aplicar-cupon-panel').style.display = 'none';
+    }
+
+    function actualizarProductoPedido(productoId, cantidad, nombre, precio) {
+        // Lógica para actualizar el resumen del pedido
+        calcularResumen();
+    }
+
+    function calcularResumen() {
+        // Implementar cálculo de subtotal, descuento y total
+        // Basado en los productos seleccionados y el tipo de cupón
+    }
+
+    async function aplicarCupon(event) {
+        event.preventDefault();
+        
+        // Implementar aplicación del cupón y creación del pedido
+        // Redirigir a Pedidos/Resumen con el ID del pedido creado
+    }
+
+    function cancelarAplicacion() {
+        document.getElementById('aplicar-cupon-panel').style.display = 'none';
+        document.getElementById('waiting-state').style.display = 'block';
+        document.getElementById('cupon-details').style.display = 'none';
+        document.getElementById('manual-code').value = '';
+    }
+
+    async function cargarSucursales() {
+        // Implementar carga de sucursales desde el servidor
+    }
+</script>

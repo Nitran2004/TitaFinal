@@ -263,16 +263,62 @@ public class PedidosController : Controller
     }
 
     [Authorize(Roles = "Administrador")]
+    // Para mostrar en Pedidos/ResumenAdmin cuáles pedidos usaron cupones
     public async Task<IActionResult> ResumenAdmin()
     {
         var pedidos = await _context.Pedidos
-            .Include(p => p.PedidoProductos!)
-                .ThenInclude(pp => pp.Producto)
             .Include(p => p.Sucursal)
+            .Include(p => p.PedidoProductos)
+                .ThenInclude(pp => pp.Producto)
             .OrderByDescending(p => p.Fecha)
+            .Select(p => new PedidoResumenViewModel
+            {
+                Id = p.Id,
+                Fecha = p.Fecha,
+                Estado = p.Estado,
+                Total = p.Total,
+                SucursalNombre = p.Sucursal.Nombre,
+                UsuarioId = p.UsuarioId,
+
+                // ✅ Verificar si este pedido usó un cupón
+                UsoCupon = _context.CuponesCanjeados.Any(cc =>
+                    cc.FechaCanje.Date == p.Fecha.Date &&
+                    cc.FechaCanje.Hour == p.Fecha.Hour &&
+                    cc.FechaCanje.Minute == p.Fecha.Minute &&
+                    cc.TotalConDescuento == p.Total),
+
+                // ✅ Obtener información del cupón si se usó
+                CuponInfo = _context.CuponesCanjeados
+                    .Where(cc => cc.FechaCanje.Date == p.Fecha.Date &&
+                               cc.FechaCanje.Hour == p.Fecha.Hour &&
+                               cc.FechaCanje.Minute == p.Fecha.Minute &&
+                               cc.TotalConDescuento == p.Total)
+                    .Select(cc => new {
+                        NombreCupon = cc.Cupon.Nombre,
+                        DescuentoAplicado = cc.DescuentoAplicado,
+                        CodigoQR = cc.CodigoQR
+                    })
+                    .FirstOrDefault(),
+
+                ProductosCount = p.PedidoProductos.Count()
+            })
             .ToListAsync();
 
         return View(pedidos);
+    }
+
+    // ViewModel para mostrar pedidos con información de cupones
+    public class PedidoResumenViewModel
+    {
+        public int Id { get; set; }
+        public DateTime Fecha { get; set; }
+        public string Estado { get; set; }
+        public decimal Total { get; set; }
+        public string SucursalNombre { get; set; }
+        public string UsuarioId { get; set; }
+        public bool UsoCupon { get; set; }
+        public dynamic CuponInfo { get; set; }
+        public int ProductosCount { get; set; }
     }
 
     public async Task<IActionResult> VerPedidoTemporal()
