@@ -22,22 +22,169 @@
         margin: 0.5rem 0;
     }
 
-    .progress-container {
-        background: rgba(255,255,255,0.2);
-        border-radius: 20px;
-        height: 30px;
-        margin: 1rem 0;
-        position: relative;
-        overflow: hidden;
-    }
+/* Reemplaza los estilos de .progress-container en tu <style> existente */
 
-    .progress-bar {
-        height: 100%;
-        background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff, #5f27cd);
-        border-radius: 20px;
-        transition: width 0.5s ease;
-        position: relative;
+.progress-container {
+    background: rgba(255,255,255,0.2);
+    border-radius: 20px;
+    height: 40px;
+    margin: 1.5rem 0;
+    position: relative;
+    overflow: visible;
+    border: 2px solid rgba(255,255,255,0.3);
+}
+
+.progress-bar-ruler {
+    height: 100%;
+    background: linear-gradient(90deg, #28a745, #20c997, #17a2b8);
+    border-radius: 18px;
+    transition: width 0.5s ease;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+/* Marcas de la regla */
+.ruler-marks {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.ruler-mark {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 0;
+}
+
+.ruler-tick {
+    width: 2px;
+    height: 15px;
+    background: rgba(255,255,255,0.8);
+    border-radius: 1px;
+    margin-top: 5px;
+}
+
+.ruler-mark.active .ruler-tick {
+    background: rgba(255,255,255,1);
+    box-shadow: 0 0 5px rgba(255,255,255,0.5);
+}
+
+.ruler-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    background: rgba(0,0,0,0.3);
+    padding: 1px 4px;
+    border-radius: 3px;
+    margin-top: 2px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.ruler-mark.active .ruler-label {
+    color: white;
+    background: rgba(0,0,0,0.5);
+}
+
+/* Indicador de posición actual */
+.current-position {
+    position: absolute;
+    top: -15px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    z-index: 4;
+}
+
+.position-marker {
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 12px solid #28a745;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.position-label {
+    background: #28a745;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-bottom: 2px;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4);
+    white-space: nowrap;
+}
+
+/* Información del progreso */
+.progress-info {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.progress-text {
+    color: rgba(255,255,255,0.9);
+}
+
+.progress-text small {
+    font-size: 0.85rem;
+}
+
+/* Responsive */
+media (max-width: 768px) {
+    .progress-container {
+        height: 35px;
+        margin: 1rem 0;
     }
+    
+    .ruler-label {
+        font-size: 0.6rem;
+        padding: 1px 2px;
+    }
+    
+    .ruler-tick {
+        height: 12px;
+    }
+    
+    .position-label {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+    }
+    
+    .position-marker {
+        border-left-width: 6px;
+        border-right-width: 6px;
+        border-top-width: 10px;
+    }
+    
+    .progress-text small {
+        font-size: 0.75rem;
+    }
+}
+
+/* Animación suave */
+keyframes pulseMarker {
+    0%, 100% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.1); }
+}
+
+.current-position {
+    animation: pulseMarker 2s ease-in-out infinite;
+}
 
     .recompensas-grid {
         display: grid;
@@ -305,6 +452,69 @@
             min-width: auto;
         }
     }
+
+    /* Añade estos estilos a la sección <style> existente en Recompensas.cshtml */
+
+.progress-container {
+    background: rgba(255,255,255,0.2);
+    border-radius: 20px;
+    height: 30px;
+    margin: 1rem 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #54a0ff, #5f27cd);
+    border-radius: 20px;
+    transition: width 0.5s ease;
+    position: relative;
+}
+
+.progress-info {
+    margin-top: 0.5rem;
+}
+
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.nivel-actual {
+    color: rgba(255,255,255,0.9);
+}
+
+.nivel-siguiente {
+    color: rgba(255,255,255,0.7);
+}
+
+.puntos-faltantes {
+    text-align: center;
+    color: rgba(255,255,255,0.8);
+}
+
+.puntos-faltantes small {
+    font-size: 0.8rem;
+}
+
+/* Responsive para móviles */
+media (max-width: 768px) {
+    .progress-labels {
+        font-size: 0.8rem;
+    }
+    
+    .puntos-faltantes small {
+        font-size: 0.7rem;
+    }
+    
+    .progress-container {
+        height: 25px;
+    }
+}
 </style>
 
 <div class="container mt-4">
@@ -314,15 +524,58 @@
         <div class="puntos-disponibles" id="puntos-disponibles">@Model.PuntosUsuario pts</div>
         <p>Selecciona las recompensas que deseas canjear</p>
         
-        <!-- Barra de progreso -->
+        <!-- Reemplaza TODA la sección de la barra de progreso en Views/Fidelizacion/Recompensas.cshtml -->
+        <!-- Barra de progreso con regla visual -->
         <div class="progress-container">
-            @{
-                int maxPuntos = 6000;
-                double porcentajeTotal = Math.Min(100, (double)Model.PuntosUsuario / maxPuntos * 100);
-            }
-            <div class="progress-bar" style="width: @porcentajeTotal%"></div>
+                @{
+                    // Usar la misma lógica que "Mis Puntos" pero con escala hasta 2000
+                    int maxPuntosRegla = 2000;
+                    double porcentajeProgreso = Math.Min(100, (double)Model.PuntosUsuario / maxPuntosRegla * 100);
+
+                    // Calcular próximo nivel de 200 en 200
+                    int siguienteNivel = ((Model.PuntosUsuario / 200) + 1) * 200;
+                    if (siguienteNivel > 2000) siguienteNivel = 2000;
+                    int puntosFaltantesProximoNivel = Math.Max(0, siguienteNivel - Model.PuntosUsuario);
+                }
+
+            <div class="progress-bar-ruler" style="width: @porcentajeProgreso%"></div>
+
+            <!-- Marcas de la regla -->
+            <div class="ruler-marks">
+                    @for (int i = 0; i <= 2000; i += 200)
+                    {
+                        double posicion = (double)i / 2000 * 100;
+                        bool esActivo = Model.PuntosUsuario >= i;
+
+                    <div class="ruler-mark @(esActivo ? "active" : "")" style="left: @posicion%">
+                        <div class="ruler-tick"></div>
+                        <div class="ruler-label">@i</div>
+                    </div>
+                    }
+            </div>
+
+            <!-- Indicador de posición actual -->
+            <div class="current-position" style="left: @porcentajeProgreso%">
+                <div class="position-marker"></div>
+                <div class="position-label">@Model.PuntosUsuario pts</div>
+            </div>
+
+            <!-- Información del progreso -->
+            <div class="progress-info">
+                    @if (Model.PuntosUsuario < 2000)
+                    {
+                    <div class="progress-text">
+                        <!-- <small>Te faltan <strong>@puntosFaltantesProximoNivel puntos</strong> para el siguiente nivel (@siguienteNivel pts)</small>-->
+                    </div>
+                    }
+                    else
+                    {
+                    <div class="progress-text">
+                        <!-- <small><strong>¡Has alcanzado el nivel máximo de fidelidad!</strong></small>-->
+                    </div>
+                    }
+            </div>
         </div>
-    </div>
 
     <!-- Mensajes de estado -->
     @if (TempData["Exito"] != null)

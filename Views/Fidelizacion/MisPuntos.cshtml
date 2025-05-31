@@ -130,7 +130,7 @@
         <div class="puntos-numero">@Model.PuntosActuales</div>
         
         <!-- Barra de progreso hacia próxima recompensa -->
-        <div class="progress-bar-container">
+@*         <div class="progress-bar-container">
             @{
                 int proximaRecompensa = 2500; // Puedes calcular esto dinámicamente
                 double porcentaje = Math.Min(100, (double)Model.PuntosActuales / proximaRecompensa * 100);
@@ -139,7 +139,7 @@
         </div>
         <div class="text-center">
             <small>Te faltan @Math.Max(0, proximaRecompensa - Model.PuntosActuales) puntos para tu próxima recompensa</small>
-        </div>
+        </div> *@
     </div>
 
     <!-- Datos Personales -->
