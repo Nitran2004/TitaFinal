@@ -76,6 +76,10 @@ namespace ProyectoIdentity.Controllers
                     return "/models3d/pizza1.glb"; // Asegúrate de que esta ruta sea correcta
                 case "mi champ":
                     return "/models3d/pizza2.glb"; // Asegúrate de que esta ruta sea correcta
+                case "say cheese":
+                    return "/models3d/pizza3.glb"; // Asegúrate de que esta ruta sea correcta
+                case "verace":
+                    return "/models3d/pizza4.glb"; // Asegúrate de que esta ruta sea correcta
                 default:
                     return ""; // Cadena vacía indica usar el cubo rojo por defecto
             }
