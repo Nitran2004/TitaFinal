@@ -852,6 +852,117 @@ namespace ProyectoIdentity.Datos
 
         }
 
+        public static void CrearCuponesPredeterminados(ApplicationDbContext context)
+        {
+            if (context.Cupones.Any()) return; // Si ya existen cupones, no crear más
+
+            var cupones = new List<Cupon>
+    {
+        // 1. Cupón para productos de Promos (IDs 64-68)
+        new Cupon
+        {
+            Nombre = "Promo Especial",
+            Descripcion = "15% de descuento en productos promocionales",
+            TipoDescuento = "Porcentaje",
+            ValorDescuento = 15,
+            MontoMinimo = 10,
+            ProductosAplicables = "64,65,66,67,68", // IDs de promos
+            DiasAplicables = "Todos",
+            CodigoQR = "PROMO15-" + Guid.NewGuid().ToString("N")[..8].ToUpper(),
+            FechaCreacion = DateTime.Now,
+            FechaExpiracion = DateTime.Now.AddMonths(3),
+            Activo = true,
+            LimiteUsos = 100
+        },
+
+        // 2. Cupón para últimas 5 cervezas (IDs 21-25)
+        new Cupon
+        {
+            Nombre = "Happy Hour Cervezas",
+            Descripcion = "20% de descuento en cervezas seleccionadas",
+            TipoDescuento = "Porcentaje",
+            ValorDescuento = 20,
+            MontoMinimo = 8,
+            ProductosAplicables = "21,22,23,24,25", // Últimas 5 cervezas
+            DiasAplicables = "Monday,Tuesday,Wednesday,Thursday,Saturday,Sunday", // Todos excepto viernes
+            CodigoQR = "BEER20-" + Guid.NewGuid().ToString("N")[..8].ToUpper(),
+            FechaCreacion = DateTime.Now,
+            FechaExpiracion = DateTime.Now.AddMonths(3),
+            Activo = true,
+            LimiteUsos = 200
+        },
+
+        // 3. Promoción 3x2 en Jarros, Pintas, Litros, Growlers (IDs 11,12,13,14) - TODOS LOS DÍAS EXCEPTO VIERNES
+        new Cupon
+        {
+            Nombre = "3x2 Cerveza Draft",
+            Descripcion = "Compra 2 y llévate 3 en Jarro, Pinta, Litro y Growler",
+            TipoDescuento = "3x2",
+            ValorDescuento = 0,
+            MontoMinimo = 0,
+            ProductosAplicables = "11,12,13,14", // Jarro, Pinta, Litro, Growler
+            DiasAplicables = "Monday,Tuesday,Wednesday,Thursday,Saturday,Sunday", // Todos excepto viernes
+            CodigoQR = "DRAFT3X2-" + Guid.NewGuid().ToString("N")[..8].ToUpper(),
+            FechaCreacion = DateTime.Now,
+            FechaExpiracion = DateTime.Now.AddMonths(6),
+            Activo = true,
+            LimiteUsos = 500
+        },
+
+        // 4. Promoción 3x2 en Cocteles - SOLO JUEVES
+        new Cupon
+        {
+            Nombre = "Jueves de Cocteles 3x2",
+            Descripcion = "Compra 2 cocteles y llévate 3 - Solo los jueves",
+            TipoDescuento = "3x2",
+            ValorDescuento = 0,
+            MontoMinimo = 0,
+            ProductosAplicables = GetCoctelesIds(context), // Todos los productos de categoría Cocteles
+            DiasAplicables = "Thursday", // Solo jueves
+            CodigoQR = "COCKTAIL3X2-" + Guid.NewGuid().ToString("N")[..8].ToUpper(),
+            FechaCreacion = DateTime.Now,
+            FechaExpiracion = DateTime.Now.AddMonths(6),
+            Activo = true,
+            LimiteUsos = 300
+        },
+
+        // 5. Cupón general de descuento fijo
+        new Cupon
+        {
+            Nombre = "Descuento VIP",
+            Descripcion = "$5 de descuento en tu pedido",
+            TipoDescuento = "Fijo",
+            ValorDescuento = 5,
+            MontoMinimo = 20,
+            ProductosAplicables = "", // Aplica a todos los productos
+            DiasAplicables = "Todos",
+            CodigoQR = "VIP5-" + Guid.NewGuid().ToString("N")[..8].ToUpper(),
+            FechaCreacion = DateTime.Now,
+            FechaExpiracion = DateTime.Now.AddMonths(1),
+            Activo = true,
+            LimiteUsos = 50
+        }
+    };
+
+            context.Cupones.AddRange(cupones);
+            context.SaveChanges();
+        }
+
+        // Método auxiliar para obtener IDs de cocteles
+        private static string GetCoctelesIds(ApplicationDbContext context)
+        {
+            var coctelesIds = context.Productos
+                .Where(p => p.Categoria == "Cocteles")
+                .Select(p => p.Id)
+                .ToList();
+
+            return string.Join(",", coctelesIds);
+        }
+
+        // Llamar este método en el método Initialize principal del DbInitializer
+        // Agregar después de CrearProductos(context):
+        // CrearCuponesPredeterminados(context);
+
 
 
     }

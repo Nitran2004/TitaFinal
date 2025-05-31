@@ -101,26 +101,6 @@ builder.Logging.SetMinimumLevel(LogLevel.Information);
 // Construcción de la aplicación
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-    try
-    {
-        // Esto creará las tablas que faltan
-        context.Database.EnsureCreated();
-
-        // Inicializar cupones
-        ApplicationDbContext.InicializarCupones(context);
-
-        Console.WriteLine("✅ Tablas creadas e inicializadas correctamente");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"❌ Error: {ex.Message}");
-    }
-}
-
 // Configuración del pipeline de middleware
 if (!app.Environment.IsDevelopment())
 {

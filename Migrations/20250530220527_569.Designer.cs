@@ -12,8 +12,8 @@ using ProyectoIdentity.Datos;
 namespace ProyectoIdentity.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250529150924_AgregarCamposCuponesPedidos")]
-    partial class AgregarCamposCuponesPedidos
+    [Migration("20250530220527_569")]
+    partial class _569
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -276,54 +276,47 @@ namespace ProyectoIdentity.Migrations
                     b.Property<bool>("Activo")
                         .HasColumnType("bit");
 
-                    b.Property<string>("CategoriasAplicables")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
                     b.Property<string>("CodigoQR")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Descripcion")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<decimal?>("DescuentoFijo")
-                        .HasColumnType("decimal(10,2)");
-
-                    b.Property<decimal?>("DescuentoPorcentaje")
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("DiasAplicables")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("FechaFin")
+                    b.Property<DateTime?>("FechaExpiracion")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("FechaInicio")
-                        .HasColumnType("datetime2");
+                    b.Property<int>("LimiteUsos")
+                        .HasColumnType("int");
 
-                    b.Property<byte[]>("ImagenCupon")
-                        .HasColumnType("varbinary(max)");
+                    b.Property<decimal>("MontoMinimo")
+                        .HasColumnType("decimal(10,2)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("ProductosAplicables")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("TipoPromocion")
+                    b.Property<string>("TipoDescuento")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("ValorDescuento")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("VecesUsado")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -341,9 +334,6 @@ namespace ProyectoIdentity.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<string>("ClienteId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<string>("CodigoQR")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -355,14 +345,13 @@ namespace ProyectoIdentity.Migrations
                     b.Property<decimal>("DescuentoAplicado")
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<string>("EstadoCanje")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<DateTime>("FechaCanje")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("ProductosIncluidos")
+                    b.Property<int?>("PedidoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProductosCanjeados")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("TotalConDescuento")
@@ -376,9 +365,9 @@ namespace ProyectoIdentity.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClienteId");
-
                     b.HasIndex("CuponId");
+
+                    b.HasIndex("PedidoId");
 
                     b.HasIndex("UsuarioId");
 
@@ -827,25 +816,25 @@ namespace ProyectoIdentity.Migrations
 
             modelBuilder.Entity("ProyectoIdentity.Models.CuponCanjeado", b =>
                 {
-                    b.HasOne("ProyectoIdentity.Models.AppUsuario", "Cliente")
-                        .WithMany()
-                        .HasForeignKey("ClienteId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("ProyectoIdentity.Models.Cupon", "Cupon")
                         .WithMany()
                         .HasForeignKey("CuponId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("ProyectoIdentity.Models.Pedido", "Pedido")
+                        .WithMany()
+                        .HasForeignKey("PedidoId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("ProyectoIdentity.Models.AppUsuario", "Usuario")
                         .WithMany()
                         .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Cliente");
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Cupon");
+
+                    b.Navigation("Pedido");
 
                     b.Navigation("Usuario");
                 });

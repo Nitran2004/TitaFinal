@@ -1,6 +1,4 @@
-﻿// Models/Cupon.cs
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace ProyectoIdentity.Models
 {
@@ -9,73 +7,32 @@ namespace ProyectoIdentity.Models
         public int Id { get; set; }
 
         [Required]
-        [StringLength(200)]
-        public string Nombre { get; set; } = string.Empty;
+        public string Nombre { get; set; }
 
-        [StringLength(500)]
-        public string? Descripcion { get; set; }
+        public string Descripcion { get; set; }
 
         [Required]
-        [StringLength(50)]
-        public string TipoPromocion { get; set; } = string.Empty;
+        public string TipoDescuento { get; set; } // "Fijo", "Porcentaje", "3x2"
 
-        [StringLength(200)]
-        public string? DiasAplicables { get; set; }
+        public decimal ValorDescuento { get; set; } // Monto fijo o porcentaje
 
-        [StringLength(500)]
-        public string? ProductosAplicables { get; set; }
+        public decimal MontoMinimo { get; set; } // Monto mínimo para aplicar
 
-        [StringLength(200)]
-        public string? CategoriasAplicables { get; set; }
+        public string ProductosAplicables { get; set; } // IDs de productos separados por coma
 
-        public decimal? DescuentoPorcentaje { get; set; }
-        public decimal? DescuentoFijo { get; set; }
-
-        public DateTime FechaInicio { get; set; }
-        public DateTime FechaFin { get; set; }
-
-        public bool Activo { get; set; }
+        public string DiasAplicables { get; set; } // Días de la semana separados por coma
 
         [Required]
-        [StringLength(50)]
-        public string CodigoQR { get; set; } = string.Empty;
+        public string CodigoQR { get; set; } // Código único para el QR
 
         public DateTime FechaCreacion { get; set; }
 
-        // CAMBIAR DE byte[] A string para URLs
-        [StringLength(300)]
-        public byte[]? ImagenCupon { get; set; }
-        // Propiedad calculada - no se mapea en la BD
-        [NotMapped]
-        public bool EsValidoHoy
-        {
-            get
-            {
-                if (!Activo || DateTime.Now.Date < FechaInicio.Date || DateTime.Now.Date > FechaFin.Date)
-                    return false;
+        public DateTime? FechaExpiracion { get; set; }
 
-                if (string.IsNullOrEmpty(DiasAplicables))
-                    return true;
+        public bool Activo { get; set; } = true;
 
-                var diaDeLaSemana = DateTime.Now.ToString("dddd", new System.Globalization.CultureInfo("es-ES"));
-                var diasPermitidos = DiasAplicables.Split(',');
+        public int LimiteUsos { get; set; } = 1; // Cuántas veces se puede usar
 
-                // Mapear días en inglés a español
-                var mapaDias = new Dictionary<string, string>
-                {
-                    {"Monday", "Lunes"}, {"Tuesday", "Martes"}, {"Wednesday", "Miercoles"},
-                    {"Thursday", "Jueves"}, {"Friday", "Viernes"}, {"Saturday", "Sabado"}, {"Sunday", "Domingo"}
-                };
-
-                var diaActual = DateTime.Now.DayOfWeek.ToString();
-                if (mapaDias.ContainsKey(diaActual))
-                {
-                    var diaEspanol = mapaDias[diaActual];
-                    return diasPermitidos.Any(d => d.Trim().Equals(diaEspanol, StringComparison.OrdinalIgnoreCase));
-                }
-
-                return false;
-            }
-        }
+        public int VecesUsado { get; set; } = 0;
     }
 }

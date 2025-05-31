@@ -1,12 +1,13 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using ProyectoIdentity.Datos;
 using ProyectoIdentity.Models;
 using System.Security.Claims;
 using Newtonsoft.Json;
+using Mailjet.Client.Resources;
 
-namespace ProyectoIdentity.Controllers
+namespace Proyecto1_MZ_MJ.Controllers
 {
     public class CuponesController : Controller
     {
@@ -17,124 +18,109 @@ namespace ProyectoIdentity.Controllers
             _context = context;
         }
 
-        // Vista principal de cupones disponibles para usuarios
+        // Vista pública para mostrar cupones disponibles
         public async Task<IActionResult> Index()
         {
-            var cuponesActivos = await _context.Cupones
-                .Where(c => c.Activo && c.FechaFin >= DateTime.Now.Date)
+            var cupones = await _context.Cupones
+                .Where(c => c.Activo && (c.FechaExpiracion == null || c.FechaExpiracion > DateTime.Now))
                 .ToListAsync();
 
-            var model = new CuponesDisponiblesViewModel();
+            // Filtrar cupones según el día actual
+            var cuponesDelDia = FiltrarCuponesPorDia(cupones);
 
-            foreach (var cupon in cuponesActivos)
+            return View(cuponesDelDia);
+        }
+
+        // Vista de detalle individual del cupón
+        public async Task<IActionResult> Detalle(int id)
+        {
+            var cupon = await _context.Cupones
+                .FirstOrDefaultAsync(c => c.Id == id && c.Activo);
+
+            if (cupon == null)
             {
-                var cuponVM = new CuponViewModel
-                {
-                    Id = cupon.Id,
-                    Nombre = cupon.Nombre,
-                    Descripcion = cupon.Descripcion,
-                    TipoPromocion = cupon.TipoPromocion,
-                    CodigoQR = cupon.CodigoQR,
-                    ImagenCupon = null, // o algún valor byte[] válido                    EsValidoHoy = cupon.EsValidoHoy,
-                    DiasAplicables = cupon.DiasAplicables,
-                    TextoDescuento = ObtenerTextoDescuento(cupon),
-                    ProductosNombres = await ObtenerNombresProductos(cupon.ProductosAplicables),
-                    FechaFin = cupon.FechaFin
-                };
-
-                // Categorizar cupones
-                if (cupon.CategoriasAplicables?.Contains("Promos") == true)
-                    model.CuponesPromos.Add(cuponVM);
-                else if (cupon.CategoriasAplicables?.Contains("Cervezas") == true)
-                    model.CuponesCervezas.Add(cuponVM);
-                else if (cupon.CategoriasAplicables?.Contains("Cocteles") == true)
-                    model.CuponesCocteles.Add(cuponVM);
-                else
-                    model.CuponesEspeciales.Add(cuponVM);
+                return NotFound();
             }
 
-            return View(model);
-        }
-
-        // Vista del QR individual
-        public async Task<IActionResult> DetalleQR(int id)
-        {
-            var cupon = await _context.Cupones.FindAsync(id);
-            if (cupon == null || !cupon.Activo)
-                return NotFound();
-
-            var model = new CuponViewModel
+            // Verificar si el cupón aplica para hoy
+            if (!CuponAplicaHoy(cupon))
             {
-                Id = cupon.Id,
-                Nombre = cupon.Nombre,
-                Descripcion = cupon.Descripcion,
-                TipoPromocion = cupon.TipoPromocion,
-                CodigoQR = cupon.CodigoQR,
-                // Restaurar a lo original:
-                ImagenCupon = null, // o algún valor byte[] válido
-                EsValidoHoy = cupon.EsValidoHoy,
-                DiasAplicables = cupon.DiasAplicables,
-                TextoDescuento = ObtenerTextoDescuento(cupon),
-                ProductosNombres = await ObtenerNombresProductos(cupon.ProductosAplicables),
-                FechaFin = cupon.FechaFin
-            };
+                ViewBag.NoAplicaHoy = true;
+                ViewBag.MensajeNoAplica = "Este cupón no es válido para el día de hoy";
+            }
 
-            return View(model);
+            // Verificar si está expirado
+            if (cupon.FechaExpiracion.HasValue && cupon.FechaExpiracion < DateTime.Now)
+            {
+                ViewBag.Expirado = true;
+                ViewBag.MensajeExpirado = "Este cupón ha expirado";
+            }
+
+            // Verificar usos disponibles
+            if (cupon.VecesUsado >= cupon.LimiteUsos)
+            {
+                ViewBag.SinUsos = true;
+                ViewBag.MensajeSinUsos = "Este cupón ya no tiene usos disponibles";
+            }
+
+            return View(cupon);
         }
 
-        // Vista para escanear QR (solo administradores y cajeros)
+        // Vista para escanear QR (solo Admin y Cajero)
         [Authorize(Roles = "Administrador,Cajero")]
         public IActionResult EscanearQR()
         {
-            return View(new EscanearQRViewModel());
+            return View();
         }
 
         // Procesar código QR escaneado
         [HttpPost]
         [Authorize(Roles = "Administrador,Cajero")]
-        public async Task<IActionResult> ProcesarQR([FromBody] EscanearQRViewModel model)
+        public async Task<IActionResult> ProcesarQR(string codigoQR)
         {
+            if (string.IsNullOrEmpty(codigoQR))
+            {
+                return Json(new { success = false, mensaje = "Código QR vacío" });
+            }
+
             try
             {
+                // Buscar el cupón por código QR
                 var cupon = await _context.Cupones
-                    .FirstOrDefaultAsync(c => c.CodigoQR == model.CodigoQR && c.Activo);
+                    .FirstOrDefaultAsync(c => c.CodigoQR == codigoQR && c.Activo);
 
                 if (cupon == null)
                 {
-                    return Json(new
-                    {
-                        success = false,
-                        message = "Cupón no válido o no encontrado"
-                    });
+                    return Json(new { success = false, mensaje = "Cupón no encontrado o inactivo" });
                 }
 
-                if (!cupon.EsValidoHoy)
+                // Verificar si ya fue usado
+                if (cupon.VecesUsado >= cupon.LimiteUsos)
                 {
-                    return Json(new
-                    {
-                        success = false,
-                        message = "Este cupón no es válido para el día de hoy"
-                    });
+                    return Json(new { success = false, mensaje = "Cupón ya utilizado" });
                 }
 
-                // Verificar si ya fue usado (opcional - depende de si permites usos múltiples)
-                var yaUsado = await _context.CuponesCanjeados
-                    .AnyAsync(cc => cc.CodigoQR == model.CodigoQR &&
-                                   cc.FechaCanje.Date == DateTime.Now.Date);
-
-                if (yaUsado && cupon.TipoPromocion != "MultiUso")
+                // Verificar fecha de expiración
+                if (cupon.FechaExpiracion.HasValue && cupon.FechaExpiracion < DateTime.Now)
                 {
-                    return Json(new
-                    {
-                        success = false,
-                        message = "Este cupón ya fue utilizado hoy"
-                    });
+                    return Json(new { success = false, mensaje = "Cupón expirado" });
+                }
+
+                // Verificar si aplica para el día actual
+                if (!CuponAplicaHoy(cupon))
+                {
+                    return Json(new { success = false, mensaje = "Cupón no válido para hoy" });
                 }
 
                 // Obtener productos aplicables
-                var productosAplicables = await ObtenerProductosAplicables(cupon);
+                var productos = await ObtenerProductosAplicables(cupon);
 
-                var response = new
+                if (!productos.Any())
+                {
+                    return Json(new { success = false, mensaje = "No hay productos disponibles para este cupón" });
+                }
+
+                return Json(new
                 {
                     success = true,
                     cupon = new
@@ -142,232 +128,347 @@ namespace ProyectoIdentity.Controllers
                         id = cupon.Id,
                         nombre = cupon.Nombre,
                         descripcion = cupon.Descripcion,
-                        tipoPromocion = cupon.TipoPromocion,
-                        textDescuento = ObtenerTextoDescuento(cupon)
-                    },
-                    productosAplicables = productosAplicables.Select(p => new
-                    {
-                        id = p.Id,
-                        nombre = p.Nombre,
-                        precio = p.Precio,
-                        categoria = p.Categoria
-                    })
-                };
-
-                return Json(response);
+                        tipoDescuento = cupon.TipoDescuento,
+                        valorDescuento = cupon.ValorDescuento,
+                        productos = productos.Select(p => new {
+                            id = p.Id,
+                            nombre = p.Nombre,
+                            precio = p.Precio,
+                            categoria = p.Categoria,
+                            imagen = p.Imagen
+                        })
+                    }
+                });
             }
             catch (Exception ex)
             {
-                return Json(new
-                {
-                    success = false,
-                    message = "Error al procesar el cupón: " + ex.Message
-                });
+                return Json(new { success = false, mensaje = "Error al procesar cupón: " + ex.Message });
             }
         }
 
-        // Aplicar cupón y crear pedido
+        // Procesar código manual (igual que confirmar punto de recolección)
         [HttpPost]
         [Authorize(Roles = "Administrador,Cajero")]
-        public async Task<IActionResult> AplicarCupon([FromBody] AplicarCuponRequest request)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ProcesarCodigoManual(string codigoQR)
         {
-            using var transaction = await _context.Database.BeginTransactionAsync();
+            if (string.IsNullOrEmpty(codigoQR))
+            {
+                TempData["Error"] = "Ingresa un código válido";
+                return RedirectToAction("EscanearQR");
+            }
+
             try
             {
+                // Buscar cupón
                 var cupon = await _context.Cupones
-                    .FirstOrDefaultAsync(c => c.CodigoQR == request.CodigoQR);
+                    .FirstOrDefaultAsync(c => c.CodigoQR == codigoQR && c.Activo);
 
                 if (cupon == null)
-                    return Json(new { success = false, message = "Cupón no válido" });
-
-                // Calcular descuento
-                var resultado = CalcularDescuento(cupon, request.ProductosSeleccionados);
-
-                // Crear pedido
-                var pedido = new Pedido
                 {
-                    UsuarioId = request.ClienteId ?? User.FindFirstValue(ClaimTypes.NameIdentifier),
-                    SucursalId = request.SucursalId,
-                    Fecha = DateTime.Now,
-                    Estado = "Procesado",
-                    Total = resultado.TotalFinal,
-                    //Categoria = "Cupón",
-                    //Observaciones = $"Cupón aplicado: {cupon.Nombre}"
-                };
-
-                _context.Pedidos.Add(pedido);
-                await _context.SaveChangesAsync();
-
-                // Crear productos del pedido
-                foreach (var producto in request.ProductosSeleccionados)
-                {
-                    var pedidoProducto = new PedidoProducto
-                    {
-                        PedidoId = pedido.Id,
-                        ProductoId = producto.ProductoId,
-                        Cantidad = producto.Cantidad,
-                        Precio= producto.Precio,
-                        Total = producto.Subtotal
-                    };
-                    _context.PedidoProductos.Add(pedidoProducto);
+                    TempData["Error"] = "Cupón no encontrado o inactivo";
+                    return RedirectToAction("EscanearQR");
                 }
 
-                // Registrar uso del cupón
-                var cuponCanjeado = new CuponCanjeado
+                // Verificaciones
+                if (cupon.VecesUsado >= cupon.LimiteUsos)
                 {
-                    CuponId = cupon.Id,
-                    UsuarioId = User.FindFirstValue(ClaimTypes.NameIdentifier),
-                    ClienteId = request.ClienteId,
-                    FechaCanje = DateTime.Now,
-                    CodigoQR = request.CodigoQR,
-                    DescuentoAplicado = resultado.DescuentoAplicado,
-                    ProductosIncluidos = JsonConvert.SerializeObject(request.ProductosSeleccionados),
-                    TotalOriginal = resultado.TotalOriginal,
-                    TotalConDescuento = resultado.TotalFinal,
-                    EstadoCanje = "Procesado"
-                };
+                    TempData["Error"] = "Cupón ya utilizado";
+                    return RedirectToAction("EscanearQR");
+                }
 
-                _context.CuponesCanjeados.Add(cuponCanjeado);
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                return Json(new
+                if (cupon.FechaExpiracion.HasValue && cupon.FechaExpiracion < DateTime.Now)
                 {
-                    success = true,
-                    pedidoId = pedido.Id,
-                    message = "Cupón aplicado exitosamente"
-                });
+                    TempData["Error"] = "Cupón expirado";
+                    return RedirectToAction("EscanearQR");
+                }
+
+                if (!CuponAplicaHoy(cupon))
+                {
+                    TempData["Error"] = "Cupón no válido para hoy";
+                    return RedirectToAction("EscanearQR");
+                }
+
+                // Obtener productos aplicables
+                var productos = await ObtenerProductosAplicables(cupon);
+
+                if (!productos.Any())
+                {
+                    TempData["Error"] = "No hay productos disponibles para este cupón";
+                    return RedirectToAction("EscanearQR");
+                }
+
+                // Pasar datos a la vista
+                ViewBag.CuponEncontrado = cupon;
+                ViewBag.ProductosDisponibles = productos;
+
+                return View("EscanearQR");
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                return Json(new
-                {
-                    success = false,
-                    message = "Error al aplicar cupón: " + ex.Message
-                });
+                TempData["Error"] = "Error al procesar cupón: " + ex.Message;
+                return RedirectToAction("EscanearQR");
             }
+        }
+
+        // Aplicar cupón - SÚPER SIMPLE
+        [HttpPost]
+        [Authorize(Roles = "Administrador,Cajero")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AplicarCupon(int cuponId, Dictionary<int, ProductoSeleccionSimple> productos)
+        {
+            try
+            {
+                var cupon = await _context.Cupones.FindAsync(cuponId);
+                if (cupon == null)
+                {
+                    TempData["Error"] = "Cupón no encontrado";
+                    return RedirectToAction("EscanearQR");
+                }
+
+                // Filtrar productos con cantidad > 0
+                var productosSeleccionados = productos
+                    .Where(p => p.Value.Cantidad > 0)
+                    .ToList();
+
+                if (!productosSeleccionados.Any())
+                {
+                    TempData["Error"] = "Selecciona al menos un producto";
+                    return RedirectToAction("EscanearQR");
+                }
+
+                // Obtener productos de la BD
+                var productosIds = productosSeleccionados.Select(p => p.Key).ToList();
+                var productosDB = await _context.Productos
+                    .Where(p => productosIds.Contains(p.Id))
+                    .ToListAsync();
+
+                // Crear pedido
+                var pedido = await CrearPedidoSimple(cupon, productosSeleccionados, productosDB);
+
+                // Marcar cupón como usado
+                cupon.VecesUsado++;
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = "¡Cupón aplicado exitosamente!";
+                return RedirectToAction("Resumen", "Pedidos", new { id = pedido.Id });
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Error: " + ex.Message;
+                return RedirectToAction("EscanearQR");
+            }
+        }
+
+        // Crear pedido simple
+        private async Task<Pedido> CrearPedidoSimple(Cupon cupon, List<KeyValuePair<int, ProductoSeleccionSimple>> productosSeleccionados, List<Producto> productosDB)
+        {
+            // Obtener sucursal
+            var sucursal = await _context.Sucursales.FirstOrDefaultAsync();
+            if (sucursal == null)
+            {
+                sucursal = new Sucursal
+                {
+                    Nombre = "Verace Pizza",
+                    Direccion = "Av. de los Shyris N35-52",
+                    Latitud = -0.180653,
+                    Longitud = -78.487834
+                };
+                _context.Sucursales.Add(sucursal);
+                await _context.SaveChangesAsync();
+            }
+
+            // Calcular total
+            decimal totalOriginal = 0;
+            var pedidoProductos = new List<PedidoProducto>();
+
+            foreach (var item in productosSeleccionados)
+            {
+                var producto = productosDB.FirstOrDefault(p => p.Id == item.Key);
+                if (producto != null)
+                {
+                    var cantidad = item.Value.Cantidad;
+                    var subtotal = producto.Precio * cantidad;
+                    totalOriginal += subtotal;
+
+                    pedidoProductos.Add(new PedidoProducto
+                    {
+                        ProductoId = producto.Id,
+                        Cantidad = cantidad,
+                        Precio = producto.Precio
+                    });
+                }
+            }
+
+            // Calcular descuento
+            decimal descuento = 0;
+            switch (cupon.TipoDescuento)
+            {
+                case "3x2":
+                    var cantidadTotal = productosSeleccionados.Sum(p => p.Value.Cantidad);
+                    var gruposDe3 = cantidadTotal / 3;
+                    var precioMasBarato = productosDB.Min(p => p.Precio);
+                    descuento = gruposDe3 * precioMasBarato;
+                    break;
+                case "Porcentaje":
+                    descuento = totalOriginal * (cupon.ValorDescuento / 100);
+                    break;
+                case "Fijo":
+                    descuento = Math.Min(cupon.ValorDescuento, totalOriginal);
+                    break;
+            }
+
+            var totalFinal = totalOriginal - descuento;
+
+            // Crear pedido
+            var pedido = new Pedido
+            {
+                Fecha = DateTime.Now,
+                SucursalId = sucursal.Id,
+                Estado = "Preparándose",
+                Total = totalFinal,
+                UsuarioId = User.Identity.IsAuthenticated ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null,
+                PedidoProductos = pedidoProductos
+            };
+
+            _context.Pedidos.Add(pedido);
+            await _context.SaveChangesAsync();
+
+            // Registrar cupón canjeado
+            var cuponCanjeado = new CuponCanjeado
+            {
+                CuponId = cupon.Id,
+                UsuarioId = pedido.UsuarioId,
+                CodigoQR = cupon.CodigoQR,
+                FechaCanje = DateTime.Now,
+                TotalOriginal = totalOriginal,
+                DescuentoAplicado = descuento,
+                TotalConDescuento = totalFinal,
+                ProductosCanjeados = string.Join(",", pedidoProductos.Select(p => $"{p.ProductoId}:{p.Cantidad}")),
+                PedidoId = pedido.Id
+            };
+
+            _context.CuponesCanjeados.Add(cuponCanjeado);
+            await _context.SaveChangesAsync();
+
+            return pedido;
         }
 
         // Métodos auxiliares
-        private string ObtenerTextoDescuento(Cupon cupon)
+        private List<Cupon> FiltrarCuponesPorDia(List<Cupon> cupones)
         {
-            return cupon.TipoPromocion switch
-            {
-                "3x2" => "3x2",
-                "50%OFF" => "50% OFF",
-                "SegundaMitadPrecio" => "Segunda a mitad de precio",
-                _ => cupon.DescuentoPorcentaje.HasValue ?
-                     $"{cupon.DescuentoPorcentaje}% OFF" :
-                     "Descuento especial"
-            };
+            var diaActual = DateTime.Now.DayOfWeek.ToString();
+            return cupones.Where(c => CuponAplicaHoy(c)).ToList();
         }
 
-        private async Task<string> ObtenerNombresProductos(string productosIds)
+        private bool CuponAplicaHoy(Cupon cupon)
         {
-            if (string.IsNullOrEmpty(productosIds))
-                return "";
+            if (string.IsNullOrEmpty(cupon.DiasAplicables))
+                return true;
 
-            var ids = productosIds.Split(',')
-                                 .Where(x => int.TryParse(x.Trim(), out _))
-                                 .Select(x => int.Parse(x.Trim()))
-                                 .ToList();
+            var diaActual = DateTime.Now.DayOfWeek.ToString();
+            var diasAplicables = cupon.DiasAplicables.Split(',').Select(d => d.Trim());
 
-            var productos = await _context.Productos
-                .Where(p => ids.Contains(p.Id))
-                .Select(p => p.Nombre)
-                .ToListAsync();
-
-            return string.Join(", ", productos);
+            return diasAplicables.Contains(diaActual) || diasAplicables.Contains("Todos");
         }
 
         private async Task<List<Producto>> ObtenerProductosAplicables(Cupon cupon)
         {
-            var query = _context.Productos.AsQueryable();
+            if (string.IsNullOrEmpty(cupon.ProductosAplicables))
+                return new List<Producto>();
 
-            // Filtrar por IDs específicos
-            if (!string.IsNullOrEmpty(cupon.ProductosAplicables))
-            {
-                var ids = cupon.ProductosAplicables.Split(',')
-                                                  .Where(x => int.TryParse(x.Trim(), out _))
-                                                  .Select(x => int.Parse(x.Trim()))
-                                                  .ToList();
-                query = query.Where(p => ids.Contains(p.Id));
-            }
-            // Filtrar por categorías
-            else if (!string.IsNullOrEmpty(cupon.CategoriasAplicables))
-            {
-                var categorias = cupon.CategoriasAplicables.Split(',')
-                                                          .Select(c => c.Trim())
-                                                          .ToList();
-                query = query.Where(p => categorias.Contains(p.Categoria));
-            }
+            var productosIds = cupon.ProductosAplicables
+                .Split(',')
+                .Select(id => int.TryParse(id.Trim(), out int result) ? result : 0)
+                .Where(id => id > 0)
+                .ToList();
 
-            return await query.ToListAsync();
+            return await _context.Productos
+                .Where(p => productosIds.Contains(p.Id))
+                .ToListAsync();
         }
 
-        private CalculoDescuentoResult CalcularDescuento(Cupon cupon, List<ProductoSeleccionado> productos)
+        private async Task<Pedido> CrearPedidoConCuponSimple(Cupon cupon, List<PedidoProducto> productos, decimal totalOriginal, decimal descuento, decimal totalFinal)
         {
-            var totalOriginal = productos.Sum(p => p.Precio * p.Cantidad);
-            var descuentoAplicado = 0m;
-
-            switch (cupon.TipoPromocion)
+            // Obtener o crear sucursal
+            var sucursal = await _context.Sucursales.FirstOrDefaultAsync();
+            if (sucursal == null)
             {
-                case "3x2":
-                    // Por cada 3 productos, el tercero es gratis
-                    foreach (var producto in productos)
-                    {
-                        var productosGratis = producto.Cantidad / 3;
-                        descuentoAplicado += productosGratis * producto.Precio;
-                    }
-                    break;
-
-                case "50%OFF":
-                    descuentoAplicado = totalOriginal * 0.5m;
-                    break;
-
-                case "SegundaMitadPrecio":
-                    // Segunda unidad a mitad de precio
-                    foreach (var producto in productos)
-                    {
-                        if (producto.Cantidad >= 2)
-                        {
-                            var descuentosPorProducto = producto.Cantidad / 2;
-                            descuentoAplicado += descuentosPorProducto * (producto.Precio * 0.5m);
-                        }
-                    }
-                    break;
-
-                default:
-                    if (cupon.DescuentoPorcentaje.HasValue)
-                        descuentoAplicado = totalOriginal * (cupon.DescuentoPorcentaje.Value / 100);
-                    else if (cupon.DescuentoFijo.HasValue)
-                        descuentoAplicado = cupon.DescuentoFijo.Value;
-                    break;
+                sucursal = new Sucursal
+                {
+                    Nombre = "Verace Pizza",
+                    Direccion = "Av. de los Shyris N35-52",
+                    Latitud = -0.180653,
+                    Longitud = -78.487834
+                };
+                _context.Sucursales.Add(sucursal);
+                await _context.SaveChangesAsync();
             }
 
-            return new CalculoDescuentoResult
+            // Crear pedido
+            var pedido = new Pedido
             {
-                TotalOriginal = totalOriginal,
-                DescuentoAplicado = descuentoAplicado,
-                TotalFinal = totalOriginal - descuentoAplicado
+                Fecha = DateTime.Now,
+                SucursalId = sucursal.Id,
+                Estado = "Preparándose",
+                Total = totalFinal,
+                UsuarioId = User.Identity.IsAuthenticated ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null,
+                PedidoProductos = productos
             };
+
+            // Asignar el pedido a cada producto
+            foreach (var producto in productos)
+            {
+                producto.Pedido = pedido;
+            }
+
+            _context.Pedidos.Add(pedido);
+            await _context.SaveChangesAsync();
+
+            // Crear registro de cupón canjeado
+            var cuponCanjeado = new CuponCanjeado
+            {
+                CuponId = cupon.Id,
+                UsuarioId = pedido.UsuarioId,
+                CodigoQR = cupon.CodigoQR,
+                FechaCanje = DateTime.Now,
+                TotalOriginal = totalOriginal,
+                DescuentoAplicado = descuento,
+                TotalConDescuento = totalFinal,
+                ProductosCanjeados = string.Join(",", productos.Select(p => $"{p.ProductoId}:{p.Cantidad}")),
+                PedidoId = pedido.Id
+            };
+
+            _context.CuponesCanjeados.Add(cuponCanjeado);
+            await _context.SaveChangesAsync();
+
+            return pedido;
         }
-    }
 
-    // Clases auxiliares
-    public class AplicarCuponRequest
-    {
-        public string CodigoQR { get; set; }
-        public string ClienteId { get; set; }
-        public int SucursalId { get; set; }
-        public List<ProductoSeleccionado> ProductosSeleccionados { get; set; }
-    }
+        // Clases auxiliares
+        public class ProductoCuponSeleccionado
+        {
+            public int Id { get; set; }
+            public string Nombre { get; set; }
+            public decimal Precio { get; set; }
+            public int Cantidad { get; set; }
+        }
 
-    public class CalculoDescuentoResult
-    {
-        public decimal TotalOriginal { get; set; }
-        public decimal DescuentoAplicado { get; set; }
-        public decimal TotalFinal { get; set; }
+        public class CalculoDescuentoResult
+        {
+            public bool Success { get; set; } = true;
+            public string Mensaje { get; set; } = "";
+            public decimal TotalOriginal { get; set; }
+            public decimal DescuentoAplicado { get; set; }
+            public decimal TotalFinal { get; set; }
+        }
+
+        // Clase simple para recibir productos
+        public class ProductoSeleccionSimple
+        {
+            public int Id { get; set; }
+            public int Cantidad { get; set; }
+            public decimal Precio { get; set; }
+        }
     }
 }

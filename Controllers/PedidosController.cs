@@ -263,48 +263,17 @@ public class PedidosController : Controller
     }
 
     [Authorize(Roles = "Administrador")]
-    // Para mostrar en Pedidos/ResumenAdmin cuáles pedidos usaron cupones
     public async Task<IActionResult> ResumenAdmin()
     {
+        // CAMBIAR ESTO - usar Admin() que funciona bien, no ResumenAdmin()
         var pedidos = await _context.Pedidos
             .Include(p => p.Sucursal)
             .Include(p => p.PedidoProductos)
                 .ThenInclude(pp => pp.Producto)
             .OrderByDescending(p => p.Fecha)
-            .Select(p => new PedidoResumenViewModel
-            {
-                Id = p.Id,
-                Fecha = p.Fecha,
-                Estado = p.Estado,
-                Total = p.Total,
-                SucursalNombre = p.Sucursal.Nombre,
-                UsuarioId = p.UsuarioId,
-
-                // ✅ Verificar si este pedido usó un cupón
-                UsoCupon = _context.CuponesCanjeados.Any(cc =>
-                    cc.FechaCanje.Date == p.Fecha.Date &&
-                    cc.FechaCanje.Hour == p.Fecha.Hour &&
-                    cc.FechaCanje.Minute == p.Fecha.Minute &&
-                    cc.TotalConDescuento == p.Total),
-
-                // ✅ Obtener información del cupón si se usó
-                CuponInfo = _context.CuponesCanjeados
-                    .Where(cc => cc.FechaCanje.Date == p.Fecha.Date &&
-                               cc.FechaCanje.Hour == p.Fecha.Hour &&
-                               cc.FechaCanje.Minute == p.Fecha.Minute &&
-                               cc.TotalConDescuento == p.Total)
-                    .Select(cc => new {
-                        NombreCupon = cc.Cupon.Nombre,
-                        DescuentoAplicado = cc.DescuentoAplicado,
-                        CodigoQR = cc.CodigoQR
-                    })
-                    .FirstOrDefault(),
-
-                ProductosCount = p.PedidoProductos.Count()
-            })
             .ToListAsync();
 
-        return View(pedidos);
+        return View(pedidos); // Devolver List<Pedido> normal
     }
 
     // ViewModel para mostrar pedidos con información de cupones

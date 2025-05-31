@@ -1,813 +1,175 @@
-﻿@model ProyectoIdentity.Models.CuponesDisponiblesViewModel
+﻿@model IEnumerable<ProyectoIdentity.Models.Cupon>
 @{
-    ViewData["Title"] = "Cupones y Promociones";
+    ViewData["Title"] = "Cupones Disponibles";
 }
 
-<div class="container-fluid mt-4">
-    <!-- Header principal -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow-lg border-0" style="border-radius: 20px; overflow: hidden;">
-                <div class="card-header text-center py-4" style="background: linear-gradient(135deg, #fd7e14, #dc3545); color: white;">
-                    <div class="cupones-header">
-                        <i class="fas fa-tags fa-3x mb-3" style="animation: bounce 2s infinite;"></i>
-                        <h2 class="mb-1">🎟️ Cupones y Promociones</h2>
-                        <p class="mb-0 opacity-75">¡Aprovecha nuestras increíbles ofertas!</p>
-                    </div>
-                </div>
-            </div>
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-warning text-dark">
+            <h2 class="mb-0">
+                <i class="fas fa-ticket-alt"></i> Cupones Disponibles
+            </h2>
+            <p class="mb-0">Descubre nuestras promociones especiales</p>
         </div>
-    </div>
-
-    <!-- Buscador de cupones -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="search-cupones">
-                <div class="input-group input-group-lg">
-                    <span class="input-group-text bg-primary text-white">
-                        <i class="fas fa-search"></i>
-                    </span>
-                    <input type="text" class="form-control" id="buscarCupones" 
-                           placeholder="Buscar cupones..." 
-                           style="border-radius: 0 25px 25px 0;">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Sección: Promociones Especiales -->
-    @if (Model.CuponesPromos.Any())
-    {
-        <section class="cupones-section mb-5">
-            <h3 class="section-title">
-                <i class="fas fa-fire text-danger me-2"></i>
-                Promociones Especiales
-                <span class="badge bg-danger ms-2">¡50% OFF!</span>
-            </h3>
-            
-            <div class="row">
-                @foreach (var cupon in Model.CuponesPromos)
-                {
-                    <div class="col-lg-4 col-md-6 mb-4">
-                        <div class="cupon-card promo-card">
-                            <div class="cupon-image">
-                                @if (cupon.ImagenCupon != null)
-                                {
-                                    <img src="data:image/jpeg;base64,@Convert.ToBase64String(cupon.ImagenCupon)" 
-                                         alt="@cupon.Nombre" class="w-100">
-                                }
-                                else
-                                {
-                                    <div class="placeholder-promo">
-                                        <i class="fas fa-percentage fa-3x"></i>
-                                        <h4>50% OFF</h4>
-                                        <p>¡Promociones Pizzas!</p>
+        
+        <div class="card-body">
+            @if (Model != null && Model.Any())
+            {
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    @foreach (var cupon in Model)
+                    {
+                        <div class="col">
+                            <div class="card h-100 cupon-card">
+                                <div class="card-header bg-gradient-warning text-center">
+                                    <h5 class="card-title mb-0">@cupon.Nombre</h5>
+                                </div>
+                                
+                                <div class="card-body text-center">
+                                    <div class="cupon-icon mb-3">
+                                        @if (cupon.TipoDescuento == "3x2")
+                                        {
+                                            <i class="fas fa-gift fa-3x text-warning"></i>
+                                        }
+                                        else if (cupon.TipoDescuento == "Porcentaje")
+                                        {
+                                            <i class="fas fa-percentage fa-3x text-success"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-dollar-sign fa-3x text-primary"></i>
+                                        }
                                     </div>
-                                }
-                                
-                                <!-- Badge de descuento -->
-                                <div class="descuento-badge promo-badge">
-                                    @cupon.TextoDescuento
-                                </div>
-                            </div>
-                            
-                            <div class="cupon-content">
-                                <h5 class="cupon-title">@cupon.Nombre</h5>
-                                <p class="cupon-description">@cupon.Descripcion</p>
-                                
-                                <div class="cupon-details">
-                                    <div class="detail-item">
-                                        <i class="fas fa-calendar-day text-primary"></i>
-                                        <span>@cupon.DiasAplicables</span>
+                                    
+                                    <div class="cupon-descuento mb-3">
+                                        @if (cupon.TipoDescuento == "3x2")
+                                        {
+                                            <span class="display-6 fw-bold text-warning">3x2</span>
+                                        }
+                                        else if (cupon.TipoDescuento == "Porcentaje")
+                                        {
+                                            <span class="display-6 fw-bold text-success">@cupon.ValorDescuento%</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="display-6 fw-bold text-primary">$@cupon.ValorDescuento</span>
+                                        }
                                     </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-clock text-warning"></i>
-                                        <span>Válido hasta: @cupon.FechaFin.ToString("dd/MM/yyyy")</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="cupon-actions">
-                                    <a href="@Url.Action("DetalleQR", new { id = cupon.Id })" 
-                                       class="btn btn-promo w-100">
-                                        <i class="fas fa-qrcode me-2"></i>Ver QR
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-        </section>
-    }
-
-    <!-- Sección: Cervezas 3x2 -->
-    @if (Model.CuponesCervezas.Any())
-    {
-        <section class="cupones-section mb-5">
-            <h3 class="section-title">
-                <i class="fas fa-beer text-warning me-2"></i>
-                Cervezas - ¡3x2 todos los días menos viernes!
-                <span class="badge bg-warning text-dark ms-2">3x2</span>
-            </h3>
-            
-            <div class="row">
-                @foreach (var cupon in Model.CuponesCervezas)
-                {
-                    <div class="col-lg-3 col-md-6 mb-4">
-                        <div class="cupon-card cerveza-card">
-                            <div class="cupon-image">
-                                @if (cupon.ImagenCupon != null)
-                                {
-                                    <img src="data:image/jpeg;base64,@Convert.ToBase64String(cupon.ImagenCupon)" 
-                                         alt="@cupon.Nombre" class="w-100">
-                                }
-                                else
-                                {
-                                    <div class="placeholder-cerveza">
-                                        <i class="fas fa-beer fa-3x"></i>
-                                        <h4>3x2</h4>
-                                        <p>Cervezas</p>
-                                    </div>
-                                }
-                                
-                                <div class="descuento-badge cerveza-badge">
-                                    3x2
-                                </div>
-                            </div>
-                            
-                            <div class="cupon-content">
-                                <h5 class="cupon-title">@cupon.Nombre</h5>
-                                <p class="cupon-description">@cupon.Descripcion</p>
-                                
-                                <div class="productos-incluidos">
-                                    <small class="text-muted">
-                                        <i class="fas fa-list-ul"></i> @cupon.ProductosNombres
-                                    </small>
-                                </div>
-                                
-                                <div class="cupon-actions mt-3">
-                                    <a href="@Url.Action("DetalleQR", new { id = cupon.Id })" 
-                                       class="btn btn-cerveza w-100">
-                                        <i class="fas fa-qrcode me-2"></i>Ver QR
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-        </section>
-    }
-
-    <!-- Sección: Cocteles Jueves 3x2 -->
-    @if (Model.CuponesCocteles.Any())
-    {
-        <section class="cupones-section mb-5">
-            <h3 class="section-title">
-                <i class="fas fa-cocktail text-info me-2"></i>
-                Cocteles - ¡3x2 todos los jueves!
-                <span class="badge bg-info ms-2">Jueves 3x2</span>
-            </h3>
-            
-            <div class="row">
-                @foreach (var cupon in Model.CuponesCocteles)
-                {
-                    <div class="col-lg-4 col-md-6 mb-4">
-                        <div class="cupon-card coctel-card">
-                            <div class="cupon-image">
-                                @if (cupon.ImagenCupon != null)
-                                {
-                                    <img src="data:image/jpeg;base64,@Convert.ToBase64String(cupon.ImagenCupon)" 
-                                         alt="@cupon.Nombre" class="w-100">
-                                }
-                                else
-                                {
-                                    <div class="placeholder-coctel">
-                                        <i class="fas fa-cocktail fa-3x"></i>
-                                        <h4>3x2</h4>
-                                        <p>¡Solo Jueves!</p>
-                                    </div>
-                                }
-                                
-                                <div class="descuento-badge coctel-badge">
-                                    Jueves 3x2
-                                </div>
-                            </div>
-                            
-                            <div class="cupon-content">
-                                <h5 class="cupon-title">@cupon.Nombre</h5>
-                                <p class="cupon-description">@cupon.Descripcion</p>
-                                
-                                <div class="cupon-status">
-                                    @if (cupon.EsValidoHoy)
+                                    
+                                    <p class="card-text">@cupon.Descripcion</p>
+                                    
+                                    @if (cupon.MontoMinimo > 0)
                                     {
-                                        <span class="badge bg-success">
-                                            <i class="fas fa-check-circle"></i> Válido HOY
-                                        </span>
+                                        <p class="text-muted small">
+                                            <i class="fas fa-info-circle"></i> Monto mínimo: $@cupon.MontoMinimo
+                                        </p>
                                     }
-                                    else
+                                    
+                                    @if (!string.IsNullOrEmpty(cupon.DiasAplicables) && cupon.DiasAplicables != "Todos")
                                     {
-                                        <span class="badge bg-secondary">
-                                            <i class="fas fa-clock"></i> Solo Jueves
-                                        </span>
+                                        <p class="text-muted small">
+                                            <i class="fas fa-calendar"></i> Válido: @cupon.DiasAplicables
+                                        </p>
+                                    }
+                                    
+                                    @if (cupon.FechaExpiracion.HasValue)
+                                    {
+                                        <p class="text-danger small">
+                                            <i class="fas fa-clock"></i> Expira: @cupon.FechaExpiracion.Value.ToString("dd/MM/yyyy")
+                                        </p>
                                     }
                                 </div>
                                 
-                                <div class="cupon-actions mt-3">
-                                    <a href="@Url.Action("DetalleQR", new { id = cupon.Id })" 
-                                       class="btn btn-coctel w-100">
-                                        <i class="fas fa-qrcode me-2"></i>Ver QR
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-        </section>
-    }
-
-    <!-- Sección: Cupones Especiales -->
-    @if (Model.CuponesEspeciales.Any())
-    {
-        <section class="cupones-section mb-5">
-            <h3 class="section-title">
-                <i class="fas fa-star text-success me-2"></i>
-                Ofertas Especiales
-                <span class="badge bg-success ms-2">Limitado</span>
-            </h3>
-            
-            <div class="row">
-                @foreach (var cupon in Model.CuponesEspeciales)
-                {
-                    <div class="col-lg-4 col-md-6 mb-4">
-                        <div class="cupon-card especial-card">
-                            <div class="cupon-image">
-                                @if (cupon.ImagenCupon != null)
-                                {
-                                    <img src="data:image/jpeg;base64,@Convert.ToBase64String(cupon.ImagenCupon)" 
-                                         alt="@cupon.Nombre" class="w-100">
-                                }
-                                else
-                                {
-                                    <div class="placeholder-especial">
-                                        <i class="fas fa-star fa-3x"></i>
-                                        <h4>Especial</h4>
-                                        <p>Oferta limitada</p>
+                                <div class="card-footer text-center bg-light">
+                                    <div class="qr-code mb-2" style="display: inline-block; padding: 10px; background: white; border: 1px solid #ddd;">
+                                        <div id="qr-@cupon.Id"></div>
                                     </div>
-                                }
-                                
-                                <div class="descuento-badge especial-badge">
-                                    @cupon.TextoDescuento
-                                </div>
-                            </div>
-                            
-                            <div class="cupon-content">
-                                <h5 class="cupon-title">@cupon.Nombre</h5>
-                                <p class="cupon-description">@cupon.Descripcion</p>
-                                
-                                <div class="cupon-actions mt-3">
-                                    <a href="@Url.Action("DetalleQR", new { id = cupon.Id })" 
-                                       class="btn btn-especial w-100">
-                                        <i class="fas fa-qrcode me-2"></i>Ver QR
+                                    <br>
+                                    <div class="codigo-texto mb-2">
+                                        <small class="text-muted">Código: <strong>@cupon.CodigoQR</strong></small>
+                                    </div>
+                                    <a href="@Url.Action("Detalle", "Cupones", new { id = cupon.Id })" 
+                                       class="btn btn-warning btn-sm">
+                                        <i class="fas fa-eye"></i> Ver Detalle
                                     </a>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                }
-            </div>
-        </section>
-    }
-
-    <!-- Mensaje si no hay cupones -->
-    @if (!Model.CuponesPromos.Any() && !Model.CuponesCervezas.Any() && !Model.CuponesCocteles.Any() && !Model.CuponesEspeciales.Any())
-    {
-        <div class="row">
-            <div class="col-12">
-                <div class="no-cupones text-center py-5">
-                    <i class="fas fa-ticket-alt fa-4x text-muted mb-3"></i>
-                    <h4 class="text-muted">No hay cupones disponibles</h4>
-                    <p class="text-muted">¡Próximamente tendremos increíbles ofertas para ti!</p>
-                    <a href="@Url.Action("SeleccionMultiple", "Productos")" class="btn btn-primary">
-                        <i class="fas fa-shopping-cart me-2"></i>Ver Menú
-                    </a>
+                    }
                 </div>
-            </div>
-        </div>
-    }
-
-    <!-- Botón flotante para administradores -->
-    @if (User.IsInRole("Administrador") || User.IsInRole("Cajero"))
-    {
-        <div class="floating-scan-btn">
-            <a href="@Url.Action("EscanearQR")" class="btn btn-scan-qr">
-                <i class="fas fa-qrcode fa-2x"></i>
-                <span>Escanear QR</span>
-            </a>
-        </div>
-    }
-
-    <!-- Información adicional -->
-    <div class="row mt-5">
-        <div class="col-12">
-            <div class="alert alert-info border-0" style="border-radius: 15px; background: linear-gradient(45deg, #e3f2fd, #f8f9ff);">
-                <div class="d-flex align-items-start">
-                    <i class="fas fa-info-circle text-info fa-2x me-3 mt-1"></i>
-                    <div>
-                        <h5 class="alert-heading">¿Cómo usar los cupones?</h5>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <ol class="mb-0">
-                                    <li class="mb-2">Selecciona el cupón que deseas usar</li>
-                                    <li class="mb-2">Haz clic en "Ver QR" para mostrar el código</li>
-                                    <li class="mb-2">Presenta el código QR al personal autorizado</li>
-                                </ol>
-                            </div>
-                            <div class="col-md-6">
-                                <ol start="4" class="mb-0">
-                                    <li class="mb-2">Selecciona los productos incluidos en la promoción</li>
-                                    <li class="mb-2">El personal aplicará automáticamente tu descuento</li>
-                                    <li class="mb-2">¡Disfruta de tu promoción especial!</li>
-                                </ol>
-                            </div>
-                        </div>
-                    </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-ticket-alt fa-5x text-muted mb-3"></i>
+                    <h3 class="text-muted">No hay cupones disponibles</h3>
+                    <p class="text-muted">Vuelve pronto para ver nuestras promociones especiales</p>
                 </div>
+            }
+            
+            <div class="mt-4 text-center">
+                <a href="@Url.Action("Menu", "Productos")" 
+                   class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Volver al menú
+                </a>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-    keyframes bounce {
-        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-        40% { transform: translateY(-10px); }
-        60% { transform: translateY(-5px); }
-    }
-
-    .section-title {
-        font-size: 1.5rem;
-        font-weight: bold;
-        margin-bottom: 1.5rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 3px solid #e9ecef;
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-
     .cupon-card {
-        border-radius: 15px;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-        background: white;
-        position: relative;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 2px solid #ffc107;
     }
-
+    
     .cupon-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
     }
-
-    .cupon-image {
-        position: relative;
-        height: 200px;
-        overflow: hidden;
-        flex-shrink: 0;
+    
+    .bg-gradient-warning {
+        background: linear-gradient(45deg, #ffc107, #ffed4e);
     }
-
-    .cupon-image img {
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.3s ease;
+    
+    .cupon-icon {
+        animation: pulse 2s infinite;
     }
-
-    .cupon-card:hover .cupon-image img {
-        transform: scale(1.05);
-    }
-
-    /* Placeholders para categorías */
-    .placeholder-promo {
-        background: linear-gradient(135deg, #fd7e14, #dc3545);
-        color: white;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-    }
-
-    .placeholder-cerveza {
-        background: linear-gradient(135deg, #ffc107, #fd7e14);
-        color: white;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-    }
-
-    .placeholder-coctel {
-        background: linear-gradient(135deg, #17a2b8, #007bff);
-        color: white;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-    }
-
-    .placeholder-especial {
-        background: linear-gradient(135deg, #28a745, #20c997);
-        color: white;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-    }
-
-    /* Badges de descuento */
-    .descuento-badge {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        padding: 8px 12px;
-        border-radius: 20px;
-        font-weight: bold;
-        font-size: 0.9rem;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-        z-index: 2;
-    }
-
-    .promo-badge {
-        background: linear-gradient(45deg, #dc3545, #fd1d1d);
-        color: white;
-    }
-
-    .cerveza-badge {
-        background: linear-gradient(45deg, #ffc107, #ffb400);
-        color: #333;
-    }
-
-    .coctel-badge {
-        background: linear-gradient(45deg, #17a2b8, #138496);
-        color: white;
-    }
-
-    .especial-badge {
-        background: linear-gradient(45deg, #28a745, #1e7e34);
-        color: white;
-    }
-
-    /* Contenido de cupones */
-    .cupon-content {
-        padding: 1.5rem;
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .cupon-title {
-        font-size: 1.2rem;
-        font-weight: bold;
-        margin-bottom: 0.5rem;
-        color: #333;
-    }
-
-    .cupon-description {
-        color: #666;
-        font-size: 0.9rem;
-        margin-bottom: 1rem;
-        flex-grow: 1;
-    }
-
-    .cupon-details {
-        margin-bottom: 1rem;
-    }
-
-    .detail-item {
-        display: flex;
-        align-items: center;
-        margin-bottom: 0.5rem;
-        font-size: 0.85rem;
-        color: #666;
-    }
-
-    .detail-item i {
-        width: 20px;
-        margin-right: 8px;
-        flex-shrink: 0;
-    }
-
-    .productos-incluidos {
-        background: #f8f9fa;
-        padding: 8px 12px;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-    }
-
-    .cupon-status {
-        margin-bottom: 1rem;
-    }
-
-    .cupon-actions {
-        margin-top: auto;
-    }
-
-    /* Botones específicos por categoría */
-    .btn-promo {
-        background: linear-gradient(45deg, #fd7e14, #dc3545);
-        border: none;
-        color: white;
-        font-weight: bold;
-        border-radius: 25px;
-        padding: 12px 20px;
-        transition: all 0.3s ease;
-    }
-
-    .btn-promo:hover {
-        background: linear-gradient(45deg, #dc3545, #fd7e14);
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(253, 126, 20, 0.4);
-    }
-
-    .btn-cerveza {
-        background: linear-gradient(45deg, #ffc107, #fd7e14);
-        border: none;
-        color: #333;
-        font-weight: bold;
-        border-radius: 25px;
-        padding: 12px 20px;
-        transition: all 0.3s ease;
-    }
-
-    .btn-cerveza:hover {
-        background: linear-gradient(45deg, #fd7e14, #ffc107);
-        color: #333;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
-    }
-
-    .btn-coctel {
-        background: linear-gradient(45deg, #17a2b8, #007bff);
-        border: none;
-        color: white;
-        font-weight: bold;
-        border-radius: 25px;
-        padding: 12px 20px;
-        transition: all 0.3s ease;
-    }
-
-    .btn-coctel:hover {
-        background: linear-gradient(45deg, #007bff, #17a2b8);
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(23, 162, 184, 0.4);
-    }
-
-    .btn-especial {
-        background: linear-gradient(45deg, #28a745, #20c997);
-        border: none;
-        color: white;
-        font-weight: bold;
-        border-radius: 25px;
-        padding: 12px 20px;
-        transition: all 0.3s ease;
-    }
-
-    .btn-especial:hover {
-        background: linear-gradient(45deg, #20c997, #28a745);
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
-    }
-
-    /* Buscador */
-    .search-cupones {
-        max-width: 600px;
-        margin: 0 auto;
-    }
-
-    .search-cupones .form-control {
-        border: 2px solid #007bff;
-        font-size: 1.1rem;
-        padding: 12px 20px;
-    }
-
-    .search-cupones .form-control:focus {
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-        border-color: #007bff;
-    }
-
-    /* Botón flotante para escanear */
-    .floating-scan-btn {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        z-index: 1000;
-    }
-
-    .btn-scan-qr {
-        background: linear-gradient(45deg, #6f42c1, #5a2d91);
-        color: white;
-        border: none;
-        border-radius: 50px;
-        padding: 15px 25px;
-        box-shadow: 0 4px 15px rgba(111, 66, 193, 0.3);
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        text-decoration: none;
-        font-weight: bold;
-    }
-
-    .btn-scan-qr:hover {
-        background: linear-gradient(45deg, #5a2d91, #6f42c1);
-        color: white;
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(111, 66, 193, 0.4);
-        text-decoration: none;
-    }
-
-    /* Cards específicas por categoría */
-    .promo-card {
-        border-left: 5px solid #fd7e14;
-    }
-
-    .cerveza-card {
-        border-left: 5px solid #ffc107;
-    }
-
-    .coctel-card {
-        border-left: 5px solid #17a2b8;
-    }
-
-    .especial-card {
-        border-left: 5px solid #28a745;
-    }
-
-    /* Responsive */
-    media (max-width: 768px) {
-        .cupon-image {
-            height: 150px;
+    
+    keyframes pulse {
+        0% {
+            transform: scale(1);
         }
-        
-        .floating-scan-btn {
-            bottom: 20px;
-            right: 20px;
+        50% {
+            transform: scale(1.05);
         }
-        
-        .btn-scan-qr {
-            padding: 12px 20px;
-        }
-        
-        .btn-scan-qr span {
-            display: none;
-        }
-
-        .section-title {
-            font-size: 1.2rem;
-        }
-
-        .cupon-title {
-            font-size: 1.1rem;
-        }
-
-        .cupon-description {
-            font-size: 0.85rem;
-        }
-
-        .detail-item {
-            font-size: 0.8rem;
-        }
-    }
-
-    media (max-width: 576px) {
-        .container-fluid {
-            padding-left: 10px;
-            padding-right: 10px;
-        }
-        
-        .cupon-content {
-            padding: 1rem;
-        }
-        
-        .search-cupones .form-control {
-            font-size: 1rem;
-            padding: 10px 15px;
-        }
-    }
-
-    /* Animaciones adicionales */
-    .cupones-section {
-        animation: fadeInUp 0.6s ease-out;
-    }
-
-    keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .cupon-card {
-        animation: fadeInScale 0.5s ease-out;
-    }
-
-    keyframes fadeInScale {
-        from {
-            opacity: 0;
-            transform: scale(0.9);
-        }
-        to {
-            opacity: 1;
+        100% {
             transform: scale(1);
         }
     }
+    
+    .qr-code {
+        border-radius: 8px;
+    }
 </style>
 
-<script>
-    // Funcionalidad del buscador
-    document.getElementById('buscarCupones').addEventListener('input', function(e) {
-        const searchTerm = e.target.value.toLowerCase();
-        const cuponCards = document.querySelectorAll('.cupon-card');
-        
-        cuponCards.forEach(function(card) {
-            const title = card.querySelector('.cupon-title').textContent.toLowerCase();
-            const description = card.querySelector('.cupon-description').textContent.toLowerCase();
-            const cardContainer = card.closest('.col-lg-4, .col-lg-3, .col-md-6');
-            
-            if (title.includes(searchTerm) || description.includes(searchTerm)) {
-                cardContainer.style.display = 'block';
-                card.style.animation = 'fadeInScale 0.3s ease-out';
-            } else {
-                cardContainer.style.display = 'none';
-            }
-        });
-        
-        // Mostrar mensaje si no hay resultados
-        const visibleCards = document.querySelectorAll('.cupon-card:not([style*="display: none"])').length;
-        const sections = document.querySelectorAll('.cupones-section');
-        
-        if (visibleCards === 0 && searchTerm.length > 0) {
-            // Crear mensaje de no resultados si no existe
-            let noResultsDiv = document.getElementById('no-results-message');
-            if (!noResultsDiv) {
-                noResultsDiv = document.createElement('div');
-                noResultsDiv.id = 'no-results-message';
-                noResultsDiv.className = 'text-center py-5';
-                noResultsDiv.innerHTML = `
-                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                    <h4 class="text-muted">No se encontraron cupones</h4>
-                    <p class="text-muted">Intenta con otros términos de búsqueda</p>
-                `;
-                document.querySelector('.container-fluid').appendChild(noResultsDiv);
-            }
-            noResultsDiv.style.display = 'block';
-        } else {
-            const noResultsDiv = document.getElementById('no-results-message');
-            if (noResultsDiv) {
-                noResultsDiv.style.display = 'none';
-            }
-        }
-    });
-
-    // Efecto de carga para las cards
-    document.addEventListener('DOMContentLoaded', function() {
-        const cards = document.querySelectorAll('.cupon-card');
-        cards.forEach((card, index) => {
-            card.style.animationDelay = `${index * 0.1}s`;
-        });
-    });
-
-    // Smooth scroll para secciones
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
+@section Scripts {
+    <!-- QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            @foreach (var cupon in Model)
+            {
+                <text>
+                new QRious({
+                    element: document.getElementById('qr-@cupon.Id'),
+                    value: '@cupon.CodigoQR',
+                    size: 100,
+                    level: 'H'
                 });
+                </text>
             }
         });
-    });
-</script>
+    </script>
+}

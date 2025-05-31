@@ -30,6 +30,9 @@ namespace ProyectoIdentity.Models
         // Añadir referencia al punto de recolección
         public int? PuntoRecoleccionId { get; set; }
         public CollectionPoint PuntoRecoleccion { get; set; }
+
+        public bool EsCupon { get; set; } = false;
+
     }
 
 

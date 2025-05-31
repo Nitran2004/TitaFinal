@@ -4,7 +4,7 @@
 
 namespace ProyectoIdentity.Migrations
 {
-    public partial class AgregarCupos : Migration
+    public partial class _5698752 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {

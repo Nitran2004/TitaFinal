@@ -4,7 +4,7 @@
 
 namespace ProyectoIdentity.Migrations
 {
-    public partial class AgregarTablaCupones : Migration
+    public partial class _569 : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {

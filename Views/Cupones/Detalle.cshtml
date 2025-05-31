@@ -1,0 +1,287 @@
+﻿@model ProyectoIdentity.Models.Cupon
+@{
+    ViewData["Title"] = "Detalle del Cupón - " + Model.Nombre;
+}
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-warning text-dark text-center">
+            <h2 class="mb-0">
+                <i class="fas fa-ticket-alt"></i> @Model.Nombre
+            </h2>
+            <p class="mb-0">@Model.Descripcion</p>
+        </div>
+
+        <div class="card-body text-center">
+            <!-- Información del descuento -->
+            <div class="discount-info mb-4">
+                @if (Model.TipoDescuento == "3x2")
+                {
+                    <div class="discount-badge bg-warning text-dark">
+                        <i class="fas fa-gift fa-3x mb-2"></i>
+                        <h1 class="display-4 fw-bold">3x2</h1>
+                        <p class="lead">Compra 2 y llévate 3</p>
+                    </div>
+                }
+                else if (Model.TipoDescuento == "Porcentaje")
+                {
+                    <div class="discount-badge bg-success text-white">
+                        <i class="fas fa-percentage fa-3x mb-2"></i>
+                        <h1 class="display-4 fw-bold">@Model.ValorDescuento%</h1>
+                        <p class="lead">de descuento</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="discount-badge bg-primary text-white">
+                        <i class="fas fa-dollar-sign fa-3x mb-2"></i>
+                        <h1 class="display-4 fw-bold">$@Model.ValorDescuento</h1>
+                        <p class="lead">de descuento</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Código QR Grande -->
+            <div class="qr-section mb-4">
+                <div class="qr-container">
+                    <div id="qr-code-main" style="min-height: 250px; display: flex; align-items: center; justify-content: center;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Generando código QR...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="qr-info mt-3">
+                    <h5>Código del cupón:</h5>
+                    <div class="codigo-display">
+                        <strong>@Model.CodigoQR</strong>
+                    </div>
+                    <small class="text-muted">Muestra este código QR o el texto en caja</small>
+                </div>
+            </div>
+
+            <!-- Información adicional -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <h6><i class="fas fa-info-circle"></i> Detalles</h6>
+                        @if (Model.MontoMinimo > 0)
+                        {
+                            <p><strong>Monto mínimo:</strong> $@Model.MontoMinimo</p>
+                        }
+                        <p><strong>Válido hasta:</strong> @(Model.FechaExpiracion?.ToString("dd/MM/yyyy") ?? "Sin expiración")</p>
+                        <p><strong>Usos disponibles:</strong> @(Model.LimiteUsos - Model.VecesUsado) de @Model.LimiteUsos</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <h6><i class="fas fa-calendar"></i> Disponibilidad</h6>
+                        @if (string.IsNullOrEmpty(Model.DiasAplicables) || Model.DiasAplicables == "Todos")
+                        {
+                            <p><strong>Válido:</strong> Todos los días</p>
+                        }
+                        else
+                        {
+                            <p><strong>Válido:</strong> @Model.DiasAplicables.Replace(",", ", ")</p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="action-buttons mt-4">
+                <a href="@Url.Action("Index", "Cupones")" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Ver todos los cupones
+                </a>
+
+                <button class="btn btn-success" onclick="compartirCupon()">
+                    <i class="fas fa-share"></i> Compartir
+                </button>
+
+                <button class="btn btn-info" onclick="descargarQR()">
+                    <i class="fas fa-download"></i> Descargar QR
+                </button>
+            </div>
+
+            <!-- Información para el personal -->
+            @if (User.IsInRole("Administrador") || User.IsInRole("Cajero"))
+            {
+                <div class="admin-info mt-4 p-3 bg-light rounded">
+                    <h6><i class="fas fa-user-shield"></i> Información para personal</h6>
+                    <p><strong>Código para ingresar manualmente:</strong></p>
+                    <div class="manual-code">
+                        <code>@Model.CodigoQR</code>
+                        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copiarCodigo()">
+                            <i class="fas fa-copy"></i> Copiar
+                        </button>
+                    </div>
+                    <small class="text-muted">Úsalo en "Escanear Cupón QR" si no funciona el escáner</small>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .discount-badge {
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        margin: 20px auto;
+        max-width: 300px;
+    }
+
+    .qr-container {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        display: inline-block;
+        border: 3px solid #ffc107;
+    }
+
+    .codigo-display {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        font-size: 1.2rem;
+        letter-spacing: 2px;
+        border: 2px dashed #6c757d;
+        margin: 10px 0;
+    }
+
+    .info-card {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        text-align: left;
+    }
+
+    .action-buttons .btn {
+        margin: 5px;
+    }
+
+    .admin-info {
+        border: 2px solid #17a2b8;
+    }
+
+    .manual-code {
+        background: white;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 10px 0;
+    }
+
+        .manual-code code {
+            font-size: 1.1rem;
+            color: #e83e8c;
+            font-weight: bold;
+        }
+</style>
+
+@section Scripts {
+    <!-- QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+    <script>
+        let qrInstance = null;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Esperar un poco para asegurar que el DOM esté listo
+            setTimeout(function () {
+                try {
+                    // Limpiar el contenedor primero
+                    const container = document.getElementById('qr-code-main');
+                    container.innerHTML = '';
+
+                    // Crear canvas para el QR
+                    const canvas = document.createElement('canvas');
+                    container.appendChild(canvas);
+
+                    // Generar QR Code grande
+                    qrInstance = new QRious({
+                        element: canvas,
+                        value: '@Html.Raw(Model.CodigoQR)',
+                        size: 250,
+                        level: 'H',
+                        foreground: '#000000',
+                        background: '#ffffff'
+                    });
+
+                    console.log('QR generado exitosamente para código: @Model.CodigoQR');
+                } catch (error) {
+                    console.error('Error generando QR:', error);
+                    document.getElementById('qr-code-main').innerHTML =
+                        '<div class="alert alert-warning">Error al generar código QR. Usa el código de texto.</div>';
+                }
+            }, 500);
+        });
+
+        function copiarCodigo() {
+            const codigo = '@Html.Raw(Model.CodigoQR)';
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(codigo).then(function () {
+                    // Usar alert simple para evitar problemas con Bootstrap
+                    alert('Código copiado: ' + codigo);
+                }).catch(function () {
+                    // Fallback manual
+                    prompt('Copia este código:', codigo);
+                });
+            } else {
+                // Fallback para navegadores antiguos
+                prompt('Copia este código:', codigo);
+            }
+        }
+
+        function compartirCupon() {
+            if (navigator.share) {
+                navigator.share({
+                    title: '@Html.Raw(Model.Nombre)',
+                    text: '@Html.Raw(Model.Descripcion)',
+                    url: window.location.href
+                }).catch(function (error) {
+                    console.log('Error compartiendo:', error);
+                    // Fallback
+                    copiarEnlace();
+                });
+            } else {
+                copiarEnlace();
+            }
+        }
+
+        function copiarEnlace() {
+            const url = window.location.href;
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(function () {
+                    alert('Enlace del cupón copiado');
+                });
+            } else {
+                prompt('Copia este enlace:', url);
+            }
+        }
+
+        function descargarQR() {
+            try {
+                const canvas = document.querySelector('#qr-code-main canvas');
+                if (canvas) {
+                    const link = document.createElement('a');
+                    link.download = 'cupon-@Html.Raw(Model.CodigoQR)-qr.png';
+                    link.href = canvas.toDataURL('image/png');
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    alert('Código QR descargado');
+                } else {
+                    alert('Error: No se pudo generar la imagen del QR');
+                }
+            } catch (error) {
+                console.error('Error descargando QR:', error);
+                alert('Error al descargar el código QR');
+            }
+        }
+    </script>
+}

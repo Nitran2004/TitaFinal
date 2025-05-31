@@ -1,0 +1,161 @@
+﻿@model List<ProyectoIdentity.Models.Pedido>
+@{
+    ViewData["Title"] = "Pedidos con Cupones";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-ticket-alt"></i> Pedidos con Cupones Aplicados</h2>
+        <div>
+            <a href="@Url.Action("EscanearQR")" class="btn btn-primary">
+                <i class="fas fa-qrcode"></i> Escanear Nuevo Cupón
+            </a>
+            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                <i class="fas fa-list"></i> Ver Todos los Cupones
+            </a>
+        </div>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="row">
+            @foreach (var pedido in Model)
+            {
+                <div class="col-md-6 mb-4">
+                    <div class="card border-success">
+                        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-receipt"></i> Pedido #@pedido.Id
+                            </h5>
+                            <span class="badge bg-light text-dark">Con Cupón</span>
+                        </div>
+                        <div class="card-body">
+                            <!-- Información básica -->
+                            <div class="row mb-3">
+                                <div class="col-sm-6">
+                                    <strong>Fecha:</strong><br>
+                                    <small>@pedido.Fecha.ToString("dd/MM/yyyy HH:mm")</small>
+                                </div>
+                                <div class="col-sm-6">
+                                    <strong>Estado:</strong><br>
+                                    <span class="badge @GetEstadoBadgeClass(pedido.Estado)">
+                                        @pedido.Estado
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Sucursal -->
+                            @if (pedido.Sucursal != null)
+                            {
+                                <div class="mb-3">
+                                    <strong><i class="fas fa-map-marker-alt"></i> Sucursal:</strong><br>
+                                    <small>@pedido.Sucursal.Nombre - @pedido.Sucursal.Direccion</small>
+                                </div>
+                            }
+
+                            <!-- Productos -->
+                            <div class="mb-3">
+                                <strong><i class="fas fa-shopping-cart"></i> Productos:</strong>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Producto</th>
+                                                <th class="text-center">Cant.</th>
+                                                <th class="text-end">Precio</th>
+                                                <th class="text-end">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if (pedido.PedidoProductos?.Any() == true)
+                                            {
+                                                @foreach (var item in pedido.PedidoProductos)
+                                                {
+                                                    <tr>
+                                                        <td>
+                                                            <small>@(item.Producto?.Nombre ?? "Producto")</small>
+                                                        </td>
+                                                        <td class="text-center">@item.Cantidad</td>
+                                                        <td class="text-end">
+                                                            <small>$@item.Precio?.ToString("F2")</small>
+                                                        </td>
+                                                        <td class="text-end">
+                                                            <small>$@((item.Precio * item.Cantidad)?.ToString("F2"))</small>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Total -->
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="text-success">
+                                    <i class="fas fa-dollar-sign"></i> Total: $@pedido.Total.ToString("F2")
+                                </strong>
+                                <div>
+                                    <!-- Formulario para actualizar estado -->
+                                    <form asp-action="ActualizarEstado" asp-controller="Pedidos" method="post" class="d-inline">
+                                        <input type="hidden" name="id" value="@pedido.Id" />
+                                        <div class="input-group input-group-sm">
+                                            <select name="estado" class="form-select form-select-sm">
+                                                <option value="Preparándose" selected="@("Preparándose" == pedido.Estado)">Preparándose</option>
+                                                <option value="Listo para entregar" selected="@("Listo para entregar" == pedido.Estado)">Listo</option>
+                                                <option value="Entregado" selected="@("Entregado" == pedido.Estado)">Entregado</option>
+                                            </select>
+                                            <button type="submit" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-sync"></i>
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Acciones -->
+                            <div class="mt-3 text-center">
+                                <a href="@Url.Action("Resumen", "Pedidos", new { id = pedido.Id })"
+                                   class="btn btn-outline-info btn-sm">
+                                    <i class="fas fa-eye"></i> Ver Detalles
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Footer con información de cupón -->
+                        <div class="card-footer bg-light">
+                            <small class="text-muted">
+                                <i class="fas fa-ticket-alt"></i>
+                                Pedido procesado con cupón de descuento
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-ticket-alt fa-5x text-muted mb-3"></i>
+            <h4 class="text-muted">No hay pedidos con cupones</h4>
+            <p class="text-muted">Los pedidos procesados con cupones aparecerán aquí.</p>
+            <a href="@Url.Action("EscanearQR")" class="btn btn-primary">
+                <i class="fas fa-qrcode"></i> Escanear Primer Cupón
+            </a>
+        </div>
+    }
+</div>
+
+@functions {
+    public string GetEstadoBadgeClass(string estado)
+    {
+        return estado switch
+        {
+            "Preparándose" => "bg-warning text-dark",
+            "Listo para entregar" => "bg-info",
+            "Entregado" => "bg-success",
+            _ => "bg-secondary"
+        };
+    }
+}

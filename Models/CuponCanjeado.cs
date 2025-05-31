@@ -1,5 +1,4 @@
-﻿// Models/CuponCanjeado.cs
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace ProyectoIdentity.Models
 {
@@ -7,30 +6,27 @@ namespace ProyectoIdentity.Models
     {
         public int Id { get; set; }
 
+        [Required]
         public int CuponId { get; set; }
         public virtual Cupon Cupon { get; set; }
 
-        public string UsuarioId { get; set; }
+        public string UsuarioId { get; set; } // Puede ser null para usuarios anónimos
         public virtual AppUsuario Usuario { get; set; }
 
-        public string ClienteId { get; set; }
-        public virtual AppUsuario Cliente { get; set; }
-
         [Required]
-        [StringLength(50)]
         public string CodigoQR { get; set; }
 
         public DateTime FechaCanje { get; set; }
 
-        public decimal DescuentoAplicado { get; set; }
         public decimal TotalOriginal { get; set; }
+
+        public decimal DescuentoAplicado { get; set; }
+
         public decimal TotalConDescuento { get; set; }
 
-        [StringLength(50)]
-        public string EstadoCanje { get; set; }
+        public string ProductosCanjeados { get; set; } // JSON con los productos
 
-        public string ProductosIncluidos { get; set; }
-
-        public string DetallesCanje { get; set; }
+        public int? PedidoId { get; set; } // Relación con el pedido generado
+        public virtual Pedido Pedido { get; set; }
     }
 }
