@@ -756,7 +756,7 @@ namespace ProyectoIdentity.Datos
                     Precio = 6m,
                     Categoria = "Shot",
                     Descripcion = "Shot de licor de hierbas alemán Jägermeister, servido helado.",
-                    Imagen = File.ReadAllBytes("wwwroot/images1/jaggerbomb.jpg"),
+                    Imagen = File.ReadAllBytes("wwwroot/images1/jaggershot.webp"),
                     InfoNutricional = "Volumen:45ml|Calorías:103Kcal - 5%|Carbohidratos:11g - 4%|Proteínas:0g - 0%|Grasas:0g - 0%|Alcohol:35% vol.|Sodio:0mg - 0%|Azúcares:11g - 22%|Hierbas:Alto contenido",
                     Alergenos = "Hierbas|Puede contener trazas de gluten"
                 },
