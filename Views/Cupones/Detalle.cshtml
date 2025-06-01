@@ -1,4 +1,5 @@
-﻿@model ProyectoIdentity.Models.Cupon
+﻿@using System.Security.Claims
+@model ProyectoIdentity.Models.Cupon
 @{
     ViewData["Title"] = "Detalle del Cupón - " + Model.Nombre;
 }
@@ -202,17 +203,27 @@
                     const canvas = document.createElement('canvas');
                     container.appendChild(canvas);
 
-                    // Generar QR Code grande
-                    qrInstance = new QRious({
-                        element: canvas,
-                        value: '@Html.Raw(Model.CodigoQR)',
-                        size: 250,
-                        level: 'H',
-                        foreground: '#000000',
-                        background: '#ffffff'
-                    });
+                    // Generar QR Code grande CON USUARIO
+                    let codigoConUsuario = '@Html.Raw(Model.CodigoQR)';
 
-                    console.log('QR generado exitosamente para código: @Model.CodigoQR');
+                    // ✅ SI EL USUARIO ESTÁ AUTENTICADO, AGREGAR SU ID AL CÓDIGO
+        @if (User.Identity.IsAuthenticated)
+        {
+            <text>
+                            codigoConUsuario = '@Html.Raw(Model.CodigoQR)' + '|USER:@User.FindFirstValue(ClaimTypes.NameIdentifier)';
+            </text>
+        }
+
+                        qrInstance = new QRious({
+                            element: canvas,
+                            value: codigoConUsuario,
+                            size: 250,
+                            level: 'H',
+                            foreground: '#000000',
+                            background: '#ffffff'
+                        });
+
+                    console.log('QR generado con código:', codigoConUsuario);
                 } catch (error) {
                     console.error('Error generando QR:', error);
                     document.getElementById('qr-code-main').innerHTML =

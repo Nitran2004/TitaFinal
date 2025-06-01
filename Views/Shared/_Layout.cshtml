@@ -258,19 +258,22 @@
                                     box-shadow: 0 6px 20px rgba(111, 66, 193, 0.6);
                                 }
                         </style>
-
+                        @if (User.IsInRole("Administrador") || User.IsInRole("Cajero") || User.IsInRole("Registrado"))
+                        {
                         <!-- Nuevo enlace para recomendación de menú -->
                         <li class="nav-item">
                             <a class="nav-link text-white" asp-area="" asp-controller="MenuRecomendacion" asp-action="Recomendacion">
                                 <i></i> Recomendaciones IA
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Cupones" asp-action="Index">
-                                <i class="fas fa-tags text-warning me-2"></i>
-                                Cupones
-                            </a>
-                        </li>
+                       
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Cupones" asp-action="Index">
+                                    <i class="fas fa-tags text-warning me-2"></i>
+                                    Cupones
+                                </a>
+                            </li>
+                        }
                     </ul>
 
                     <!-- Vista parcial para acceso (login y registro) -->

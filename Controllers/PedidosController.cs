@@ -290,12 +290,54 @@ public class PedidosController : Controller
         public int ProductosCount { get; set; }
     }
 
+    // EN PedidosController.cs - REEMPLAZAR el método VerPedidoTemporal
+
     public async Task<IActionResult> VerPedidoTemporal()
     {
+        Console.WriteLine($"[DEBUG] VerPedidoTemporal - Usuario autenticado: {User.Identity.IsAuthenticated}");
+
+        Pedido pedido = null;
+
+        // ✅ SI EL USUARIO ESTÁ AUTENTICADO, BUSCAR SU ÚLTIMO PEDIDO
+        if (User.Identity.IsAuthenticated)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Console.WriteLine($"[DEBUG] Buscando último pedido para usuario: {userId}");
+
+            // Buscar el pedido más reciente del usuario autenticado
+            pedido = await _context.Pedidos
+                .Include(p => p.PedidoProductos)
+                    .ThenInclude(pp => pp.Producto)
+                .Include(p => p.Sucursal)
+                .Where(p => p.UsuarioId == userId) // ✅ FILTRAR POR USUARIO
+                .OrderByDescending(p => p.Fecha)   // ✅ MÁS RECIENTE PRIMERO
+                .FirstOrDefaultAsync();
+
+            if (pedido != null)
+            {
+                Console.WriteLine($"[DEBUG] Pedido encontrado para usuario autenticado: {pedido.Id}");
+
+                // Actualizar sesión y cookie con el pedido encontrado
+                HttpContext.Session.SetInt32("PedidoActualId", pedido.Id);
+                Response.Cookies.Append("PedidoActualId", pedido.Id.ToString(), new CookieOptions
+                {
+                    Expires = DateTimeOffset.Now.AddDays(1)
+                });
+
+                return View("Resumen", pedido);
+            }
+            else
+            {
+                Console.WriteLine($"[DEBUG] No se encontraron pedidos para el usuario: {userId}");
+            }
+        }
+
+        // ✅ SI NO HAY USUARIO AUTENTICADO O NO TIENE PEDIDOS, BUSCAR POR COOKIES/SESIÓN
         int? pedidoId = null;
 
-        // 1. Intentar obtener el ID del pedido de la sesión (prioridad más alta)
+        // 1. Intentar obtener el ID del pedido de la sesión
         pedidoId = HttpContext.Session.GetInt32("PedidoActualId");
+        Console.WriteLine($"[DEBUG] ID de sesión: {pedidoId}");
 
         // 2. Si no está en la sesión, intentar obtenerlo de la cookie PedidoActualId
         if (!pedidoId.HasValue && Request.Cookies.TryGetValue("PedidoActualId", out string pedidoActualIdStr))
@@ -303,6 +345,7 @@ public class PedidosController : Controller
             if (int.TryParse(pedidoActualIdStr, out int id))
             {
                 pedidoId = id;
+                Console.WriteLine($"[DEBUG] ID de cookie PedidoActualId: {pedidoId}");
             }
         }
 
@@ -312,13 +355,14 @@ public class PedidosController : Controller
             if (int.TryParse(pedidoTemporalIdStr, out int id))
             {
                 pedidoId = id;
+                Console.WriteLine($"[DEBUG] ID de cookie PedidoTemporalId: {pedidoId}");
             }
         }
 
         // Si encontramos un ID de pedido, intentar cargar el pedido
         if (pedidoId.HasValue)
         {
-            var pedido = await _context.Pedidos
+            pedido = await _context.Pedidos
                 .Include(p => p.PedidoProductos)
                     .ThenInclude(pp => pp.Producto)
                 .Include(p => p.Sucursal)
@@ -326,9 +370,10 @@ public class PedidosController : Controller
 
             if (pedido != null)
             {
+                Console.WriteLine($"[DEBUG] Pedido encontrado por ID: {pedido.Id}");
+
                 // Actualizar ambas formas de almacenamiento para futuras referencias
                 HttpContext.Session.SetInt32("PedidoActualId", pedido.Id);
-
                 Response.Cookies.Append("PedidoActualId", pedido.Id.ToString(), new CookieOptions
                 {
                     Expires = DateTimeOffset.Now.AddDays(1)
@@ -338,7 +383,7 @@ public class PedidosController : Controller
             }
         }
 
-        // Si no se encuentra ningún pedido, buscar el pedido más reciente
+        // ✅ COMO ÚLTIMO RECURSO, BUSCAR EL PEDIDO MÁS RECIENTE GENERAL
         var pedidoMasReciente = await _context.Pedidos
             .Include(p => p.PedidoProductos)
                 .ThenInclude(pp => pp.Producto)
@@ -348,9 +393,10 @@ public class PedidosController : Controller
 
         if (pedidoMasReciente != null)
         {
+            Console.WriteLine($"[DEBUG] Usando pedido más reciente general: {pedidoMasReciente.Id}");
+
             // Actualizar ambas formas de almacenamiento para futuras referencias
             HttpContext.Session.SetInt32("PedidoActualId", pedidoMasReciente.Id);
-
             Response.Cookies.Append("PedidoActualId", pedidoMasReciente.Id.ToString(), new CookieOptions
             {
                 Expires = DateTimeOffset.Now.AddDays(1)
@@ -360,10 +406,10 @@ public class PedidosController : Controller
         }
 
         // Si no hay pedidos, redirigir al inicio
+        Console.WriteLine("[DEBUG] No se encontró ningún pedido");
         TempData["Mensaje"] = "No se encontró ningún pedido reciente";
         return RedirectToAction("Index", "Home");
     }
-
     [HttpPost]
     public async Task<IActionResult> ActualizarEstado(int id, string estado)
     {
@@ -591,6 +637,8 @@ public class PedidosController : Controller
         return RedirectToAction("Resumen", new { id = pedido.Id });
     }
 
+    // EN PedidosController.cs - CORREGIR el método DetallePedido
+
     public async Task<IActionResult> DetallePedido(int id)
     {
         var pedido = await _context.Pedidos
@@ -604,7 +652,8 @@ public class PedidosController : Controller
             return NotFound();
         }
 
-        return View(pedido);
+        // ✅ USAR LA VISTA RESUMEN EN LUGAR DE DetallePedido
+        return View("Resumen", pedido);
     }
 
     public async Task<IActionResult> SucursalMasCercana(double lat, double lng)

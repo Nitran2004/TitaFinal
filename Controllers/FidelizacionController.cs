@@ -526,18 +526,30 @@ namespace ProyectoIdentity.Controllers
 
         public async Task<IActionResult> DetallePedido(int id)
         {
+            // Verificar que el usuario esté autenticado
+            if (!User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Buscar el pedido y verificar que pertenezca al usuario actual
             var pedido = await _context.Pedidos
                 .Include(p => p.PedidoProductos)
                     .ThenInclude(pp => pp.Producto)
                 .Include(p => p.Sucursal)
                 .FirstOrDefaultAsync(p => p.Id == id && p.UsuarioId == userId);
 
-            if (pedido == null) return NotFound();
+            if (pedido == null)
+            {
+                TempData["Error"] = "Pedido no encontrado o no tienes permisos para verlo";
+                return RedirectToAction("Historial");
+            }
 
-            return View(pedido);
+            // ✅ REDIRIGIR AL MÉTODO CORRECTO EN PEDIDOSCONTROLLER
+            return RedirectToAction("DetallePedido", "Pedidos", new { id = id });
         }
-
         // Método estático para calcular puntos que se ganarán
         public static int CalcularPuntosAGanar(decimal precio)
         {

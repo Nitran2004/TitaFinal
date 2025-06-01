@@ -98,6 +98,15 @@
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="cuponId" value="@cupon.Id" />
 
+                            @* ✅ PASAR USUARIO QUE ESCANEÓ *@
+                            @if (ViewBag.UsuarioQueEscanea != null)
+                            {
+                                <input type="hidden" name="usuarioQueEscanea" value="@ViewBag.UsuarioQueEscanea" />
+                                <div class="alert alert-info">
+                                    <i class="fas fa-user"></i> <strong>Pedido para:</strong> Usuario autenticado
+                                </div>
+                            }
+
                             <h6>Productos disponibles:</h6>
                             <div class="row">
                                 @foreach (var producto in productos)
@@ -184,7 +193,7 @@
             return confirm("¿Confirmar la aplicación del cupón y crear el pedido?");
         }
 
-        // Scanner QR - SIMPLE
+        // ✅ Scanner QR - SIN ERRORES, SOLO CÁMARA
         let html5QrcodeScanner;
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -193,59 +202,74 @@
 
         function inicializarScanner() {
             try {
-                html5QrcodeScanner = new Html5QrcodeScanner(
-                    "qr-reader",
-                    {
-                        fps: 10,
-                        qrbox: { width: 250, height: 250 },
-                        // ✅ SOLO CÁMARA, NO ARCHIVOS
-                        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-                        showTorchButtonIfSupported: true,
-                        showZoomSliderIfSupported: true,
-                        defaultZoomValueIfSupported: 2,
-                        // ✅ TEXTOS EN ESPAÑOL
-                        qrCodeSuccessCallback: onScanSuccess,
-                        qrCodeErrorCallback: onScanFailure,
-                        verbose: false
-                    },
-                    {
-                        // ✅ TEXTOS EN ESPAÑOL
-                        fps: 10,
-                        qrbox: { width: 250, height: 250 },
-                        aspectRatio: 1.0,
-                        disableFlip: false,
-                        // Textos personalizados en español
-                        experimentalFeatures: {
-                            useBarCodeDetectorIfSupported: true
-                        },
-                        rememberLastUsedCamera: true,
-                        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
-                    }
-                );
+                // ✅ USAR Html5Qrcode EN LUGAR DE Html5QrcodeScanner PARA CONTROL TOTAL
+                const html5QrCode = new Html5Qrcode("qr-reader");
 
-                html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+                // ✅ CONFIGURACIÓN SOLO PARA CÁMARA
+                const config = {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0
+                };
 
-                document.getElementById('scanner-status').innerHTML =
-                    '<i class="fas fa-camera"></i> Cámara lista. Apunta al código QR del cupón.';
+                // ✅ CREAR BOTÓN PERSONALIZADO PARA ACTIVAR CÁMARA
+                document.getElementById('qr-reader').innerHTML = `
+                            <div style="text-align: center; padding: 20px;">
+                                <button id="start-camera-btn" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-camera"></i> Activar Cámara
+                                </button>
+                                <div id="camera-preview" style="margin-top: 20px; display: none;"></div>
+                            </div>
+                        `;
 
-                // ✅ OCULTAR OPCIÓN DE ARCHIVOS DESPUÉS DE RENDERIZAR
-                setTimeout(() => {
-                    const fileInput = document.querySelector('#qr-reader__dashboard_section_swaplink');
-                    if (fileInput) {
-                        fileInput.style.display = 'none';
-                    }
+                // ✅ EVENTO PARA INICIAR SOLO LA CÁMARA
+                document.getElementById('start-camera-btn').addEventListener('click', function () {
+                    this.disabled = true;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando cámara...';
 
-                    const fileSection = document.querySelector('#qr-reader__dashboard_section_fsr');
-                    if (fileSection) {
-                        fileSection.style.display = 'none';
-                    }
+                    // Iniciar cámara directamente
+                    html5QrCode.start(
+                        { facingMode: "environment" }, // Cámara trasera preferida
+                        config,
+                        onScanSuccess,
+                        onScanFailure
+                    ).then(() => {
+                        document.getElementById('scanner-status').innerHTML =
+                            '<i class="fas fa-check-circle text-success"></i> Cámara activa. Apunta al código QR del cupón.';
 
-                    // Cambiar textos a español
-                    const cameraButton = document.querySelector('#qr-reader__dashboard_section_csr > div > button');
-                    if (cameraButton && cameraButton.textContent.includes('Request Camera')) {
-                        cameraButton.textContent = 'Activar Cámara';
-                    }
-                }, 500);
+                        // Ocultar botón y mostrar preview
+                        document.getElementById('start-camera-btn').style.display = 'none';
+                        document.getElementById('camera-preview').style.display = 'block';
+
+                        // Agregar botón para detener
+                        document.getElementById('camera-preview').innerHTML = `
+                                    <button id="stop-camera-btn" class="btn btn-danger">
+                                        <i class="fas fa-stop"></i> Detener Escáneo
+                                    </button>
+                                `;
+
+                        document.getElementById('stop-camera-btn').addEventListener('click', function () {
+                            html5QrCode.stop().then(() => {
+                                document.getElementById('start-camera-btn').style.display = 'block';
+                                document.getElementById('start-camera-btn').disabled = false;
+                                document.getElementById('start-camera-btn').innerHTML = '<i class="fas fa-camera"></i> Activar Cámara';
+                                document.getElementById('camera-preview').style.display = 'none';
+                                document.getElementById('scanner-status').innerHTML =
+                                    '<i class="fas fa-camera"></i> Cámara detenida. Presiona "Activar Cámara" para escanear.';
+                            });
+                        });
+
+                    }).catch(err => {
+                        console.error('Error al iniciar cámara:', err);
+                        document.getElementById('start-camera-btn').disabled = false;
+                        document.getElementById('start-camera-btn').innerHTML = '<i class="fas fa-camera"></i> Activar Cámara';
+                        document.getElementById('scanner-status').innerHTML =
+                            '<i class="fas fa-exclamation-triangle text-danger"></i> Error al acceder a la cámara. Usa entrada manual.';
+                    });
+                });
+
+                // Guardar referencia para uso global
+                window.html5QrCodeInstance = html5QrCode;
 
             } catch (error) {
                 console.error('Error inicializando scanner:', error);
@@ -257,43 +281,26 @@
         function onScanSuccess(decodedText, decodedResult) {
             console.log(`Código escaneado: ${decodedText}`);
 
-            // Parar el scanner
-            html5QrcodeScanner.clear();
+            // Detener el scanner
+            if (window.html5QrCodeInstance) {
+                window.html5QrCodeInstance.stop();
+            }
 
             // Poner el código en el input manual
             document.getElementById('codigoManualInput').value = decodedText;
 
             // Actualizar status
             document.getElementById('scanner-status').innerHTML =
-                '<i class="fas fa-check-circle text-success"></i> ¡Código escaneado! Revisa abajo y presiona "Buscar Cupón".';
+                '<i class="fas fa-check-circle text-success"></i> ¡Código escaneado exitosamente!';
 
-            // Auto-enviar el formulario (opcional)
-            // document.querySelector('form').submit();
+            // Auto-enviar el formulario
+            setTimeout(() => {
+                document.querySelector('form[action*="ProcesarCodigoManual"]').submit();
+            }, 500);
         }
 
         function onScanFailure(error) {
-            // Manejar errores silenciosamente
-            // console.log(`Error de escaneo: ${error}`);
-        }
-
-        function confirmarAplicacion() {
-            // Verificar que al menos un producto tenga cantidad > 0
-            const cantidades = document.querySelectorAll('input[name*="Cantidad"]');
-            let tieneProductos = false;
-
-            cantidades.forEach(input => {
-                if (parseInt(input.value) > 0) {
-                    tieneProductos = true;
-                }
-            });
-
-            if (!tieneProductos) {
-                alert('Selecciona al menos un producto con cantidad mayor a 0');
-                return false;
-            }
-
-            return confirm("¿Confirmar la aplicación del cupón y crear el pedido?");
+            // Manejar errores silenciosamente para evitar spam en consola
         }
     </script>
 }
-
