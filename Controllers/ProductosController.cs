@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace Proyecto1_MZ_MJ.Controllers
 {
+    [Authorize]
     public class ProductosController : Controller
     {
         private readonly ApplicationDbContext _context;
