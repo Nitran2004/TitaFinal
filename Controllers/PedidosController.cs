@@ -86,10 +86,31 @@ public class PedidosController : Controller
         var pedido = await _context.Pedidos
             .Include(p => p.PedidoProductos!)
                 .ThenInclude(pp => pp.Producto)
-            .Include(p => p.Sucursal) // Incluir la sucursal relacionada
+            .Include(p => p.Sucursal)
             .FirstOrDefaultAsync(p => p.Id == id);
 
-        if (pedido == null) return NotFound();
+        if (pedido == null)
+            return NotFound();
+
+        // ✅ VALIDACIÓN DE SEGURIDAD: Solo el propietario del pedido puede verlo
+        if (User.Identity.IsAuthenticated)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Si el pedido tiene un usuario asignado y no es el usuario actual, denegar acceso
+            if (!string.IsNullOrEmpty(pedido.UsuarioId) && pedido.UsuarioId != currentUserId)
+            {
+                return Forbid(); // Devuelve 403 Forbidden
+            }
+        }
+        else
+        {
+            // Si el usuario no está autenticado y el pedido tiene un usuario asignado, denegar acceso
+            if (!string.IsNullOrEmpty(pedido.UsuarioId))
+            {
+                return Forbid();
+            }
+        }
 
         return View(pedido);
     }
@@ -294,70 +315,55 @@ public class PedidosController : Controller
 
     // EN PedidosController.cs - REEMPLAZAR el método VerPedidoTemporal
 
+    // MÉTODO VERPEDIDOTEMPORAL CORREGIDO - Solo busca pedidos del usuario actual
     public async Task<IActionResult> VerPedidoTemporal()
     {
         Console.WriteLine($"[DEBUG] VerPedidoTemporal - Usuario autenticado: {User.Identity.IsAuthenticated}");
 
         Pedido pedido = null;
 
-        // ✅ SI EL USUARIO ESTÁ AUTENTICADO, BUSCAR SU ÚLTIMO PEDIDO
+        // ✅ SI EL USUARIO ESTÁ AUTENTICADO, SOLO BUSCAR SUS PEDIDOS
         if (User.Identity.IsAuthenticated)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             Console.WriteLine($"[DEBUG] Buscando último pedido para usuario: {userId}");
 
-            // Buscar el pedido más reciente del usuario autenticado
+            // Buscar SOLO pedidos del usuario autenticado
             pedido = await _context.Pedidos
                 .Include(p => p.PedidoProductos)
                     .ThenInclude(pp => pp.Producto)
                 .Include(p => p.Sucursal)
-                .Where(p => p.UsuarioId == userId) // ✅ FILTRAR POR USUARIO
-                .OrderByDescending(p => p.Fecha)   // ✅ MÁS RECIENTE PRIMERO
+                .Where(p => p.UsuarioId == userId) // ✅ FILTRAR SOLO POR USUARIO ACTUAL
+                .OrderByDescending(p => p.Fecha)
                 .FirstOrDefaultAsync();
 
             if (pedido != null)
             {
                 Console.WriteLine($"[DEBUG] Pedido encontrado para usuario autenticado: {pedido.Id}");
-
-                // Actualizar sesión y cookie con el pedido encontrado
-                HttpContext.Session.SetInt32("PedidoActualId", pedido.Id);
-                Response.Cookies.Append("PedidoActualId", pedido.Id.ToString(), new CookieOptions
-                {
-                    Expires = DateTimeOffset.Now.AddDays(1)
-                });
-
                 return View("Resumen", pedido);
             }
             else
             {
                 Console.WriteLine($"[DEBUG] No se encontraron pedidos para el usuario: {userId}");
+                TempData["Mensaje"] = "No tienes pedidos recientes";
+                return RedirectToAction("Index", "Home");
             }
         }
 
-        // ✅ SI NO HAY USUARIO AUTENTICADO O NO TIENE PEDIDOS, BUSCAR POR COOKIES/SESIÓN
+        // ✅ SI NO HAY USUARIO AUTENTICADO, BUSCAR SOLO PEDIDOS SIN USUARIO ASIGNADO
         int? pedidoId = null;
 
         // 1. Intentar obtener el ID del pedido de la sesión
         pedidoId = HttpContext.Session.GetInt32("PedidoActualId");
         Console.WriteLine($"[DEBUG] ID de sesión: {pedidoId}");
 
-        // 2. Si no está en la sesión, intentar obtenerlo de la cookie PedidoActualId
-        if (!pedidoId.HasValue && Request.Cookies.TryGetValue("PedidoActualId", out string pedidoActualIdStr))
-        {
-            if (int.TryParse(pedidoActualIdStr, out int id))
-            {
-                pedidoId = id;
-                Console.WriteLine($"[DEBUG] ID de cookie PedidoActualId: {pedidoId}");
-            }
-        }
-
-        // 3. Si aún no hay ID, intentar obtenerlo de la cookie PedidoTemporalId
+        // 2. Si no está en la sesión, intentar obtenerlo de la cookie
         if (!pedidoId.HasValue && Request.Cookies.TryGetValue("PedidoTemporalId", out string pedidoTemporalIdStr))
         {
             if (int.TryParse(pedidoTemporalIdStr, out int id))
             {
                 pedidoId = id;
-                Console.WriteLine($"[DEBUG] ID de cookie PedidoTemporalId: {pedidoId}");
+                Console.WriteLine($"[DEBUG] ID de cookie: {pedidoId}");
             }
         }
 
@@ -368,43 +374,14 @@ public class PedidosController : Controller
                 .Include(p => p.PedidoProductos)
                     .ThenInclude(pp => pp.Producto)
                 .Include(p => p.Sucursal)
-                .FirstOrDefaultAsync(p => p.Id == pedidoId.Value);
+                .Where(p => p.Id == pedidoId.Value && p.UsuarioId == null) // ✅ SOLO PEDIDOS SIN USUARIO
+                .FirstOrDefaultAsync();
 
             if (pedido != null)
             {
                 Console.WriteLine($"[DEBUG] Pedido encontrado por ID: {pedido.Id}");
-
-                // Actualizar ambas formas de almacenamiento para futuras referencias
-                HttpContext.Session.SetInt32("PedidoActualId", pedido.Id);
-                Response.Cookies.Append("PedidoActualId", pedido.Id.ToString(), new CookieOptions
-                {
-                    Expires = DateTimeOffset.Now.AddDays(1)
-                });
-
                 return View("Resumen", pedido);
             }
-        }
-
-        // ✅ COMO ÚLTIMO RECURSO, BUSCAR EL PEDIDO MÁS RECIENTE GENERAL
-        var pedidoMasReciente = await _context.Pedidos
-            .Include(p => p.PedidoProductos)
-                .ThenInclude(pp => pp.Producto)
-            .Include(p => p.Sucursal)
-            .OrderByDescending(p => p.Fecha)
-            .FirstOrDefaultAsync();
-
-        if (pedidoMasReciente != null)
-        {
-            Console.WriteLine($"[DEBUG] Usando pedido más reciente general: {pedidoMasReciente.Id}");
-
-            // Actualizar ambas formas de almacenamiento para futuras referencias
-            HttpContext.Session.SetInt32("PedidoActualId", pedidoMasReciente.Id);
-            Response.Cookies.Append("PedidoActualId", pedidoMasReciente.Id.ToString(), new CookieOptions
-            {
-                Expires = DateTimeOffset.Now.AddDays(1)
-            });
-
-            return View("Resumen", pedidoMasReciente);
         }
 
         // Si no hay pedidos, redirigir al inicio
@@ -641,6 +618,7 @@ public class PedidosController : Controller
 
     // EN PedidosController.cs - CORREGIR el método DetallePedido
 
+    // MÉTODO DETALLEPEDIDO CORREGIDO - Con validación de usuario
     public async Task<IActionResult> DetallePedido(int id)
     {
         var pedido = await _context.Pedidos
@@ -654,10 +632,45 @@ public class PedidosController : Controller
             return NotFound();
         }
 
-        // ✅ USAR LA VISTA RESUMEN EN LUGAR DE DetallePedido
+        // ✅ VALIDACIÓN DE SEGURIDAD: Solo el propietario del pedido puede verlo
+        if (User.Identity.IsAuthenticated)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Si el pedido tiene un usuario asignado y no es el usuario actual, denegar acceso
+            if (!string.IsNullOrEmpty(pedido.UsuarioId) && pedido.UsuarioId != currentUserId)
+            {
+                return Forbid();
+            }
+        }
+        else
+        {
+            // Si el usuario no está autenticado y el pedido tiene un usuario asignado, denegar acceso
+            if (!string.IsNullOrEmpty(pedido.UsuarioId))
+            {
+                return Forbid();
+            }
+        }
+
         return View("Resumen", pedido);
     }
 
+    // NUEVO MÉTODO: Listar pedidos del usuario actual
+    [Authorize]
+    public async Task<IActionResult> MisPedidos()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var pedidos = await _context.Pedidos
+            .Include(p => p.Sucursal)
+            .Include(p => p.PedidoProductos)
+                .ThenInclude(pp => pp.Producto)
+            .Where(p => p.UsuarioId == userId) // ✅ SOLO PEDIDOS DEL USUARIO ACTUAL
+            .OrderByDescending(p => p.Fecha)
+            .ToListAsync();
+
+        return View(pedidos);
+    }
     public async Task<IActionResult> SucursalMasCercana(double lat, double lng)
     {
         var sucursales = await _context.Sucursales.ToListAsync();
@@ -808,6 +821,7 @@ public class PedidosController : Controller
         }
     }
 
+    // MÉTODO GUARDARCOMENTARIO CORREGIDO - Con validación de usuario
     [HttpPost]
     public async Task<IActionResult> GuardarComentario(int pedidoId, int calificacion, string comentario)
     {
@@ -816,6 +830,24 @@ public class PedidosController : Controller
         if (pedido == null)
         {
             return NotFound();
+        }
+
+        // ✅ VALIDACIÓN DE SEGURIDAD: Solo el propietario del pedido puede comentar
+        if (User.Identity.IsAuthenticated)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (!string.IsNullOrEmpty(pedido.UsuarioId) && pedido.UsuarioId != currentUserId)
+            {
+                return Forbid();
+            }
+        }
+        else
+        {
+            if (!string.IsNullOrEmpty(pedido.UsuarioId))
+            {
+                return Forbid();
+            }
         }
 
         // Verificar que el pedido esté en estado "Entregado"
@@ -831,7 +863,6 @@ public class PedidosController : Controller
 
         await _context.SaveChangesAsync();
 
-        // Redireccionar al resumen del pedido
         return RedirectToAction("Resumen", new { id = pedidoId });
     }
 
