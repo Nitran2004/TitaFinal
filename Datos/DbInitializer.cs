@@ -657,47 +657,43 @@ namespace ProyectoIdentity.Datos
                     Nombre = "Promo Pilas",
                     Precio = 16m,
                     Categoria = "Promo",
-                    Descripcion = "Promoción ideal para empezar la noche: 1 pizza mediana a elección + 4 cervezas nacionales.",
+                    Descripcion = "2 pizzas Simples + 2 Gaseosas",
                     Imagen = File.ReadAllBytes("wwwroot/images1/470140898_18004212455697669_2952221237043222814_n.jpg"),
                     InfoNutricional = "Porción total:Para 4 personas|Calorías:1800Kcal - 90%|Carbohidratos:160g - 53%|Proteínas:60g - 120%|Grasas:55g - 70%|Sodio:2400mg - 100%|Alcohol:4.5% vol. (por cerveza)",
                     Alergenos = "Leche|Lactosa|Gluten|Cebada|Trigo|Puede variar según pizza elegida"
                 },
-
                 new Producto {
                     Nombre = "Promo Lovers",
                     Precio = 20m,
                     Categoria = "Promo",
-                    Descripcion = "Pack romántico: 1 pizza mediana especial + 2 cócteles + postre para compartir.",
+                    Descripcion = "2 pizzas Clásicas + 2 Gaseosas",
                     Imagen = File.ReadAllBytes("wwwroot/images1/promolovers.jpg"),
                     InfoNutricional = "Porción total:Para 2 personas|Calorías:1600Kcal - 80%|Carbohidratos:170g - 57%|Proteínas:40g - 80%|Grasas:45g - 58%|Sodio:1800mg - 75%|Alcohol:Varía según cócteles",
                     Alergenos = "Leche|Lactosa|Gluten|Trigo|Cítricos|Puede contener frutos secos|Varía según elecciones"
                 },
-
                 new Producto {
                     Nombre = "Promo King",
                     Precio = 24m,
                     Categoria = "Promo",
-                    Descripcion = "Combo festivo: 1 pizza familiar + 6 cervezas nacionales + nachos con queso.",
+                    Descripcion = "2 pizzas Signature + 2 Gaseosas",
                     Imagen = File.ReadAllBytes("wwwroot/images1/promoking1.jpg"),
                     InfoNutricional = "Porción total:Para 6 personas|Calorías:2400Kcal - 120%|Carbohidratos:220g - 73%|Proteínas:80g - 160%|Grasas:85g - 109%|Sodio:3200mg - 133%|Alcohol:4.5% vol. (por cerveza)",
                     Alergenos = "Leche|Lactosa|Gluten|Cebada|Trigo|Maíz|Puede variar según pizza elegida"
                 },
-
                 new Producto {
                     Nombre = "Promo Sanduchera",
                     Precio = 10m,
                     Categoria = "Promo",
-                    Descripcion = "Promoción para la hora del almuerzo: 2 sánduches a elección + 2 bebidas no alcohólicas.",
+                    Descripcion = "2 Sánduches + 2 Gaseosas",
                     Imagen = File.ReadAllBytes("wwwroot/images1/278953595_514677723447399_1453067101951070993_n.webp"),
                     InfoNutricional = "Porción total:Para 2 personas|Calorías:900Kcal - 45%|Carbohidratos:100g - 33%|Proteínas:35g - 70%|Grasas:30g - 38%|Sodio:1600mg - 67%|Azúcares:Varía según bebida",
                     Alergenos = "Gluten|Trigo|Puede contener lácteos|Puede contener mostaza|Puede variar según elecciones"
                 },
-
                 new Producto {
                     Nombre = "Promo Piqueo",
                     Precio = 18m,
                     Categoria = "Promo",
-                    Descripcion = "Tabla para compartir con variedad de picadas + 4 cervezas nacionales.",
+                    Descripcion = "2 Sánduches + 1 Nacho Verace + 2 Gaseosas",
                     Imagen = File.ReadAllBytes("wwwroot/images1/promopiqueo.avif"),
                     InfoNutricional = "Porción total:Para 4 personas|Calorías:1500Kcal - 75%|Carbohidratos:120g - 40%|Proteínas:50g - 100%|Grasas:60g - 77%|Sodio:2200mg - 92%|Alcohol:4.5% vol. (por cerveza)",
                     Alergenos = "Leche|Lactosa|Gluten|Cebada|Trigo|Puede contener frutos secos"

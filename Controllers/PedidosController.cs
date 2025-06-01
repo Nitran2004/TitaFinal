@@ -11,8 +11,10 @@ using ProyectoIdentity.Models.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Newtonsoft.Json;
 
+[Authorize]
 public class PedidosController : Controller
 {
+
     private readonly ApplicationDbContext _context;
 
     public PedidosController(ApplicationDbContext context)

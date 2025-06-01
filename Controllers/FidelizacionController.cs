@@ -476,7 +476,6 @@ namespace ProyectoIdentity.Controllers
             return codigo;
         }
 
-        // Historial de puntos del usuario
         public async Task<IActionResult> Historial()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -493,7 +492,7 @@ namespace ProyectoIdentity.Controllers
                 .Take(50) // Últimas 50 transacciones
                 .ToListAsync();
 
-            // 2. Obtener pedidos del usuario
+            // 2. Obtener pedidos del usuario CON DATOS COMPLETOS
             var pedidos = await _context.Pedidos
                 .Include(p => p.PedidoProductos)
                     .ThenInclude(pp => pp.Producto)
@@ -503,9 +502,24 @@ namespace ProyectoIdentity.Controllers
                 .Take(20) // Últimos 20 pedidos
                 .ToListAsync();
 
+            // ✅ DEBUG: Verificar que los datos se cargan correctamente
+            Console.WriteLine($"[DEBUG] Usuario {userId} tiene {pedidos.Count} pedidos");
+            foreach (var pedido in pedidos.Take(3))
+            {
+                Console.WriteLine($"[DEBUG] Pedido {pedido.Id} tiene {pedido.PedidoProductos?.Count ?? 0} productos");
+                if (pedido.PedidoProductos != null)
+                {
+                    foreach (var pp in pedido.PedidoProductos.Take(2))
+                    {
+                        Console.WriteLine($"[DEBUG] Producto: {pp.Producto?.Nombre}, Cantidad: {pp.Cantidad}");
+                    }
+                }
+            }
+
             // 3. Obtener recompensas canjeadas
             var canjes = await _context.HistorialCanjes
                 .Include(h => h.ProductoRecompensa)
+                    .ThenInclude(pr => pr.Producto)
                 .Where(h => h.UsuarioId == userId)
                 .OrderByDescending(h => h.FechaCanje)
                 .Take(20) // Últimos 20 canjes

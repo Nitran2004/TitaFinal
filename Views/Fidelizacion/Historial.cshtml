@@ -133,12 +133,20 @@
                                                     {
                                                         @foreach (var item in pedido.PedidoProductos.Take(3))
                                                         {
-                                                            <li class="small">• @item.Producto?.Nombre <span class="text-muted">(x@item.Cantidad)</span></li>
+                                                            <li class="small">
+                                                                • @(item.Producto?.Nombre ?? "Producto no disponible")
+                                                                <span class="text-muted">(x@(item.Cantidad ?? 0))</span>
+                                                                <span class="text-success">- $@((item.Precio ?? 0).ToString("F2"))</span>
+                                                            </li>
                                                         }
                                                         @if (pedido.PedidoProductos.Count > 3)
                                                         {
-                                                            <li class="small text-muted">... y @(pedido.PedidoProductos.Count - 3) más</li>
+                                                            <li class="small text-muted">... y @(pedido.PedidoProductos.Count - 3) más productos</li>
                                                         }
+                                                    }
+                                                    else
+                                                    {
+                                                        <li class="small text-muted">• Sin productos registrados</li>
                                                     }
                                                 </ul>
                                             </div>
