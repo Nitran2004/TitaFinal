@@ -13,12 +13,30 @@
         </div>
         
         <div class="card-body">
+            <!-- Barra de búsqueda -->
+            <div class="search-container mb-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-warning border-warning">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" 
+                           id="searchInput" 
+                           class="form-control border-warning" 
+                           placeholder="Buscar cupones por nombre, descripción, código o tipo..."
+                           style="border-left: none;">
+                </div>
+            </div>
+
             @if (Model != null && Model.Any())
             {
-                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="cuponesContainer">
                     @foreach (var cupon in Model)
                     {
-                        <div class="col">
+                        <div class="col cupon-item" 
+                             data-nombre="@cupon.Nombre.ToLower()" 
+                             data-descripcion="@cupon.Descripcion.ToLower()" 
+                             data-codigo="@cupon.CodigoQR.ToLower()" 
+                             data-tipo="@cupon.TipoDescuento.ToLower()">
                             <div class="card h-100 cupon-card">
                                 <div class="card-header bg-gradient-warning text-center">
                                     <h5 class="card-title mb-0">@cupon.Nombre</h5>
@@ -96,6 +114,13 @@
                         </div>
                     }
                 </div>
+
+                <!-- Mensaje cuando no hay resultados -->
+                <div id="noResultsMessage" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-search fa-5x text-muted mb-3"></i>
+                    <h3 class="text-muted">No se encontraron cupones</h3>
+                    <p class="text-muted">Intenta con otros términos de búsqueda</p>
+                </div>
             }
             else
             {
@@ -136,7 +161,7 @@
         animation: pulse 2s infinite;
     }
     
-    keyframes pulse {
+    @@keyframes pulse {
         0% {
             transform: scale(1);
         }
@@ -151,6 +176,31 @@
     .qr-code {
         border-radius: 8px;
     }
+
+    /* Estilos para la búsqueda */
+    .search-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .search-container .form-control:focus {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+    }
+
+    .cupon-item {
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .cupon-item.hidden {
+        opacity: 0;
+        transform: scale(0.8);
+        pointer-events: none;
+        height: 0;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+    }
 </style>
 
 @section Scripts {
@@ -159,6 +209,7 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Generar códigos QR
             @foreach (var cupon in Model)
             {
                 <text>
@@ -170,6 +221,56 @@
                 });
                 </text>
             }
+
+            // Funcionalidad de búsqueda
+            const searchInput = document.getElementById('searchInput');
+            const cuponesContainer = document.getElementById('cuponesContainer');
+            const noResultsMessage = document.getElementById('noResultsMessage');
+            const cuponItems = document.querySelectorAll('.cupon-item');
+
+            function filterCupones() {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                let visibleCount = 0;
+
+                cuponItems.forEach(item => {
+                    const nombre = item.getAttribute('data-nombre');
+                    const descripcion = item.getAttribute('data-descripcion');
+                    const codigo = item.getAttribute('data-codigo');
+                    const tipo = item.getAttribute('data-tipo');
+
+                    const matches = nombre.includes(searchTerm) || 
+                                  descripcion.includes(searchTerm) || 
+                                  codigo.includes(searchTerm) || 
+                                  tipo.includes(searchTerm);
+
+                    if (matches) {
+                        item.classList.remove('hidden');
+                        visibleCount++;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+
+                // Mostrar/ocultar mensaje de "no resultados"
+                if (visibleCount === 0 && searchTerm !== '') {
+                    cuponesContainer.style.display = 'none';
+                    noResultsMessage.style.display = 'block';
+                } else {
+                    cuponesContainer.style.display = 'flex';
+                    noResultsMessage.style.display = 'none';
+                }
+            }
+
+            // Event listener para búsqueda en tiempo real
+            searchInput.addEventListener('input', filterCupones);
+
+            // Limpiar búsqueda al presionar Escape
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    this.value = '';
+                    filterCupones();
+                }
+            });
         });
     </script>
 }
