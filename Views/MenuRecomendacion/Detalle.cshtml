@@ -1,0 +1,85 @@
+﻿@model ProyectoIdentity.Controllers.MenuRecomendacionController.Plato
+@{
+    ViewBag.Title = "Detalle del Plato";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h2>@Model.Nombre</h2>
+                    <a href="@Url.Action("Recomendacion", "MenuRecomendacion")" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver a Recomendaciones
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Información General</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Nombre:</strong></td>
+                                    <td>@Model.Nombre</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Precio:</strong></td>
+                                    <td class="text-success fw-bold">$@Model.Precio</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Calorías:</strong></td>
+                                    <td>@Model.Calorias cal</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Categoría:</strong></td>
+                                    <td><span class="badge bg-primary">@Model.Categoria</span></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Ingredientes</h5>
+                            <p class="text-muted">@Model.Ingredientes</p>
+
+                            @if (Model.Similitud.HasValue)
+                            {
+                                <h5 class="mt-4">Similitud</h5>
+                                <p>@((Model.Similitud.Value * 100).ToString("F1"))% de coincidencia</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="@Url.Action("Recomendacion", "MenuRecomendacion")" class="btn btn-warning">
+                        Nueva Búsqueda
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section styles {
+    <style>
+        .btn-warning {
+            color: #fff;
+            background-color: #F2A900;
+            border-color: #F2A900;
+        }
+
+            .btn-warning:hover {
+                color: #fff;
+                background-color: #e09600;
+                border-color: #d48e00;
+            }
+
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        .table-borderless td {
+            border: none;
+            padding: 0.5rem 0;
+        }
+    </style>
+}

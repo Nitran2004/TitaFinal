@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 
 namespace ProyectoIdentity.Controllers
@@ -446,6 +447,26 @@ namespace ProyectoIdentity.Controllers
                 return 0;
 
             return producto / (normaA * normaB);
+        }
+
+        public IActionResult Detalle(int id)
+        {
+            try
+            {
+                // Como usas una lista estática, buscamos por índice
+                if (id < 0 || id >= _data.Count)
+                {
+                    return NotFound();
+                }
+
+                var plato = _data[id];
+                return View(plato);
+            }
+            catch (Exception ex)
+            {
+                // Log del error si es necesario
+                return View("Error");
+            }
         }
     }
 }
