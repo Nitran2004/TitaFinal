@@ -460,6 +460,7 @@ namespace ProyectoIdentity.Controllers
                 }
 
                 var plato = _data[id];
+                ViewBag.IndiceProducto = id; // Pasar el índice para JavaScript
                 return View(plato);
             }
             catch (Exception ex)

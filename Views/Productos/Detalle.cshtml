@@ -1,8 +1,8 @@
 ﻿@model ProyectoIdentity.Models.Producto
 @{
     ViewData["Title"] = Model.Nombre;
-    // Calcular puntos que ganará (175 puntos por dólar)
-    int puntosAGanar = (int)(Model.Precio * 175);
+    // Calcular puntos que ganará (30 puntos por dólar)
+    int puntosAGanar = (int)(Model.Precio * 30);
 }
 
 <style>
@@ -72,7 +72,7 @@
         animation: pulse 2s infinite;
     }
 
-    keyframes pulse {
+    @@keyframes pulse {
         0% { transform: scale(1); }
         50% { transform: scale(1.02); }
         100% { transform: scale(1); }
@@ -257,7 +257,7 @@
         }
 
     /* Responsive */
-    media (max-width: 768px) {
+    @@media (max-width: 768px) {
         .product-header {
             flex-direction: column;
         }
@@ -292,8 +292,8 @@
             <div class="points-breakdown">
                 <small class="text-muted">
                     <i class="fas fa-info-circle"></i> <strong>Desglose de puntos:</strong><br>
-                    $@Model.Precio × 175 puntos por dólar = @puntosAGanar puntos<br>
-                    <em>Cada dólar que gastes te da 175 puntos de fidelidad</em>
+                    $@Model.Precio × 30 puntos por dólar = @puntosAGanar puntos<br>
+                    <em>Cada dólar que gastes te da 30 puntos de fidelidad</em>
                 </small>
             </div>
 

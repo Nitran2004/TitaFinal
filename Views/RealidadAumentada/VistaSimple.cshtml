@@ -7,48 +7,83 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualizador 3D Simple - Pizza</title>
+    <title>Visualizador 3D Simple - @ViewBag.ProductoNombre</title>
     <style>
-        body { 
-            margin: 0; 
+        body {
+            margin: 0;
             padding: 0;
             background-color: #333;
             color: white;
             font-family: Arial, sans-serif;
             overflow: hidden;
         }
+
         #container {
             width: 100%;
             height: 100vh;
             display: flex;
             flex-direction: column;
         }
+
         header {
             background-color: #222;
             padding: 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
         }
+
+        .header-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
         #canvas-container {
             flex: 1;
             width: 100%;
+            position: relative;
         }
+
         canvas {
             width: 100%;
             height: 100%;
             display: block;
         }
+
         #loading {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             padding: 20px;
             border-radius: 10px;
             text-align: center;
+            color: white;
         }
+
+        #error {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(200,0,0,0.9);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            display: none;
+            max-width: 80%;
+        }
+
         .btn {
             background-color: #4CAF50;
             color: white;
@@ -56,19 +91,164 @@
             padding: 8px 16px;
             border-radius: 4px;
             cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-test {
+            background-color: #2196F3;
+        }
+
+        .btn-warning {
+            background-color: #ff9800;
+        }
+
+        .btn-control {
+            background-color: #9C27B0;
+            margin: 2px;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        #debug-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 12px;
+            max-width: 350px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        #controls-panel {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+
+        .control-group {
+            margin-bottom: 10px;
+        }
+
+            .control-group label {
+                display: block;
+                margin-bottom: 5px;
+                color: #fff;
+            }
+
+        .control-slider {
+            width: 150px;
+        }
+
+        #model-stats {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 12px;
+            max-width: 300px;
+        }
+
+        #ai-panel {
+            position: absolute;
+            top: 200px;
+            left: 10px;
+            background: rgba(0,100,0,0.9);
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 11px;
+            max-width: 300px;
+            border: 2px solid #00ff00;
+        }
+
+        .ai-decision {
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        .ai-reasoning {
+            color: #ccffcc;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
     <div id="container">
         <header>
-            <h2>Modelo 3D: Pizza Pepperoni</h2>
-            <button class="btn" onclick="history.back()">Volver</button>
+            <div class="header-info">
+                <h2>🤖 IA Auto-Ajuste: @ViewBag.ProductoNombre</h2>
+                <small>ID: @ViewBag.ProductoId | Archivo: @ViewBag.ModeloArchivo</small>
+            </div>
+            <div class="test-buttons">
+                <button class="btn" onclick="history.back()">Volver</button>
+                <a href="/RealidadAumentada/VistaSimple?id=1" class="btn btn-test">ID 1</a>
+                <a href="/RealidadAumentada/VistaSimple?id=2" class="btn btn-test">ID 2</a>
+                <a href="/RealidadAumentada/VistaSimple?id=9" class="btn btn-warning">ID 9</a>
+                <a href="/RealidadAumentada/VistaSimple?id=10" class="btn btn-warning">ID 10</a>
+                <button class="btn btn-control" onclick="resetCamera()">Reset Cámara</button>
+                <button class="btn btn-control" onclick="toggleWireframe()">Wireframe</button>
+                <button class="btn btn-control" onclick="showBoundingBox()">Bounding Box</button>
+            </div>
         </header>
         <div id="canvas-container">
             <canvas id="canvas3d"></canvas>
         </div>
         <div id="loading">Cargando modelo 3D...</div>
+        <div id="error">
+            <h3>Error al cargar el modelo</h3>
+            <p id="error-message"></p>
+            <button class="btn" onclick="recargarModelo()">Reintentar</button>
+        </div>
+
+        <!-- Panel de estadísticas del modelo -->
+        <div id="model-stats" style="display: none;">
+            <strong>📊 Estadísticas del Modelo:</strong><br>
+            <span id="stats-content">Cargando...</span>
+        </div>
+
+        <!-- Panel de IA -->
+        <div id="ai-panel" style="display: none;">
+            <strong>🤖 Decisiones de la IA:</strong><br>
+            <span id="ai-content">Analizando...</span>
+        </div>
+
+        <!-- Panel de controles -->
+        <div id="controls-panel" style="display: none;">
+            <strong>🎮 Controles del Modelo:</strong><br>
+            <div class="control-group">
+                <label>Escala: <span id="scale-value">1.0</span></label>
+                <input type="range" id="scale-slider" class="control-slider" min="0.1" max="10" step="0.1" value="1.0">
+            </div>
+            <div class="control-group">
+                <label>Posición Y: <span id="posY-value">0.0</span></label>
+                <input type="range" id="posY-slider" class="control-slider" min="-5" max="5" step="0.1" value="0.0">
+            </div>
+            <div class="control-group">
+                <label>Rotación Y: <span id="rotY-value">0°</span></label>
+                <input type="range" id="rotY-slider" class="control-slider" min="0" max="360" step="5" value="0">
+            </div>
+            <div class="control-group">
+                <button class="btn btn-control" onclick="autoFitModel()">Auto Ajustar</button>
+                <button class="btn btn-control" onclick="centerModel()">Centrar</button>
+            </div>
+        </div>
+
+        <!-- Panel de debug -->
+        <div id="debug-info">
+            <strong>🔍 Debug Info:</strong><br>
+            Ruta: @ViewBag.ModeloPath<br>
+            Estado: <span id="debug-status">Iniciando...</span><br>
+            <div id="debug-details"></div>
+        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -76,139 +256,611 @@
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
 
     <script>
-        // Variables
+        // Variables (tu código original)
         let scene, camera, renderer, controls;
-        let model;
-        const modelPath = '/RealidadAumentada/GetGLBFile';
-        const loadingElement = document.getElementById('loading');
+        let model, boundingBoxHelper, wireframeModels = [];
+        const modelPath = '@ViewBag.ModeloPath';
+        const modelId = '@ViewBag.ProductoId';
+        const modelFile = '@ViewBag.ModeloArchivo';
 
-        // Inicializar Three.js
+        // Referencias DOM
+        const loadingElement = document.getElementById('loading');
+        const errorElement = document.getElementById('error');
+        const errorMessage = document.getElementById('error-message');
+        const debugStatus = document.getElementById('debug-status');
+        const debugDetails = document.getElementById('debug-details');
+        const modelStats = document.getElementById('model-stats');
+        const controlsPanel = document.getElementById('controls-panel');
+        const statsContent = document.getElementById('stats-content');
+        const aiPanel = document.getElementById('ai-panel');
+        const aiContent = document.getElementById('ai-content');
+
+        // 🤖 SISTEMA DE IA INTELIGENTE
+        let aiAnalysis = null;
+        let aiDecision = null;
+
+        // Log inicial
+        console.log('=== 🤖 IA AUTO-AJUSTE INICIADO ===');
+        console.log('Producto ID:', modelId);
+        console.log('Archivo Modelo:', modelFile);
+        console.log('Ruta Modelo:', modelPath);
+
+        // Función para actualizar debug (tu código original)
+        function updateDebug(status, details = '') {
+            debugStatus.textContent = status;
+            if (details) {
+                debugDetails.innerHTML = details;
+            }
+        }
+
+        // Función para mostrar error (tu código original)
+        function showError(message) {
+            errorMessage.textContent = message;
+            loadingElement.style.display = 'none';
+            errorElement.style.display = 'block';
+            updateDebug('Error', message);
+        }
+
+        // Función para recargar modelo (tu código original)
+        function recargarModelo() {
+            errorElement.style.display = 'none';
+            loadingElement.style.display = 'block';
+            if (model) {
+                scene.remove(model);
+                model = null;
+            }
+            if (boundingBoxHelper) {
+                scene.remove(boundingBoxHelper);
+                boundingBoxHelper = null;
+            }
+            wireframeModels.forEach(wf => scene.remove(wf));
+            wireframeModels = [];
+
+            loadModel();
+        }
+
+        // Inicializar Three.js (tu código original)
         function init() {
+            updateDebug('Inicializando Three.js');
+
             // Escena
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x333333);
-            
-            // Cámara
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 1, 3);
-            
+
+            // Cámara con configuración mejorada
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 1000);
+            camera.position.set(0, 2, 5);
+
             // Renderer
             const canvas = document.getElementById('canvas3d');
-            renderer = new THREE.WebGLRenderer({ 
+            renderer = new THREE.WebGLRenderer({
                 canvas: canvas,
-                antialias: true 
+                antialias: true
             });
             renderer.setSize(canvas.clientWidth, canvas.clientHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.shadowMap.enabled = true;
-            
-            // Luces
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+
+            // Luces mejoradas
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
             scene.add(ambientLight);
-            
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
             directionalLight.position.set(5, 5, 5);
             directionalLight.castShadow = true;
             scene.add(directionalLight);
-            
+
+            // Luz adicional para mejor visibilidad
+            const frontLight = new THREE.DirectionalLight(0xffffff, 0.4);
+            frontLight.position.set(0, 0, 10);
+            scene.add(frontLight);
+
             // Controles
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
-            
-            // Evento de redimensionamiento
+            controls.minDistance = 0.1;
+            controls.maxDistance = 100;
+
+            // Eventos
             window.addEventListener('resize', onWindowResize);
-            
-            // Cargar modelo
+            setupControlListeners();
+
+            updateDebug('Three.js inicializado');
             loadModel();
-            
-            // Animación
-            animate();
         }
-        
-        // Cargar modelo
+
+        // Configurar listeners de controles (tu código original)
+        function setupControlListeners() {
+            const scaleSlider = document.getElementById('scale-slider');
+            const posYSlider = document.getElementById('posY-slider');
+            const rotYSlider = document.getElementById('rotY-slider');
+
+            scaleSlider.addEventListener('input', function () {
+                if (model) {
+                    const scale = parseFloat(this.value);
+                    model.scale.set(scale, scale, scale);
+                    document.getElementById('scale-value').textContent = scale.toFixed(1);
+                }
+            });
+
+            posYSlider.addEventListener('input', function () {
+                if (model) {
+                    const posY = parseFloat(this.value);
+                    model.position.y = posY;
+                    document.getElementById('posY-value').textContent = posY.toFixed(1);
+                }
+            });
+
+            rotYSlider.addEventListener('input', function () {
+                if (model) {
+                    const rotY = parseFloat(this.value) * Math.PI / 180;
+                    model.rotation.y = rotY;
+                    document.getElementById('rotY-value').textContent = this.value + '°';
+                }
+            });
+        }
+
+        // Cargar modelo (tu código original + IA)
         function loadModel() {
-            console.log('Cargando modelo desde:', modelPath);
-            
+            updateDebug('Cargando modelo GLB');
+            console.log('=== INICIANDO CARGA DE MODELO ===');
+            console.log('Ruta:', modelPath);
+
             const loader = new THREE.GLTFLoader();
+
             loader.load(
                 modelPath,
-                function(gltf) {
-                    console.log('Modelo cargado correctamente');
+                function (gltf) {
+                    console.log('=== MODELO CARGADO EXITOSAMENTE ===');
+                    console.log('GLTF Scene:', gltf.scene);
+
                     loadingElement.style.display = 'none';
-                    
+                    updateDebug('Modelo cargado exitosamente');
+
                     model = gltf.scene;
-                    model.scale.set(0.5, 0.5, 0.5);
-                    model.position.set(0, 0, 0);
-                    
+
+                    // 🤖 ANÁLISIS DE IA AQUÍ
+                    aiAnalysis = performAIAnalysis();
+                    aiDecision = makeAIDecision(aiAnalysis);
+                    updateAIPanel();
+
+                    // Aplicar decisiones de IA AUTOMÁTICAMENTE
+                    applyAIDecisions();
+
                     // Configurar sombras
-                    model.traverse(function(node) {
+                    model.traverse(function (node) {
                         if (node.isMesh) {
                             node.castShadow = true;
                             node.receiveShadow = true;
                         }
                     });
-                    
+
                     scene.add(model);
-                    
-                    // Centrar cámara
-                    fitCameraToModel();
+
+                    // Mostrar paneles de control
+                    modelStats.style.display = 'block';
+                    controlsPanel.style.display = 'block';
+                    aiPanel.style.display = 'block';
+
+                    // Actualizar estadísticas en UI
+                    analyzeModel();
+
+                    updateDebug('🤖 IA: Modelo optimizado automáticamente');
                 },
-                function(xhr) {
-                    // Progreso
+                function (xhr) {
                     if (xhr.lengthComputable) {
                         const percent = Math.floor((xhr.loaded / xhr.total) * 100);
                         loadingElement.textContent = `Cargando: ${percent}%`;
+                        updateDebug('Cargando', `${percent}%`);
                     }
                 },
-                function(error) {
-                    console.error('Error al cargar modelo:', error);
-                    loadingElement.textContent = 'Error al cargar el modelo. Revise la consola para más detalles.';
+                function (error) {
+                    console.error('=== ERROR AL CARGAR MODELO ===');
+                    console.error('Error completo:', error);
+                    showError(`Error de carga: ${error.message || 'Error desconocido'}`);
                 }
             );
         }
-        
-        // Ajustar cámara al modelo
-        function fitCameraToModel() {
+
+        // 🤖 ANÁLISIS DE IA
+        function performAIAnalysis() {
+            console.log('🤖 IA: Iniciando análisis inteligente...');
+
             const box = new THREE.Box3().setFromObject(model);
             const center = box.getCenter(new THREE.Vector3());
             const size = box.getSize(new THREE.Vector3());
-            
             const maxDim = Math.max(size.x, size.y, size.z);
-            const fov = camera.fov * (Math.PI / 180);
-            let cameraZ = Math.abs(maxDim / (2 * Math.tan(fov / 2)));
-            cameraZ *= 1.5; // Factor de ajuste
-            
-            camera.position.set(center.x, center.y + (size.y / 4), center.z + cameraZ);
-            controls.target.set(center.x, center.y, center.z);
+            const centerDistance = center.length();
+
+            let meshCount = 0;
+            let vertexCount = 0;
+            model.traverse(function (node) {
+                if (node.isMesh) {
+                    meshCount++;
+                    if (node.geometry && node.geometry.attributes.position) {
+                        vertexCount += node.geometry.attributes.position.count;
+                    }
+                }
+            });
+
+            return {
+                filename: modelFile,
+                dimensions: size,
+                center: center,
+                maxDim: maxDim,
+                centerDistance: centerDistance,
+                meshCount: meshCount,
+                vertexCount: vertexCount,
+                // Clasificaciones IA
+                sizeCategory: classifySize(maxDim),
+                centerCategory: classifyCenter(centerDistance),
+                complexityCategory: classifyComplexity(vertexCount),
+                problemCategory: classifyProblem(modelFile, center, maxDim)
+            };
+        }
+
+        function classifySize(maxDim) {
+            if (maxDim < 0.001) return 'microscopic';
+            if (maxDim < 0.1) return 'tiny';
+            if (maxDim < 1) return 'small';
+            if (maxDim < 10) return 'normal';
+            return 'large';
+        }
+
+        function classifyCenter(distance) {
+            if (distance < 1) return 'origin';
+            if (distance < 10) return 'near';
+            if (distance < 50) return 'far';
+            return 'extreme';
+        }
+
+        function classifyComplexity(vertices) {
+            if (vertices < 1000) return 'simple';
+            if (vertices < 10000) return 'moderate';
+            if (vertices < 100000) return 'complex';
+            return 'very_complex';
+        }
+
+        function classifyProblem(filename, center, maxDim) {
+            // Basado en tus datos reales:
+            if (filename === 'pizza3.glb') {
+                // Centro: (24.24, 10.55, 37.13), Dim: 0.345
+                return 'displaced_center_small';
+            }
+            if (filename === 'pizza4.glb') {
+                // Centro: (-14.19, -23.64, 29.20), Dim: 0.296
+                return 'displaced_center_small';
+            }
+            if (filename === 'pizza1.glb' || filename === 'pizza2.glb') {
+                return 'normal';
+            }
+            return 'unknown';
+        }
+
+        // 🤖 DECISIONES DE IA
+        function makeAIDecision(analysis) {
+            console.log('🤖 IA: Tomando decisiones inteligentes...');
+
+            let decision = {
+                strategy: 'standard',
+                scale: 1.0,
+                rotationY: 0,
+                positionY: 0.0,
+                centerCorrection: false,
+                noAutoRotation: false, // NUEVA PROPIEDAD: controlar rotación automática
+                reasoning: []
+            };
+
+            // IA: Análisis del problema específico
+            if (analysis.problemCategory === 'displaced_center_small') {
+                decision.strategy = 'displaced_small_fix';
+                decision.centerCorrection = true;
+                decision.reasoning.push('Centro desplazado detectado');
+
+                // IA: Decisión inteligente de escala basada en tamaño
+                if (analysis.maxDim < 0.5) {
+                    decision.scale = 20.0; // MÁS GRANDE: era 8.0, ahora 12.0
+                    decision.reasoning.push('Modelo muy pequeño: escala agresiva aumentada');
+                } else {
+                    decision.scale = 3.0; // MÁS GRANDE: era 4.0, ahora 6.0
+                    decision.reasoning.push('Modelo pequeño: escala moderada aumentada');
+                }
+
+                // IA: Decisión de rotación para visibilidad óptima
+                if (analysis.filename === 'pizza3.glb') {
+                    decision.rotationY = 50; // Tu valor óptimo descubierto
+                    decision.reasoning.push('pizza3: rotación óptima aplicada');
+                } else if (analysis.filename === 'pizza4.glb') {
+                    decision.rotationY = 45; // Ligeramente diferente para pizza4
+                    decision.reasoning.push('pizza4: rotación óptima aplicada');
+                }
+
+            } else if (analysis.problemCategory === 'normal') {
+                decision.strategy = 'standard_optimize';
+                decision.scale = 4.0 / Math.max(analysis.maxDim, 0.1); // MÁS GRANDE: era 3.0, ahora 4.0
+                decision.reasoning.push('Modelo normal: optimización estándar (sin rotación automática)');
+                decision.noAutoRotation = true; // NUEVA PROPIEDAD: evitar rotación automática
+
+            } else {
+                // IA: Análisis general para casos desconocidos
+                if (analysis.sizeCategory === 'tiny' || analysis.sizeCategory === 'microscopic') {
+                    decision.scale = 25.0; // MÁS GRANDE: era 20.0, ahora 25.0
+                    decision.reasoning.push('Tamaño microscópico: amplificación extrema aumentada');
+                } else if (analysis.centerCategory === 'far' || analysis.centerCategory === 'extreme') {
+                    decision.centerCorrection = true;
+                    decision.scale = 7.0; // MÁS GRANDE: era 5.0, ahora 7.0
+                    decision.reasoning.push('Centro lejano: corrección + amplificación aumentada');
+                }
+            }
+
+            decision.reasoning.push(`Estrategia final: ${decision.strategy}`);
+            return decision;
+        }
+
+        // 🤖 APLICAR DECISIONES DE IA AUTOMÁTICAMENTE
+        function applyAIDecisions() {
+            if (!model || !aiDecision) return;
+
+            console.log('🤖 IA: Aplicando decisiones automáticamente...');
+
+            // 1. Corrección de centro si es necesaria
+            if (aiDecision.centerCorrection) {
+                const center = aiAnalysis.center;
+                model.position.copy(center).negate();
+                console.log('🤖 IA: Centro corregido');
+            }
+
+            // 2. Aplicar escala decidida por IA
+            model.scale.set(aiDecision.scale, aiDecision.scale, aiDecision.scale);
+            console.log('🤖 IA: Escala aplicada:', aiDecision.scale);
+
+            // 3. Aplicar rotación decidida por IA
+            const rotRad = (aiDecision.rotationY * Math.PI) / 180;
+            model.rotation.y = rotRad;
+            console.log('🤖 IA: Rotación aplicada:', aiDecision.rotationY);
+
+            // 4. Posición Y
+            model.position.y = aiDecision.positionY;
+
+            // 5. Ajuste final sobre el suelo
+            const finalBox = new THREE.Box3().setFromObject(model);
+            if (finalBox.min.y < 0) {
+                model.position.y = -(finalBox.min.y) + 0.1;
+            }
+
+            // 6. Actualizar controles UI para reflejar los valores aplicados
+            document.getElementById('scale-slider').value = aiDecision.scale;
+            document.getElementById('scale-value').textContent = aiDecision.scale.toFixed(1);
+            document.getElementById('posY-slider').value = model.position.y;
+            document.getElementById('posY-value').textContent = model.position.y.toFixed(1);
+            document.getElementById('rotY-slider').value = aiDecision.rotationY;
+            document.getElementById('rotY-value').textContent = aiDecision.rotationY + '°';
+
+            // 7. Ajustar cámara
+            fitCameraToModel();
+
+            console.log('🤖 IA: Todas las decisiones aplicadas automáticamente');
+        }
+
+        function updateAIPanel() {
+            if (!aiAnalysis || !aiDecision) return;
+
+            aiContent.innerHTML = `
+                        <div class="ai-decision">Estrategia: ${aiDecision.strategy}</div>
+                        <div class="ai-decision">Escala IA: ${aiDecision.scale}x</div>
+                        <div class="ai-decision">Rotación IA: ${aiDecision.rotationY}°</div>
+                        <div class="ai-decision">Centro: ${aiDecision.centerCorrection ? 'Corregido' : 'Original'}</div>
+                        <br>
+                        <div class="ai-reasoning">Razonamiento IA:</div>
+                        ${aiDecision.reasoning.map(r => `<div class="ai-reasoning">• ${r}</div>`).join('')}
+                        <br>
+                        <div style="color: #ffff99; font-size: 10px;">
+                        Análisis: ${aiAnalysis.sizeCategory}, ${aiAnalysis.centerCategory}, ${aiAnalysis.problemCategory}
+                        </div>
+                    `;
+        }
+
+        // Analizar modelo en detalle (tu código original)
+        function analyzeModel() {
+            if (!model) return;
+
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+
+            let meshCount = 0;
+            let materialCount = 0;
+            let vertexCount = 0;
+
+            model.traverse(function (node) {
+                if (node.isMesh) {
+                    meshCount++;
+                    if (node.material) materialCount++;
+                    if (node.geometry && node.geometry.attributes.position) {
+                        vertexCount += node.geometry.attributes.position.count;
+                    }
+                }
+            });
+
+            const distance = camera.position.distanceTo(center);
+            const maxDim = Math.max(size.x, size.y, size.z);
+
+            console.log('=== ANÁLISIS DETALLADO DEL MODELO ===');
+            console.log('Archivo:', modelFile);
+            console.log('Dimensiones:', size);
+            console.log('Centro:', center);
+            console.log('Dimensión máxima:', maxDim);
+            console.log('Distancia a cámara:', distance);
+            console.log('Meshes:', meshCount);
+            console.log('Materiales:', materialCount);
+            console.log('Vértices:', vertexCount);
+
+            // Actualizar estadísticas en UI
+            statsContent.innerHTML = `
+                                <strong>Archivo:</strong> ${modelFile}<br>
+                                <strong>Dimensiones:</strong> ${size.x.toFixed(3)} × ${size.y.toFixed(3)} × ${size.z.toFixed(3)}<br>
+                                <strong>Centro:</strong> (${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)})<br>
+                                <strong>Dim. máxima:</strong> ${maxDim.toFixed(3)}<br>
+                                <strong>Meshes:</strong> ${meshCount}<br>
+                                <strong>Materiales:</strong> ${materialCount}<br>
+                                <strong>Vértices:</strong> ${vertexCount}
+                            `;
+
+            // Diagnosticar problemas potenciales
+            let warnings = [];
+            if (maxDim < 0.01) warnings.push('⚠️ Modelo muy pequeño');
+            if (maxDim > 50) warnings.push('⚠️ Modelo muy grande');
+            if (Math.abs(center.x) > 10 || Math.abs(center.y) > 10 || Math.abs(center.z) > 10)
+                warnings.push('⚠️ Centro lejos del origen');
+            if (meshCount === 0) warnings.push('❌ Sin meshes');
+
+            if (warnings.length > 0) {
+                statsContent.innerHTML += '<br><strong>Advertencias:</strong><br>' + warnings.join('<br>');
+            }
+        }
+
+        // Auto ajustar modelo a la vista (tu código original)
+        function autoFitModel() {
+            if (!model) return;
+
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+
+            // Calcular escala apropiada
+            let targetScale = 1;
+            if (maxDim > 0) {
+                targetScale = 3 / maxDim; // Hacer que el modelo ocupe ~3 unidades
+            }
+
+            // Aplicar ajustes
+            model.scale.set(targetScale, targetScale, targetScale);
+            model.position.copy(center).negate(); // Centrar en origen
+
+            // Actualizar controles
+            document.getElementById('scale-slider').value = targetScale;
+            document.getElementById('scale-value').textContent = targetScale.toFixed(1);
+            document.getElementById('posY-slider').value = 0;
+            document.getElementById('posY-value').textContent = '0.0';
+
+            // Ajustar cámara
+            fitCameraToModel();
+
+            console.log('Modelo auto-ajustado. Escala:', targetScale);
+        }
+
+        // Centrar modelo (tu código original)
+        function centerModel() {
+            if (!model) return;
+
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            model.position.copy(center).negate();
+
+            document.getElementById('posY-slider').value = 0;
+            document.getElementById('posY-value').textContent = '0.0';
+        }
+
+        // Resetear cámara (tu código original)
+        function resetCamera() {
+            camera.position.set(0, 2, 5);
+            camera.lookAt(0, 0, 0);
+            controls.target.set(0, 0, 0);
             controls.update();
         }
-        
-        // Manejar redimensionamiento
+
+        // Toggle wireframe (tu código original)
+        function toggleWireframe() {
+            if (!model) return;
+
+            if (wireframeModels.length > 0) {
+                // Remover wireframes
+                wireframeModels.forEach(wf => scene.remove(wf));
+                wireframeModels = [];
+            } else {
+                // Crear wireframes
+                model.traverse(function (node) {
+                    if (node.isMesh && node.geometry) {
+                        const wireframe = new THREE.WireframeGeometry(node.geometry);
+                        const line = new THREE.LineSegments(wireframe);
+                        line.material.color.setHex(0x00ff00);
+                        line.position.copy(node.position);
+                        line.rotation.copy(node.rotation);
+                        line.scale.copy(node.scale);
+                        scene.add(line);
+                        wireframeModels.push(line);
+                    }
+                });
+            }
+        }
+
+        // Mostrar bounding box (tu código original)
+        function showBoundingBox() {
+            if (!model) return;
+
+            if (boundingBoxHelper) {
+                scene.remove(boundingBoxHelper);
+                boundingBoxHelper = null;
+            } else {
+                const box = new THREE.Box3().setFromObject(model);
+                boundingBoxHelper = new THREE.Box3Helper(box, 0xff0000);
+                scene.add(boundingBoxHelper);
+            }
+        }
+
+        // Ajustar cámara al modelo (tu código original)
+        function fitCameraToModel() {
+            if (!model) return;
+
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+
+            const fov = camera.fov * (Math.PI / 180);
+            let cameraZ = Math.abs(maxDim / (2 * Math.tan(fov / 2)));
+            cameraZ *= 2; // Factor de seguridad
+
+            camera.position.set(center.x, center.y + (size.y / 4), center.z + cameraZ);
+            controls.target.copy(center);
+            controls.update();
+        }
+
+        // Manejar redimensionamiento (tu código original)
         function onWindowResize() {
             const canvas = renderer.domElement;
             camera.aspect = canvas.clientWidth / canvas.clientHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(canvas.clientWidth, canvas.clientHeight);
         }
-        
-        // Función de animación
+
+        // Función de animación (tu código original con mejora IA)
         function animate() {
             requestAnimationFrame(animate);
-            
+
             if (controls) {
                 controls.update();
             }
-            
-            if (model) {
-                model.rotation.y += 0.005;
+
+            // 🤖 IA: Rotación automática inteligente
+            // Solo rotar si NO es un modelo normal (pizza1, pizza2) Y el slider está en 0
+            const shouldAutoRotate = aiDecision && !aiDecision.noAutoRotation;
+            if (model && document.getElementById('rotY-slider').value == 0 && shouldAutoRotate) {
+                model.rotation.y += 0.003;
             }
-            
+
             renderer.render(scene, camera);
         }
-        
-        // Iniciar
-        document.addEventListener('DOMContentLoaded', init);
+
+        // Iniciar cuando el DOM esté listo (tu código original)
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('=== 🤖 INICIO DE IA AUTO-AJUSTE ===');
+
+            init();
+            animate();
+        });
     </script>
 </body>
 </html>

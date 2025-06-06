@@ -40,7 +40,7 @@
                         <div class="col-md-6">
                             <h5>Ingredientes</h5>
                             <p class="text-muted">@Model.Ingredientes</p>
-
+                            
                             @if (Model.Similitud.HasValue)
                             {
                                 <h5 class="mt-4">Similitud</h5>
@@ -50,36 +50,94 @@
                     </div>
                 </div>
                 <div class="card-footer text-center">
-                    <a href="@Url.Action("Recomendacion", "MenuRecomendacion")" class="btn btn-warning">
-                        Nueva Búsqueda
-                    </a>
+                    <div class="d-flex justify-content-between">
+                        <a href="@Url.Action("Recomendacion", "MenuRecomendacion")" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Seguir Seleccionando
+                        </a>
+                        <button type="button" class="btn btn-success" onclick="agregarAlPedido(@ViewBag.IndiceProducto, '@Model.Nombre', @Model.Precio)">
+                            <i class="fas fa-cart-plus"></i> Agregar al Pedido
+                        </button>
+                        <a href="@Url.Action("VerCarrito", "PedidoRecomendacion")" class="btn btn-warning">
+                            <i class="fas fa-shopping-cart"></i> Ver Carrito
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-@section styles {
-    <style>
-        .btn-warning {
-            color: #fff;
-            background-color: #F2A900;
-            border-color: #F2A900;
+@section scripts {
+<script>
+    function agregarAlPedido(id, nombre, precio) {
+        // Obtener carrito existente del localStorage
+        let carrito = JSON.parse(localStorage.getItem('carritoRecomendacion') || '[]');
+        
+        // Verificar si el producto ya existe en el carrito
+        let productoExistente = carrito.find(item => item.id === id);
+        
+        if (productoExistente) {
+            productoExistente.cantidad += 1;
+            productoExistente.subtotal = productoExistente.cantidad * productoExistente.precio;
+        } else {
+            carrito.push({
+                id: id,
+                nombre: nombre,
+                precio: precio,
+                cantidad: 1,
+                subtotal: precio
+            });
         }
-
-            .btn-warning:hover {
-                color: #fff;
-                background-color: #e09600;
-                border-color: #d48e00;
-            }
-
-        .card {
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        
+        // Guardar carrito actualizado
+        localStorage.setItem('carritoRecomendacion', JSON.stringify(carrito));
+        
+        // Mostrar mensaje de confirmación
+        alert(`${nombre} agregado al carrito!`);
+        
+        // Actualizar contador del carrito si existe
+        actualizarContadorCarrito();
+    }
+    
+    function actualizarContadorCarrito() {
+        let carrito = JSON.parse(localStorage.getItem('carritoRecomendacion') || '[]');
+        let totalItems = carrito.reduce((total, item) => total + item.cantidad, 0);
+        
+        // Actualizar badge del carrito si existe
+        const badge = document.querySelector('.carrito-badge');
+        if (badge) {
+            badge.textContent = totalItems;
+            badge.style.display = totalItems > 0 ? 'inline' : 'none';
         }
+    }
+    
+    // Actualizar contador al cargar la página
+    $(document).ready(function() {
+        actualizarContadorCarrito();
+    });
+</script>
+}
 
-        .table-borderless td {
-            border: none;
-            padding: 0.5rem 0;
-        }
-    </style>
+<style>
+    .btn-warning {
+        color: #fff;
+        background-color: #F2A900;
+        border-color: #F2A900;
+    }
+
+    .btn-warning:hover {
+        color: #fff;
+        background-color: #e09600;
+        border-color: #d48e00;
+    }
+
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .table-borderless td {
+        border: none;
+        padding: 0.5rem 0;
+    }
+</style>
 }

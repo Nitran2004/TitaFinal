@@ -1,0 +1,418 @@
+﻿@{
+    ViewData["Title"] = "Diagnóstico de Archivos GLB";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico de Archivos GLB</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+            .test-section h3 {
+                margin-top: 0;
+                color: #333;
+            }
+
+        .file-test {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .file-info {
+            flex: 1;
+            margin-right: 15px;
+        }
+
+        .status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            color: white;
+            font-weight: bold;
+            min-width: 80px;
+            text-align: center;
+        }
+
+            .status.success {
+                background-color: #4CAF50;
+            }
+
+            .status.error {
+                background-color: #f44336;
+            }
+
+            .status.loading {
+                background-color: #2196F3;
+            }
+
+            .status.warning {
+                background-color: #ff9800;
+            }
+
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+        }
+
+            .btn:hover {
+                background-color: #45a049;
+            }
+
+        .details {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e8f5e8;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            display: none;
+        }
+
+        .error-details {
+            background: #ffeaea;
+            color: #d8000c;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Diagnóstico de Archivos GLB</h1>
+        <p>Esta página permite verificar el estado de los archivos de modelos 3D y diagnosticar problemas de carga.</p>
+
+        <div class="test-section">
+            <h3>🎯 Enlaces de Prueba Rápida</h3>
+            <a href="/RealidadAumentada/VistaSimple?id=1" class="btn">Probar ID 1 (pizza1.glb)</a>
+            <a href="/RealidadAumentada/VistaSimple?id=2" class="btn">Probar ID 2 (pizza2.glb)</a>
+            <a href="/RealidadAumentada/VistaSimple?id=9" class="btn">Probar ID 9 (pizza3.glb)</a>
+            <a href="/RealidadAumentada/VistaSimple?id=10" class="btn">Probar ID 10 (pizza4.glb)</a>
+        </div>
+
+        <div class="test-section">
+            <h3>📁 Verificación de Archivos del Servidor</h3>
+            <div id="server-files">Cargando información del servidor...</div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Pruebas de Acceso HTTP</h3>
+            <div id="http-tests">
+                <div class="file-test" data-file="pizza1.glb">
+                    <div class="file-info">
+                        <strong>pizza1.glb</strong><br>
+                        <small>Ruta: /RealidadAumentada/GetGLBFile?archivo=pizza1.glb</small>
+                    </div>
+                    <div class="status loading">Probando...</div>
+                </div>
+                <div class="file-test" data-file="pizza2.glb">
+                    <div class="file-info">
+                        <strong>pizza2.glb</strong><br>
+                        <small>Ruta: /RealidadAumentada/GetGLBFile?archivo=pizza2.glb</small>
+                    </div>
+                    <div class="status loading">Probando...</div>
+                </div>
+                <div class="file-test" data-file="pizza3.glb">
+                    <div class="file-info">
+                        <strong>pizza3.glb</strong><br>
+                        <small>Ruta: /RealidadAumentada/GetGLBFile?archivo=pizza3.glb</small>
+                    </div>
+                    <div class="status loading">Probando...</div>
+                </div>
+                <div class="file-test" data-file="pizza4.glb">
+                    <div class="file-info">
+                        <strong>pizza4.glb</strong><br>
+                        <small>Ruta: /RealidadAumentada/GetGLBFile?archivo=pizza4.glb</small>
+                    </div>
+                    <div class="status loading">Probando...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Pruebas de Carga con GLTFLoader</h3>
+            <div id="gltf-tests">
+                <p>Estas pruebas utilizan Three.js GLTFLoader para verificar que los archivos sean válidos.</p>
+                <div id="gltf-results"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Resumen de Resultados</h3>
+            <table id="summary-table">
+                <thead>
+                    <tr>
+                        <th>Archivo</th>
+                        <th>Servidor</th>
+                        <th>HTTP</th>
+                        <th>GLTFLoader</th>
+                        <th>Tamaño</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="summary-body">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
+
+    <script>
+        const archivos = ['pizza1.glb', 'pizza2.glb', 'pizza3.glb', 'pizza4.glb'];
+        const resultados = {};
+
+        // Función para actualizar estado visual
+        function updateStatus(archivo, tipo, estado, detalles = '') {
+            const element = document.querySelector(`[data-file="${archivo}"] .status`);
+            if (element) {
+                element.className = `status ${estado}`;
+                element.textContent = estado === 'success' ? '✅ OK' :
+                    estado === 'error' ? '❌ Error' :
+                        estado === 'warning' ? '⚠️ Advertencia' : 'Probando...';
+
+                if (detalles) {
+                    let detailsDiv = element.parentNode.querySelector('.details');
+                    if (!detailsDiv) {
+                        detailsDiv = document.createElement('div');
+                        detailsDiv.className = 'details';
+                        if (estado === 'error') detailsDiv.classList.add('error-details');
+                        element.parentNode.appendChild(detailsDiv);
+                    }
+                    detailsDiv.textContent = detalles;
+                    detailsDiv.style.display = 'block';
+                }
+            }
+
+            // Guardar resultado
+            if (!resultados[archivo]) resultados[archivo] = {};
+            resultados[archivo][tipo] = { estado, detalles };
+        }
+
+        // 1. Cargar información del servidor
+        async function cargarInfoServidor() {
+            try {
+                const response = await fetch('/RealidadAumentada/TestArchivos');
+                const html = await response.text();
+                document.getElementById('server-files').innerHTML = html;
+            } catch (error) {
+                document.getElementById('server-files').innerHTML =
+                    `<div class="status error">Error al conectar con el servidor: ${error.message}</div>`;
+            }
+        }
+
+        // 2. Probar acceso HTTP
+        async function probarAccesoHTTP() {
+            for (const archivo of archivos) {
+                try {
+                    const url = `/RealidadAumentada/GetGLBFile?archivo=${archivo}`;
+                    const response = await fetch(url, { method: 'HEAD' });
+
+                    const contentType = response.headers.get('content-type');
+                    const contentLength = response.headers.get('content-length');
+
+                    if (response.ok) {
+                        const detalles = `Status: ${response.status}, Tipo: ${contentType}, Tamaño: ${contentLength ? (parseInt(contentLength) / 1024).toFixed(1) + ' KB' : 'desconocido'}`;
+                        updateStatus(archivo, 'http', 'success', detalles);
+                    } else {
+                        updateStatus(archivo, 'http', 'error', `HTTP ${response.status}: ${response.statusText}`);
+                    }
+                } catch (error) {
+                    updateStatus(archivo, 'http', 'error', `Error de red: ${error.message}`);
+                }
+            }
+        }
+
+        // 3. Probar con GLTFLoader
+        async function probarGLTFLoader() {
+            const gltfResults = document.getElementById('gltf-results');
+            const loader = new THREE.GLTFLoader();
+
+            for (const archivo of archivos) {
+                const testDiv = document.createElement('div');
+                testDiv.className = 'file-test';
+                testDiv.innerHTML = `
+                            <div class="file-info">
+                                <strong>${archivo}</strong><br>
+                                <small>Prueba de carga con GLTFLoader</small>
+                            </div>
+                            <div class="status loading">Cargando...</div>
+                        `;
+                gltfResults.appendChild(testDiv);
+
+                const statusEl = testDiv.querySelector('.status');
+                const url = `/RealidadAumentada/GetGLBFile?archivo=${archivo}`;
+
+                try {
+                    await new Promise((resolve, reject) => {
+                        loader.load(
+                            url,
+                            function (gltf) {
+                                // Analizar el modelo cargado
+                                const scene = gltf.scene;
+                                let meshCount = 0;
+                                let materialCount = 0;
+
+                                scene.traverse(function (node) {
+                                    if (node.isMesh) {
+                                        meshCount++;
+                                        if (node.material) materialCount++;
+                                    }
+                                });
+
+                                const box = new THREE.Box3().setFromObject(scene);
+                                const size = box.getSize(new THREE.Vector3());
+
+                                statusEl.className = 'status success';
+                                statusEl.textContent = '✅ Válido';
+
+                                const details = document.createElement('div');
+                                details.className = 'details';
+                                details.innerHTML = `
+                                            Meshes: ${meshCount}<br>
+                                            Materiales: ${materialCount}<br>
+                                            Dimensiones: ${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)}<br>
+                                            Animaciones: ${gltf.animations ? gltf.animations.length : 0}
+                                        `;
+                                details.style.display = 'block';
+                                testDiv.appendChild(details);
+
+                                updateStatus(archivo, 'gltf', 'success', `${meshCount} meshes, ${materialCount} materiales`);
+                                resolve();
+                            },
+                            function (xhr) {
+                                // Progreso
+                                if (xhr.lengthComputable) {
+                                    const percent = Math.floor((xhr.loaded / xhr.total) * 100);
+                                    statusEl.textContent = `${percent}%`;
+                                }
+                            },
+                            function (error) {
+                                statusEl.className = 'status error';
+                                statusEl.textContent = '❌ Error';
+
+                                const details = document.createElement('div');
+                                details.className = 'details error-details';
+                                details.textContent = `Error GLTFLoader: ${error.message || 'Error desconocido'}`;
+                                details.style.display = 'block';
+                                testDiv.appendChild(details);
+
+                                updateStatus(archivo, 'gltf', 'error', error.message || 'Error de carga');
+                                reject(error);
+                            }
+                        );
+                    });
+                } catch (error) {
+                    console.error(`Error con ${archivo}:`, error);
+                }
+            }
+        }
+
+        // 4. Generar resumen
+        function generarResumen() {
+            const tbody = document.getElementById('summary-body');
+            tbody.innerHTML = '';
+
+            archivos.forEach(archivo => {
+                const row = document.createElement('tr');
+                const resultado = resultados[archivo] || {};
+
+                const httpStatus = resultado.http?.estado || 'pending';
+                const gltfStatus = resultado.gltf?.estado || 'pending';
+
+                // Extraer tamaño del resultado HTTP
+                let tamaño = 'N/A';
+                if (resultado.http?.detalles) {
+                    const match = resultado.http.detalles.match(/Tamaño: ([^,]+)/);
+                    if (match) tamaño = match[1];
+                }
+
+                row.innerHTML = `
+                            <td><strong>${archivo}</strong></td>
+                            <td><span class="status ${httpStatus === 'success' ? 'success' : 'error'}">${httpStatus === 'success' ? '✅' : '❌'}</span></td>
+                            <td><span class="status ${httpStatus === 'success' ? 'success' : 'error'}">${httpStatus === 'success' ? '✅' : '❌'}</span></td>
+                            <td><span class="status ${gltfStatus === 'success' ? 'success' : gltfStatus === 'error' ? 'error' : 'warning'}">${gltfStatus === 'success' ? '✅' : gltfStatus === 'error' ? '❌' : '⏳'}</span></td>
+                            <td>${tamaño}</td>
+                            <td>
+                                <a href="/RealidadAumentada/VistaSimple?id=${archivos.indexOf(archivo) === 2 ? '9' : archivos.indexOf(archivo) === 3 ? '10' : archivos.indexOf(archivo) + 1}" class="btn" style="font-size: 12px; padding: 4px 8px;">Probar</a>
+                            </td>
+                        `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Función principal de diagnóstico
+        async function ejecutarDiagnostico() {
+            console.log('=== INICIANDO DIAGNÓSTICO COMPLETO ===');
+
+            // 1. Información del servidor
+            await cargarInfoServidor();
+
+            // 2. Pruebas HTTP
+            await probarAccesoHTTP();
+
+            // 3. Pruebas con GLTFLoader
+            await probarGLTFLoader();
+
+            // 4. Generar resumen
+            setTimeout(generarResumen, 2000); // Dar tiempo para que terminen las pruebas
+
+            console.log('=== DIAGNÓSTICO COMPLETADO ===');
+            console.log('Resultados:', resultados);
+        }
+
+        // Iniciar diagnóstico cuando la página esté lista
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('Página de diagnóstico cargada');
+            ejecutarDiagnostico();
+        });
+    </script>
+</body>
+</html>
