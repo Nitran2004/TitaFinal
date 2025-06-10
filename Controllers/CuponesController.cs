@@ -265,7 +265,15 @@ namespace Proyecto1_MZ_MJ.Controllers
                 await _context.SaveChangesAsync();
 
                 TempData["Success"] = "¡Cupón aplicado exitosamente!";
-                return RedirectToAction("Resumen", "Pedidos", new { id = pedido.Id });
+                // Redirección basada en el rol del usuario
+                if (User.IsInRole("Administrador") || User.IsInRole("Cajero"))
+                {
+                    return RedirectToAction("ResumenAdmin", "Pedidos");
+                }
+                else
+                {
+                    return RedirectToAction("Resumen", "Pedidos", new { id = pedido.Id });
+                }
             }
             catch (Exception ex)
             {
