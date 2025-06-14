@@ -126,7 +126,7 @@
                 });
             });
 
-            // Mostrar resultados - SIN MODAL, CON ENLACE A VISTA DE DETALLE
+            // Mostrar resultados - CON ID CORRECTO
             function mostrarResultados(data) {
                 var tbody = $("#tbodyResultados");
                 tbody.empty();
@@ -141,10 +141,12 @@
                     var item = data[i];
 
                     // Extraer propiedades de manera segura
-                    var nombre = item.Nombre || item.nombre || "Sin nombre";
-                    var precio = item.Precio || item.precio || "0";
-                    var calorias = item.Calorias || item.calorias || "0";
-                    var id = item.Id || item.id || item.ID || i; // Usar el ID del plato o el índice
+                    var id = item.id || item.Id || 0; // USAR EL ID REAL DEL PRODUCTO
+                    var nombre = item.nombre || item.Nombre || "Sin nombre";
+                    var precio = item.precio || item.Precio || "0";
+                    var calorias = item.calorias || item.Calorias || "0";
+
+                    console.log("ID del producto:", id); // Para debug
 
                     var row = '<tr>' +
                         '<td>' + nombre + '</td>' +

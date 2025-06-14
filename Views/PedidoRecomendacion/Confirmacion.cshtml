@@ -39,6 +39,10 @@
                             <h5>Datos de Entrega</h5>
                             <table class="table table-borderless">
                                 <tr>
+                                    <td><strong>Usuario:</strong></td>
+                                    <td>@Model.UsuarioEmail</td>
+                                </tr>
+                                <tr>
                                     <td><strong>Cliente:</strong></td>
                                     <td>@Model.ClienteNombre</td>
                                 </tr>
@@ -47,9 +51,33 @@
                                     <td>@Model.ClienteTelefono</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Dirección:</strong></td>
-                                    <td>@Model.Direccion</td>
+                                    <td><strong>Tipo de Servicio:</strong></td>
+                                    <td>
+                                        @if (Model.TipoServicio == "Servir aquí")
+                                        {
+                                            <span class="badge bg-primary">
+                                                <i class="fas fa-chair"></i> @Model.TipoServicio
+                                            </span>
+                                        }
+                                        else if (Model.TipoServicio == "Para llevar")
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-shopping-bag"></i> @Model.TipoServicio
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@Model.TipoServicio</span>
+                                        }
+                                    </td>
                                 </tr>
+                                @if (Model.TipoServicio == "Para llevar")
+                                {
+                                    <tr>
+                                        <td><strong>Dirección:</strong></td>
+                                        <td>@Model.Direccion</td>
+                                    </tr>
+                                }
                                 @if (!string.IsNullOrEmpty(Model.Observaciones))
                                 {
                                     <tr>
@@ -95,9 +123,25 @@
                     <div class="alert alert-info">
                         <h6><i class="fas fa-info-circle"></i> Información Importante:</h6>
                         <ul class="mb-0">
-                            <li>Tiempo estimado de entrega: 30-45 minutos</li>
-                            <li>Recibirás una llamada de confirmación en breve</li>
-                            <li>Métodos de pago disponibles: Efectivo, transferencia</li>
+                            @if (Model.TipoServicio == "Servir aquí")
+                            {
+                                <li>Tu mesa te será asignada cuando llegues al restaurante</li>
+                                <li>Tiempo estimado de preparación: 15-25 minutos</li>
+                                <li>Puedes esperar en el área de recepción</li>
+                            }
+                            else if (Model.TipoServicio == "Para llevar")
+                            {
+                                <li>Tiempo estimado de preparación: 15-20 minutos</li>
+                                <li>Recoge tu pedido en el mostrador</li>
+                                <li>Te avisaremos cuando esté listo</li>
+                            }
+                            else
+                            {
+                                <li>Tiempo estimado de preparación: 15-25 minutos</li>
+                            }
+                            <li>Recibirás una notificación cuando esté listo</li>
+                            <li>Métodos de pago disponibles: Efectivo, tarjeta, transferencia</li>
+                            <li>El pedido se registró con tu usuario: <strong>@Model.UsuarioEmail</strong></li>
                         </ul>
                     </div>
                 </div>
@@ -106,12 +150,12 @@
                         <a href="@Url.Action("Recomendacion", "MenuRecomendacion")" class="btn btn-warning">
                             <i class="fas fa-utensils"></i> Hacer Nuevo Pedido
                         </a>
-                        <a href="@Url.Action("ListarPedidos", "PedidoRecomendacion")" class="btn btn-outline-secondary">
+                        <a href="@Url.Action("MisPedidos", "PedidoRecomendacion")" class="btn btn-outline-secondary">
                             <i class="fas fa-list"></i> Ver Mis Pedidos
                         </a>
-                        <button onclick="window.print()" class="btn btn-outline-primary">
-                            <i class="fas fa-print"></i> Imprimir
-                        </button>
+                        <a href="@Url.Action("ListarPedidos", "PedidoRecomendacion")" class="btn btn-outline-primary">
+                            <i class="fas fa-cog"></i> Administrar Pedidos
+                        </a>
                     </div>
                 </div>
             </div>

@@ -143,6 +143,28 @@
                     {
                         <p><strong>Sucursal:</strong> @Model.Sucursal.Nombre</p>
                         <p><strong>Dirección:</strong> @Model.Sucursal.Direccion</p>
+                        @if (!string.IsNullOrEmpty(Model.TipoServicio))
+                        {
+                            <p>
+                                <strong>Tipo de Servicio:</strong>
+                                @if (Model.TipoServicio == "Servir aquí")
+                                {
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-chair"></i> Servir aquí
+                                    </span>
+                                }
+                                else if (Model.TipoServicio == "Para llevar")
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-shopping-bag"></i> Para llevar
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@Model.TipoServicio</span>
+                                }
+                            </p>
+                        }
                     }
                 </div>
             </div>

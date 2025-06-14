@@ -23,10 +23,11 @@
             <thead>
                 <tr>
                     <th>Producto</th>
+                    <th>Tipo Servicio</th>
                     <th>Categoría</th>
                     <th>Cantidad</th>
                     <th>Precio Unitario</th>
-                    <th>Total</th>
+                    <th>Total</th>    
                 </tr>
             </thead>
             <tbody>
@@ -34,6 +35,24 @@
                 {
                     <tr>
                         <td>@item.Producto.Nombre</td>
+                        @if (!string.IsNullOrEmpty(pedido.TipoServicio))
+                        {
+                            <p>
+                                <strong>Tipo de Servicio:</strong>
+                                @if (pedido.TipoServicio == "Para llevar")
+                                {
+                                    <span class="badge bg-success"><i class="fas fa-shopping-bag"></i> Para llevar</span>
+                                }
+                                else if (pedido.TipoServicio == "Servir aquí")
+                                {
+                                    <span class="badge bg-primary"><i class="fas fa-chair"></i> Servir aquí</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">@pedido.TipoServicio</span>
+                                }
+                            </p>
+                        }
                         <td>@item.Producto.Categoria</td>
                         <td>@item.Cantidad</td>
                         <td>$@item.Producto.Precio</td>

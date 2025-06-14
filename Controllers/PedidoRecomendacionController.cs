@@ -1,9 +1,20 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using ProyectoIdentity.Models;
 
 namespace ProyectoIdentity.Controllers
 {
+    [Authorize] // Requiere que el usuario esté logueado
     public class PedidoRecomendacionController : Controller
     {
+        private readonly UserManager<IdentityUser> _userManager;
+
+        public PedidoRecomendacionController(UserManager<IdentityUser> userManager)
+        {
+            _userManager = userManager;
+        }
+
         // Modelos para el carrito
         public class ItemCarrito
         {
@@ -21,37 +32,18 @@ namespace ProyectoIdentity.Controllers
             public List<ItemCarrito> Items { get; set; }
             public decimal Total { get; set; }
             public string Estado { get; set; }
-            public string ClienteNombre { get; set; }
-            public string ClienteTelefono { get; set; }
-            public string Direccion { get; set; }
-            public string Observaciones { get; set; }
+            public string UsuarioId { get; set; } // ID del usuario de Identity
+            public string UsuarioEmail { get; set; } // Email del usuario
+            public string ClienteNombre { get; set; } // Nombre del usuario
+            public string ClienteTelefono { get; set; } // Teléfono del usuario
+            public string Direccion { get; set; } // Dirección del usuario
+            public string TipoServicio { get; set; } // "Servir aquí" o "Para llevar"
+            public string Observaciones { get; set; } // Observaciones adicionales opcionales
         }
 
         // Lista estática para simular base de datos de pedidos
         private static List<Pedido> _pedidos = new List<Pedido>();
         private static int _siguienteId = 1;
-
-        // Referencia a los datos del menú del otro controlador
-        private readonly List<MenuRecomendacionController.Plato> _menuData;
-
-        public PedidoRecomendacionController()
-        {
-            // Inicializar con los mismos datos del menú
-            var menuController = new MenuRecomendacionController();
-            _menuData = GetMenuData();
-        }
-
-        // Método para obtener los datos del menú (copia de MenuRecomendacionController)
-        private List<MenuRecomendacionController.Plato> GetMenuData()
-        {
-            return new List<MenuRecomendacionController.Plato>
-            {
-                // Solo algunos ejemplos, puedes copiar todos los datos del otro controlador
-                new MenuRecomendacionController.Plato { Nombre = "Margarita", Precio = 8, Calorias = 250, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, tomate cherry, albahaca" },
-                new MenuRecomendacionController.Plato { Nombre = "Pepperoni", Precio = 9, Calorias = 300, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, pepperoni" },
-                // Agrega el resto de los datos aquí...
-            };
-        }
 
         // Vista del carrito
         public IActionResult VerCarrito()
@@ -59,12 +51,22 @@ namespace ProyectoIdentity.Controllers
             return View();
         }
 
-        // Procesar pedido desde el carrito
+        // Procesar pedido desde el carrito - USANDO DATOS DEL USUARIO LOGUEADO
         [HttpPost]
-        public IActionResult ProcesarPedido([FromBody] PedidoRequest request)
+        public async Task<IActionResult> ProcesarPedido([FromBody] PedidoRequest request)
         {
             try
             {
+                // Obtener el usuario logueado
+                var usuario = await _userManager.GetUserAsync(User);
+                if (usuario == null)
+                {
+                    return Json(new { success = false, message = "Usuario no encontrado" });
+                }
+
+                // Si el usuario es tipo AppUsuario, obtener datos adicionales
+                var appUsuario = usuario as AppUsuario;
+
                 var pedido = new Pedido
                 {
                     Id = _siguienteId++,
@@ -72,10 +74,13 @@ namespace ProyectoIdentity.Controllers
                     Items = request.Items,
                     Total = request.Items.Sum(i => i.Subtotal),
                     Estado = "Pendiente",
-                    ClienteNombre = request.ClienteNombre,
-                    ClienteTelefono = request.ClienteTelefono,
-                    Direccion = request.Direccion,
-                    Observaciones = request.Observaciones
+                    UsuarioId = usuario.Id,
+                    UsuarioEmail = usuario.Email,
+                    ClienteNombre = appUsuario?.Nombre ?? usuario.UserName, // Usar el nombre del perfil o email
+                    ClienteTelefono = appUsuario?.Telefono ?? "No especificado",
+                    Direccion = appUsuario?.Direccion ?? "No especificada",
+                    TipoServicio = request.TipoServicio,
+                    Observaciones = request.Observaciones ?? ""
                 };
 
                 _pedidos.Add(pedido);
@@ -114,14 +119,29 @@ namespace ProyectoIdentity.Controllers
             return View(_pedidos.OrderByDescending(p => p.Fecha));
         }
 
-        // Modelo para recibir el pedido
+        // Listar pedidos del usuario logueado
+        public async Task<IActionResult> MisPedidos()
+        {
+            var usuario = await _userManager.GetUserAsync(User);
+            if (usuario == null)
+            {
+                return RedirectToAction("Acceso", "Cuentas");
+            }
+
+            var pedidosUsuario = _pedidos
+                .Where(p => p.UsuarioId == usuario.Id)
+                .OrderByDescending(p => p.Fecha)
+                .ToList();
+
+            return View(pedidosUsuario);
+        }
+
+        // Modelo para recibir el pedido - CON TIPO DE SERVICIO
         public class PedidoRequest
         {
             public List<ItemCarrito> Items { get; set; }
-            public string ClienteNombre { get; set; }
-            public string ClienteTelefono { get; set; }
-            public string Direccion { get; set; }
-            public string Observaciones { get; set; }
+            public string TipoServicio { get; set; } // "Servir aquí" o "Para llevar"
+            public string Observaciones { get; set; } // Observaciones adicionales opcionales
         }
     }
 }

@@ -195,10 +195,14 @@ namespace Proyecto1_MZ_MJ.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> FinalizarPedido(int puntoRecoleccionId)
+        public async Task<IActionResult> FinalizarPedido(int puntoRecoleccionId, string tipoServicio, string observaciones)
         {
             try
             {
+                Console.WriteLine($"[DEBUG] FinalizarPedido llamado con:");
+                Console.WriteLine($"[DEBUG] puntoRecoleccionId: {puntoRecoleccionId}");
+                Console.WriteLine($"[DEBUG] tipoServicio: '{tipoServicio}'");
+
                 var puntoRecoleccion = await _context.CollectionPoints
                     .Include(p => p.Sucursal)
                     .FirstOrDefaultAsync(p => p.Id == puntoRecoleccionId);
@@ -264,6 +268,14 @@ namespace Proyecto1_MZ_MJ.Controllers
             }
             catch (Exception ex)
             {
+                // AGREGAR ESTAS LÍNEAS PARA VER EL ERROR REAL:
+                Console.WriteLine($"[ERROR COMPLETO] {ex.Message}");
+                Console.WriteLine($"[STACK TRACE] {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"[INNER EXCEPTION] {ex.InnerException.Message}");
+                }
+
                 TempData["Error"] = "Error al finalizar pedido: " + ex.Message;
                 return RedirectToAction("Seleccionar");
             }
@@ -271,7 +283,7 @@ namespace Proyecto1_MZ_MJ.Controllers
 
         // Método para crear pedido desde ElementoCarrito (formato nuevo)
         // 1. Método CrearPedidoDesdeElementosCarrito CORREGIDO:
-        private async Task<int> CrearPedidoDesdeElementosCarrito(List<ElementoCarrito> elementos, int sucursalId)
+        private async Task<int> CrearPedidoDesdeElementosCarrito(List<ElementoCarrito> elementos, int sucursalId, string tipoServicio = null, string observaciones = null)
         {
             try
             {
@@ -283,7 +295,8 @@ namespace Proyecto1_MZ_MJ.Controllers
                     SucursalId = sucursalId,
                     PedidoProductos = new List<PedidoProducto>(),
                     Estado = "Preparándose",
-                    UsuarioId = User.Identity.IsAuthenticated ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null // ✅ AGREGAR ESTA LÍNEA
+                    UsuarioId = User.Identity.IsAuthenticated ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null,
+                    TipoServicio = string.IsNullOrEmpty(tipoServicio) ? null : tipoServicio
                 };
 
                 Console.WriteLine($"[DEBUG] Pedido creado con UsuarioId: {pedido.UsuarioId}");
@@ -340,7 +353,7 @@ namespace Proyecto1_MZ_MJ.Controllers
         }
 
         // 2. Método CrearPedidoDesdeSeleccionMultiple CORREGIDO:
-        private async Task<int> CrearPedidoDesdeSeleccionMultiple(List<ProductoSeleccionadoInput> seleccionados, int sucursalId)
+        private async Task<int> CrearPedidoDesdeSeleccionMultiple(List<ProductoSeleccionadoInput> seleccionados, int sucursalId, string tipoServicio = null, string observaciones = null)
         {
             try
             {
@@ -352,7 +365,8 @@ namespace Proyecto1_MZ_MJ.Controllers
                     SucursalId = sucursalId,
                     PedidoProductos = new List<PedidoProducto>(),
                     Estado = "Preparándose",
-                    UsuarioId = User.Identity.IsAuthenticated ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null // ✅ AGREGAR ESTA LÍNEA
+                    UsuarioId = User.Identity.IsAuthenticated ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null,
+                    TipoServicio = string.IsNullOrEmpty(tipoServicio) ? null : tipoServicio
                 };
 
                 Console.WriteLine($"[DEBUG] Pedido creado con UsuarioId: {pedido.UsuarioId}");
@@ -409,7 +423,7 @@ namespace Proyecto1_MZ_MJ.Controllers
         }
 
         // 3. Método CrearPedidoDesdeCarrito CORREGIDO:
-        private async Task<int> CrearPedidoDesdeCarrito(string pedidoJson, int sucursalId)
+        private async Task<int> CrearPedidoDesdeCarrito(string pedidoJson, int sucursalId, string tipoServicio = null, string observaciones = null)
         {
             try
             {
@@ -423,7 +437,8 @@ namespace Proyecto1_MZ_MJ.Controllers
                     SucursalId = sucursalId,
                     PedidoProductos = new List<PedidoProducto>(),
                     Estado = "Preparándose",
-                    UsuarioId = User.Identity.IsAuthenticated ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null // ✅ AGREGAR ESTA LÍNEA
+                    UsuarioId = User.Identity.IsAuthenticated ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null,
+                    TipoServicio = string.IsNullOrEmpty(tipoServicio) ? null : tipoServicio
                 };
 
                 Console.WriteLine($"[DEBUG] Pedido creado con UsuarioId: {pedido.UsuarioId}");

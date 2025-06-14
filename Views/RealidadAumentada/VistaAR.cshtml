@@ -3,332 +3,972 @@
     Layout = null;
 }
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>@ViewData["Title"] - @ViewBag.ProductoNombre</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vista AR - @ViewBag.ProductoNombre</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/DRACOLoader.js"></script>
+
     <style>
-        * {
+        body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
+            background-color: #333;
+            color: white;
+            font-family: Arial, sans-serif;
             overflow: hidden;
-            font-family: sans-serif;
+        }
+
+        #container {
             width: 100%;
-            height: 100%;
-            position: fixed;
-            touch-action: none;
-            user-select: none;
-            -webkit-user-select: none;
-            background: #000;
-        }
-
-        #ar-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        .btn {
-            position: absolute;
-            padding: 12px 20px;
-            background: #4CAF50;
-            color: #fff;
-            border: none;
-            border-radius: 20px;
-            font-size: 16px;
-            cursor: pointer;
-            z-index: 100;
-        }
-
-        #start-btn {
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        #exit-btn {
-            top: 20px;
-            right: 20px;
-            display: none;
-            background: rgba(255,255,255,0.8);
-            color: #333;
-        }
-
-        #ar-info {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0,0,0,0.7);
-            color: #fff;
-            padding: 10px;
-            border-radius: 10px;
-            font-size: 14px;
-            z-index: 10;
-        }
-
-        #ar-status, #controls, #gesture, #distance, #surface, #loading {
-            position: absolute;
-            background: rgba(0,0,0,0.7);
-            color: #fff;
-            padding: 8px 15px;
-            border-radius: 15px;
-            text-align: center;
-            display: none;
-            z-index: 10;
-        }
-
-        #ar-status {
-            bottom: 90px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        #controls {
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 13px;
-        }
-
-        #gesture {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%,-50%);
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
+            height: 100vh;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: #222;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            font-size: 28px;
-            opacity: 0;
-            transition: opacity 0.3s;
+            flex-wrap: wrap;
         }
 
-        #distance {
-            left: 50%;
-            top: 60%;
-            transform: translateX(-50%);
+        .header-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
         }
 
-        #surface {
-            left: 50%;
-            top: 70%;
-            transform: translateX(-50%);
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        #canvas-container {
+            flex: 1;
+            width: 100%;
+            position: relative;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
         }
 
         #loading {
+            position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%,-50%);
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+        }
+
+        #error {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(200,0,0,0.9);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            display: none;
+            max-width: 80%;
+        }
+
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-test {
+            background-color: #2196F3;
+        }
+
+        .btn-warning {
+            background-color: #ff9800;
+        }
+
+        .btn-control {
+            background-color: #9C27B0;
+            margin: 2px;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        #model-stats {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 12px;
+            max-width: 300px;
+        }
+
+        #ai-panel {
+            position: absolute;
+            top: 200px;
+            left: 10px;
+            background: rgba(0,100,0,0.9);
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 11px;
+            max-width: 300px;
+            border: 2px solid #00ff00;
+        }
+
+        .ai-decision {
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        .ai-reasoning {
+            color: #ccffcc;
+            font-style: italic;
+        }
+
+        #controls-panel {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+
+        .control-group {
+            margin-bottom: 10px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        .control-slider {
+            width: 150px;
+        }
+
+        /* Móvil */
+        .mobile-header {
+            display: none;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 20;
+            max-width: calc(100% - 40px);
+        }
+
+        #ar-button {
+            position: fixed;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 25;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        #ar-status {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+            z-index: 15;
+            font-size: 14px;
+        }
+
+        @@media (max-width: 768px) {
+            header {
+                display: none;
+            }
+            
+            .mobile-header {
+                display: block;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="ar-container">
-        <div id="ar-info">
-            <div>Producto: @ViewBag.ProductoNombre - $@ViewBag.ProductoPrecio</div>
-            <div id="device-info">Detectando dispositivo...</div>
-            <div id="model-info">@(string.IsNullOrEmpty(ViewBag.ModeloPath) ? "Modelo: Por defecto" : "Modelo: Personalizado")</div>
-        </div>
-        <div id="ar-status">Mueve el dispositivo para detectar superficies</div>
-        <div id="loading">Cargando modelo 3D...</div>
-        <button id="start-btn" class="btn">Iniciar Realidad Aumentada</button>
-        <button id="exit-btn" class="btn">Salir</button>
-        <div id="distance">Distancia: -- cm</div>
-        <div id="surface"></div>
-        <div id="controls">Arrastra para mover • Pellizca para escalar</div>
-        <div id="gesture"></div>
-    </div>
-    <script>
-        // Variables principales
-        let scene, camera, renderer;
-        let object3D; // Referencia al objeto 3D principal (modelo o cubo)
-        let modelReady = false; // Indica si el modelo está listo
-        let reticle;
-        let arSession = null, hitTestSource = null;
-        let isARActive = false, isObjectPlaced = false;
-        let isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        // Variable para controlar si la rotación automática está activa
-        let autoRotate = false; // Cambiado a false para evitar rotación automática
+    <div id="container">
+        <header>
+            <div class="header-info">
+                <h2>🤖 IA Auto-Ajuste: @ViewBag.ProductoNombre</h2>
+                <small>ID: @ViewBag.ProductoId | Archivo: @ViewBag.ModeloArchivo</small>
+            </div>
+            <div class="test-buttons">
+                <button class="btn" onclick="history.back()">Volver</button>
+                <a href="/RealidadAumentada/VistaAR?id=1" class="btn btn-test">ID 1</a>
+                <a href="/RealidadAumentada/VistaAR?id=2" class="btn btn-test">ID 2</a>
+                <a href="/RealidadAumentada/VistaAR?id=9" class="btn btn-warning">ID 9</a>
+                <a href="/RealidadAumentada/VistaAR?id=10" class="btn btn-warning">ID 10</a>
+                <button class="btn btn-control" onclick="resetCamera()">Reset Cámara</button>
+                <button class="btn btn-control" onclick="toggleWireframe()">Wireframe</button>
+                <button class="btn btn-control" onclick="showBoundingBox()">Bounding Box</button>
+            </div>
+        </header>
 
-        // Obtener la ruta del modelo del ViewBag
+        <div class="mobile-header">
+            <div><strong>@ViewBag.ProductoNombre</strong> - $@ViewBag.ProductoPrecio</div>
+            <div id="device-status">Cargando...</div>
+        </div>
+
+        <div id="canvas-container">
+            <canvas id="canvas3d"></canvas>
+        </div>
+
+        <div id="loading">Cargando modelo 3D...</div>
+        <div id="error">
+            <h3>Error al cargar el modelo</h3>
+            <p id="error-message"></p>
+            <button class="btn" onclick="recargarModelo()">Reintentar</button>
+        </div>
+
+        <div id="model-stats">
+            <strong>📊 Estadísticas del Modelo:</strong><br>
+            <span id="stats-content">Cargando...</span>
+        </div>
+
+        <div id="ai-panel">
+            <strong>🤖 Decisiones de la IA:</strong><br>
+            <span id="ai-content">Analizando...</span>
+        </div>
+
+        <div id="controls-panel">
+            <strong>🎮 Controles del Modelo:</strong><br>
+            <div class="control-group">
+                <label>Escala: <span id="scale-value">1.0</span></label>
+                <input type="range" id="scale-slider" class="control-slider" min="0.1" max="10" step="0.1" value="1.0">
+            </div>
+            <div class="control-group">
+                <label>Posición Y: <span id="posY-value">0.0</span></label>
+                <input type="range" id="posY-slider" class="control-slider" min="-5" max="5" step="0.1" value="0.0">
+            </div>
+            <div class="control-group">
+                <label>Rotación Y: <span id="rotY-value">0°</span></label>
+                <input type="range" id="rotY-slider" class="control-slider" min="0" max="360" step="5" value="0">
+            </div>
+            <div class="control-group">
+                <button class="btn btn-control" onclick="autoFitModel()">Auto Ajustar</button>
+                <button class="btn btn-control" onclick="centerModel()">Centrar</button>
+            </div>
+        </div>
+
+        <div id="ar-status">Mueve el dispositivo para detectar superficies</div>
+        <button id="ar-button">📷 Activar Realidad Aumentada</button>
+    </div>
+
+    <script>
+        let scene, camera, renderer, controls;
+        let model, boundingBoxHelper, wireframeModels = [];
         const modelPath = '@ViewBag.ModeloPath';
+        const modelId = '@ViewBag.ProductoId';
+        const modelFile = '@ViewBag.ModeloArchivo';
         const productName = '@ViewBag.ProductoNombre';
 
-        // Referencias DOM
-        const startBtn = document.getElementById('start-btn');
-        const exitBtn = document.getElementById('exit-btn');
-        const deviceInfo = document.getElementById('device-info');
-        const arStatus = document.getElementById('ar-status');
-        const controls = document.getElementById('controls');
-        const gesture = document.getElementById('gesture');
-        const distance = document.getElementById('distance');
-        const surface = document.getElementById('surface');
-        const loading = document.getElementById('loading');
+        // Variables AR
+        let reticle, arSession = null, hitTestSource = null;
+        let isARActive = false;
+        let isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-        // Inicialización
-        window.addEventListener('DOMContentLoaded', init);
-        window.addEventListener('resize', onResize);
-        startBtn.addEventListener('click', startAR);
-        exitBtn.addEventListener('click', exitAR);
+        // Referencias DOM
+        const loadingElement = document.getElementById('loading');
+        const errorElement = document.getElementById('error');
+        const errorMessage = document.getElementById('error-message');
+        const modelStats = document.getElementById('model-stats');
+        const controlsPanel = document.getElementById('controls-panel');
+        const statsContent = document.getElementById('stats-content');
+        const aiPanel = document.getElementById('ai-panel');
+        const aiContent = document.getElementById('ai-content');
+        const deviceStatus = document.getElementById('device-status');
+        const arStatus = document.getElementById('ar-status');
+        const arButton = document.getElementById('ar-button');
+
+        // Variables IA
+        let aiAnalysis = null;
+        let aiDecision = null;
+
+        console.log('=== INICIANDO VISTA AR ===');
+        console.log('Producto ID:', modelId);
+        console.log('Archivo:', modelFile);
+        console.log('Ruta:', modelPath);
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            loadingElement.style.display = 'none';
+            errorElement.style.display = 'block';
+            console.error('ERROR:', message);
+        }
+
+        function recargarModelo() {
+            errorElement.style.display = 'none';
+            loadingElement.style.display = 'block';
+            if (model) {
+                scene.remove(model);
+                model = null;
+            }
+            if (boundingBoxHelper) {
+                scene.remove(boundingBoxHelper);
+                boundingBoxHelper = null;
+            }
+            wireframeModels.forEach(wf => scene.remove(wf));
+            wireframeModels = [];
+            loadModel();
+        }
 
         function init() {
-            deviceInfo.textContent = isMobile ? 'Dispositivo móvil' : 'Escritorio';
+            console.log('🔍 DIAGNÓSTICO COMPLETO:');
+            console.log('- Es móvil:', isMobile);
+            console.log('- ModelPath:', modelPath);
+            console.log('- ModelFile:', modelFile);
+            console.log('- ModelId:', modelId);
+            console.log('- ProductName:', productName);
 
-            // Inicializar Three.js
+            // Escena
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 1.6, 3);
+            
+            // FONDO CORREGIDO
+            if (isMobile) {
+                scene.background = null; // Transparente para AR
+            } else {
+                scene.background = new THREE.Color(0x333333); // Gris para PC
+            }
 
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            // Cámara
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 1000);
+            camera.position.set(0, 2, 5);
+
+            // Renderer
+            const canvas = document.getElementById('canvas3d');
+            renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                antialias: true,
+                alpha: isMobile
+            });
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
             renderer.shadowMap.enabled = true;
-            renderer.xr.enabled = true;
-            document.getElementById('ar-container').appendChild(renderer.domElement);
+
+            // XR para Android
+            if (isMobile && /Android/i.test(navigator.userAgent)) {
+                renderer.xr.enabled = true;
+            }
 
             // Luces
-            scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            dirLight.position.set(1, 2, 1);
-            dirLight.castShadow = true;
-            scene.add(dirLight);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
 
-            // Crear objeto 3D según el tipo de producto
-            createObject3D();
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
 
-            // Crear retículo para AR
-            createReticle();
+            const frontLight = new THREE.DirectionalLight(0xffffff, 0.4);
+            frontLight.position.set(0, 0, 10);
+            scene.add(frontLight);
 
-            // Si es escritorio, iniciar vista 3D en cuanto el modelo esté listo
+            // Controles solo para PC
             if (!isMobile) {
-                if (modelReady) {
-                    startDesktopView();
-                } else {
-                    // Si el modelo aún no está listo, esperar a que cargue
-                    const checkInterval = setInterval(() => {
-                        if (modelReady) {
-                            startDesktopView();
-                            clearInterval(checkInterval);
+                controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.05;
+                controls.minDistance = 0.1;
+                controls.maxDistance = 100;
+                setupControlListeners();
+            }
+
+            // AR para Android
+            if (isMobile && /Android/i.test(navigator.userAgent)) {
+                createReticle();
+                if (arButton) {
+                    arButton.style.display = 'block';
+                    arButton.addEventListener('click', tryAR);
+                }
+            } else if (isMobile && /iPhone|iPad/i.test(navigator.userAgent)) {
+                if (deviceStatus) deviceStatus.textContent = 'AR no disponible en Safari/iPhone';
+            }
+
+            window.addEventListener('resize', onWindowResize);
+            loadModel();
+        }
+
+        function setupControlListeners() {
+            const scaleSlider = document.getElementById('scale-slider');
+            const posYSlider = document.getElementById('posY-slider');
+            const rotYSlider = document.getElementById('rotY-slider');
+
+            scaleSlider.addEventListener('input', function () {
+                if (model) {
+                    const scale = parseFloat(this.value);
+                    model.scale.set(scale, scale, scale);
+                    document.getElementById('scale-value').textContent = scale.toFixed(1);
+                }
+            });
+
+            posYSlider.addEventListener('input', function () {
+                if (model) {
+                    const posY = parseFloat(this.value);
+                    model.position.y = posY;
+                    document.getElementById('posY-value').textContent = posY.toFixed(1);
+                }
+            });
+
+            rotYSlider.addEventListener('input', function () {
+                if (model) {
+                    const rotY = parseFloat(this.value) * Math.PI / 180;
+                    model.rotation.y = rotY;
+                    document.getElementById('rotY-value').textContent = this.value + '°';
+                }
+            });
+        }
+
+        function loadModel() {
+            console.log('Cargando modelo:', modelPath);
+
+            const loader = new THREE.GLTFLoader();
+
+            // AGREGAR SOPORTE PARA DRACO
+            const dracoLoader = new THREE.DRACOLoader();
+            dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+            loader.setDRACOLoader(dracoLoader);
+
+            loader.load(
+                modelPath,
+                function (gltf) {
+                    console.log('Modelo cargado exitosamente');
+                    loadingElement.style.display = 'none';
+
+                    model = gltf.scene;
+
+                    // FORZAR VISIBILIDAD BRUTAL PARA PIZZA3/4
+                    if (modelFile === 'pizza3.glb' || modelFile === 'pizza4.glb') {
+                        console.log('🍕 FORZANDO PIZZA3/4');
+
+                        // Analizar modelo GLB real
+                        console.log('🔍 Analizando modelo GLB:', model);
+                        console.log('🔍 Hijos del modelo:', model.children.length);
+
+                        if (model && model.children.length > 0) {
+                            console.log('✅ Modelo GLB válido cargado');
+                            // Forzar visibilidad de todos los meshes
+                            model.traverse(function (child) {
+                                if (child.isMesh) {
+                                    console.log('📦 Mesh encontrado:', child.name, child.geometry, child.material);
+                                    child.visible = true;
+                                    if (child.material) {
+                                        child.material.transparent = false;
+                                        child.material.opacity = 1.0;
+                                        child.material.side = THREE.DoubleSide;
+                                    }
+                                }
+                            });
+                        } else {
+                            console.log('❌ Modelo GLB vacío - usando pizza artificial');
+                            const geometry = new THREE.CylinderGeometry(0.15, 0.15, 0.02, 32);
+                            const material = new THREE.MeshStandardMaterial({ color: 0xD2691E });
+                            model = new THREE.Mesh(geometry, material);
                         }
-                    }, 100);
+
+                        // Configuración brutal para móvil
+                        if (isMobile) {
+                            model.position.set(0, 0, -1);
+                            model.scale.set(1, 1, 1);
+                            model.visible = true;
+
+                            // Hacer todos los meshes visibles
+                            model.traverse(function (child) {
+                                if (child.isMesh) {
+                                    child.visible = true;
+                                    child.material.transparent = false;
+                                    child.material.opacity = 1.0;
+                                    child.castShadow = false;
+                                    child.receiveShadow = false;
+                                }
+                            });
+                        }
+                    }
+
+                    // Configurar sombras para otros modelos
+                    if (modelFile !== 'pizza3.glb' && modelFile !== 'pizza4.glb') {
+                        model.traverse(function (node) {
+                            if (node.isMesh) {
+                                node.castShadow = true;
+                                node.receiveShadow = true;
+                            }
+                        });
+                    }
+
+                    scene.add(model);
+
+                    // IA solo para PC o pizza1/2
+                    if (!isMobile || (modelFile !== 'pizza3.glb' && modelFile !== 'pizza4.glb')) {
+                        try {
+                            aiAnalysis = performAIAnalysis();
+                            aiDecision = makeAIDecision(aiAnalysis);
+                            updateAIPanel();
+                            applyAIDecisions();
+                        } catch (aiError) {
+                            console.error('Error IA:', aiError);
+                        }
+                    }
+
+                    // Mostrar paneles solo para PC
+                    if (!isMobile) {
+                        modelStats.style.display = 'block';
+                        controlsPanel.style.display = 'block';
+                        aiPanel.style.display = 'block';
+                    } else {
+                        if (deviceStatus) deviceStatus.textContent = '📱 Vista 3D lista - Toca AR para usar cámara';
+                        setupTouchControls();
+                    }
+
+                    model.visible = true;
+                    analyzeModel();
+                    animate();
+
+                    // FORZAR VISIBILIDAD DESPUÉS DE CARGAR - PARA PIZZA3/4 EN MÓVIL
+                    if (isMobile && (modelFile === 'pizza3.glb' || modelFile === 'pizza4.glb')) {
+                        console.log('🍕 APLICANDO CONFIGURACIÓN FINAL PIZZA3/4');
+                        setTimeout(() => {
+                            if (model) {
+                                model.visible = true;
+                                model.position.set(0, 0, -1.5);
+                                model.scale.set(0.8, 0.8, 0.8);
+                                console.log('🍕 Pizza3/4 configurada:', model.position, model.scale);
+                            }
+                        }, 500);
+                    }
+                },
+                function (xhr) {
+                    if (xhr.lengthComputable) {
+                        const percent = Math.floor((xhr.loaded / xhr.total) * 100);
+                        loadingElement.textContent = `Cargando: ${percent}%`;
+                    }
+                },
+                function (error) {
+                    console.error('Error cargando modelo:', error);
+                    showError(`Error de carga: ${error.message || 'Error desconocido'}`);
+                }
+            );
+        }
+
+        // IA - Sistema exacto del documento que funciona
+        function performAIAnalysis() {
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const centerDistance = center.length();
+
+            let meshCount = 0;
+            let vertexCount = 0;
+            model.traverse(function (node) {
+                if (node.isMesh) {
+                    meshCount++;
+                    if (node.geometry && node.geometry.attributes.position) {
+                        vertexCount += node.geometry.attributes.position.count;
+                    }
+                }
+            });
+
+            return {
+                filename: modelFile,
+                dimensions: size,
+                center: center,
+                maxDim: maxDim,
+                centerDistance: centerDistance,
+                meshCount: meshCount,
+                vertexCount: vertexCount,
+                sizeCategory: classifySize(maxDim),
+                centerCategory: classifyCenter(centerDistance),
+                complexityCategory: classifyComplexity(vertexCount),
+                problemCategory: classifyProblem(modelFile, center, maxDim)
+            };
+        }
+
+        function classifySize(maxDim) {
+            if (maxDim < 0.001) return 'microscopic';
+            if (maxDim < 0.1) return 'tiny';
+            if (maxDim < 1) return 'small';
+            if (maxDim < 10) return 'normal';
+            return 'large';
+        }
+
+        function classifyCenter(distance) {
+            if (distance < 1) return 'origin';
+            if (distance < 10) return 'near';
+            if (distance < 50) return 'far';
+            return 'extreme';
+        }
+
+        function classifyComplexity(vertices) {
+            if (vertices < 1000) return 'simple';
+            if (vertices < 10000) return 'moderate';
+            if (vertices < 100000) return 'complex';
+            return 'very_complex';
+        }
+
+        function classifyProblem(filename, center, maxDim) {
+            if (filename === 'pizza3.glb') {
+                return 'displaced_center_small';
+            }
+            if (filename === 'pizza4.glb') {
+                return 'displaced_center_small';
+            }
+            if (filename === 'pizza1.glb' || filename === 'pizza2.glb') {
+                return 'normal';
+            }
+            return 'unknown';
+        }
+
+        function makeAIDecision(analysis) {
+            let decision = {
+                strategy: 'standard',
+                scale: 1.0,
+                rotationY: 0,
+                positionY: 0.0,
+                centerCorrection: false,
+                noAutoRotation: false,
+                reasoning: []
+            };
+
+            if (analysis.problemCategory === 'displaced_center_small') {
+                decision.strategy = 'displaced_small_fix';
+                decision.centerCorrection = true;
+                decision.reasoning.push('Centro desplazado detectado');
+
+                if (analysis.maxDim < 0.5) {
+                    decision.scale = 20.0;
+                    decision.reasoning.push('Modelo muy pequeño: escala agresiva aplicada');
+                } else {
+                    decision.scale = 3.0;
+                    decision.reasoning.push('Modelo pequeño: escala moderada aplicada');
+                }
+
+                if (analysis.filename === 'pizza3.glb') {
+                    decision.rotationY = 50;
+                    decision.reasoning.push('pizza3: rotación óptima aplicada');
+                } else if (analysis.filename === 'pizza4.glb') {
+                    decision.rotationY = 45;
+                    decision.reasoning.push('pizza4: rotación óptima aplicada');
+                }
+
+            } else if (analysis.problemCategory === 'normal') {
+                decision.strategy = 'standard_optimize';
+                decision.scale = 4.0 / Math.max(analysis.maxDim, 0.1);
+                decision.reasoning.push('Modelo normal: optimización estándar');
+                decision.noAutoRotation = true;
+
+            } else {
+                if (analysis.sizeCategory === 'tiny' || analysis.sizeCategory === 'microscopic') {
+                    decision.scale = 25.0;
+                    decision.reasoning.push('Tamaño microscópico: amplificación extrema');
+                } else if (analysis.centerCategory === 'far' || analysis.centerCategory === 'extreme') {
+                    decision.centerCorrection = true;
+                    decision.scale = 7.0;
+                    decision.reasoning.push('Centro lejano: corrección + amplificación');
                 }
             }
 
-            // Verificar soporte WebXR
-            if ('xr' in navigator) {
-                navigator.xr.isSessionSupported('immersive-ar')
-                    .then(supported => {
-                        if (isMobile && !supported) startMobile3D();
-                    });
-            } else if (isMobile) {
-                startMobile3D();
-            }
+            decision.reasoning.push(`Estrategia final: ${decision.strategy}`);
+            return decision;
         }
-        function createObject3D() {
-            if (modelPath && modelPath !== '') {
-                // Mostrar indicador de carga
-                loading.style.display = 'block';
 
-                // Cargar modelo GLB correspondiente
-                const loader = new THREE.GLTFLoader();
-                loader.load(
-                    modelPath,
-                    function (gltf) {
-                        // Éxito al cargar el modelo
-                        object3D = gltf.scene;
+        function updateAIPanel() {
+            if (!aiAnalysis || !aiDecision) return;
 
-                        // Ajustar tamaño y posición según el modelo específico
-                        switch (productName.toLowerCase()) {
-                            case "pepperoni":
-                                object3D.scale.set(0.5, 0.5, 0.5);
-                                break;
-                            case "mi champ":
-                                object3D.scale.set(0.4, 0.4, 0.4);
-                                break;
-                            case "say cheese":
-                                object3D.scale.set(0.5, 0.5, 0.5);
-                                break;
-                            case "verace":
-                                object3D.scale.set(0.5, 0.5, 0.5);
-                                break;
-                            default:
-                                object3D.scale.set(0.5, 0.5, 0.5);
-                        }
+            aiContent.innerHTML = `
+                <div class="ai-decision">Estrategia: ${aiDecision.strategy}</div>
+                <div class="ai-decision">Escala IA: ${aiDecision.scale}x</div>
+                <div class="ai-decision">Rotación IA: ${aiDecision.rotationY}°</div>
+                <div class="ai-decision">Centro: ${aiDecision.centerCorrection ? 'Corregido' : 'Original'}</div>
+                <br>
+                <div class="ai-reasoning">Razonamiento IA:</div>
+                ${aiDecision.reasoning.map(r => `<div class="ai-reasoning">• ${r}</div>`).join('')}
+                <br>
+                <div style="color: #ffff99; font-size: 10px;">
+                Análisis: ${aiAnalysis.sizeCategory}, ${aiAnalysis.centerCategory}, ${aiAnalysis.problemCategory}
+                </div>
+            `;
+        }
 
-                        // Asegurarse de que reciba sombras
-                        object3D.traverse(function (child) {
-                            if (child.isMesh) {
-                                child.castShadow = true;
-                                child.receiveShadow = true;
-                            }
-                        });
+        function applyAIDecisions() {
+            if (!model || !aiDecision) return;
 
-                        object3D.visible = false;
-                        scene.add(object3D);
+            console.log('🤖 Aplicando IA para:', modelFile, 'Móvil AR:', isMobile && isARActive);
 
-                        // Marcar como cargado
-                        modelReady = true;
-                        loading.style.display = 'none';
+            // CONFIGURACIÓN ESPECIAL PARA MÓVIL AR
+            if (isMobile) {
+                if (modelFile === 'pizza3.glb' || modelFile === 'pizza4.glb') {
+                    // Pizza3/4 en móvil: posición visible
+                    model.position.set(0, 0, -2); // Más cerca para que se vea
+                    model.scale.set(1.0, 1.0, 1.0); // Escala más grande
 
-                        // Si estamos en escritorio, iniciar la vista
-                        if (!isMobile && !isARActive) {
-                            startDesktopView();
-                        }
-                    },
-                    // Progreso
-                    function (xhr) {
-                        const percent = Math.floor((xhr.loaded / xhr.total) * 100);
-                        loading.textContent = `Cargando modelo 3D: ${percent}%`;
-                    },
-                    // Error
-                    function (error) {
-                        console.error('Error al cargar el modelo:', error);
-                        loading.style.display = 'none';
-                        // Crear cubo por defecto si hay error
-                        createDefaultCube();
+                    // Solo aplicar rotación
+                    if (modelFile === 'pizza3.glb') {
+                        model.rotation.y = 50 * Math.PI / 180;
+                    } else {
+                        model.rotation.y = 45 * Math.PI / 180;
                     }
-                );
-            } else {
-                // Si no hay modelo específico, crear cubo rojo por defecto
-                createDefaultCube();
+
+                    console.log('🍕 Pizza3/4 móvil configurada:', model.position, model.scale);
+                    return; // SALIR AQUÍ para pizza3/4 en móvil
+                }
+            }
+
+            // RESTO DE LA LÓGICA ORIGINAL para PC y pizza1/2
+            if (aiDecision.centerCorrection && !isMobile) {
+                const center = aiAnalysis.center;
+                model.position.copy(center).negate();
+            }
+
+            let finalScale = aiDecision.scale;
+            if (isMobile && isARActive) {
+                const targetRealSize = 0.30;
+                const currentMaxDim = aiAnalysis ? aiAnalysis.maxDim : 1.0;
+                finalScale = targetRealSize / currentMaxDim;
+            }
+
+            model.scale.set(finalScale, finalScale, finalScale);
+
+            const rotRad = (aiDecision.rotationY * Math.PI) / 180;
+            model.rotation.y = rotRad;
+
+            model.position.y = aiDecision.positionY;
+
+            if (!isMobile) {
+                const finalBox = new THREE.Box3().setFromObject(model);
+                if (finalBox.min.y < 0) {
+                    model.position.y = -(finalBox.min.y) + 0.1;
+                }
+            }
+
+            // Actualizar controles UI
+            document.getElementById('scale-slider').value = finalScale;
+            document.getElementById('scale-value').textContent = finalScale.toFixed(1);
+            document.getElementById('posY-slider').value = model.position.y;
+            document.getElementById('posY-value').textContent = model.position.y.toFixed(1);
+            document.getElementById('rotY-slider').value = aiDecision.rotationY;
+            document.getElementById('rotY-value').textContent = aiDecision.rotationY + '°';
+
+            // FIX: Solo llamar fitCameraToModel en PC
+            if (!isMobile) {
+                fitCameraToModel();
             }
         }
 
-        function createDefaultCube() {
-            // Crear cubo rojo por defecto
-            object3D = new THREE.Mesh(
-                new THREE.BoxGeometry(0.3, 0.3, 0.3),
-                new THREE.MeshStandardMaterial({
-                    color: 0xff0000,
-                    metalness: 0.1,
-                    roughness: 0.5
-                })
-            );
-            object3D.castShadow = true;
-            object3D.receiveShadow = true;
-            object3D.visible = false;
-            scene.add(object3D);
+        function analyzeModel() {
+            if (!model) return;
 
-            // Marcar como listo
-            modelReady = true;
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+
+            let meshCount = 0;
+            let materialCount = 0;
+            let vertexCount = 0;
+
+            model.traverse(function (node) {
+                if (node.isMesh) {
+                    meshCount++;
+                    if (node.material) materialCount++;
+                    if (node.geometry && node.geometry.attributes.position) {
+                        vertexCount += node.geometry.attributes.position.count;
+                    }
+                }
+            });
+
+            const maxDim = Math.max(size.x, size.y, size.z);
+
+            statsContent.innerHTML = `
+                <strong>Archivo:</strong> ${modelFile}<br>
+                <strong>Dimensiones:</strong> ${size.x.toFixed(3)} × ${size.y.toFixed(3)} × ${size.z.toFixed(3)}<br>
+                <strong>Centro:</strong> (${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)})<br>
+                <strong>Dim. máxima:</strong> ${maxDim.toFixed(3)}<br>
+                <strong>Meshes:</strong> ${meshCount}<br>
+                <strong>Materiales:</strong> ${materialCount}<br>
+                <strong>Vértices:</strong> ${vertexCount}
+            `;
         }
+
+        function autoFitModel() {
+            if (!model) return;
+
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+
+            let targetScale = 1;
+            if (maxDim > 0) {
+                targetScale = 3 / maxDim;
+            }
+
+            model.scale.set(targetScale, targetScale, targetScale);
+            model.position.copy(center).negate();
+
+            document.getElementById('scale-slider').value = targetScale;
+            document.getElementById('scale-value').textContent = targetScale.toFixed(1);
+            document.getElementById('posY-slider').value = 0;
+            document.getElementById('posY-value').textContent = '0.0';
+
+            // FIX: Solo llamar fitCameraToModel en PC
+            if (!isMobile) {
+                fitCameraToModel();
+            }
+        }
+
+        function centerModel() {
+            if (!model) return;
+
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            model.position.copy(center).negate();
+
+            document.getElementById('posY-slider').value = 0;
+            document.getElementById('posY-value').textContent = '0.0';
+        }
+
+        function resetCamera() {
+            camera.position.set(0, 2, 5);
+            camera.lookAt(0, 0, 0);
+            
+            // FIX: Solo usar controls si existen (no en móvil)
+            if (controls) {
+                controls.target.set(0, 0, 0);
+                controls.update();
+            }
+        }
+
+        function toggleWireframe() {
+            if (!model) return;
+
+            if (wireframeModels.length > 0) {
+                wireframeModels.forEach(wf => scene.remove(wf));
+                wireframeModels = [];
+            } else {
+                model.traverse(function (node) {
+                    if (node.isMesh && node.geometry) {
+                        const wireframe = new THREE.WireframeGeometry(node.geometry);
+                        const line = new THREE.LineSegments(wireframe);
+                        line.material.color.setHex(0x00ff00);
+                        line.position.copy(node.position);
+                        line.rotation.copy(node.rotation);
+                        line.scale.copy(node.scale);
+                        scene.add(line);
+                        wireframeModels.push(line);
+                    }
+                });
+            }
+        }
+
+        function showBoundingBox() {
+            if (!model) return;
+
+            if (boundingBoxHelper) {
+                scene.remove(boundingBoxHelper);
+                boundingBoxHelper = null;
+            } else {
+                const box = new THREE.Box3().setFromObject(model);
+                boundingBoxHelper = new THREE.Box3Helper(box, 0xff0000);
+                scene.add(boundingBoxHelper);
+            }
+        }
+
+        function fitCameraToModel() {
+            if (!model) return;
+
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+
+            const fov = camera.fov * (Math.PI / 180);
+            let cameraZ = Math.abs(maxDim / (2 * Math.tan(fov / 2)));
+            cameraZ *= 2;
+
+            camera.position.set(center.x, center.y + (size.y / 4), center.z + cameraZ);
+
+            // FIX: Solo usar controls si existen (no en móvil)
+            if (controls) {
+                controls.target.copy(center);
+                controls.update();
+            } else {
+                // Para móvil: solo hacer que la cámara mire al centro
+                camera.lookAt(center);
+            }
+        }
+
+        function onWindowResize() {
+            const canvas = renderer.domElement;
+            camera.aspect = canvas.clientWidth / canvas.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (controls) {
+                controls.update();
+            }
+
+            // Rotación automática inteligente
+            const shouldAutoRotate = aiDecision && !aiDecision.noAutoRotation;
+            if (model && document.getElementById('rotY-slider').value == 0 && shouldAutoRotate) {
+                model.rotation.y += 0.003;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // === FUNCIONES AR PARA MÓVIL ===
 
         function createReticle() {
             reticle = new THREE.Group();
 
-            // Anillo principal
             const ring = new THREE.Mesh(
                 new THREE.RingGeometry(0.05, 0.07, 24),
                 new THREE.MeshBasicMaterial({
@@ -338,7 +978,6 @@
             );
             reticle.add(ring);
 
-            // Anillo exterior pulsante
             const outerRing = new THREE.Mesh(
                 new THREE.RingGeometry(0.08, 0.09, 24),
                 new THREE.MeshBasicMaterial({
@@ -348,44 +987,10 @@
             );
             reticle.add(outerRing);
 
-            // Líneas cruzadas
-            const lineMaterial = new THREE.LineBasicMaterial({
-                color: 0xffffff, transparent: true, opacity: 0.8
-            });
-
-            const hLine = new THREE.Line(
-                new THREE.BufferGeometry().setFromPoints([
-                    new THREE.Vector3(-0.05, 0, 0),
-                    new THREE.Vector3(0.05, 0, 0)
-                ]),
-                lineMaterial
-            );
-            reticle.add(hLine);
-
-            const vLine = new THREE.Line(
-                new THREE.BufferGeometry().setFromPoints([
-                    new THREE.Vector3(0, -0.05, 0),
-                    new THREE.Vector3(0, 0.05, 0)
-                ]),
-                lineMaterial
-            );
-            reticle.add(vLine);
-
-            // Plano semitransparente
-            const plane = new THREE.Mesh(
-                new THREE.PlaneGeometry(0.15, 0.15),
-                new THREE.MeshBasicMaterial({
-                    color: 0x00ff00, transparent: true,
-                    opacity: 0.2, side: THREE.DoubleSide
-                })
-            );
-            reticle.add(plane);
-
             reticle.rotation.x = -Math.PI / 2;
             reticle.visible = false;
             scene.add(reticle);
 
-            // Animación pulsante simplificada
             function pulse() {
                 if (reticle.visible) {
                     const scale = 1 + Math.sin(Date.now() * 0.005) * 0.2;
@@ -395,284 +1000,225 @@
             }
             pulse();
         }
-        function startDesktopView() {
-            // Verificar que el modelo esté listo
-            if (!modelReady) {
-                setTimeout(startDesktopView, 100);
-                return;
+
+        async function tryAR() {
+            console.log('🚀 Intentando AR para:', modelFile);
+
+            if (deviceStatus) deviceStatus.textContent = 'Iniciando AR...';
+            arButton.style.display = 'none';
+
+            try {
+                // Solicitar cámara directamente
+                console.log('📷 Solicitando cámara...');
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+
+                if (deviceStatus) deviceStatus.textContent = '📷 Cámara obtenida - Verificando AR...';
+
+                // Detener stream de prueba
+                stream.getTracks().forEach(track => track.stop());
+
+                // Verificar WebXR
+                if (!('xr' in navigator)) {
+                    throw new Error('WebXR no disponible');
+                }
+
+                const supported = await navigator.xr.isSessionSupported('immersive-ar');
+                if (!supported) {
+                    throw new Error('AR no soportado');
+                }
+
+                // Iniciar sesión AR
+                const sessionInit = {
+                    requiredFeatures: ['hit-test'],
+                    optionalFeatures: ['dom-overlay']
+                };
+
+                arSession = await navigator.xr.requestSession('immersive-ar', sessionInit);
+
+                renderer.xr.setReferenceSpaceType('local');
+                await renderer.xr.setSession(arSession);
+
+                arSession.addEventListener('select', onARSelect);
+                arSession.addEventListener('end', onARSessionEnd);
+
+                // Ocultar modelo hasta colocar
+                model.visible = false;
+
+                if (arStatus) arStatus.style.display = 'block';
+                if (deviceStatus) deviceStatus.textContent = '📷 AR activo - Busca superficie';
+
+                isARActive = true;
+                renderer.setAnimationLoop(renderAR);
+
+            } catch (error) {
+                console.error('❌ Error AR:', error);
+                if (deviceStatus) deviceStatus.textContent = 'Error AR: ' + error.message;
+                arButton.style.display = 'block';
+            }
+        }
+
+        function onARSelect() {
+            console.log('🎯 Superficie tocada');
+
+            if (!reticle.visible || model.visible) return;
+
+            const position = new THREE.Vector3();
+            const quaternion = new THREE.Quaternion();
+            const scale = new THREE.Vector3();
+
+            reticle.matrix.decompose(position, quaternion, scale);
+
+            console.log('📍 Posición superficie:', position);
+            console.log('🔍 Modelo antes:', model, 'Visible:', model.visible);
+
+            // APLICAR IA PARA PIZZA3 EN AR
+            if (modelFile === 'pizza3.glb') {
+                // Corrección de centro de IA
+                const box = new THREE.Box3().setFromObject(model);
+                const center = box.getCenter(new THREE.Vector3());
+                console.log('📦 Centro del modelo:', center);
+
+                // Posicionar en superficie pero corregir centro
+                model.position.copy(position);
+                model.position.add(center.clone().negate()); // Corregir centro desplazado
+                model.position.y += 0.1; // Subir un poco
+
+                // Escala de IA para AR
+                model.scale.set(0.4, 0.4, 0.4); // Escala visible
+
+                // Rotación de IA
+                model.rotation.y = 50 * Math.PI / 180;
             }
 
-            // Fondo y suelo simplificados
-            scene.background = new THREE.Color(0x87CEEB);
-            const floor = new THREE.Mesh(
-                new THREE.PlaneGeometry(20, 20),
-                new THREE.MeshStandardMaterial({ color: 0x3a7b3c, roughness: 0.8 })
-            );
-            floor.rotation.x = -Math.PI / 2;
-            floor.receiveShadow = true;
-            scene.add(floor);
-
-            // Posicionar objeto más cercano y a una altura adecuada
-            object3D.position.set(0, 0.8, -1);
-            object3D.visible = true;
-
-            // Configurar interacción con más eventos
-            const canvas = renderer.domElement;
-            canvas.addEventListener('mousedown', onMouseDown);
-            canvas.addEventListener('mousemove', onMouseMove);
-            canvas.addEventListener('mouseup', onMouseUp);
-            canvas.addEventListener('wheel', onMouseWheel);
-            canvas.addEventListener('contextmenu', onContextMenu); // Prevenir menú contextual
-
-            // Actualizar instrucciones
-            controls.textContent = 'Clic izquierdo: rotar • Clic derecho: mover • Rueda: escalar';
-            controls.style.display = 'block';
-            startBtn.style.display = 'none';
-            exitBtn.style.display = 'block';
-
-            // Iniciar animación
-            animate();
-        }
-        // Función para crear la mesa
-        function createTable() {
-            // Crear la superficie de la mesa
-            const tableTopGeometry = new THREE.BoxGeometry(3, 0.1, 2);
-            const tableTopMaterial = new THREE.MeshStandardMaterial({
-                color: 0x8B4513,  // Marrón oscuro para la madera
-                roughness: 0.5,
-                metalness: 0.1
+            // FORZAR VISIBILIDAD BRUTAL
+            model.visible = true;
+            model.traverse(function (child) {
+                if (child.isMesh) {
+                    child.visible = true;
+                    if (child.material) {
+                        child.material.transparent = false;
+                        child.material.opacity = 1.0;
+                        child.material.side = THREE.DoubleSide;
+                    }
+                }
             });
-            const tableTop = new THREE.Mesh(tableTopGeometry, tableTopMaterial);
-            tableTop.position.set(0, 0.75, -1); // Posición ajustada para la mesa
-            tableTop.receiveShadow = true;
-            tableTop.castShadow = true;
-            scene.add(tableTop);
 
-            // Crear las patas de la mesa
-            const legGeometry = new THREE.BoxGeometry(0.1, 0.75, 0.1);
-            const legMaterial = new THREE.MeshStandardMaterial({
-                color: 0x6B3E14,  // Marrón más oscuro para las patas
-                roughness: 0.7,
-                metalness: 0.1
-            });
+            reticle.visible = false;
 
-            // Posiciones de las patas (en las cuatro esquinas)
-            const legPositions = [
-                { x: -1.4, z: -1.9 },
-                { x: 1.4, z: -1.9 },
-                { x: -1.4, z: -0.1 },
-                { x: 1.4, z: -0.1 }
-            ];
+            console.log('✅ Modelo después:', model.position, model.scale, model.visible);
 
-            // Crear las cuatro patas
-            legPositions.forEach(pos => {
-                const leg = new THREE.Mesh(legGeometry, legMaterial);
-                leg.position.set(pos.x, 0.375, pos.z); // Mitad de la altura de la pata
-                leg.castShadow = true;
-                leg.receiveShadow = true;
-                scene.add(leg);
-            });
+            if (arStatus) arStatus.style.display = 'none';
+            if (deviceStatus) deviceStatus.textContent = 'Pizza3 colocada - Toca para mover';
 
-            // Agregar un suelo bajo la mesa
-            const floorGeometry = new THREE.PlaneGeometry(20, 20);
-            const floorMaterial = new THREE.MeshStandardMaterial({
-                color: 0x808080,  // Gris para el suelo
-                roughness: 0.9
-            });
-            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-            floor.rotation.x = -Math.PI / 2;
-            floor.position.y = 0;
-            floor.receiveShadow = true;
-            scene.add(floor);
-
-            // Mejorar la iluminación para la mesa
-            // Luz direccional adicional desde arriba para mostrar mejor la mesa
-            const topLight = new THREE.DirectionalLight(0xffffff, 0.5);
-            topLight.position.set(0, 5, 0);
-            topLight.castShadow = true;
-            topLight.shadow.mapSize.width = 1024;
-            topLight.shadow.mapSize.height = 1024;
-            scene.add(topLight);
-
-            // Luz ambiental más suave
-            scene.remove(scene.children.find(child => child instanceof THREE.AmbientLight));
-            scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+            setupTouchControls();
         }
 
-        // Variables para interacción con ratón
-        let isMouseDown = false;
-        let isDragging = false;
-        let isRotating = false;
-        let lastMousePos = { x: 0, y: 0 };
+        function onARSessionEnd() {
+            isARActive = false;
+            model.visible = true;
+            if (deviceStatus) deviceStatus.textContent = 'AR finalizado - Vista 3D activa';
+            if (arButton) arButton.style.display = 'block';
 
-        function onMouseDown(e) {
-            isMouseDown = true;
-            lastMousePos.x = e.clientX;
-            lastMousePos.y = e.clientY;
-
-            // Botón izquierdo: rotación
-            if (e.button === 0) {
-                isRotating = true;
-                isDragging = false;
-                showGesture('🔄');
-            }
-            // Botón derecho: movimiento
-            else if (e.button === 2) {
-                isDragging = true;
-                isRotating = false;
-                showGesture('✋');
-
-                // Prevenir menú contextual al hacer clic derecho
-                e.preventDefault();
+            // Aplicar IA solo si existe
+            if (aiDecision && aiAnalysis) {
+                applyAIDecisions();
             }
         }
 
-        function onMouseMove(e) {
-            if (!isMouseDown) return;
+        function renderAR(timestamp, frame) {
+            if (!frame || !isARActive) return;
 
-            const dx = e.clientX - lastMousePos.x;
-            const dy = e.clientY - lastMousePos.y;
+            const session = renderer.xr.getSession();
+            const referenceSpace = renderer.xr.getReferenceSpace();
 
-            // Si estamos rotando
-            if (isRotating) {
-                // Rotar alrededor del eje Y (izquierda/derecha)
-                object3D.rotation.y += dx * 0.01;
-
-                // Rotar alrededor del eje X (arriba/abajo)
-                object3D.rotation.x += dy * 0.01;
-            }
-            // Si estamos moviendo
-            else if (isDragging) {
-                // Mover objeto
-                const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-                right.y = 0;
-                right.normalize();
-                const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-                forward.y = 0;
-                forward.normalize();
-
-                object3D.position.add(right.multiplyScalar(dx * 0.01));
-                object3D.position.add(forward.multiplyScalar(-dy * 0.01));
-                object3D.position.y = 0.5;
+            if (!hitTestSource) {
+                session.requestReferenceSpace('viewer').then(viewerSpace => {
+                    session.requestHitTestSource({ space: viewerSpace })
+                        .then(source => {
+                            hitTestSource = source;
+                        });
+                });
             }
 
-            lastMousePos.x = e.clientX;
-            lastMousePos.y = e.clientY;
-        }
+            if (hitTestSource && !model.visible) {
+                const hitTestResults = frame.getHitTestResults(hitTestSource);
 
-        function onMouseUp() {
-            isMouseDown = false;
-            isRotating = false;
-            isDragging = false;
-        }
-        //PILAS
-        function onMouseWheel(e) {
-            // Aumentar sensibilidad y rango del zoom
-            const factor = e.deltaY < 0 ? 1.2 : 0.8; // Más sensible (antes 1.1/0.9)
-            const newScale = object3D.scale.x * factor;
-            // Aumentar el rango máximo de escala (antes 2.0)
-            const scale = Math.max(0.1, Math.min(5.0, newScale));
-            object3D.scale.set(scale, scale, scale);
-            showGesture('↔️');
-        }
+                if (hitTestResults.length > 0) {
+                    const hit = hitTestResults[0];
+                    const pose = hit.getPose(referenceSpace);
 
-        // Añadir prevención del menú contextual
-        function onContextMenu(e) {
-            e.preventDefault();
-            return false;
-        }
-        function startMobile3D() {
-            // Esperar a que el modelo esté listo
-            if (!modelReady) {
-                setTimeout(startMobile3D, 100);
-                return;
+                    if (pose) {
+                        if (arStatus) {
+                            arStatus.style.display = 'block';
+                            arStatus.textContent = 'Superficie detectada - Toca para colocar';
+                            arStatus.style.backgroundColor = 'rgba(76, 175, 80, 0.8)';
+                        }
+
+                        reticle.visible = true;
+                        reticle.matrix.fromArray(pose.transform.matrix);
+                        reticle.matrix.decompose(
+                            reticle.position,
+                            reticle.quaternion,
+                            reticle.scale
+                        );
+                    }
+                } else {
+                    reticle.visible = false;
+                    if (arStatus) arStatus.style.display = 'none';
+                }
             }
 
-            // Crear mesa en lugar del fondo negro
-            scene.background = new THREE.Color(0x87CEEB);
-            createTable();
+            renderer.render(scene, camera);
+        }
 
-            // Vista simplificada para móviles sin AR
-            // Ajustar posición para que esté sobre la mesa
-            object3D.position.set(0, 0.8, -1);
-            object3D.visible = true;
-
+        function setupTouchControls() {
             const canvas = renderer.domElement;
             let touchStart = null;
             let isTwoFingerGesture = false;
-            let initialRotation = 0;
             let initialTouchDistance = 0;
             let initialScale = 1;
 
             canvas.addEventListener('touchstart', e => {
                 e.preventDefault();
 
-                // Detección de gestos con dos dedos para escalar/rotar
                 if (e.touches.length === 2) {
                     isTwoFingerGesture = true;
-
-                    // Calcular distancia inicial entre dedos para escalar
                     const touch1 = e.touches[0];
                     const touch2 = e.touches[1];
                     initialTouchDistance = Math.hypot(
                         touch2.clientX - touch1.clientX,
                         touch2.clientY - touch1.clientY
                     );
-                    initialScale = object3D.scale.x;
-
-                    // Calcular ángulo inicial para rotación
-                    initialRotation = Math.atan2(
-                        touch2.clientY - touch1.clientY,
-                        touch2.clientX - touch1.clientX
-                    );
-
-                    showGesture('↔️');
-                }
-                // Gesto con un dedo para rotar
-                else if (e.touches.length === 1) {
+                    initialScale = model.scale.x;
+                } else if (e.touches.length === 1) {
                     isTwoFingerGesture = false;
                     touchStart = e.touches[0];
-                    showGesture('🔄');
                 }
             });
 
             canvas.addEventListener('touchmove', e => {
                 e.preventDefault();
 
-                // Manejo de gestos con dos dedos
                 if (isTwoFingerGesture && e.touches.length === 2) {
                     const touch1 = e.touches[0];
                     const touch2 = e.touches[1];
-
-                    // Escalar basado en la distancia entre dedos
                     const currentTouchDistance = Math.hypot(
                         touch2.clientX - touch1.clientX,
                         touch2.clientY - touch1.clientY
                     );
                     const scaleFactor = currentTouchDistance / initialTouchDistance;
                     const newScale = initialScale * scaleFactor;
-                    // Aumentar rango máximo de escala de 2.0 a 5.0
-                    const scale = Math.max(0.2, Math.min(5.0, newScale));
-                    object3D.scale.set(scale, scale, scale);
-
-                    // Rotar basado en el cambio de ángulo entre dedos
-                    const currentRotation = Math.atan2(
-                        touch2.clientY - touch1.clientY,
-                        touch2.clientX - touch1.clientX
-                    );
-                    const rotationDelta = currentRotation - initialRotation;
-                    object3D.rotation.z += rotationDelta * 0.5;
-                    initialRotation = currentRotation;
-                }
-                // Manejo de gesto con un dedo
-                else if (!isTwoFingerGesture && e.touches.length === 1 && touchStart) {
+                    const scale = Math.max(0.05, Math.min(2.0, newScale));
+                    model.scale.set(scale, scale, scale);
+                } else if (!isTwoFingerGesture && e.touches.length === 1 && touchStart) {
                     const touch = e.touches[0];
                     const dx = touch.clientX - touchStart.clientX;
                     const dy = touch.clientY - touchStart.clientY;
 
-                    // Rotar el objeto basado en el movimiento del dedo
-                    object3D.rotation.y += dx * 0.01;
-                    object3D.rotation.x += dy * 0.01;
+                    model.rotation.y += dx * 0.01;
+                    model.rotation.x += dy * 0.01;
 
                     touchStart = touch;
                 }
@@ -687,412 +1233,13 @@
                     touchStart = e.touches[0];
                 }
             });
-
-            // Actualizar instrucciones
-            controls.textContent = 'Un dedo: rotar • Dos dedos: escalar/girar';
-            controls.style.display = 'block';
-
-            startBtn.style.display = 'none';
-            exitBtn.style.display = 'block';
-            animate();
         }
 
-        async function startAR() {
-            // Verificar que el modelo esté listo
-            if (!modelReady) {
-                loading.style.display = 'block';
-                loading.textContent = 'Esperando a que el modelo termine de cargar...';
-                setTimeout(startAR, 500);
-                return;
-            }
-
-            if (!isMobile) {
-                startDesktopView();
-                return;
-            }
-
-            arStatus.textContent = 'Solicitando acceso a la cámara...';
-            arStatus.style.display = 'block';
-
-            if (!('xr' in navigator)) {
-                startMobile3D();
-                return;
-            }
-
-            try {
-                const supported = await navigator.xr.isSessionSupported('immersive-ar');
-                if (!supported) {
-                    startMobile3D();
-                    return;
-                }
-
-                startBtn.style.display = 'none';
-                exitBtn.style.display = 'block';
-
-                // Configurar sesión AR
-                const sessionInit = {
-                    requiredFeatures: ['hit-test'],
-                    optionalFeatures: ['dom-overlay']
-                };
-
-                if (sessionInit.optionalFeatures.includes('dom-overlay')) {
-                    sessionInit.domOverlay = { root: document.getElementById('ar-container') };
-                }
-
-                arSession = await navigator.xr.requestSession('immersive-ar', sessionInit);
-
-                // Configurar renderer y eventos
-                renderer.xr.setReferenceSpaceType('local');
-                await renderer.xr.setSession(arSession);
-                arSession.addEventListener('select', onARSelect);
-                arSession.addEventListener('end', onARSessionEnd);
-
-                arStatus.textContent = 'Mueve el dispositivo para detectar superficies';
-                isARActive = true;
-
-                // Iniciar loop de renderizado
-                renderer.setAnimationLoop(renderAR);
-
-            } catch (error) {
-                console.error('Error al iniciar AR:', error);
-                arStatus.textContent = 'Error: No se pudo acceder a la cámara';
-                setTimeout(() => { arStatus.style.display = 'none'; }, 3000);
-                startBtn.style.display = 'block';
-                exitBtn.style.display = 'none';
-            }
-        }
-
-        function onARSessionEnd() {
-            isARActive = false;
-            exitBtn.style.display = 'block';
-
-            if (object3D.visible) {
-                controls.style.display = 'block';
-                setupTouchHandlers();
-                animate();
-            } else {
-                arStatus.textContent = 'Sesión AR interrumpida';
-                arStatus.style.display = 'block';
-            }
-        }
-
-        function onARSelect() {
-            if (!reticle.visible || object3D.visible) return;
-
-            // Colocar objeto en posición del retículo
-            const position = new THREE.Vector3();
-            const quaternion = new THREE.Quaternion();
-            const scale = new THREE.Vector3();
-
-            reticle.matrix.decompose(position, quaternion, scale);
-            object3D.position.copy(position);
-            // Ajustar altura ligeramente para elevarlo sobre la superficie
-            object3D.position.y += 0.05;
-
-            // Orientar según superficie
-            const normalVector = new THREE.Vector3(0, 0, 1).applyQuaternion(quaternion);
-            const upVector = new THREE.Vector3(0, 1, 0);
-            const angle = Math.acos(normalVector.dot(upVector)) * (180 / Math.PI);
-
-            if (angle > 45 && angle < 135) {
-                object3D.quaternion.copy(quaternion);
-                const offset = new THREE.Vector3(0, 0, 0.15).applyQuaternion(quaternion);
-                object3D.position.add(offset);
-            }
-
-            // Mostrar objeto con animación
-            object3D.visible = true;
-            // Guardamos la escala original
-            const originalScale = {
-                x: object3D.scale.x,
-                y: object3D.scale.y,
-                z: object3D.scale.z
-            };
-            // Escalamos a cero temporalmente
-            object3D.scale.set(
-                originalScale.x * 0.1,
-                originalScale.y * 0.1,
-                originalScale.z * 0.1
-            );
-            // Animamos para volver a la escala original
-            animateScale(object3D, originalScale, 300);
-
-            // Actualizar estado
-            isObjectPlaced = true;
-            arStatus.style.display = 'none';
-            distance.style.display = 'none';
-            surface.style.display = 'none';
-            controls.style.display = 'block';
-
-            // Configurar manipulación
-            setupTouchHandlers();
-        }
-        // Variables para manipulación táctil
-        let isMoving = false, isScaling = false;
-        let lastTouch = { x: 0, y: 0 };
-        let initialDistance = 0, initialScale = 0;
-
-        function setupTouchHandlers() {
-            const canvas = renderer.domElement;
-
-            canvas.removeEventListener('touchstart', onTouchStart);
-            canvas.removeEventListener('touchmove', onTouchMove);
-            canvas.removeEventListener('touchend', onTouchEnd);
-
-            canvas.addEventListener('touchstart', onTouchStart);
-            canvas.addEventListener('touchmove', onTouchMove);
-            canvas.addEventListener('touchend', onTouchEnd);
-
-            // Mostrar gestos
-            showGesture('👆');
-            setTimeout(() => showGesture('👋'), 1500);
-            setTimeout(() => showGesture('👌'), 3000);
-        }
-
-        function onTouchStart(e) {
-            e.preventDefault();
-
-            if (e.touches.length === 2) {
-                isScaling = true;
-                isMoving = false;
-
-                const touch1 = e.touches[0];
-                const touch2 = e.touches[1];
-                initialDistance = Math.hypot(
-                    touch2.clientX - touch1.clientX,
-                    touch2.clientY - touch1.clientY
-                );
-                initialScale = object3D.scale.x;
-
-                showGesture('↔️');
-
-            } else if (e.touches.length === 1) {
-                isMoving = true;
-                isScaling = false;
-
-                const touch = e.touches[0];
-                lastTouch.x = touch.clientX;
-                lastTouch.y = touch.clientY;
-
-                showGesture('✋');
-            }
-        }
-
-        function onTouchMove(e) {
-            e.preventDefault();
-
-            if (isScaling && e.touches.length === 2) {
-                const touch1 = e.touches[0];
-                const touch2 = e.touches[1];
-
-                const currentDistance = Math.hypot(
-                    touch2.clientX - touch1.clientX,
-                    touch2.clientY - touch1.clientY
-                );
-
-                const factor = currentDistance / initialDistance;
-                const newScale = initialScale * factor;
-                const scale = Math.max(0.2, Math.min(2.0, newScale));
-
-                object3D.scale.set(scale, scale, scale);
-
-            } else if (isMoving && e.touches.length === 1) {
-                const touch = e.touches[0];
-                const dx = touch.clientX - lastTouch.x;
-                const dy = touch.clientY - lastTouch.y;
-
-                // Mover en el espacio 3D
-                const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-                const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
-
-                const distance = camera.position.distanceTo(object3D.position);
-                const sensitivity = distance * 0.003;
-
-                object3D.position.add(right.multiplyScalar(dx * sensitivity));
-                object3D.position.add(up.multiplyScalar(-dy * sensitivity));
-
-                lastTouch.x = touch.clientX;
-                lastTouch.y = touch.clientY;
-            }
-        }
-
-        function onTouchEnd() {
-            isMoving = isScaling = false;
-        }
-
-        function showGesture(emoji) {
-            gesture.textContent = emoji;
-            gesture.style.opacity = '0.8';
-            setTimeout(() => { gesture.style.opacity = '0'; }, 1000);
-        }
-
-        function animateScale(object, target, duration) {
-            const start = {
-                x: object.scale.x,
-                y: object.scale.y,
-                z: object.scale.z
-            };
-            const startTime = Date.now();
-
-            function update() {
-                const elapsed = Date.now() - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-
-                object.scale.x = start.x + (target.x - start.x) * progress;
-                object.scale.y = start.y + (target.y - start.y) * progress;
-                object.scale.z = start.z + (target.z - start.z) * progress;
-
-                if (progress < 1) requestAnimationFrame(update);
-            }
-
-            update();
-        }
-        function renderAR(timestamp, frame) {
-            if (!frame || !isARActive) return;
-
-            const session = renderer.xr.getSession();
-            const referenceSpace = renderer.xr.getReferenceSpace();
-
-            // Solicitar hit test source si es necesario
-            if (!hitTestSource) {
-                session.requestReferenceSpace('viewer').then(viewerSpace => {
-                    session.requestHitTestSource({ space: viewerSpace })
-                        .then(source => {
-                            hitTestSource = source;
-                        });
-                });
-
-                session.addEventListener('end', () => {
-                    hitTestSource = null;
-                });
-            }
-
-            // Procesar hit test
-            if (hitTestSource) {
-                const hitTestResults = frame.getHitTestResults(hitTestSource);
-
-                if (hitTestResults.length > 0 && !object3D.visible) {
-                    const hit = hitTestResults[0];
-                    const pose = hit.getPose(referenceSpace);
-
-                    if (pose) {
-                        // Actualizar indicadores
-                        const position = pose.transform.position;
-                        const distanceVal = Math.sqrt(
-                            position.x * position.x +
-                            position.y * position.y +
-                            position.z * position.z
-                        );
-
-                        distance.style.display = 'block';
-                        distance.textContent = `Distancia: ${(distanceVal * 100).toFixed(0)} cm`;
-
-                        surface.style.display = 'block';
-
-                        // Evaluar calidad de superficie
-                        const normalVector = new THREE.Vector3(0, 0, 1);
-                        normalVector.applyQuaternion(new THREE.Quaternion(
-                            pose.transform.orientation.x,
-                            pose.transform.orientation.y,
-                            pose.transform.orientation.z,
-                            pose.transform.orientation.w
-                        ));
-
-                        const upVector = new THREE.Vector3(0, 1, 0);
-                        const angle = Math.acos(normalVector.dot(upVector)) * (180 / Math.PI);
-
-                        let quality = 'buena';
-                        let color = '#4CAF50';
-
-                        if ((angle < 20 || angle > 160) || (angle > 70 && angle < 110)) {
-                            if (distanceVal > 2) {
-                                quality = 'lejos';
-                                color = '#FFC107';
-                            }
-                        } else {
-                            quality = 'inclinada';
-                            color = '#FF9800';
-
-                            if (distanceVal > 1.5) {
-                                quality = 'inadecuada';
-                                color = '#F44336';
-                            }
-                        }
-
-                        surface.textContent = `Superficie: ${quality}`;
-                        surface.style.backgroundColor = color;
-
-                        // Actualizar retículo
-                        reticle.visible = true;
-                        reticle.matrix.fromArray(pose.transform.matrix);
-                        reticle.matrix.decompose(
-                            reticle.position,
-                            reticle.quaternion,
-                            reticle.scale
-                        );
-                    }
-                } else if (hitTestResults.length === 0 && reticle.visible) {
-                    reticle.visible = false;
-                    distance.style.display = 'none';
-                    surface.style.display = 'none';
-                }
-            }
-
-            // Rotación automática del objeto solo si está configurado para ello
-            if (object3D.visible && autoRotate && !isMoving && !isScaling) {
-                object3D.rotation.y += 0.01;
-            }
-
-            renderer.render(scene, camera);
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-
-            // Rotación automática del objeto solo si está configurado para ello
-            if (object3D && object3D.visible && autoRotate && !isMoving && !isScaling) {
-                object3D.rotation.y += 0.01;
-            }
-
-            renderer.render(scene, camera);
-        }
-
-        function onResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        function exitAR() {
-            // Limpiar eventos
-            const canvas = renderer.domElement;
-            canvas.removeEventListener('touchstart', onTouchStart);
-            canvas.removeEventListener('touchmove', onTouchMove);
-            canvas.removeEventListener('touchend', onTouchEnd);
-            canvas.removeEventListener('mousedown', onMouseDown);
-            canvas.removeEventListener('mousemove', onMouseMove);
-            canvas.removeEventListener('mouseup', onMouseUp);
-            canvas.removeEventListener('wheel', onMouseWheel);
-            canvas.removeEventListener('contextmenu', onContextMenu);
-
-            // Finalizar sesión AR si existe
-            if (arSession) {
-                arStatus.textContent = 'Cerrando sesión AR...';
-                arStatus.style.display = 'block';
-
-                try {
-                    arSession.end();
-                } catch (e) {
-                    console.error('Error al finalizar sesión AR:', e);
-                }
-            }
-
-            // Detener animación y limpiar
-            renderer.setAnimationLoop(null);
-
-            // Volver a la página de detalle
-            window.location.href = '@Url.Action("Detalle", "Productos", new { id = ViewBag.ProductoId })';
-        }
+        // === INICIALIZACIÓN ===
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('=== INICIANDO VISTA AR ===');
+            init();
+        });
     </script>
 </body>
 </html>

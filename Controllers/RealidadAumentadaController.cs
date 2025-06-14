@@ -25,6 +25,7 @@ namespace ProyectoIdentity.Controllers
             ViewBag.ProductoNombre = producto.Nombre;
             ViewBag.ProductoPrecio = producto.Precio;
             ViewBag.ModeloPath = DeterminarModelo3D(producto.Nombre);
+            ViewBag.ModeloArchivo = DeterminarModeloPorId(id.Value);
 
             return View();
         }
@@ -201,13 +202,13 @@ namespace ProyectoIdentity.Controllers
             switch (nombreNormalizado)
             {
                 case "pepperoni":
-                    return "/models3d/pizza1.glb";
+                    return "/RealidadAumentada/GetGLBFile?archivo=pizza1.glb";
                 case "mi champ":
-                    return "/models3d/pizza2.glb";
+                    return "/RealidadAumentada/GetGLBFile?archivo=pizza2.glb";
                 case "say cheese":
-                    return "/models3d/pizza3.glb";
+                    return "/RealidadAumentada/GetGLBFile?archivo=pizza3.glb";
                 case "verace":
-                    return "/models3d/pizza4.glb";
+                    return "/RealidadAumentada/GetGLBFile?archivo=pizza4.glb";
                 default:
                     return "";
             }

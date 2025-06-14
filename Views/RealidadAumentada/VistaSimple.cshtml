@@ -186,15 +186,16 @@
         <header>
             <div class="header-info">
                 <h2>@ViewBag.ProductoNombre</h2>
-@*                 <small>ID: @ViewBag.ProductoId | Archivo: @ViewBag.ModeloArchivo</small>
- *@            </div>
+                @*                 <small>ID: @ViewBag.ProductoId | Archivo: @ViewBag.ModeloArchivo</small>
+                *@
+            </div>
             <div class="test-buttons">
                 <button class="btn" onclick="history.back()">Volver</button>
                 <a href="/RealidadAumentada/VistaSimple?id=1" class="btn btn-test">ID 1</a>
                 <a href="/RealidadAumentada/VistaSimple?id=2" class="btn btn-test">ID 2</a>
                 <a href="/RealidadAumentada/VistaSimple?id=9" class="btn btn-warning">ID 9</a>
                 <a href="/RealidadAumentada/VistaSimple?id=10" class="btn btn-warning">ID 10</a>
-@*                 <button class="btn btn-control" onclick="resetCamera()">Reset Cámara</button>
+                @*                 <button class="btn btn-control" onclick="resetCamera()">Reset Cámara</button>
                 <button class="btn btn-control" onclick="toggleWireframe()">Wireframe</button>
                 <button class="btn btn-control" onclick="showBoundingBox()">Bounding Box</button> *@
             </div>
@@ -753,18 +754,18 @@
 
             try {
                 aiContent.innerHTML = `
-                            <div class="ai-decision">Estrategia: ${aiDecision.strategy}</div>
-                            <div class="ai-decision">Escala IA: ${aiDecision.scale}x</div>
-                            <div class="ai-decision">Rotación IA: ${aiDecision.rotationY}°</div>
-                            <div class="ai-decision">Centro: ${aiDecision.centerCorrection ? 'Corregido' : 'Original'}</div>
-                            <br>
-                            <div class="ai-reasoning">Razonamiento IA:</div>
-                            ${aiDecision.reasoning.map(r => `<div class="ai-reasoning">• ${r}</div>`).join('')}
-                            <br>
-                            <div style="color: #ffff99; font-size: 10px;">
-                            Análisis: ${aiAnalysis.sizeCategory}, ${aiAnalysis.centerCategory}, ${aiAnalysis.problemCategory}
-                            </div>
-                        `;
+                                    <div class="ai-decision">Estrategia: ${aiDecision.strategy}</div>
+                                    <div class="ai-decision">Escala IA: ${aiDecision.scale}x</div>
+                                    <div class="ai-decision">Rotación IA: ${aiDecision.rotationY}°</div>
+                                    <div class="ai-decision">Centro: ${aiDecision.centerCorrection ? 'Corregido' : 'Original'}</div>
+                                    <br>
+                                    <div class="ai-reasoning">Razonamiento IA:</div>
+                                    ${aiDecision.reasoning.map(r => `<div class="ai-reasoning">• ${r}</div>`).join('')}
+                                    <br>
+                                    <div style="color: #ffff99; font-size: 10px;">
+                                    Análisis: ${aiAnalysis.sizeCategory}, ${aiAnalysis.centerCategory}, ${aiAnalysis.problemCategory}
+                                    </div>
+                                `;
             } catch (error) {
                 console.error('Error actualizando panel de IA:', error);
                 if (aiContent) aiContent.innerHTML = '<div style="color: red;">Error mostrando análisis de IA</div>';
@@ -797,14 +798,14 @@
                 const maxDim = Math.max(size.x, size.y, size.z);
 
                 statsContent.innerHTML = `
-                            <strong>Archivo:</strong> ${modelFile}<br>
-                            <strong>Dimensiones:</strong> ${size.x.toFixed(3)} × ${size.y.toFixed(3)} × ${size.z.toFixed(3)}<br>
-                            <strong>Centro:</strong> (${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)})<br>
-                            <strong>Dim. máxima:</strong> ${maxDim.toFixed(3)}<br>
-                            <strong>Meshes:</strong> ${meshCount}<br>
-                            <strong>Materiales:</strong> ${materialCount}<br>
-                            <strong>Vértices:</strong> ${vertexCount}
-                        `;
+                                    <strong>Archivo:</strong> ${modelFile}<br>
+                                    <strong>Dimensiones:</strong> ${size.x.toFixed(3)} × ${size.y.toFixed(3)} × ${size.z.toFixed(3)}<br>
+                                    <strong>Centro:</strong> (${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)})<br>
+                                    <strong>Dim. máxima:</strong> ${maxDim.toFixed(3)}<br>
+                                    <strong>Meshes:</strong> ${meshCount}<br>
+                                    <strong>Materiales:</strong> ${materialCount}<br>
+                                    <strong>Vértices:</strong> ${vertexCount}
+                                `;
 
                 // Diagnosticar problemas potenciales
                 let warnings = [];

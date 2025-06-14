@@ -32,6 +32,8 @@ namespace ProyectoIdentity.Models
         public CollectionPoint PuntoRecoleccion { get; set; }
 
         public bool EsCupon { get; set; } = false;
+        public string? TipoServicio { get; set; }
+
 
     }
 
