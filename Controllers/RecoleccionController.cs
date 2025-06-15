@@ -25,25 +25,25 @@ namespace Proyecto1_MZ_MJ.Controllers
         {
             try
             {
-                // Verificar que tenemos datos de productos seleccionados
-                if (!TempData.ContainsKey("ProductosSeleccionados") && !TempData.ContainsKey("DatosCarrito"))
+                // VERIFICAR SI VIENE DE RECOMPENSAS O DE PRODUCTOS
+                bool vieneDeRecompensas = TempData.ContainsKey("RecompensaCanjeada");
+                bool vieneDeProductos = TempData.ContainsKey("ProductosSeleccionados") || TempData.ContainsKey("DatosCarrito");
+
+                if (!vieneDeRecompensas && !vieneDeProductos)
                 {
-                    TempData["Error"] = "No hay productos seleccionados para procesar";
+                    TempData["Error"] = "No hay productos o recompensas seleccionados para procesar";
                     return RedirectToAction("SeleccionMultiple", "Productos");
                 }
 
-                // Recuperar puntos de recolección
+                // Tu código existente para obtener puntos de recolección...
                 var puntosRecoleccion = await _context.CollectionPoints
                     .Include(p => p.Sucursal)
                     .ToListAsync();
 
-                // Verificar que existan puntos de recolección
+                // Tu código existente para crear puntos por defecto si es necesario...
                 if (!puntosRecoleccion.Any())
                 {
-                    // Crear puntos por defecto
                     await CrearPuntosRecoleccionPorDefecto();
-
-                    // Volver a cargar después de crear los puntos
                     puntosRecoleccion = await _context.CollectionPoints
                         .Include(p => p.Sucursal)
                         .ToListAsync();
@@ -55,7 +55,7 @@ namespace Proyecto1_MZ_MJ.Controllers
                     }
                 }
 
-                // Mantener los datos en TempData para la siguiente acción
+                // MANTENER TODOS LOS DATOS EN TEMPDATA
                 if (TempData.ContainsKey("ProductosSeleccionados"))
                 {
                     TempData.Keep("ProductosSeleccionados");
@@ -64,13 +64,17 @@ namespace Proyecto1_MZ_MJ.Controllers
                 {
                     TempData.Keep("DatosCarrito");
                 }
+                if (TempData.ContainsKey("RecompensaCanjeada"))
+                {
+                    TempData.Keep("RecompensaCanjeada");
+                }
 
                 return View(puntosRecoleccion);
             }
             catch (Exception ex)
             {
                 TempData["Error"] = "Error al cargar puntos de recolección: " + ex.Message;
-                return RedirectToAction("SeleccionMultiple", "Productos");
+                return RedirectToAction("Index", "Home");
             }
         }
 
@@ -194,6 +198,9 @@ namespace Proyecto1_MZ_MJ.Controllers
             return degrees * Math.PI / 180;
         }
 
+        // ACTUALIZA el método FinalizarPedido en RecoleccionController.cs
+        // Agrega estas líneas de debug al inicio del método, justo después de la declaración de variables:
+
         [HttpPost]
         public async Task<IActionResult> FinalizarPedido(int puntoRecoleccionId, string tipoServicio, string observaciones)
         {
@@ -202,6 +209,20 @@ namespace Proyecto1_MZ_MJ.Controllers
                 Console.WriteLine($"[DEBUG] FinalizarPedido llamado con:");
                 Console.WriteLine($"[DEBUG] puntoRecoleccionId: {puntoRecoleccionId}");
                 Console.WriteLine($"[DEBUG] tipoServicio: '{tipoServicio}'");
+
+                // ✅ AGREGAR DEBUG PARA TEMPDATA
+                Console.WriteLine($"[DEBUG] TempData keys disponibles:");
+                foreach (var key in TempData.Keys)
+                {
+                    Console.WriteLine($"[DEBUG] - {key}");
+                }
+
+                // ✅ DEBUG ESPECÍFICO PARA RECOMPENSAS
+                if (TempData.ContainsKey("RecompensaCanjeada"))
+                {
+                    string recompensaJson = TempData["RecompensaCanjeada"].ToString();
+                    Console.WriteLine($"[DEBUG] RecompensaCanjeada JSON: {recompensaJson}");
+                }
 
                 var puntoRecoleccion = await _context.CollectionPoints
                     .Include(p => p.Sucursal)
@@ -215,9 +236,18 @@ namespace Proyecto1_MZ_MJ.Controllers
 
                 int pedidoId = 0;
 
-                // Verificamos si viene de selección múltiple
-                if (TempData.ContainsKey("ProductosSeleccionados"))
+                // VERIFICAR SI VIENE DE RECOMPENSAS
+                if (TempData.ContainsKey("RecompensaCanjeada"))
                 {
+                    Console.WriteLine($"[DEBUG] Procesando recompensa canjeada...");
+                    string recompensaJson = TempData["RecompensaCanjeada"].ToString();
+                    pedidoId = await CrearPedidoDesdeRecompensa(recompensaJson, puntoRecoleccion.SucursalId, tipoServicio);
+                    Console.WriteLine($"[DEBUG] Pedido creado desde recompensa con ID: {pedidoId}");
+                }
+                // VERIFICAR SI VIENE DE PRODUCTOS (tu lógica existente)
+                else if (TempData.ContainsKey("ProductosSeleccionados"))
+                {
+                    Console.WriteLine($"[DEBUG] Procesando productos seleccionados...");
                     string productosJson = TempData["ProductosSeleccionados"].ToString();
 
                     // Intentar deserializar con ambos tipos para compatibilidad
@@ -225,29 +255,33 @@ namespace Proyecto1_MZ_MJ.Controllers
                     {
                         // Primero intentar con ElementoCarrito (formato nuevo)
                         var elementosCarrito = Newtonsoft.Json.JsonConvert.DeserializeObject<List<ElementoCarrito>>(productosJson);
-                        pedidoId = await CrearPedidoDesdeElementosCarrito(elementosCarrito, puntoRecoleccion.SucursalId);
+                        pedidoId = await CrearPedidoDesdeElementosCarrito(elementosCarrito, puntoRecoleccion.SucursalId, tipoServicio);
                     }
                     catch
                     {
                         // Si falla, intentar con el formato anterior
                         var productosSeleccionados = System.Text.Json.JsonSerializer.Deserialize<List<ProductoSeleccionadoInput>>(productosJson);
-                        pedidoId = await CrearPedidoDesdeSeleccionMultiple(productosSeleccionados, puntoRecoleccion.SucursalId);
+                        pedidoId = await CrearPedidoDesdeSeleccionMultiple(productosSeleccionados, puntoRecoleccion.SucursalId, tipoServicio);
                     }
                 }
                 // Verificamos si viene del carrito
                 else if (TempData.ContainsKey("DatosCarrito"))
                 {
+                    Console.WriteLine($"[DEBUG] Procesando datos del carrito...");
                     string carritoJson = TempData["DatosCarrito"].ToString();
-                    pedidoId = await CrearPedidoDesdeCarrito(carritoJson, puntoRecoleccion.SucursalId);
+                    pedidoId = await CrearPedidoDesdeCarrito(carritoJson, puntoRecoleccion.SucursalId, tipoServicio);
                 }
                 else
                 {
-                    TempData["Error"] = "No se encontraron datos del pedido";
-                    return RedirectToAction("SeleccionMultiple", "Productos");
+                    Console.WriteLine($"[DEBUG] ERROR: No se encontraron datos del pedido o recompensa");
+                    TempData["Error"] = "No se encontraron datos del pedido o recompensa";
+                    return RedirectToAction("Seleccionar");
                 }
 
                 if (pedidoId > 0)
                 {
+                    Console.WriteLine($"[DEBUG] ✅ Pedido creado exitosamente con ID: {pedidoId}");
+
                     // Guardar el ID del pedido actual para "Ver mi pedido"
                     HttpContext.Session.SetInt32("PedidoActualId", pedidoId);
 
@@ -262,6 +296,7 @@ namespace Proyecto1_MZ_MJ.Controllers
                 }
                 else
                 {
+                    Console.WriteLine($"[DEBUG] ❌ Error: pedidoId = 0");
                     TempData["Error"] = "Error al crear el pedido";
                     return RedirectToAction("Seleccionar");
                 }
@@ -280,7 +315,6 @@ namespace Proyecto1_MZ_MJ.Controllers
                 return RedirectToAction("Seleccionar");
             }
         }
-
         // Método para crear pedido desde ElementoCarrito (formato nuevo)
         // 1. Método CrearPedidoDesdeElementosCarrito CORREGIDO:
         private async Task<int> CrearPedidoDesdeElementosCarrito(List<ElementoCarrito> elementos, int sucursalId, string tipoServicio = null, string observaciones = null)
@@ -552,6 +586,86 @@ namespace Proyecto1_MZ_MJ.Controllers
             {
                 Console.WriteLine($"[ERROR] Error al guardar en la base de datos: {ex.Message}");
                 Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+            }
+        }
+
+        // REEMPLAZA el método CrearPedidoDesdeRecompensa en RecoleccionController.cs
+
+        private async Task<int> CrearPedidoDesdeRecompensa(string recompensaJson, int sucursalId, string tipoServicio = null)
+        {
+            try
+            {
+                Console.WriteLine($"[DEBUG] CrearPedidoDesdeRecompensa - JSON recibido: {recompensaJson}");
+
+                var datosRecompensa = System.Text.Json.JsonSerializer.Deserialize<JsonElement>(recompensaJson);
+
+                // Extraer los datos del JSON
+                var recompensaId = datosRecompensa.GetProperty("RecompensaId").GetInt32();
+                var usuarioId = datosRecompensa.GetProperty("UsuarioId").GetString();
+                var nombreRecompensa = datosRecompensa.GetProperty("NombreRecompensa").GetString();
+                var puntosUtilizados = datosRecompensa.GetProperty("PuntosUtilizados").GetInt32();
+                var historialCanjeId = datosRecompensa.GetProperty("HistorialCanjeId").GetInt32();
+
+                Console.WriteLine($"[DEBUG] Datos parseados - RecompensaId: {recompensaId}, Usuario: {usuarioId}, Nombre: {nombreRecompensa}");
+
+                var pedido = new Pedido
+                {
+                    Fecha = DateTime.Now,
+                    SucursalId = sucursalId,
+                    Estado = "Preparándose",
+                    UsuarioId = usuarioId,
+                    TipoServicio = string.IsNullOrEmpty(tipoServicio) ? "Para llevar" : tipoServicio,
+                    Total = 0, // Las recompensas no tienen costo monetario
+                    EsCupon = true, // Marcar que es una recompensa
+                    PedidoProductos = new List<PedidoProducto>()
+                };
+
+                _context.Pedidos.Add(pedido);
+                await _context.SaveChangesAsync();
+
+                // ✅ CREAR UNA ENTRADA EN PEDIDOPRODUCTOS PARA LA RECOMPENSA
+                // Esto es importante para que aparezca en el resumen del pedido
+
+                // Obtener el producto asociado a la recompensa
+                var productoRecompensa = await _context.ProductosRecompensa
+                    .Include(pr => pr.Producto)
+                    .FirstOrDefaultAsync(pr => pr.Id == recompensaId);
+
+                if (productoRecompensa?.Producto != null)
+                {
+                    var pedidoProducto = new PedidoProducto
+                    {
+                        PedidoId = pedido.Id,
+                        ProductoId = productoRecompensa.ProductoId ?? 0,
+                        Cantidad = 1,
+                        Precio = 0, // Precio 0 porque es una recompensa
+                                    // ✅ AGREGAR CAMPO PERSONALIZADO SI EXISTE
+                                    // EsRecompensa = true, // Si tienes este campo en tu modelo
+                    };
+
+                    _context.PedidoProductos.Add(pedidoProducto);
+                    await _context.SaveChangesAsync();
+
+                    Console.WriteLine($"[DEBUG] PedidoProducto creado para recompensa - ProductoId: {productoRecompensa.ProductoId}");
+                }
+
+                // ✅ OPCIONAL: ACTUALIZAR EL HISTORIAL DE CANJE CON EL ID DEL PEDIDO
+                var historialCanje = await _context.HistorialCanjes.FindAsync(historialCanjeId);
+                if (historialCanje != null)
+                {
+                    // Si tienes un campo PedidoId en HistorialCanje, descomenta esto:
+                    // historialCanje.PedidoId = pedido.Id;
+                    // await _context.SaveChangesAsync();
+                }
+
+                Console.WriteLine($"[DEBUG] Pedido de recompensa creado exitosamente con ID: {pedido.Id}");
+                return pedido.Id;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error en CrearPedidoDesdeRecompensa: {ex.Message}");
+                Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+                return 0;
             }
         }
 

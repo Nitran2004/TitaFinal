@@ -91,7 +91,112 @@ namespace ProyectoIdentity.Controllers
             return View(model);
         }
 
-        // API para obtener puntos del usuario (para AJAX)
+        // Vista de carrito de recompensas
+        public async Task<IActionResult> VerCarritoRecompensas()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var puntosUsuario = 0;
+
+            if (userId != null)
+            {
+                var usuario = await _context.AppUsuario.FindAsync(userId);
+                puntosUsuario = usuario?.PuntosFidelidad ?? 0;
+            }
+
+            // Obtener recompensas para validación
+            var recompensas = await _context.ProductosRecompensa
+                .Include(r => r.Producto)
+                .OrderBy(r => r.PuntosNecesarios)
+                .ToListAsync();
+
+            var model = new RecompensasViewModel
+            {
+                PuntosUsuario = puntosUsuario,
+                ProductosRecompensa = recompensas
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ActualizarTipoServicio(string codigoCanje, string tipoServicio)
+        {
+            try
+            {
+                var usuarioIdentity = await _userManager.GetUserAsync(User);
+                if (usuarioIdentity == null)
+                {
+                    return RedirectToAction("Recompensas");
+                }
+
+                // ✅ CAST EXPLÍCITO a AppUsuario
+                var usuario = (AppUsuario)usuarioIdentity;
+
+                // ✅ MÉTODO SIMPLIFICADO: Buscar canjes por usuario en las últimas horas
+                // En lugar de parsear el código, buscamos los canjes más recientes
+                var fechaLimite = DateTime.Now.AddHours(-2); // Últimas 2 horas
+
+                var canjesRecientes = await _context.HistorialCanjes
+                    .Include(h => h.ProductoRecompensa)
+                        .ThenInclude(pr => pr.Producto)
+                    .Where(c => c.UsuarioId == usuario.Id &&
+                               c.FechaCanje >= fechaLimite &&
+                               (c.TipoServicio == null || c.TipoServicio == "")) // Solo los que no tienen tipo asignado
+                    .OrderByDescending(c => c.FechaCanje)
+                    .ToListAsync();
+
+                if (!canjesRecientes.Any())
+                {
+                    // ✅ SIN TempData - crear ViewModel directamente con mensaje
+                    var viewModelError = new ResumenCanjesMultiplesViewModel
+                    {
+                        Usuario = usuario,
+                        CanjesRealizados = new List<HistorialCanje>(),
+                        TotalPuntosUtilizados = 0,
+                        CantidadRecompensas = 0,
+                        PuntosRestantes = usuario.PuntosFidelidad ?? 0,
+                        FechaCanje = DateTime.Now,
+                        CodigoCanje = codigoCanje,
+                        ValorTotalAhorrado = 0
+                    };
+
+                    ViewBag.ErrorMessage = "No hay canjes recientes sin tipo de servicio asignado";
+                    return View("ResumenCanjeMultiple", viewModelError);
+                }
+
+                // Actualizar el tipo de servicio para todos los canjes recientes
+                foreach (var canje in canjesRecientes)
+                {
+                    canje.TipoServicio = tipoServicio;
+                }
+
+                await _context.SaveChangesAsync();
+
+                // ✅ CREAR EL VIEWMODEL Y REGRESAR A ResumenCanjeMultiple CON MENSAJE DE ÉXITO
+                var viewModel = new ResumenCanjesMultiplesViewModel
+                {
+                    Usuario = usuario,
+                    CanjesRealizados = canjesRecientes,
+                    TotalPuntosUtilizados = canjesRecientes.Sum(c => c.PuntosUtilizados),
+                    CantidadRecompensas = canjesRecientes.Count,
+                    PuntosRestantes = usuario.PuntosFidelidad ?? 0,
+                    FechaCanje = canjesRecientes.First().FechaCanje,
+                    CodigoCanje = codigoCanje,
+                    ValorTotalAhorrado = canjesRecientes.Sum(c => c.ProductoRecompensa?.PrecioOriginal ?? 0)
+                };
+
+                // ✅ USAR ViewBag EN LUGAR DE TempData para que no persista
+                ViewBag.SuccessMessage = $"Tipo de servicio actualizado: {tipoServicio}";
+
+                return View("ResumenCanjeMultiple", viewModel);
+            }
+            catch (Exception ex)
+            {
+                // ✅ SIN TempData - redirigir sin mensajes
+                return RedirectToAction("Recompensas");
+            }
+        }
         [HttpGet]
         public async Task<IActionResult> ObtenerPuntos()
         {
@@ -185,8 +290,28 @@ namespace ProyectoIdentity.Controllers
             _context.TransaccionesPuntos.Add(transaccion);
             await _context.SaveChangesAsync();
 
-            // ✅ NUEVO: Redirigir al resumen de canje en lugar de mostrar mensaje
-            return RedirectToAction("ResumenCanje", new { id = historialCanje.Id });
+            // ✅ CORREGIR: GUARDAR DATOS EN EL FORMATO CORRECTO PARA RECOLECCIÓN
+            var datosRecompensa = new
+            {
+                RecompensaId = recompensaId,
+                UsuarioId = userId,
+                FechaCanje = DateTime.Now,
+                NombreRecompensa = productoRecompensa.Nombre,
+                PuntosUtilizados = productoRecompensa.PuntosNecesarios,
+                HistorialCanjeId = historialCanje.Id,
+                // ✅ AGREGAR DATOS DEL PRODUCTO PARA EL PEDIDO
+                ProductoId = productoRecompensa.ProductoId,
+                Categoria = productoRecompensa.Categoria,
+                PrecioOriginal = productoRecompensa.PrecioOriginal
+            };
+
+            TempData["RecompensaCanjeada"] = System.Text.Json.JsonSerializer.Serialize(datosRecompensa);
+
+            // ✅ AGREGAR MENSAJE DE ÉXITO
+            TempData["Success"] = $"¡Recompensa '{productoRecompensa.Nombre}' canjeada exitosamente! Ahora selecciona dónde recogerla.";
+
+            // REDIRIGIR AL FLUJO DE RECOLECCIÓN
+            return RedirectToAction("Seleccionar", "Recoleccion");
         }
 
         // ✅ NUEVO: Método para mostrar el resumen del canje

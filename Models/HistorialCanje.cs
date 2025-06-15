@@ -19,6 +19,9 @@ namespace ProyectoIdentity.Models
 
         public DateTime FechaCanje { get; set; } = DateTime.Now;
 
+        [StringLength(50)]
+        public string? TipoServicio { get; set; }
+
         // Navegación
         public virtual ProductoRecompensa? ProductoRecompensa { get; set; }
     }

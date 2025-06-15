@@ -4,6 +4,7 @@
 }
 
 <style>
+    /* --------- Estilos para el Header con puntos --------- */
     .puntos-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -22,7 +23,7 @@
         margin: 0.5rem 0;
     }
 
-    /* BARRA DE PROGRESO ESTILO ORIGINAL - 0 a 2000 pts */
+    /* --------- Barra de Progreso --------- */
     .progress-container {
         background: rgba(255,255,255,0.2);
         border-radius: 20px;
@@ -46,7 +47,6 @@
         box-shadow: 0 4px 15px rgba(65, 105, 225, 0.3);
     }
 
-    /* Marcas de la regla */
     .ruler-marks {
         position: absolute;
         top: 0;
@@ -98,7 +98,6 @@
         background: rgba(0,0,0,0.5);
     }
 
-    /* Indicador de posición actual */
     .current-position {
         position: absolute;
         top: -15px;
@@ -108,6 +107,7 @@
         align-items: center;
         pointer-events: none;
         z-index: 4;
+        animation: pulseMarker 2s ease-in-out infinite;
     }
 
     .position-marker {
@@ -131,62 +131,12 @@
         white-space: nowrap;
     }
 
-    /* Información del progreso */
-    .progress-info {
-        margin-top: 1rem;
-        text-align: center;
-    }
-
-    .progress-text {
-        color: rgba(255,255,255,0.9);
-    }
-
-    .progress-text small {
-        font-size: 0.85rem;
-    }
-
-    /* CORRECCIÓN: Agregando  antes de media */
-    @@media (max-width: 768px) {
-        .progress-container {
-            height: 35px;
-            margin: 1rem 0;
-        }
-        
-        .ruler-label {
-            font-size: 0.6rem;
-            padding: 1px 2px;
-        }
-        
-        .ruler-tick {
-            height: 12px;
-        }
-        
-        .position-label {
-            font-size: 0.7rem;
-            padding: 2px 6px;
-        }
-        
-        .position-marker {
-            border-left-width: 6px;
-            border-right-width: 6px;
-            border-top-width: 10px;
-        }
-        
-        .progress-text small {
-            font-size: 0.75rem;
-        }
-    }
-
-    /* CORRECCIÓN: Agregando  antes de keyframes */
     @@keyframes pulseMarker {
         0%, 100% { transform: translateX(-50%) scale(1); }
         50% { transform: translateX(-50%) scale(1.1); }
     }
 
-    .current-position {
-        animation: pulseMarker 2s ease-in-out infinite;
-    }
-
+    /* --------- Grid de Recompensas --------- */
     .recompensas-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -279,11 +229,6 @@
         color: #212529;
     }
 
-    .seleccionado-badge {
-        background: #28a745;
-        color: white;
-    }
-
     .recompensa-controls {
         display: flex;
         align-items: center;
@@ -291,6 +236,46 @@
         margin-top: 1rem;
     }
 
+    /* --------- Checkbox Bootstrap Style --------- */
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .form-check-input {
+        margin: 0 !important;
+        position: static !important;
+        width: 16px;
+        height: 16px;
+    }
+
+    .form-check-label {
+        font-weight: 500;
+        color: #495057;
+        cursor: pointer;
+        margin: 0;
+        user-select: none;
+        font-size: 0.875rem;
+        line-height: 1;
+    }
+
+    .form-check:hover .form-check-label {
+        color: #007bff;
+    }
+
+    .form-check-input:checked + .form-check-label {
+        color: #007bff;
+        font-weight: 600;
+    }
+
+    .form-check-input:disabled + .form-check-label {
+        color: #6c757d;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    /* --------- Quantity Control --------- */
     .quantity-control {
         display: flex;
         align-items: center;
@@ -330,19 +315,7 @@
         font-weight: bold;
     }
 
-    .checkbox-container {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .recompensa-checkbox {
-        width: 20px;
-        height: 20px;
-        cursor: pointer;
-    }
-
-    /* Carrito flotante */
+    /* --------- Carrito Flotante --------- */
     .cart-container {
         position: fixed;
         bottom: 30px;
@@ -442,20 +415,7 @@
         cursor: not-allowed;
     }
 
-    /* CORRECCIÓN: Agregando  antes de media */
-    @@media (max-width: 768px) {
-        .recompensas-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .cart-container {
-            right: 15px;
-            left: 15px;
-            min-width: auto;
-        }
-    }
-
-    /* Información adicional */
+    /* --------- Información adicional --------- */
     .siguiente-nivel {
         background: #f8f9fa;
         padding: 2rem;
@@ -473,7 +433,46 @@
         color: #6c757d;
         margin-bottom: 0.5rem;
     }
+
+    /* --------- Media Queries --------- */
+    @@media (max-width: 768px) {
+        .progress-container {
+            height: 35px;
+            margin: 1rem 0;
+        }
+        
+        .ruler-label {
+            font-size: 0.6rem;
+            padding: 1px 2px;
+        }
+        
+        .ruler-tick {
+            height: 12px;
+        }
+        
+        .position-label {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+        }
+        
+        .position-marker {
+            border-left-width: 6px;
+            border-right-width: 6px;
+            border-top-width: 10px;
+        }
+
+        .recompensas-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .cart-container {
+            right: 15px;
+            left: 15px;
+            min-width: auto;
+        }
+    }
 </style>
+
 <div class="container mt-4">
     <!-- Header con puntos disponibles -->
     <div class="puntos-header">
@@ -481,41 +480,32 @@
         <div class="puntos-disponibles" id="puntos-disponibles">@Model.PuntosUsuario pts</div>
         <p>Selecciona las recompensas que deseas canjear</p>
 
-        <!-- REEMPLAZA la sección de la barra de progreso en Recompensas.cshtml -->
+        <!-- Barra de progreso -->
         <div class="progress-container">
-                @{
-                    // Calcular el porcentaje considerando el padding
-                    int maxPuntosRegla = 2000;
-                    double porcentajeProgreso = Math.Min(100, (double)Model.PuntosUsuario / maxPuntosRegla * 100);
-
-                    // Ajustar el ancho para que incluya el padding izquierdo (15px)
-                    // El ancho total efectivo es 100% - 30px (15px cada lado)
-                    // Agregamos 15px al porcentaje para que la barra comience desde el borde
-                    double anchoBarraAjustado = 15 + (porcentajeProgreso * 0.85); // 85% del ancho total disponible
-
-                    // Calcular próximo nivel de 200 en 200
-                    int siguienteNivel = ((Model.PuntosUsuario / 200) + 1) * 200;
-                    if (siguienteNivel > 2000) siguienteNivel = 2000;
-                    int puntosFaltantesProximoNivel = Math.Max(0, siguienteNivel - Model.PuntosUsuario);
-
-                    // Para el indicador, mantener el cálculo original con padding
-                    double posicionIndicador = 15 + (porcentajeProgreso * 0.7); // Ajuste para centrarlo mejor
-                }
+            @{
+                int maxPuntosRegla = 2000;
+                double porcentajeProgreso = Math.Min(100, (double)Model.PuntosUsuario / maxPuntosRegla * 100);
+                double anchoBarraAjustado = 15 + (porcentajeProgreso * 0.85);
+                int siguienteNivel = ((Model.PuntosUsuario / 200) + 1) * 200;
+                if (siguienteNivel > 2000) siguienteNivel = 2000;
+                int puntosFaltantesProximoNivel = Math.Max(0, siguienteNivel - Model.PuntosUsuario);
+                double posicionIndicador = 15 + (porcentajeProgreso * 0.7);
+            }
 
             <div class="progress-bar-ruler" style="width: calc(@anchoBarraAjustado% + 15px)"></div>
 
             <!-- Marcas de la regla -->
             <div class="ruler-marks">
-                    @for (int i = 0; i <= 2000; i += 200)
-                    {
-                        double posicion = (double)i / 2000 * 100;
-                        bool esActivo = Model.PuntosUsuario >= i;
+                @for (int i = 0; i <= 2000; i += 200)
+                {
+                    double posicion = (double)i / 2000 * 100;
+                    bool esActivo = Model.PuntosUsuario >= i;
 
                     <div class="ruler-mark @(esActivo ? "active" : "")" style="left: @posicion%">
                         <div class="ruler-tick"></div>
                         <div class="ruler-label">@i</div>
                     </div>
-                    }
+                }
             </div>
 
             <!-- Indicador de posición actual -->
@@ -523,23 +513,8 @@
                 <div class="position-marker"></div>
                 <div class="position-label">@Model.PuntosUsuario pts</div>
             </div>
-
-            <!-- Información del progreso -->
-            <div class="progress-info">
-                    @if (Model.PuntosUsuario < 2000)
-                    {
-                    <div class="progress-text">
-                        <!-- <small>Te faltan <strong>@puntosFaltantesProximoNivel puntos</strong> para el siguiente nivel (@siguienteNivel pts)</small>-->
-                    </div>
-                    }
-                    else
-                    {
-                    <div class="progress-text">
-                        <!-- <small><strong>¡Has alcanzado el nivel máximo de fidelidad!</strong></small>-->
-                    </div>
-                    }
-            </div>
         </div>
+    </div>
 
     <!-- Mensajes de estado -->
     @if (TempData["Exito"] != null)
@@ -569,12 +544,12 @@
                 var recompensa = Model.ProductosRecompensa[i];
                 bool puedeComprar = Model.PuntosUsuario >= recompensa.PuntosNecesarios;
                 int puntosFaltantes = Math.Max(0, recompensa.PuntosNecesarios - Model.PuntosUsuario);
-                
-                <div class="recompensa-card @(!puedeComprar ? "no-disponible" : "")" 
-                     data-id="@recompensa.Id" 
+
+                <div class="recompensa-card @(!puedeComprar ? "no-disponible" : "")"
+                     data-id="@recompensa.Id"
                      data-puntos="@recompensa.PuntosNecesarios"
                      data-nombre="@recompensa.Nombre">
-                    
+
                     <div class="recompensa-imagen">
                         @if (recompensa.Producto?.Imagen != null && recompensa.Producto.Imagen.Length > 0)
                         {
@@ -585,13 +560,13 @@
                             <i class="fas fa-utensils"></i>
                         }
                     </div>
-                    
+
                     <div class="recompensa-contenido">
                         <h3 class="recompensa-titulo">@recompensa.Nombre</h3>
                         <p class="recompensa-descripcion">
                             @recompensa.Categoria - Valor original: $@recompensa.PrecioOriginal.ToString("F2")
                         </p>
-                        
+
                         <div class="recompensa-puntos">
                             <span class="puntos-requeridos">@recompensa.PuntosNecesarios pts</span>
                             @if (puedeComprar)
@@ -603,31 +578,31 @@
                                 <span class="estado-badge faltan-puntos-badge">Te faltan @puntosFaltantes pts</span>
                             }
                         </div>
-                        
+
                         <!-- Controles de selección -->
                         <div class="recompensa-controls">
-                            <div class="checkbox-container">
-                                <input type="checkbox" 
-                                       class="recompensa-checkbox" 
-                                       id="chk-@recompensa.Id" 
+                            <div class="form-check">
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       id="chk-@recompensa.Id"
                                        name="recompensasSeleccionadas[@i].Seleccionada"
-                                       value="true" 
+                                       value="true"
                                        data-id="@recompensa.Id"
                                        @(!puedeComprar ? "disabled" : "") />
-                                <label for="chk-@recompensa.Id" class="mb-0">
-                                    <strong>Seleccionar</strong>
+                                <label class="form-check-label" for="chk-@recompensa.Id">
+                                    Seleccionar
                                 </label>
                                 <input type="hidden" name="recompensasSeleccionadas[@i].RecompensaId" value="@recompensa.Id" />
                             </div>
-                            
+
                             <div class="quantity-control">
                                 <button type="button" class="quantity-btn decrease-btn" data-id="@recompensa.Id" @(!puedeComprar ? "disabled" : "")>−</button>
-                                <input type="number" 
-                                       class="quantity-input" 
+                                <input type="number"
+                                       class="quantity-input"
                                        name="recompensasSeleccionadas[@i].Cantidad"
-                                       value="1" 
-                                       min="1" 
-                                       max="10" 
+                                       value="1"
+                                       min="1"
+                                       max="10"
                                        data-id="@recompensa.Id"
                                        @(!puedeComprar ? "disabled" : "") />
                                 <button type="button" class="quantity-btn increase-btn" data-id="@recompensa.Id" @(!puedeComprar ? "disabled" : "")>+</button>
@@ -647,24 +622,24 @@
                 <span class="cart-items-count" id="cart-count">0</span>
             </h5>
         </div>
-        
+
         <div class="cart-summary">
             <div class="cart-total-puntos" id="cart-total">0 pts</div>
             <small class="text-muted">Total a canjear</small>
         </div>
-        
+
         <div class="cart-status valid" id="cart-status">
             <i class="fas fa-check-circle"></i> Tienes suficientes puntos
         </div>
-        
-        <button type="submit" 
-                class="btn-canjear-multiple enabled" 
-                id="btn-canjear" 
+
+        <button type="submit"
+                class="btn-canjear-multiple enabled"
+                id="btn-canjear"
                 form="form-canje-multiple"
                 onclick="return confirmarCanje()">
             <i class="fas fa-gift"></i> Canjear Recompensas
         </button>
-        
+
         <div class="text-center mt-2">
             <small class="text-muted">Puntos restantes: <span id="puntos-restantes">@Model.PuntosUsuario</span></small>
         </div>
@@ -675,7 +650,7 @@
         <h3><i class="fas fa-info-circle"></i> ¿Cómo ganar más puntos?</h3>
         <p>Ganas <strong>30 puntos por cada dólar</strong> que gastes en tus pedidos.</p>
         <p>¡Sigue pidiendo tus platillos favoritos para acumular más puntos!</p>
-        
+
         <div class="row mt-3">
             <div class="col-md-6 mb-2">
                 <a href="@Url.Action("SeleccionMultiple", "Productos")" class="btn btn-primary btn-lg w-100">
@@ -694,7 +669,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const PUNTOS_USUARIO = @Model.PuntosUsuario;
-    const checkboxes = document.querySelectorAll('.recompensa-checkbox');
+    const checkboxes = document.querySelectorAll('.form-check-input');
     const quantityInputs = document.querySelectorAll('.quantity-input');
     const decreaseBtns = document.querySelectorAll('.decrease-btn');
     const increaseBtns = document.querySelectorAll('.increase-btn');

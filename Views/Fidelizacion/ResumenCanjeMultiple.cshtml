@@ -67,9 +67,111 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- ✅ MOSTRAR TIPO DE SERVICIO SI YA ESTÁ SELECCIONADO -->
+                        @if (!string.IsNullOrEmpty(Model.CanjesRealizados.FirstOrDefault()?.TipoServicio))
+                        {
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="alert alert-success d-flex align-items-center" style="margin-bottom: 0;">
+                                        @if (Model.CanjesRealizados.First().TipoServicio == "Servir aquí")
+                                        {
+                                            <i class="fas fa-chair fa-2x me-3 text-primary"></i>
+                                            <div>
+                                                <strong>Tipo de servicio confirmado: Servir aquí</strong>
+                                                <div class="small text-muted">Podrás disfrutar tus recompensas en el restaurante</div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-shopping-bag fa-2x me-3 text-success"></i>
+                                            <div>
+                                                <strong>Tipo de servicio confirmado: Para llevar</strong>
+                                                <div class="small text-muted">Podrás recoger tus recompensas y llevarlas contigo</div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
+
+            <!-- ✅ SECCIÓN DE SELECCIÓN - SOLO SE MUESTRA SI NO HAY TIPO SELECCIONADO -->
+            @if (string.IsNullOrEmpty(Model.CanjesRealizados.FirstOrDefault()?.TipoServicio))
+            {
+                <div class="card mb-4 shadow border-0" style="border-radius: 15px;">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-utensils"></i> ¿Cómo quieres disfrutar tus recompensas?</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="formTipoServicio" asp-action="ActualizarTipoServicio" asp-controller="Fidelizacion" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="codigoCanje" value="@Model.CodigoCanje" />
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-concierge-bell"></i> Tipo de Servicio *
+                                </label>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card service-option" data-service="Servir aquí">
+                                            <div class="card-body text-center">
+                                                <input class="form-check-input" type="radio" name="tipoServicio" id="servirAqui" value="Servir aquí" required>
+                                                <label class="form-check-label w-100" for="servirAqui">
+                                                    <i class="fas fa-chair fa-2x d-block mb-2 text-primary"></i>
+                                                    <strong>Servir aquí</strong>
+                                                    <small class="d-block text-muted">Consumir en el restaurante</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card service-option" data-service="Para llevar">
+                                            <div class="card-body text-center">
+                                                <input class="form-check-input" type="radio" name="tipoServicio" id="paraLlevar" value="Para llevar" required>
+                                                <label class="form-check-label w-100" for="paraLlevar">
+                                                    <i class="fas fa-shopping-bag fa-2x d-block mb-2 text-success"></i>
+                                                    <strong>Para llevar</strong>
+                                                    <small class="d-block text-muted">Recoger en el restaurante</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary btn-lg" id="btnConfirmarServicio">
+                                    <i class="fas fa-check"></i> Confirmar Tipo de Servicio
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Información específica según tipo de servicio -->
+                        <div id="infoServirAqui" class="alert alert-info mt-3" style="display: none;">
+                            <strong><i class="fas fa-chair"></i> Servir aquí:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Dirígete a cualquier sucursal de Verace Pizza</li>
+                                <li>Tu mesa te será asignada cuando llegues</li>
+                                <li>Presenta tu código: <code>@Model.CodigoCanje</code></li>
+                                <li>Podrás disfrutar tus recompensas en el restaurante</li>
+                            </ul>
+                        </div>
+
+                        <div id="infoParaLlevar" class="alert alert-success mt-3" style="display: none;">
+                            <strong><i class="fas fa-shopping-bag"></i> Para llevar:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Dirígete a cualquier sucursal de Verace Pizza</li>
+                                <li>Recoge en el mostrador</li>
+                                <li>Presenta tu código: <code>@Model.CodigoCanje</code></li>
+                                <li>Llevate tus recompensas para disfrutar donde quieras</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            }
 
             <!-- Lista de canjes individuales -->
             <div class="canjes-list">
@@ -124,7 +226,7 @@
                 </div>
             </div>
 
-            <!-- Instrucciones -->
+            <!-- Instrucciones actualizadas -->
             <div class="alert alert-info border-0 mb-4" style="background: linear-gradient(45deg, #e3f2fd, #f8f9ff); border-radius: 12px;">
                 <div class="d-flex align-items-start">
                     <i class="fas fa-info-circle text-info me-3 mt-1"></i>
@@ -133,7 +235,14 @@
                         <ul class="mb-2 small">
                             <li>Dirígete a <strong>cualquier sucursal</strong> de Verace Pizza</li>
                             <li>Presenta tu <strong>código de canje</strong>: <code>@Model.CodigoCanje</code></li>
-                            <li>Puedes reclamar todas las recompensas <strong>juntas o por separado</strong></li>
+                            @if (!string.IsNullOrEmpty(Model.CanjesRealizados.FirstOrDefault()?.TipoServicio))
+                            {
+                                <li>Tipo de servicio: <strong>@Model.CanjesRealizados.First().TipoServicio</strong></li>
+                            }
+                            else
+                            {
+                                <li><strong>No olvides seleccionar el tipo de servicio arriba</strong></li>
+                            }
                             <li>Válido por <strong>30 días</strong> desde la fecha de canje</li>
                         </ul>
                     </div>
@@ -170,7 +279,7 @@
 </div>
 
 <style>
-    keyframes bounce {
+    @@keyframes bounce {
         0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
         40% { transform: translateY(-10px); }
         60% { transform: translateY(-5px); }
@@ -226,9 +335,103 @@
         box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
-    media (max-width: 768px) {
+    /* ✅ ESTILOS PARA SELECCIÓN DE SERVICIO - Copiados de Recoleccion/Confirmar */
+    .service-option {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid #dee2e6;
+        height: 100%;
+    }
+
+    .service-option:hover {
+        border-color: #28a745;
+        box-shadow: 0 0.25rem 0.5rem rgba(40, 167, 69, 0.25);
+        transform: translateY(-2px);
+    }
+
+    .service-option.selected {
+        border-color: #28a745;
+        background-color: #f8fff9;
+        box-shadow: 0 0.25rem 0.5rem rgba(40, 167, 69, 0.25);
+    }
+
+    .service-option .form-check-input {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+
+    .service-option label {
+        cursor: pointer;
+        margin: 0;
+        padding: 1rem 0;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    .alert-info {
+        background-color: #e7f3ff;
+        border-color: #b8daff;
+        color: #0c5460;
+    }
+
+    @@media (max-width: 768px) {
         .action-buttons .col-6 {
             margin-bottom: 0.5rem;
         }
     }
 </style>
+
+<script>
+    // ✅ JAVASCRIPT PARA MANEJAR SELECCIÓN DE SERVICIO - Copiado de Recoleccion/Confirmar
+    document.addEventListener('DOMContentLoaded', function() {
+        // Manejar selección de tipo de servicio
+        document.querySelectorAll('input[name="tipoServicio"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                const tipoSeleccionado = this.value;
+
+                // Actualizar estilos visuales
+                document.querySelectorAll('.service-option').forEach(function (option) {
+                    option.classList.remove('selected');
+                });
+                this.closest('.service-option').classList.add('selected');
+
+                // Mostrar información específica
+                document.getElementById('infoServirAqui').style.display = 'none';
+                document.getElementById('infoParaLlevar').style.display = 'none';
+
+                if (tipoSeleccionado === 'Servir aquí') {
+                    document.getElementById('infoServirAqui').style.display = 'block';
+                } else if (tipoSeleccionado === 'Para llevar') {
+                    document.getElementById('infoParaLlevar').style.display = 'block';
+                }
+            });
+        });
+
+        // Efecto visual para las opciones de servicio
+        document.querySelectorAll('.service-option').forEach(function (option) {
+            option.addEventListener('click', function () {
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change'));
+            });
+        });
+
+        // Validación del formulario
+        document.getElementById('formTipoServicio').addEventListener('submit', function (e) {
+            const tipoServicio = document.querySelector('input[name="tipoServicio"]:checked');
+
+            if (!tipoServicio) {
+                e.preventDefault();
+                alert('Por favor selecciona si deseas servir aquí o para llevar');
+                return false;
+            }
+
+            return confirm("¿Confirmas el tipo de servicio seleccionado?");
+        });
+    });
+</script>
