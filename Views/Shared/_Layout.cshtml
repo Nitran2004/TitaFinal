@@ -31,18 +31,26 @@
         .navbar-dark .navbar-nav .nav-link {
             color: white !important;
             font-weight: 500;
+            text-decoration: none;
         }
 
         .navbar-dark .navbar-nav .nav-link:hover {
             color: rgba(255, 255, 255, 0.8) !important;
             background-color: rgba(255, 255, 255, 0.1);
             border-radius: 4px;
+            text-decoration: none;
         }
 
         .navbar-dark .navbar-nav .nav-link.active {
             color: white !important;
             background-color: rgba(255, 255, 255, 0.2);
             border-radius: 4px;
+            text-decoration: none;
+        }
+
+        /* Asegurar que no haya subrayado en los iconos */
+        .navbar-dark .navbar-nav .nav-link i {
+            text-decoration: none !important;
         }
 
         /* Estilos para dropdowns */
@@ -66,6 +74,7 @@
         .dropdown-menu .dropdown-item:hover {
             background-color: #f8f9fa;
             color: #212529;
+            text-decoration: none;
         }
 
         .dropdown-menu .dropdown-item i {
@@ -170,6 +179,7 @@
             color: white;
             transform: scale(1.1);
             box-shadow: 0 6px 20px rgba(111, 66, 193, 0.6);
+            text-decoration: none;
         }
 
         @@media (max-width: 768px) {
@@ -186,7 +196,7 @@
             }
         }
 
-        @@media (min-width: 769px) {
+        @@edia (min-width: 769px) {
             .mobile-footer-nav {
                 display: none;
             }
@@ -207,7 +217,7 @@
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
             <div class="container">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <img src="~/images1/logo_bar_verace.png" alt="Logo" class="logo" style="height: 40px;">
+                    <img src="~/images1/logo_bar_verace.png" alt="Logo" class="logo" style="height: 78px;">
                 </a>
                 <button class="navbar-toggler menu-button" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
@@ -221,7 +231,7 @@
                             <!-- SECCIÓN ADMINISTRACIÓN DE SISTEMA -->
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="adminSystemDropdown" role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-users-cog me-2"></i>Administración Sistema
+                                    Administración Sistema
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li>
@@ -242,39 +252,39 @@
                                     </li>
                                 </ul>
                             </li>
+                        }
 
-                            @if (User.IsInRole("Administrador") || User.IsInRole("Cajero"))
-                            {
-                                <!-- SECCIÓN OPERACIONES -->
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="operationsDropdown" role="button" data-bs-toggle="dropdown">
-                                        <i class="fas fa-cash-register me-2"></i>Operaciones
-                                    </a>
-                                    <ul class="dropdown-menu">
-                                        <li>
-                                            <a class="dropdown-item" asp-controller="Pedidos" asp-action="ResumenAdmin">
-                                                <i class="fas fa-shopping-cart"></i> Resumen de Pedidos
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="AdminCanjesIndex">
-                                                <i class="fas fa-gift"></i> Resumen de Canjes
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="Historial">
-                                                <i class="fas fa-history"></i> Resumen Completo
-                                            </a>
-                                        </li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li>
-                                            <a class="dropdown-item" asp-controller="Cupones" asp-action="EscanearQR">
-                                                <i class="fas fa-qrcode"></i> Escanear Cupones QR
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </li>
-                            }
+                        @if (User.IsInRole("Administrador") || User.IsInRole("Cajero"))
+                        {
+                            <!-- SECCIÓN OPERACIONES -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="operationsDropdown" role="button" data-bs-toggle="dropdown">
+                                    Operaciones
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Pedidos" asp-action="ResumenAdmin">
+                                            <i class="fas fa-shopping-cart"></i> Resumen de Pedidos
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="AdminCanjesIndex">
+                                            <i class="fas fa-gift"></i> Resumen de Canjes
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="Historial">
+                                            <i class="fas fa-history"></i> Resumen Completo
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Cupones" asp-action="EscanearQR">
+                                            <i class="fas fa-qrcode"></i> Escanear Cupones QR
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
                         }
 
                         @if (User.IsInRole("Administrador") || User.IsInRole("Cajero") || User.IsInRole("Registrado"))
@@ -295,7 +305,7 @@
                             <!-- SECCIÓN FIDELIZACIÓN -->
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="loyaltyDropdown" role="button" data-bs-toggle="dropdown">
-                                    <i></i>Fidelización
+                                    Fidelización
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li>

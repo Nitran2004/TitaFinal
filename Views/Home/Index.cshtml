@@ -27,37 +27,92 @@
     }
   .category-container::-webkit-scrollbar { height:6px; }
   .category-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius:3px; }
+  
+  /* ✅ Estilos de categorías desde cero - como el original */
   .category-btn {
-    flex:0 0 auto; display:flex; flex-direction:column; align-items:center;
-    border:none; background:transparent; cursor:pointer;
-    padding:6px 12px; transition:color .2s,transform .2s; color:#555;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 6px 12px;
+    transition: color .2s, transform .2s;
+    color: #555; /* ✅ Color gris oscuro original */
+    text-decoration: none !important;
   }
-  .category-btn i { font-size:1.4rem; margin-bottom:4px; transition:transform .2s; }
-  .category-btn span { font-size:.85rem; white-space:nowrap; }
+  
+  .category-btn i {
+    font-size: 1.4rem;
+    margin-bottom: 4px;
+    transition: transform .2s;
+  }
+  
+  .category-btn span {
+    font-size: .85rem;
+    white-space: nowrap;
+  }
+  
+  /* ✅ Efectos hover originales */
   .category-btn.active,
-  .category-btn:hover { color:#28a745; transform:translateY(-3px); }
-  .category-btn.active i,
-  .category-btn:hover i { transform:scale(1.2); }
-  .category-btn.active::after {
-    content:''; display:block; width:100%; height:3px;
-    background:linear-gradient(90deg,#ffc107,#28a745);
-    border-radius:2px; margin-top:6px; animation:indicator-in .3s ease-out;
+  .category-btn:hover {
+    color: #28a745; /* ✅ Verde al hacer hover */
+    transform: translateY(-3px); /* ✅ Elevación */
+    text-decoration: none !important;
   }
-  keyframes indicator-in { from{width:0} to{width:100%} }
-  media(max-width:576px){ .category-btn i{font-size:1.2rem} .category-btn span{font-size:.75rem} }
+  
+  .category-btn.active i,
+  .category-btn:hover i {
+    transform: scale(1.2); /* ✅ Icono se agranda */
+  }
+  
+  /* ✅ Barra indicadora original */
+  .category-btn.active::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, #ffc107, #28a745);
+    border-radius: 2px;
+    margin-top: 6px;
+    animation: indicator-in .3s ease-out;
+  }
+  
+  /* ✅ Asegurar que funcione en todos los estados */
+  .category-btn:hover,
+  .category-btn:focus,
+  .category-btn:visited {
+    text-decoration: none !important;
+  }
+  
+  @@keyframes indicator-in { 
+    from{width:0} 
+    to{width:100%} 
+  }
+  
+  @@media(max-width:576px){ 
+    .category-btn i{font-size:1.2rem} 
+    .category-btn span{font-size:.75rem} 
+  }
 
   /* Imagen de bienvenida */
   .welcome-container {
     position: relative;
-    margin: 40px auto;
-    max-width: 800px;
+    margin: 80px auto 40px;
+    max-width: 1000px; /* Aumentado de 800px a 1000px para hacerlo más ancho */
     text-align: center;
   }
+  
   .welcome-image {
     width: 100%;
+    height: 600px; /* Reducido de la altura implícita para hacerlo más pequeño */
+    object-fit: cover; /* Asegura que la imagen cubra bien el espacio */
+    object-position: center 30%; /* Muestra más la parte superior (0%) o inferior (100%) */
     border-radius: 16px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.12);
   }
+  
   .welcome-text {
     position: absolute;
     top: 50%;
@@ -65,34 +120,56 @@
     transform: translate(-50%, -50%);
     color: white;
     text-shadow: 0 2px 6px rgba(0,0,0,0.5);
-    padding: 24px;
+    padding: 20px; /* Reducido de 24px para ajustar el tamaño */
     background: rgba(0,0,0,0.4);
     border-radius: 12px;
     width: 80%;
   }
+  
   .welcome-text h1 {
-    font-size: 2.5rem;
+    font-size: 2.2rem; /* Reducido de 2.5rem */
     font-weight: 700;
-    margin-bottom: 16px;
+    margin-bottom: 10px; /* Reducido de 16px */
   }
+  
   .welcome-text p {
-    font-size: 1.2rem;
-    margin-bottom: 24px;
+    font-size: 1.1rem; /* Reducido de 1.2rem */
+    margin-bottom: 16px; /* Reducido de 24px */
   }
+  
   .btn-explore {
     background: linear-gradient(45deg, #28a745, #20c997);
     color: white;
     border: none;
-    padding: 12px 24px;
+    padding: 10px 20px; /* Reducido de 12px 24px */
     border-radius: 8px;
     font-weight: 600;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     transition: transform 0.3s, box-shadow 0.3s;
+    display: inline-block;
+    text-decoration: none !important; /* ✅ CORREGIDO */
   }
+  
   .btn-explore:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 16px rgba(0,0,0,0.2);
     color: white;
+    text-decoration: none !important; /* ✅ CORREGIDO */
+  }
+
+  /* Para dispositivos móviles, asegúrate de que se vea bien */
+  @@media (max-width: 768px) {
+    .welcome-container {
+      margin-top: 100px;
+    }
+    
+    .welcome-image {
+      height: 300px; /* Aún más pequeño en móviles */
+    }
+    
+    .welcome-text h1 {
+      font-size: 1.8rem;
+    }
   }
   
   /* Secciones Adicionales */
@@ -136,6 +213,60 @@
     margin-bottom: 15px;
   }
   
+  /* ✅ CORREGIDO: Botones de categorías destacadas */
+  .category-card .btn {
+    text-decoration: none !important;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    display: inline-block;
+    margin-top: 10px;
+  }
+  
+  .category-card .btn:hover {
+    text-decoration: none !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  
+  /* ✅ Colores específicos para cada botón */
+  .btn-outline-success {
+    color: #28a745 !important;
+    border: 2px solid #28a745 !important;
+    background-color: transparent !important;
+  }
+  
+  .btn-outline-success:hover {
+    color: white !important;
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+  }
+  
+  .btn-outline-warning {
+    color: #ffc107 !important;
+    border: 2px solid #ffc107 !important;
+    background-color: transparent !important;
+  }
+  
+  .btn-outline-warning:hover {
+    color: #212529 !important;
+    background-color: #ffc107 !important;
+    border-color: #ffc107 !important;
+  }
+  
+  .btn-outline-danger {
+    color: #dc3545 !important;
+    border: 2px solid #dc3545 !important;
+    background-color: transparent !important;
+  }
+  
+  .btn-outline-danger:hover {
+    color: white !important;
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+  }
+  
   .promo-section {
     background-color: #ffca28;
     padding: 50px 0;
@@ -163,10 +294,12 @@
     border-radius: 8px;
     font-weight: 600;
     transition: transform 0.3s, box-shadow 0.3s;
+    text-decoration: none !important; /* ✅ CORREGIDO */
   }
   .btn-register:hover {
     transform: translateY(-3px);
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    text-decoration: none !important; /* ✅ CORREGIDO */
   }
   
   .faq-section {
@@ -216,7 +349,6 @@
 
 <h1 class="text-center mt-4">Bienvenido, selecciona una categoría</h1>
 
-
 <nav class="category-nav">
   <div class="category-container">
     <a href="/Productos/SeleccionMultiple" class="category-btn">
@@ -258,8 +390,6 @@
   </div>
 </nav>
 
-@* <div style="height: 1px;"></div>
- *@
 <div class="welcome-container">
     <img src="~/images1/cervesa.webp" alt="Bienvenido" class="welcome-image" onerror="this.src='https://via.placeholder.com/800x400/28a745/FFFFFF?text=Bienvenido+a+nuestro+menú'">
   <div class="welcome-text">
@@ -268,81 +398,6 @@
     <a href="/Productos/SeleccionMultiple" class="btn btn-explore">Ver Todo el Menú</a>
   </div>
 </div>
-<style>
-.welcome-container {
-  position: relative;
-  margin: 80px auto 40px;
-  max-width: 1000px; /* Aumentado de 800px a 1000px para hacerlo más ancho */
-  text-align: center;
-
-}
-
-.welcome-image {
-  width: 100%;
-  height: 600px; /* Reducido de la altura implícita para hacerlo más pequeño */
-  object-fit: cover; /* Asegura que la imagen cubra bien el espacio */
-        object-position: center 30%; /* Muestra más la parte superior (0%) o inferior (100%) */
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-}
-
-.welcome-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: white;
-  text-shadow: 0 2px 6px rgba(0,0,0,0.5);
-  padding: 20px; /* Reducido de 24px para ajustar el tamaño */
-  background: rgba(0,0,0,0.4);
-  border-radius: 12px;
-  width: 80%;
-}
-
-.welcome-text h1 {
-  font-size: 2.2rem; /* Reducido de 2.5rem */
-  font-weight: 700;
-  margin-bottom: 10px; /* Reducido de 16px */
-}
-
-.welcome-text p {
-  font-size: 1.1rem; /* Reducido de 1.2rem */
-  margin-bottom: 16px; /* Reducido de 24px */
-}
-
-.btn-explore {
-  background: linear-gradient(45deg, #28a745, #20c997);
-  color: white;
-  border: none;
-  padding: 10px 20px; /* Reducido de 12px 24px */
-  border-radius: 8px;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  transition: transform 0.3s, box-shadow 0.3s;
-  display: inline-block;
-}
-
-.btn-explore:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-  color: white;
-}
-
-/* Para dispositivos móviles, asegúrate de que se vea bien */
-media (max-width: 768px) {
-  .welcome-container {
-    margin-top: 100px;
-  }
-  
-  .welcome-image {
-    height: 300px; /* Aún más pequeño en móviles */
-  }
-  
-  .welcome-text h1 {
-    font-size: 1.8rem;
-  }
-}
-</style>
 
 <!-- Sección principal "Explora Nuestras Categorías" con espacio adicional para evitar que se tape -->
 <div class="container main-categories-section text-center">
@@ -353,7 +408,7 @@ media (max-width: 768px) {
   <div class="row">
     <div class="col-md-4 mb-4">
       <div class="category-card">
-                <img src="~/images1/pizzas.png" alt="Pizzas">
+        <img src="~/images1/pizzas.png" alt="Pizzas">
         <h3>Pizzas</h3>
         <p>Deliciosas pizzas con ingredientes frescos y de la mejor calidad.</p>
         <a href="/Productos/SeleccionMultiple?categoria=Pizza" class="btn btn-outline-success">Ver Pizzas</a>
@@ -361,7 +416,7 @@ media (max-width: 768px) {
     </div>
     <div class="col-md-4 mb-4">
       <div class="category-card">
-                <img src="~/images1/cervesa.webp" alt="Cervezas">
+        <img src="~/images1/cervesa.webp" alt="Cervezas">
         <h3>Cervezas</h3>
         <p>Gran variedad de cervezas nacionales e importadas para todos los gustos.</p>
         <a href="/Productos/SeleccionMultiple?categoria=Cerveza" class="btn btn-outline-warning">Ver Cervezas</a>
@@ -369,7 +424,7 @@ media (max-width: 768px) {
     </div>
     <div class="col-md-4 mb-4">
       <div class="category-card">
-                <img src="~/images1/sanduches.png" alt="Sánduches">
+        <img src="~/images1/sanduches.png" alt="Sánduches">
         <h3>Sánduches</h3>
         <p>Deliciosos sánduches preparados con ingredientes frescos y de calidad.</p>
         <a href="/Productos/SeleccionMultiple?categoria=Sánduches" class="btn btn-outline-danger">Ver Sánduches</a>
