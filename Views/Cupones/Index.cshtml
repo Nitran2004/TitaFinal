@@ -37,7 +37,16 @@
                              data-descripcion="@cupon.Descripcion.ToLower()" 
                              data-codigo="@cupon.CodigoQR.ToLower()" 
                              data-tipo="@cupon.TipoDescuento.ToLower()">
-                            <div class="card h-100 cupon-card">
+                            <div class="card h-100 cupon-card @(cupon.OtorgaPuntos ? "cupon-con-puntos" : "")">
+                                
+                                <!-- Badge de puntos si otorga puntos -->
+                                @if (cupon.OtorgaPuntos)
+                                {
+                                    <div class="puntos-badge">
+                                        <i class="fas fa-star"></i> ¡Gana Puntos!
+                                    </div>
+                                }
+                                
                                 <div class="card-header bg-gradient-warning text-center">
                                     <h5 class="card-title mb-0">@cupon.Nombre</h5>
                                 </div>
@@ -74,6 +83,18 @@
                                     </div>
                                     
                                     <p class="card-text">@cupon.Descripcion</p>
+                                    
+                                    <!-- Información de puntos -->
+                                    @if (cupon.OtorgaPuntos)
+                                    {
+                                        <div class="puntos-info mb-3">
+                                            <div class="alert alert-success p-2">
+                                                <i class="fas fa-star text-warning"></i>
+                                                <small><strong>¡Ganas puntos de fidelidad!</strong><br>
+                                                30 puntos por cada dólar gastado</small>
+                                            </div>
+                                        </div>
+                                    }
                                     
                                     @if (cupon.MontoMinimo > 0)
                                     {
@@ -146,11 +167,57 @@
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         transition: transform 0.3s ease, box-shadow 0.3s ease;
         border: 2px solid #ffc107;
+        position: relative;
     }
     
     .cupon-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Estilo especial para cupones con puntos */
+    .cupon-con-puntos {
+        border: 2px solid #28a745 !important;
+        box-shadow: 0 4px 6px rgba(40, 167, 69, 0.2) !important;
+    }
+    
+    .cupon-con-puntos:hover {
+        box-shadow: 0 8px 15px rgba(40, 167, 69, 0.3) !important;
+    }
+    
+    /* Badge de puntos */
+    .puntos-badge {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        background: linear-gradient(45deg, #28a745, #20c997);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        z-index: 10;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4);
+        animation: puntosGlow 2s ease-in-out infinite;
+    }
+    
+    .puntos-badge i {
+        margin-right: 3px;
+        animation: starSpin 3s linear infinite;
+    }
+    
+    @@keyframes puntosGlow {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    @@keyframes starSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .puntos-info {
+        border-left: 4px solid #28a745;
     }
     
     .bg-gradient-warning {

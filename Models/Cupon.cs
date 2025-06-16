@@ -34,5 +34,7 @@ namespace ProyectoIdentity.Models
         public int LimiteUsos { get; set; } = 1; // Cuántas veces se puede usar
 
         public int VecesUsado { get; set; } = 0;
+
+        public bool OtorgaPuntos { get; set; } = false;
     }
 }

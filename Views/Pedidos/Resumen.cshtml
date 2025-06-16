@@ -213,7 +213,7 @@
             </div>
 
             <!-- Mostrar puntos ganados -->
-            @if (User.Identity.IsAuthenticated && !Model.EsCupon)
+            @if (User.Identity.IsAuthenticated && (!Model.EsCupon || ViewBag.CuponOtorgaPuntos == true))
             {
                 <div class="points-earned position-relative">
                     <!-- Confetti animado -->

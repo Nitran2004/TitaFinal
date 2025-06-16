@@ -221,7 +221,6 @@ namespace Proyecto1_MZ_MJ.Controllers
         }
 
 
-        // Aplicar cupón - SÚPER SIMPLE
         [HttpPost]
         [Authorize(Roles = "Administrador,Cajero")]
         [ValidateAntiForgeryToken]
@@ -231,8 +230,8 @@ namespace Proyecto1_MZ_MJ.Controllers
             {
                 // ✅ OBTENER USUARIO QUE ESCANEÓ (desde TempData o parámetro)
                 var usuarioDelCupon = usuarioQueEscanea ?? TempData["UsuarioQueEscanea"]?.ToString();
-
                 Console.WriteLine($"[DEBUG] Aplicando cupón para usuario: {usuarioDelCupon}");
+
                 var cupon = await _context.Cupones.FindAsync(cuponId);
                 if (cupon == null)
                 {
@@ -264,7 +263,11 @@ namespace Proyecto1_MZ_MJ.Controllers
                 cupon.VecesUsado++;
                 await _context.SaveChangesAsync();
 
+                // ✅ GUARDAR INFO DE PUNTOS ANTES DE REDIRIGIR
+                HttpContext.Session.SetString("CuponOtorgaPuntos", cupon.OtorgaPuntos.ToString());
+
                 TempData["Success"] = "¡Cupón aplicado exitosamente!";
+
                 // Redirección basada en el rol del usuario
                 if (User.IsInRole("Administrador") || User.IsInRole("Cajero"))
                 {
@@ -348,7 +351,7 @@ namespace Proyecto1_MZ_MJ.Controllers
                 SucursalId = sucursal.Id,
                 Estado = "Preparándose",
                 Total = totalFinal,
-                UsuarioId = usuarioDelCupon, // ✅ ASIGNAR AL USUARIO QUE ESCANEÓ
+                UsuarioId = usuarioDelCupon,
                 PedidoProductos = pedidoProductos,
                 EsCupon = true
             };
@@ -356,11 +359,22 @@ namespace Proyecto1_MZ_MJ.Controllers
             _context.Pedidos.Add(pedido);
             await _context.SaveChangesAsync();
 
+            // ✅ AGREGAR PUNTOS SI EL CUPÓN OTORGA PUNTOS
+            if (cupon.OtorgaPuntos && !string.IsNullOrEmpty(usuarioDelCupon))
+            {
+                Console.WriteLine($"[DEBUG] Cupón otorga puntos - agregando puntos por total: {totalFinal}");
+                await AgregarPuntosAUsuario(usuarioDelCupon, totalFinal);
+            }
+            else
+            {
+                Console.WriteLine($"[DEBUG] Cupón NO otorga puntos o usuario nulo - OtorgaPuntos: {cupon.OtorgaPuntos}, UsuarioId: {usuarioDelCupon}");
+            }
+
             // Registrar cupón canjeado
             var cuponCanjeado = new CuponCanjeado
             {
                 CuponId = cupon.Id,
-                UsuarioId = usuarioDelCupon, // ✅ ASIGNAR AL USUARIO QUE ESCANEÓ
+                UsuarioId = usuarioDelCupon,
                 CodigoQR = cupon.CodigoQR,
                 FechaCanje = DateTime.Now,
                 TotalOriginal = totalOriginal,
@@ -375,6 +389,60 @@ namespace Proyecto1_MZ_MJ.Controllers
 
             Console.WriteLine($"[DEBUG] Pedido {pedido.Id} creado para usuario: {usuarioDelCupon}");
             return pedido;
+        }
+        private async Task AgregarPuntosAUsuario(string usuarioId, decimal totalPedido)
+        {
+            Console.WriteLine($"[DEBUG] AgregarPuntosAUsuario iniciado - UsuarioId: {usuarioId}, Total: {totalPedido}");
+
+            if (string.IsNullOrEmpty(usuarioId))
+            {
+                Console.WriteLine("[DEBUG] UsuarioId es null o vacío - SALIENDO");
+                return;
+            }
+
+            var usuario = await _context.AppUsuario.FindAsync(usuarioId);
+            if (usuario == null)
+            {
+                Console.WriteLine($"[DEBUG] Usuario no encontrado con ID: {usuarioId} - SALIENDO");
+                return;
+            }
+
+            Console.WriteLine($"[DEBUG] Usuario encontrado: {usuario.Email}, Puntos actuales: {usuario.PuntosFidelidad}");
+
+            // Calcular puntos ganados (30 puntos por dólar)
+            int puntosGanados = (int)(totalPedido * 30);
+            Console.WriteLine($"[DEBUG] Puntos a agregar: {puntosGanados}");
+
+            // Agregar puntos al usuario
+            int puntosAnteriores = usuario.PuntosFidelidad ?? 0;
+            usuario.PuntosFidelidad = puntosAnteriores + puntosGanados;
+
+            Console.WriteLine($"[DEBUG] Puntos anteriores: {puntosAnteriores}, Nuevos puntos: {usuario.PuntosFidelidad}");
+
+            try
+            {
+                // Crear registro de transacción de puntos
+                var transaccion = new TransaccionPuntos
+                {
+                    UsuarioId = usuarioId,
+                    Puntos = puntosGanados,
+                    Tipo = "Ganancia",
+                    Descripcion = $"Puntos ganados por cupón - Total: ${totalPedido:F2}",
+                    Fecha = DateTime.Now
+                };
+
+                _context.TransaccionesPuntos.Add(transaccion);
+
+                // Guardar cambios
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine("[DEBUG] ✅ Cambios guardados exitosamente en la base de datos");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error al guardar en la base de datos: {ex.Message}");
+                Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+            }
         }
 
         // Crear pedido simple

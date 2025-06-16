@@ -112,6 +112,23 @@ public class PedidosController : Controller
             }
         }
 
+        // Si es cupón, verificar si otorga puntos
+        if (pedido.EsCupon == true)
+        {
+            var cuponCanjeado = await _context.CuponesCanjeados
+                .Include(cc => cc.Cupon)
+                .FirstOrDefaultAsync(cc => cc.PedidoId == pedido.Id);
+
+            ViewBag.CuponOtorgaPuntos = cuponCanjeado?.Cupon?.OtorgaPuntos ?? false;
+        }
+        // Verificar también en sesión
+        if (HttpContext.Session.GetString("CuponOtorgaPuntos") == "True")
+        {
+            ViewBag.CuponOtorgaPuntos = true;
+            // Limpiar sesión después de usar
+            HttpContext.Session.Remove("CuponOtorgaPuntos");
+        }
+
         return View(pedido);
     }
 
@@ -340,7 +357,7 @@ public class PedidosController : Controller
             if (pedido != null)
             {
                 Console.WriteLine($"[DEBUG] Pedido encontrado para usuario autenticado: {pedido.Id}");
-                return View("Resumen", pedido);
+                return RedirectToAction("Resumen", new { id = pedido.Id });
             }
             else
             {
@@ -380,7 +397,7 @@ public class PedidosController : Controller
             if (pedido != null)
             {
                 Console.WriteLine($"[DEBUG] Pedido encontrado por ID: {pedido.Id}");
-                return View("Resumen", pedido);
+                return RedirectToAction("Resumen", new { id = pedido.Id });
             }
         }
 
