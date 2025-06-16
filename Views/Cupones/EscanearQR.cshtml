@@ -94,7 +94,7 @@
                         }
 
                         <!-- Formulario para seleccionar productos -->
-                        <form asp-action="AplicarCupon" asp-controller="Cupones" method="post" onsubmit="return confirmarAplicacion();">
+                        <form asp-action="AplicarCupon" asp-controller="Cupones" method="post" onsubmit="return confirmarAplicacion();" id="formAplicarCupon">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="cuponId" value="@cupon.Id" />
 
@@ -106,6 +106,46 @@
                                     <i class="fas fa-user"></i> <strong>Pedido para:</strong> Usuario autenticado
                                 </div>
                             }
+
+                            <!-- OPCIONES DE SERVICIO -->
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="fas fa-utensils"></i> Opciones de Servicio</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">
+                                            <i class="fas fa-concierge-bell"></i> Tipo de Servicio *
+                                        </label>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <div class="card service-option" data-service="Servir aquí">
+                                                    <div class="card-body text-center">
+                                                        <input class="form-check-input" type="radio" name="tipoServicio" id="servirAqui" value="Servir aquí" required>
+                                                        <label class="form-check-label w-100" for="servirAqui">
+                                                            <i class="fas fa-chair fa-2x d-block mb-2 text-primary"></i>
+                                                            <strong>Servir aquí</strong>
+                                                            <small class="d-block text-muted">Consumir en el restaurante</small>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <div class="card service-option" data-service="Para llevar">
+                                                    <div class="card-body text-center">
+                                                        <input class="form-check-input" type="radio" name="tipoServicio" id="paraLlevar" value="Para llevar" required>
+                                                        <label class="form-check-label w-100" for="paraLlevar">
+                                                            <i class="fas fa-shopping-bag fa-2x d-block mb-2 text-success"></i>
+                                                            <strong>Para llevar</strong>
+                                                            <small class="d-block text-muted">Recoger en el restaurante</small>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
                             <h6>Productos disponibles:</h6>
                             <div class="row">
@@ -131,6 +171,9 @@
                                     </div>
                                 }
                             </div>
+
+                            <!-- Campo oculto para tipo de servicio -->
+                            <input type="hidden" name="tipoServicioSeleccionado" id="tipoServicioHidden" value="" />
 
                             <div class="mt-3 text-center">
                                 <button type="submit" class="btn btn-success btn-lg">
@@ -167,6 +210,38 @@
         border-radius: 8px;
         overflow: hidden;
     }
+
+    /* Estilos para opciones de servicio */
+    .service-option {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid #dee2e6;
+        height: 100%;
+    }
+
+        .service-option:hover {
+            border-color: #28a745;
+            box-shadow: 0 0.25rem 0.5rem rgba(40, 167, 69, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .service-option.selected {
+            border-color: #28a745;
+            background-color: #f8fff9;
+            box-shadow: 0 0.25rem 0.5rem rgba(40, 167, 69, 0.25);
+        }
+
+        .service-option .form-check-input {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .service-option label {
+            cursor: pointer;
+            margin: 0;
+            padding: 1rem 0;
+        }
 </style>
 
 @section Scripts {
@@ -190,10 +265,40 @@
                 return false;
             }
 
+            // ✅ VERIFICAR QUE SE HAYA SELECCIONADO TIPO DE SERVICIO
+            const tipoServicio = document.querySelector('input[name="tipoServicio"]:checked');
+            if (!tipoServicio) {
+                alert('Por favor selecciona si es para "Servir aquí" o "Para llevar"');
+                return false;
+            }
+
+            // ✅ AGREGAR TIPO DE SERVICIO AL CAMPO OCULTO
+            document.getElementById('tipoServicioHidden').value = tipoServicio.value;
+
             return confirm("¿Confirmar la aplicación del cupón y crear el pedido?");
         }
 
-        // ✅ Scanner QR - SIN ERRORES, SOLO CÁMARA
+        // Manejar selección de tipo de servicio
+        document.querySelectorAll('input[name="tipoServicio"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                // Actualizar estilos visuales
+                document.querySelectorAll('.service-option').forEach(function (option) {
+                    option.classList.remove('selected');
+                });
+                this.closest('.service-option').classList.add('selected');
+            });
+        });
+
+        // Efecto visual para las opciones de servicio
+        document.querySelectorAll('.service-option').forEach(function (option) {
+            option.addEventListener('click', function () {
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change'));
+            });
+        });
+
+        // ✅ Scanner QR - CÓDIGO ORIGINAL
         let html5QrcodeScanner;
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -202,17 +307,14 @@
 
         function inicializarScanner() {
             try {
-                // ✅ USAR Html5Qrcode EN LUGAR DE Html5QrcodeScanner PARA CONTROL TOTAL
                 const html5QrCode = new Html5Qrcode("qr-reader");
 
-                // ✅ CONFIGURACIÓN SOLO PARA CÁMARA
                 const config = {
                     fps: 10,
                     qrbox: { width: 250, height: 250 },
                     aspectRatio: 1.0
                 };
 
-                // ✅ CREAR BOTÓN PERSONALIZADO PARA ACTIVAR CÁMARA
                 document.getElementById('qr-reader').innerHTML = `
                             <div style="text-align: center; padding: 20px;">
                                 <button id="start-camera-btn" class="btn btn-primary btn-lg">
@@ -222,14 +324,12 @@
                             </div>
                         `;
 
-                // ✅ EVENTO PARA INICIAR SOLO LA CÁMARA
                 document.getElementById('start-camera-btn').addEventListener('click', function () {
                     this.disabled = true;
                     this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando cámara...';
 
-                    // Iniciar cámara directamente
                     html5QrCode.start(
-                        { facingMode: "environment" }, // Cámara trasera preferida
+                        { facingMode: "environment" },
                         config,
                         onScanSuccess,
                         onScanFailure
@@ -237,11 +337,9 @@
                         document.getElementById('scanner-status').innerHTML =
                             '<i class="fas fa-check-circle text-success"></i> Cámara activa. Apunta al código QR del cupón.';
 
-                        // Ocultar botón y mostrar preview
                         document.getElementById('start-camera-btn').style.display = 'none';
                         document.getElementById('camera-preview').style.display = 'block';
 
-                        // Agregar botón para detener
                         document.getElementById('camera-preview').innerHTML = `
                                     <button id="stop-camera-btn" class="btn btn-danger">
                                         <i class="fas fa-stop"></i> Detener Escáneo
@@ -268,7 +366,6 @@
                     });
                 });
 
-                // Guardar referencia para uso global
                 window.html5QrCodeInstance = html5QrCode;
 
             } catch (error) {
@@ -281,26 +378,22 @@
         function onScanSuccess(decodedText, decodedResult) {
             console.log(`Código escaneado: ${decodedText}`);
 
-            // Detener el scanner
             if (window.html5QrCodeInstance) {
                 window.html5QrCodeInstance.stop();
             }
 
-            // Poner el código en el input manual
             document.getElementById('codigoManualInput').value = decodedText;
 
-            // Actualizar status
             document.getElementById('scanner-status').innerHTML =
                 '<i class="fas fa-check-circle text-success"></i> ¡Código escaneado exitosamente!';
 
-            // Auto-enviar el formulario
             setTimeout(() => {
                 document.querySelector('form[action*="ProcesarCodigoManual"]').submit();
             }, 500);
         }
 
         function onScanFailure(error) {
-            // Manejar errores silenciosamente para evitar spam en consola
+            // Manejar errores silenciosamente
         }
     </script>
 }

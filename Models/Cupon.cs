@@ -22,7 +22,6 @@ namespace ProyectoIdentity.Models
 
         public string DiasAplicables { get; set; } // Días de la semana separados por coma
 
-        [Required]
         public string CodigoQR { get; set; } // Código único para el QR
 
         public DateTime FechaCreacion { get; set; }
@@ -30,8 +29,6 @@ namespace ProyectoIdentity.Models
         public DateTime? FechaExpiracion { get; set; }
 
         public bool Activo { get; set; } = true;
-
-        public int LimiteUsos { get; set; } = 1; // Cuántas veces se puede usar
 
         public int VecesUsado { get; set; } = 0;
 

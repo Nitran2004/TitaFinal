@@ -1,0 +1,319 @@
+﻿@model ProyectoIdentity.Models.Cupon
+@{
+    ViewData["Title"] = "Editar Cupón - " + Model.Nombre;
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h3 class="mb-0">
+                        <i class="fas fa-edit"></i> Editar Cupón: @Model.Nombre
+                    </h3>
+                    <small class="text-muted">ID: @Model.Id | Código: @Model.CodigoQR</small>
+                </div>
+                <div class="card-body">
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger">
+                            @TempData["Error"]
+                        </div>
+                    }
+
+                    <form asp-action="Editar" method="post">
+                        @Html.AntiForgeryToken()
+                        <input asp-for="Id" type="hidden">
+                        <input asp-for="VecesUsado" type="hidden">
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="Nombre" class="form-label">
+                                        <i class="fas fa-tag"></i> Nombre del Cupón *
+                                    </label>
+                                    <input asp-for="Nombre" class="form-control" required>
+                                    <span asp-validation-for="Nombre" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="CodigoQR" class="form-label">
+                                        <i class="fas fa-qrcode"></i> Código QR
+                                    </label>
+                                    <input asp-for="CodigoQR" class="form-control" readonly>
+                                    <small class="form-text text-muted">El código QR no se puede modificar</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Descripcion" class="form-label">
+                                <i class="fas fa-align-left"></i> Descripción *
+                            </label>
+                            <textarea asp-for="Descripcion" class="form-control" rows="3" required></textarea>
+                            <span asp-validation-for="Descripcion" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="TipoDescuento" class="form-label">
+                                        <i class="fas fa-percentage"></i> Tipo de Descuento *
+                                    </label>
+                                    <select asp-for="TipoDescuento" class="form-select" onchange="toggleValorDescuentoEdit()" required>
+                                        <option value="">Selecciona tipo...</option>
+                                        <option value="Porcentaje">Porcentaje (%)</option>
+                                        <option value="Fijo">Monto Fijo ($)</option>
+                                        <option value="3x2">Promoción 3x2</option>
+                                    </select>
+                                    <span asp-validation-for="TipoDescuento" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3" id="valorDescuentoGroupEdit">
+                                    <label asp-for="ValorDescuento" class="form-label">
+                                        <i class="fas fa-dollar-sign"></i> <span id="valorLabelEdit">Valor del Descuento</span>
+                                    </label>
+                                    <input asp-for="ValorDescuento" type="number" step="0.01" min="0" class="form-control"
+                                           id="valorDescuentoInputEdit">
+                                    <span asp-validation-for="ValorDescuento" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="MontoMinimo" class="form-label">
+                                        <i class="fas fa-coins"></i> Monto Mínimo
+                                    </label>
+                                    <input asp-for="MontoMinimo" type="number" step="0.01" min="0" class="form-control"
+                                           value="@Model.MontoMinimo">
+                                    <small class="form-text text-muted">Monto mínimo para aplicar el cupón</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="FechaExpiracion" class="form-label">
+                                        <i class="fas fa-calendar-alt"></i> Fecha de Expiración
+                                    </label>
+                                    <input asp-for="FechaExpiracion" type="date" class="form-control"
+                                           value="@(Model.FechaExpiracion?.ToString("yyyy-MM-dd"))">
+                                    <small class="form-text text-muted">Dejar vacío para sin límite</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-calendar-week"></i> Días Aplicables
+                                    </label>
+                                    @{
+                                        var diasSeleccionados = string.IsNullOrEmpty(Model.DiasAplicables) ?
+                                        new List<string>() :
+                                        Model.DiasAplicables.Split(',').Select(d => d.Trim()).ToList();
+                                    }
+                                    <div class="dias-checkboxes">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="checkbox" value="Todos" id="todosDias"
+                                            @(diasSeleccionados.Contains("Todos") || !diasSeleccionados.Any() ? "checked" : "")
+                                                   onchange="toggleTodosDias()">
+                                            <label class="form-check-label" for="todosDias">
+                                                Todos los días
+                                            </label>
+                                        </div>
+                                        <br>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input dia-individual" type="checkbox" value="Lunes" id="lunes"
+                                            @(diasSeleccionados.Contains("Lunes") ? "checked" : "")>
+                                            <label class="form-check-label" for="lunes">Lunes</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input dia-individual" type="checkbox" value="Martes" id="martes"
+                                            @(diasSeleccionados.Contains("Martes") ? "checked" : "")>
+                                            <label class="form-check-label" for="martes">Martes</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input dia-individual" type="checkbox" value="Miércoles" id="miercoles"
+                                            @(diasSeleccionados.Contains("Miércoles") ? "checked" : "")>
+                                            <label class="form-check-label" for="miercoles">Miércoles</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input dia-individual" type="checkbox" value="Jueves" id="jueves"
+                                            @(diasSeleccionados.Contains("Jueves") ? "checked" : "")>
+                                            <label class="form-check-label" for="jueves">Jueves</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input dia-individual" type="checkbox" value="Viernes" id="viernes"
+                                            @(diasSeleccionados.Contains("Viernes") ? "checked" : "")>
+                                            <label class="form-check-label" for="viernes">Viernes</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input dia-individual" type="checkbox" value="Sábado" id="sabado"
+                                            @(diasSeleccionados.Contains("Sábado") ? "checked" : "")>
+                                            <label class="form-check-label" for="sabado">Sábado</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input dia-individual" type="checkbox" value="Domingo" id="domingo"
+                                            @(diasSeleccionados.Contains("Domingo") ? "checked" : "")>
+                                            <label class="form-check-label" for="domingo">Domingo</label>
+                                        </div>
+                                    </div>
+                                    <input asp-for="DiasAplicables" type="hidden" id="diasAplicablesHidden">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estadísticas de uso -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6><i class="fas fa-chart-bar"></i> Estadísticas de Uso</h6>
+                                        <div class="row text-center">
+                                            <div class="col-md-6">
+                                                <div class="border-end">
+                                                    <h4 class="text-primary">@Model.VecesUsado</h4>
+                                                    <small class="text-muted">Veces Usado</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h4 class="text-success">Sin límite</h4>
+                                                <small class="text-muted">Usos disponibles</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input asp-for="Activo" class="form-check-input" type="checkbox">
+                                        <label asp-for="Activo" class="form-check-label">
+                                            <i class="fas fa-toggle-on"></i> Cupón Activo
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">Los cupones inactivos no se pueden usar</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input asp-for="OtorgaPuntos" class="form-check-input" type="checkbox">
+                                        <label asp-for="OtorgaPuntos" class="form-check-label">
+                                            <i class="fas fa-star"></i> Otorga Puntos de Fidelidad
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">El cliente ganará puntos al usar este cupón</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ProductosAplicables" class="form-label">
+                                <i class="fas fa-shopping-cart"></i> Productos Aplicables
+                            </label>
+                            <input asp-for="ProductosAplicables" class="form-control"
+                                   placeholder="Ej: 1,2,3,4 (IDs de productos separados por comas)">
+                            <small class="form-text text-muted">Dejar vacío para aplicar a todos los productos</small>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="@Url.Action("Index")" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-save"></i> Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        function toggleValorDescuentoEdit() {
+            const tipoDescuento = document.getElementById('TipoDescuento').value;
+            const valorGroup = document.getElementById('valorDescuentoGroupEdit');
+            const valorInput = document.getElementById('valorDescuentoInputEdit');
+            const valorLabel = document.getElementById('valorLabelEdit');
+
+            if (tipoDescuento === '3x2') {
+                valorGroup.style.display = 'none';
+                valorInput.required = false;
+                valorInput.value = '0';
+            } else {
+                valorGroup.style.display = 'block';
+                valorInput.required = true;
+
+                if (tipoDescuento === 'Porcentaje') {
+                    valorLabel.textContent = 'Porcentaje de Descuento (%)';
+                    valorInput.max = '100';
+                } else if (tipoDescuento === 'Fijo') {
+                    valorLabel.textContent = 'Monto de Descuento ($)';
+                    valorInput.removeAttribute('max');
+                }
+            }
+        }
+
+        // Inicializar al cargar la página
+        document.addEventListener('DOMContentLoaded', function () {
+            toggleValorDescuentoEdit();
+            actualizarDiasAplicables();
+
+            // Event listeners para los checkboxes de días
+            document.querySelectorAll('.dia-individual').forEach(function (checkbox) {
+                checkbox.addEventListener('change', function () {
+                    const todosDias = document.getElementById('todosDias');
+                    if (this.checked) {
+                        todosDias.checked = false;
+                    }
+                    actualizarDiasAplicables();
+                });
+            });
+        });
+
+        function toggleTodosDias() {
+            const todosDias = document.getElementById('todosDias');
+            const diasIndividuales = document.querySelectorAll('.dia-individual');
+
+            if (todosDias.checked) {
+                diasIndividuales.forEach(function (checkbox) {
+                    checkbox.checked = false;
+                });
+            }
+            actualizarDiasAplicables();
+        }
+
+        function actualizarDiasAplicables() {
+            const todosDias = document.getElementById('todosDias');
+            const diasIndividuales = document.querySelectorAll('.dia-individual');
+            const hiddenInput = document.getElementById('diasAplicablesHidden');
+
+            if (todosDias.checked) {
+                hiddenInput.value = 'Todos';
+            } else {
+                const diasSeleccionados = [];
+                diasIndividuales.forEach(function (checkbox) {
+                    if (checkbox.checked) {
+                        diasSeleccionados.push(checkbox.value);
+                    }
+                });
+                hiddenInput.value = diasSeleccionados.join(',');
+            }
+        }
+    </script>
+}

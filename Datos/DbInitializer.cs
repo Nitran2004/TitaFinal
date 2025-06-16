@@ -868,7 +868,6 @@ namespace ProyectoIdentity.Datos
             FechaCreacion = DateTime.Now,
             FechaExpiracion = DateTime.Now.AddMonths(3),
             Activo = true,
-            LimiteUsos = 100
         },
 
         // 2. Cupón para últimas 5 cervezas (IDs 21-25)
@@ -885,7 +884,6 @@ namespace ProyectoIdentity.Datos
             FechaCreacion = DateTime.Now,
             FechaExpiracion = DateTime.Now.AddMonths(3),
             Activo = true,
-            LimiteUsos = 200
         },
 
         // 3. Promoción 3x2 en Jarros, Pintas, Litros, Growlers (IDs 11,12,13,14) - TODOS LOS DÍAS EXCEPTO VIERNES
@@ -902,7 +900,6 @@ namespace ProyectoIdentity.Datos
             FechaCreacion = DateTime.Now,
             FechaExpiracion = DateTime.Now.AddMonths(6),
             Activo = true,
-            LimiteUsos = 500
         },
 
         // 4. Promoción 3x2 en Cocteles - SOLO JUEVES
@@ -919,7 +916,6 @@ namespace ProyectoIdentity.Datos
             FechaCreacion = DateTime.Now,
             FechaExpiracion = DateTime.Now.AddMonths(6),
             Activo = true,
-            LimiteUsos = 300
         },
 
         // 5. Cupón general de descuento fijo
@@ -936,7 +932,6 @@ namespace ProyectoIdentity.Datos
             FechaCreacion = DateTime.Now,
             FechaExpiracion = DateTime.Now.AddMonths(1),
             Activo = true,
-            LimiteUsos = 50
         }
     };
 

@@ -58,13 +58,6 @@ namespace Proyecto1_MZ_MJ.Controllers
                 ViewBag.MensajeExpirado = "Este cupón ha expirado";
             }
 
-            // Verificar usos disponibles
-            if (cupon.VecesUsado >= cupon.LimiteUsos)
-            {
-                ViewBag.SinUsos = true;
-                ViewBag.MensajeSinUsos = "Este cupón ya no tiene usos disponibles";
-            }
-
             return View(cupon);
         }
 
@@ -94,12 +87,6 @@ namespace Proyecto1_MZ_MJ.Controllers
                 if (cupon == null)
                 {
                     return Json(new { success = false, mensaje = "Cupón no encontrado o inactivo" });
-                }
-
-                // Verificar si ya fue usado
-                if (cupon.VecesUsado >= cupon.LimiteUsos)
-                {
-                    return Json(new { success = false, mensaje = "Cupón ya utilizado" });
                 }
 
                 // Verificar fecha de expiración
@@ -224,18 +211,26 @@ namespace Proyecto1_MZ_MJ.Controllers
         [HttpPost]
         [Authorize(Roles = "Administrador,Cajero")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AplicarCupon(int cuponId, Dictionary<int, ProductoSeleccionSimple> productos, string usuarioQueEscanea = null)
+        public async Task<IActionResult> AplicarCupon(int cuponId, Dictionary<int, ProductoSeleccionSimple> productos, string usuarioQueEscanea = null, string tipoServicioSeleccionado = null)
         {
             try
             {
                 // ✅ OBTENER USUARIO QUE ESCANEÓ (desde TempData o parámetro)
                 var usuarioDelCupon = usuarioQueEscanea ?? TempData["UsuarioQueEscanea"]?.ToString();
                 Console.WriteLine($"[DEBUG] Aplicando cupón para usuario: {usuarioDelCupon}");
+                Console.WriteLine($"[DEBUG] Tipo de servicio seleccionado: {tipoServicioSeleccionado}");
 
                 var cupon = await _context.Cupones.FindAsync(cuponId);
                 if (cupon == null)
                 {
                     TempData["Error"] = "Cupón no encontrado";
+                    return RedirectToAction("EscanearQR");
+                }
+
+                // ✅ VALIDAR QUE SE HAYA SELECCIONADO TIPO DE SERVICIO
+                if (string.IsNullOrEmpty(tipoServicioSeleccionado))
+                {
+                    TempData["Error"] = "Debes seleccionar si es para 'Servir aquí' o 'Para llevar'";
                     return RedirectToAction("EscanearQR");
                 }
 
@@ -256,8 +251,8 @@ namespace Proyecto1_MZ_MJ.Controllers
                     .Where(p => productosIds.Contains(p.Id))
                     .ToListAsync();
 
-                // Crear pedido
-                var pedido = await CrearPedidoParaUsuarioEspecifico(cupon, productosSeleccionados, productosDB, usuarioDelCupon);
+                // ✅ CREAR PEDIDO CON TIPO DE SERVICIO
+                var pedido = await CrearPedidoParaUsuarioEspecificoConServicio(cupon, productosSeleccionados, productosDB, usuarioDelCupon, tipoServicioSeleccionado);
 
                 // Marcar cupón como usado
                 cupon.VecesUsado++;
@@ -284,6 +279,111 @@ namespace Proyecto1_MZ_MJ.Controllers
                 return RedirectToAction("EscanearQR");
             }
         }
+
+        // ✅ NUEVO MÉTODO QUE INCLUYE TIPO DE SERVICIO
+        private async Task<Pedido> CrearPedidoParaUsuarioEspecificoConServicio(Cupon cupon, List<KeyValuePair<int, ProductoSeleccionSimple>> productosSeleccionados, List<Producto> productosDB, string usuarioDelCupon, string tipoServicio)
+        {
+            // Obtener sucursal
+            var sucursal = await _context.Sucursales.FirstOrDefaultAsync();
+            if (sucursal == null)
+            {
+                sucursal = new Sucursal
+                {
+                    Nombre = "Verace Pizza",
+                    Direccion = "Av. de los Shyris N35-52",
+                    Latitud = -0.180653,
+                    Longitud = -78.487834
+                };
+                _context.Sucursales.Add(sucursal);
+                await _context.SaveChangesAsync();
+            }
+
+            // Calcular totales
+            decimal totalOriginal = 0;
+            var pedidoProductos = new List<PedidoProducto>();
+
+            foreach (var item in productosSeleccionados)
+            {
+                var producto = productosDB.FirstOrDefault(p => p.Id == item.Key);
+                if (producto != null)
+                {
+                    var cantidad = item.Value.Cantidad;
+                    var subtotal = producto.Precio * cantidad;
+                    totalOriginal += subtotal;
+
+                    pedidoProductos.Add(new PedidoProducto
+                    {
+                        ProductoId = producto.Id,
+                        Cantidad = cantidad,
+                        Precio = producto.Precio
+                    });
+                }
+            }
+
+            // Calcular descuento
+            decimal descuento = 0;
+            switch (cupon.TipoDescuento)
+            {
+                case "3x2":
+                    var cantidadTotal = productosSeleccionados.Sum(p => p.Value.Cantidad);
+                    var gruposDe3 = cantidadTotal / 3;
+                    var precioMasBarato = productosDB.Min(p => p.Precio);
+                    descuento = gruposDe3 * precioMasBarato;
+                    break;
+                case "Porcentaje":
+                    descuento = totalOriginal * (cupon.ValorDescuento / 100);
+                    break;
+                case "Fijo":
+                    descuento = Math.Min(cupon.ValorDescuento, totalOriginal);
+                    break;
+            }
+
+            var totalFinal = totalOriginal - descuento;
+
+            // ✅ CREAR PEDIDO CON TIPO DE SERVICIO
+            var pedido = new Pedido
+            {
+                Fecha = DateTime.Now,
+                SucursalId = sucursal.Id,
+                Estado = "Preparándose",
+                Total = totalFinal,
+                UsuarioId = usuarioDelCupon,
+                PedidoProductos = pedidoProductos,
+                EsCupon = true,
+                TipoServicio = tipoServicio // ✅ AGREGAR TIPO DE SERVICIO
+            };
+
+            _context.Pedidos.Add(pedido);
+            await _context.SaveChangesAsync();
+
+            // ✅ AGREGAR PUNTOS SI EL CUPÓN OTORGA PUNTOS
+            if (cupon.OtorgaPuntos && !string.IsNullOrEmpty(usuarioDelCupon))
+            {
+                Console.WriteLine($"[DEBUG] Cupón otorga puntos - agregando puntos por total: {totalFinal}");
+                await AgregarPuntosAUsuario(usuarioDelCupon, totalFinal);
+            }
+
+            // Registrar cupón canjeado
+            var cuponCanjeado = new CuponCanjeado
+            {
+                CuponId = cupon.Id,
+                UsuarioId = usuarioDelCupon,
+                CodigoQR = cupon.CodigoQR,
+                FechaCanje = DateTime.Now,
+                TotalOriginal = totalOriginal,
+                DescuentoAplicado = descuento,
+                TotalConDescuento = totalFinal,
+                ProductosCanjeados = string.Join(",", pedidoProductos.Select(p => $"{p.ProductoId}:{p.Cantidad}")),
+                PedidoId = pedido.Id
+            };
+
+            _context.CuponesCanjeados.Add(cuponCanjeado);
+            await _context.SaveChangesAsync();
+
+            Console.WriteLine($"[DEBUG] Pedido {pedido.Id} creado para usuario: {usuarioDelCupon} con servicio: {tipoServicio}");
+            return pedido;
+        }
+
 
         private async Task<Pedido> CrearPedidoParaUsuarioEspecifico(Cupon cupon, List<KeyValuePair<int, ProductoSeleccionSimple>> productosSeleccionados, List<Producto> productosDB, string usuarioDelCupon)
         {
@@ -551,10 +651,27 @@ namespace Proyecto1_MZ_MJ.Controllers
             if (string.IsNullOrEmpty(cupon.DiasAplicables))
                 return true;
 
-            var diaActual = DateTime.Now.DayOfWeek.ToString();
+            // ✅ CONVERTIR DÍA ACTUAL A ESPAÑOL
+            var diaActualIngles = DateTime.Now.DayOfWeek.ToString();
+            var diaActualEspanol = ConvertirDiaAEspanol(diaActualIngles);
+
             var diasAplicables = cupon.DiasAplicables.Split(',').Select(d => d.Trim());
 
-            return diasAplicables.Contains(diaActual) || diasAplicables.Contains("Todos");
+            return diasAplicables.Contains(diaActualEspanol) || diasAplicables.Contains("Todos");
+        }
+        private string ConvertirDiaAEspanol(string diaIngles)
+        {
+            return diaIngles switch
+            {
+                "Monday" => "Lunes",
+                "Tuesday" => "Martes",
+                "Wednesday" => "Miércoles",
+                "Thursday" => "Jueves",
+                "Friday" => "Viernes",
+                "Saturday" => "Sábado",
+                "Sunday" => "Domingo",
+                _ => diaIngles
+            };
         }
 
         private async Task<List<Producto>> ObtenerProductosAplicables(Cupon cupon)

@@ -70,7 +70,6 @@
                             <p><strong>Monto mínimo:</strong> $@Model.MontoMinimo</p>
                         }
                         <p><strong>Válido hasta:</strong> @(Model.FechaExpiracion?.ToString("dd/MM/yyyy") ?? "Sin expiración")</p>
-                        <p><strong>Usos disponibles:</strong> @(Model.LimiteUsos - Model.VecesUsado) de @Model.LimiteUsos</p>
                     </div>
                 </div>
                 <div class="col-md-6">
