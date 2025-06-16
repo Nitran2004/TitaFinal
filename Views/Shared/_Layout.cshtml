@@ -5,13 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Verace</title>
     
-    <!-- SOLO Bootstrap 5 CSS - remover duplicados -->
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/recompensas.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="~/ProyectoIdentity.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
@@ -31,34 +30,63 @@
         /* Estilos para el navbar */
         .navbar-dark .navbar-nav .nav-link {
             color: white !important;
+            font-weight: 500;
         }
 
         .navbar-dark .navbar-nav .nav-link:hover {
             color: rgba(255, 255, 255, 0.8) !important;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
         }
 
         .navbar-dark .navbar-nav .nav-link.active {
             color: white !important;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
         }
 
-        /* Estilos para el dropdown */
+        /* Estilos para dropdowns */
         .dropdown-menu {
             background-color: white;
             border: 1px solid #dee2e6;
             border-radius: 0.375rem;
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            margin-top: 0.5rem;
         }
 
-        .dropdown-menu .nav-link {
-            color: black !important;
-            padding: 0.5rem 1rem;
+        .dropdown-menu .dropdown-item {
+            color: #212529;
+            padding: 0.75rem 1.25rem;
             text-decoration: none;
-            display: block;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .dropdown-menu .nav-link:hover {
+        .dropdown-menu .dropdown-item:hover {
             background-color: #f8f9fa;
-            color: black !important;
+            color: #212529;
+        }
+
+        .dropdown-menu .dropdown-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Separadores en dropdowns */
+        .dropdown-divider {
+            margin: 0.5rem 0;
+        }
+
+        /* Estilos para secciones del menú */
+        .nav-section-title {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0 1rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .footer {
@@ -69,6 +97,7 @@
             line-height: 60px;
         }
 
+        /* Navegación móvil */
         .mobile-footer-nav {
             position: fixed;
             bottom: 0;
@@ -113,7 +142,37 @@
             margin-bottom: 4px;
         }
 
-        media (max-width: 768px) {
+        /* Botón flotante QR */
+        .floating-qr-scanner {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .btn-scan-floating {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #6f42c1, #5a2d91);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(111, 66, 193, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-scan-floating:hover {
+            background: linear-gradient(45deg, #5a2d91, #6f42c1);
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(111, 66, 193, 0.6);
+        }
+
+        @@media (max-width: 768px) {
             body {
                 padding-bottom: 70px;
             }
@@ -127,7 +186,7 @@
             }
         }
 
-        media (min-width: 769px) {
+        @@media (min-width: 769px) {
             .mobile-footer-nav {
                 display: none;
             }
@@ -156,129 +215,111 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
+                        
                         @if (User.IsInRole("Administrador"))
                         {
-                            <li class="nav-item">
-                                <a class="nav-link text-white" asp-area="" asp-controller="Usuarios" asp-action="Index">Administracion de Usuarios</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-white" asp-area="" asp-controller="Roles" asp-action="Index">Administracion de Roles</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="@Url.Action("Index", "AdminCupones")">
-                                    <i class="fas fa-ticket-alt"></i> Admin Cupones
-                                </a>
-                            </li>
-                        }
-                        <li class="nav-item">
-                            <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="Privacy">Privacidad</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" asp-area="" asp-controller="Productos" asp-action="SeleccionMultiple">
-                                <i></i> Productos
-                            </a>
-                        </li>
-                        @if (User.IsInRole("Administrador"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-white" asp-controller="Pedidos" asp-action="ResumenAdmin">Resumen de Pedidos</a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Fidelizacion" asp-action="AdminCanjesIndex">
-                                    <i ></i>
-                                    Resumen de Canjes
-                                </a>
-                            </li>
-                        }
-                        <li class="nav-item">
-                            <a class="nav-link text-white" asp-controller="Pedidos" asp-action="VerPedidoTemporal">Ver mi pedido</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" asp-controller="Fidelizacion" asp-action="Recompensas">Ver Recompesas</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Fidelizacion" asp-action="MisCanjes">
-                                <i></i>
-                                Mis Canjes
-                            </a>
-                        </li>
-                        <!-- En el dropdown de administración para Administradores y Cajeros -->
-                        @if (User.IsInRole("Administrador") || User.IsInRole("Cajero"))
-                        {
+                            <!-- SECCIÓN ADMINISTRACIÓN DE SISTEMA -->
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-cogs me-2"></i>Administración
+                                <a class="nav-link dropdown-toggle" href="#" id="adminSystemDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-users-cog me-2"></i>Administración Sistema
                                 </a>
                                 <ul class="dropdown-menu">
-                                    <!-- Otros enlaces de admin... -->
-                                    <li><hr class="dropdown-divider"></li>
                                     <li>
-                                        <a class="dropdown-item" asp-controller="Cupones" asp-action="EscanearQR">
-                                            <i class="fas fa-qrcode text-purple"></i> Escanear Cupones QR
+                                        <a class="dropdown-item" asp-area="" asp-controller="Usuarios" asp-action="Index">
+                                            <i class="fas fa-users"></i> Gestión de Usuarios
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="AdminCanjesIndex">
-                                            <i class="fas fa-users-cog text-purple"></i> Gestión de Canjes
+                                        <a class="dropdown-item" asp-area="" asp-controller="Roles" asp-action="Index">
+                                            <i class="fas fa-user-tag"></i> Gestión de Roles
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Index", "AdminCupones")">
+                                            <i class="fas fa-ticket-alt"></i> Admin Cupones
                                         </a>
                                     </li>
                                 </ul>
                             </li>
+
+                            @if (User.IsInRole("Administrador") || User.IsInRole("Cajero"))
+                            {
+                                <!-- SECCIÓN OPERACIONES -->
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="operationsDropdown" role="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-cash-register me-2"></i>Operaciones
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Pedidos" asp-action="ResumenAdmin">
+                                                <i class="fas fa-shopping-cart"></i> Resumen de Pedidos
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="AdminCanjesIndex">
+                                                <i class="fas fa-gift"></i> Resumen de Canjes
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="Historial">
+                                                <i class="fas fa-history"></i> Resumen Completo
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Cupones" asp-action="EscanearQR">
+                                                <i class="fas fa-qrcode"></i> Escanear Cupones QR
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            }
                         }
 
-                        <!-- Botón flotante alternativo para móviles (solo admin/cajero) -->
-                        @if (User.IsInRole("Administrador") || User.IsInRole("Cajero"))
-                        {
-                            <div class="floating-qr-scanner d-lg-none">
-                                <a href="@Url.Action("EscanearQR", "Cupones")" class="btn btn-scan-floating">
-                                    <i class="fas fa-qrcode fa-2x"></i>
-                                </a>
-                            </div>
-                        }
-
-                        <style>
-                            .floating-qr-scanner {
-                                position: fixed;
-                                bottom: 80px;
-                                right: 20px;
-                                z-index: 1000;
-                            }
-
-                            .btn-scan-floating {
-                                width: 60px;
-                                height: 60px;
-                                border-radius: 50%;
-                                background: linear-gradient(45deg, #6f42c1, #5a2d91);
-                                color: white;
-                                border: none;
-                                box-shadow: 0 4px 15px rgba(111, 66, 193, 0.4);
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                transition: all 0.3s ease;
-                            }
-
-                                .btn-scan-floating:hover {
-                                    background: linear-gradient(45deg, #5a2d91, #6f42c1);
-                                    color: white;
-                                    transform: scale(1.1);
-                                    box-shadow: 0 6px 20px rgba(111, 66, 193, 0.6);
-                                }
-                        </style>
                         @if (User.IsInRole("Administrador") || User.IsInRole("Cajero") || User.IsInRole("Registrado"))
                         {
-                        <!-- Nuevo enlace para recomendación de menú -->
-                        <li class="nav-item">
-                            <a class="nav-link text-white" asp-area="" asp-controller="MenuRecomendacion" asp-action="Recomendacion">
-                                <i></i> Recomendaciones IA
-                            </a>
-                        </li>
-                       
+                            <!-- SECCIÓN CLIENTE/TIENDA -->
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Cupones" asp-action="Index">
-                                    <i class="fas fa-tags text-warning me-2"></i>
-                                    Cupones
+                                <a class="nav-link" asp-area="" asp-controller="Productos" asp-action="SeleccionMultiple">
+                                    Productos
+                                </a>
+                            </li>
+                            
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Pedidos" asp-action="VerPedidoTemporal">
+                                    Ver mi pedido
+                                </a>
+                            </li>
+
+                            <!-- SECCIÓN FIDELIZACIÓN -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="loyaltyDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i></i>Fidelización
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="Recompensas">
+                                            <i class="fas fa-trophy"></i> Ver Recompensas
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="MisCanjes">
+                                            <i class="fas fa-exchange-alt"></i> Mis Canjes
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Cupones" asp-action="Index">
+                                            <i class="fas fa-tags"></i> Mis Cupones
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <!-- HERRAMIENTAS -->
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="MenuRecomendacion" asp-action="Recomendacion">
+                                    Recomendaciones IA
                                 </a>
                             </li>
                         }
@@ -291,6 +332,16 @@
         </nav>
     </header>
 
+    <!-- Botón flotante QR para móviles (solo admin/cajero) -->
+    @if (User.IsInRole("Administrador") || User.IsInRole("Cajero"))
+    {
+        <div class="floating-qr-scanner d-lg-none">
+            <a href="@Url.Action("EscanearQR", "Cupones")" class="btn btn-scan-floating" title="Escanear QR">
+                <i class="fas fa-qrcode fa-2x"></i>
+            </a>
+        </div>
+    }
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
@@ -299,7 +350,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2025 - Verace - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacidad</a>
+            &copy; 2025 - Verace
         </div>
     </footer>
 
@@ -345,7 +396,7 @@
         </div>
     </div>
 
-    <!-- SOLO jQuery y Bootstrap 5 JS - remover duplicados -->
+    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
@@ -355,7 +406,6 @@
 
     <!-- Configuración global de Toastr -->
     <script>
-        // Configuración de Toastr
         toastr.options = {
             "closeButton": true,
             "debug": false,
