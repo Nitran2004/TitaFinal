@@ -1,0 +1,389 @@
+﻿@model ProyectoIdentity.Models.Producto
+@{
+    ViewData["Title"] = Model.Nombre;
+    int puntosAGanar = (int)(Model.Precio * 30);
+    var ingredientes = ViewBag.Ingredientes as List<ProyectoIdentity.Models.Ingrediente> ?? new();
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- Imagen del producto -->
+        <div class="col-md-6">
+            <div class="product-image-container position-relative">
+                @if (Model.Imagen != null)
+                {
+                    <img src="data:image/jpeg;base64,@Convert.ToBase64String(Model.Imagen)"
+                         alt="@Model.Nombre" class="img-fluid rounded product-image" />
+                }
+                <div class="position-absolute top-0 end-0 p-3">
+                    <span class="badge bg-primary fs-6">@Model.Categoria</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del producto -->
+        <div class="col-md-6">
+            <h1 class="product-title">@Model.Nombre</h1>
+            <p class="product-description">@Model.Descripcion</p>
+            <div class="product-price h3 text-success">Precio: $@Model.Precio.ToString("F2")</div>
+
+            <!-- Puntos -->
+            <div class="product-points">
+                <i class="fas fa-star"></i> ¡Ganas @puntosAGanar puntos con este producto!
+            </div>
+            <div class="points-breakdown">
+                <small class="text-muted">
+                    $@Model.Precio × 30 puntos por dólar = @puntosAGanar puntos
+                </small>
+            </div>
+
+            <!-- Formulario de personalización -->
+            <form id="personalizacionForm">
+                <input type="hidden" id="productoId" value="@Model.Id" />
+
+                <!-- Cantidad -->
+                <div class="mb-4">
+                    <label class="form-label h6">Cantidad:</label>
+                    <div class="quantity-control">
+                        <button type="button" class="quantity-btn" onclick="cambiarCantidad(-1)">-</button>
+                        <input type="number" id="cantidad" value="1" min="1" max="10" class="quantity-input" readonly />
+                        <button type="button" class="quantity-btn" onclick="cambiarCantidad(1)">+</button>
+                    </div>
+                </div>
+
+                <!-- Ingredientes removibles -->
+                @if (ingredientes.Any(i => i.Removible))
+                {
+                    <div class="mb-4">
+                        <h6>Quitar ingredientes (sin cambio de precio):</h6>
+                        <div class="ingredients-container">
+                            @foreach (var ingrediente in ingredientes.Where(i => i.Removible))
+                            {
+                                <div class="form-check ingredient-item">
+                                    <input class="form-check-input" type="checkbox"
+                                           value="@ingrediente.Nombre"
+                                           id="ingrediente_@ingrediente.Nombre.Replace(" ", "_")" />
+                                    <label class="form-check-label" for="ingrediente_@ingrediente.Nombre.Replace(" ", "_")">
+                                        Sin @ingrediente.Nombre
+                                        <small class="text-muted">(Ahorro: $@ingrediente.Costo.ToString("F2"))</small>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Notas especiales -->
+                <div class="mb-4">
+                    <label class="form-label h6">Notas especiales:</label>
+                    <textarea id="notasEspeciales" class="form-control" rows="3"
+                              placeholder="Ej: Extra picante, sin sal, etc..."></textarea>
+                </div>
+
+                <!-- Resumen -->
+                <div class="price-summary">
+                    <div class="d-flex justify-content-between">
+                        <span>Precio:</span>
+                        <span id="precioFinal">$@Model.Precio.ToString("F2")</span>
+                    </div>
+                    <div class="d-flex justify-content-between text-muted">
+                        <span>Ahorro interno:</span>
+                        <span id="ahorroInterno">$0.00</span>
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div class="d-grid gap-2 mt-4">
+                    <button type="button" class="btn btn-success btn-lg" onclick="agregarAlCarrito()">
+                        <i class="fas fa-cart-plus"></i> Agregar al Carrito
+                    </button>
+                    <div class="row">
+                        <div class="col-6">
+                            <a href="@Url.Action("Index")" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-arrow-left"></i> Seguir Comprando
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="@Url.Action("VerCarrito")" class="btn btn-warning w-100">
+                                <i class="fas fa-shopping-cart"></i> Ver Carrito (<span id="contadorCarrito">0</span>)
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Información nutricional (acordeón) -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="accordion">
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion('nutrition')">
+                        <h5>Información Nutricional</h5>
+                        <span id="nutrition-icon">▼</span>
+                    </div>
+                    <div class="accordion-content" id="nutrition-content">
+                        <table class="nutrition-table">
+                            @if (!string.IsNullOrEmpty(Model.InfoNutricional))
+                            {
+                                @foreach (var linea in Model.InfoNutricional.Split('|'))
+                                {
+                                    var partes = linea.Split(':');
+                                    if (partes.Length == 2)
+                                    {
+                                        <tr><td>@partes[0]</td><td>@partes[1]</td></tr>
+                                    }
+                                }
+                            }
+                        </table>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <div class="accordion-header" onclick="toggleAccordion('allergens')">
+                        <h5>Información de Alérgenos</h5>
+                        <span id="allergens-icon">▼</span>
+                    </div>
+                    <div class="accordion-content" id="allergens-content">
+                        <ul class="allergen-list">
+                            @if (!string.IsNullOrEmpty(Model.Alergenos))
+                            {
+                                @foreach (var alergeno in Model.Alergenos.Split('|'))
+                                {
+                                    <li>@alergeno</li>
+                                }
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function cambiarCantidad(cambio) {
+        const input = document.getElementById('cantidad');
+        let nuevaCantidad = parseInt(input.value) + cambio;
+        if (nuevaCantidad < 1) nuevaCantidad = 1;
+        if (nuevaCantidad > 10) nuevaCantidad = 10;
+        input.value = nuevaCantidad;
+        calcularAhorro();
+    }
+
+    function calcularAhorro() {
+        const checkboxes = document.querySelectorAll('.form-check-input:checked');
+        let ahorro = 0;
+
+        checkboxes.forEach(checkbox => {
+            // Extraer costo del label (esto es aproximado, en producción usarías data attributes)
+            const label = checkbox.nextElementSibling.textContent;
+            const match = label.match(/\$(\d+\.?\d*)/);
+            if (match) {
+                ahorro += parseFloat(match[1]);
+            }
+        });
+
+        const cantidad = parseInt(document.getElementById('cantidad').value);
+        const ahorroTotal = ahorro * cantidad;
+
+        document.getElementById('ahorroInterno').textContent = '$' + ahorroTotal.toFixed(2);
+    }
+
+    function agregarAlCarrito() {
+        const productoId = document.getElementById('productoId').value;
+        const cantidad = parseInt(document.getElementById('cantidad').value);
+        const notasEspeciales = document.getElementById('notasEspeciales').value;
+
+        const ingredientesRemovidos = [];
+        document.querySelectorAll('.form-check-input:checked').forEach(checkbox => {
+            ingredientesRemovidos.push(checkbox.value);
+        });
+
+        const data = {
+            ProductoId: parseInt(productoId),
+            Cantidad: cantidad,
+            IngredientesRemovidos: ingredientesRemovidos,
+            NotasEspeciales: notasEspeciales
+        };
+
+        fetch('@Url.Action("AgregarAlCarrito")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert(result.message);
+                    document.getElementById('contadorCarrito').textContent = result.totalItems;
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            })
+            .catch(error => {
+                alert('Error al agregar al carrito');
+            });
+    }
+
+    function toggleAccordion(section) {
+        const content = document.getElementById(section + '-content');
+        const icon = document.getElementById(section + '-icon');
+
+        if (content.style.maxHeight) {
+            content.style.maxHeight = null;
+            icon.textContent = '▼';
+        } else {
+            content.style.maxHeight = content.scrollHeight + 'px';
+            icon.textContent = '▲';
+        }
+    }
+
+    // Calcular ahorro al cambiar ingredientes
+    document.querySelectorAll('.form-check-input').forEach(checkbox => {
+        checkbox.addEventListener('change', calcularAhorro);
+    });
+
+    // Cargar contador del carrito al inicializar
+    window.onload = function () {
+        // Aquí podrías hacer una llamada AJAX para obtener el contador actual
+        calcularAhorro();
+    };
+</script>
+
+<style>
+    .product-image {
+        max-height: 400px;
+        object-fit: cover;
+        width: 100%;
+    }
+
+    .product-title {
+        font-size: 2.2em;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .product-description {
+        font-size: 1.1em;
+        color: #555;
+        margin-bottom: 20px;
+    }
+
+    .product-points {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+        margin: 15px 0;
+    }
+
+    .points-breakdown {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+
+    .quantity-control {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .quantity-btn {
+        width: 35px;
+        height: 35px;
+        border: 1px solid #ddd;
+        background: #f8f9fa;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .quantity-input {
+        width: 60px;
+        text-align: center;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        padding: 5px;
+    }
+
+    .ingredients-container {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+    }
+
+    .ingredient-item {
+        margin-bottom: 10px;
+    }
+
+    .price-summary {
+        background: #e8f5e8;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .accordion-item {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+
+    .accordion-header {
+        padding: 15px;
+        background: #f8f9fa;
+        cursor: pointer;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+
+    .accordion-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+        background: white;
+        padding: 0 15px;
+    }
+
+    .nutrition-table, .allergen-list {
+        width: 100%;
+    }
+
+        .nutrition-table td {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+    .allergen-list {
+        list-style: none;
+        padding: 0;
+    }
+
+        .allergen-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+    .btn-warning {
+        background-color: #F2A900;
+        border-color: #F2A900;
+        color: #fff;
+    }
+
+        .btn-warning:hover {
+            background-color: #e09600;
+            border-color: #d48e00;
+            color: #fff;
+        }
+</style>

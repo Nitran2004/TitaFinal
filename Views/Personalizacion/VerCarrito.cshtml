@@ -1,0 +1,243 @@
+﻿@model List<ProyectoIdentity.Models.ItemCarritoPersonalizado>
+@{
+    ViewData["Title"] = "Mi Carrito Personalizado";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-shopping-cart"></i> Mi Carrito Personalizado</h3>
+                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                        <i class="fas fa-plus"></i> Agregar Más Productos
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (!Model.Any())
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-shopping-cart fa-3x text-muted"></i>
+                            <h4 class="mt-3">Tu carrito está vacío</h4>
+                            <p class="text-muted">Personaliza productos desde nuestro menú</p>
+                            <a href="@Url.Action("Index")" class="btn btn-warning">
+                                Ver Menú Personalizable
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Precio</th>
+                                        <th>Cantidad</th>
+                                        <th>Personalización</th>
+                                        <th>Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@item.Nombre</strong>
+                                                @if (!string.IsNullOrEmpty(item.NotasEspeciales))
+                                                {
+                                                    <br>
+
+                                                    <small class="text-muted"><i class="fas fa-sticky-note"></i> @item.NotasEspeciales</small>
+                                                }
+                                            </td>
+                                            <td>$@item.Precio.ToString("F2")</td>
+                                            <td>@item.Cantidad</td>
+                                            <td>
+                                                @if (item.IngredientesRemovidos.Any())
+                                                {
+                                                    <small class="text-danger">
+                                                        <i class="fas fa-minus-circle"></i> Sin: @string.Join(", ", item.IngredientesRemovidos)
+                                                        <br><span class="text-success">Ahorro interno: $@item.AhorroInterno.ToString("F2")</span>
+                                                    </small>
+                                                }
+                                                else
+                                                {
+                                                    <small class="text-muted">Sin cambios</small>
+                                                }
+                                            </td>
+                                            <td><strong>$@item.Subtotal.ToString("F2")</strong></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6 offset-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h5>Resumen del Pedido</h5>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Total Items:</span>
+                                            <span>@Model.Sum(m => m.Cantidad)</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Ahorro Total Interno:</span>
+                                            <span class="text-success">$@Model.Sum(m => m.AhorroInterno).ToString("F2")</span>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between">
+                                            <strong>Total a Pagar:</strong>
+                                            <strong class="text-success">$@Model.Sum(m => m.Subtotal).ToString("F2")</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-utensils"></i> Finalizar Pedido</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Datos de Entrega</h6>
+                        <p class="mb-1"><strong>Usuario:</strong> @User.Identity.Name</p>
+                        <p class="mb-0">Se usarán los datos de tu perfil.</p>
+                    </div>
+
+                    <form id="formPedido">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Tipo de Servicio *</label>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="card service-option" data-service="Servir aquí">
+                                        <div class="card-body text-center">
+                                            <input type="radio" name="tipoServicio" id="servirAqui" value="Servir aquí" required>
+                                            <label for="servirAqui" class="w-100">
+                                                <i class="fas fa-chair fa-2x d-block mb-2 text-primary"></i>
+                                                <strong>Servir aquí</strong>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="card service-option" data-service="Para llevar">
+                                        <div class="card-body text-center">
+                                            <input type="radio" name="tipoServicio" id="paraLlevar" value="Para llevar" required>
+                                            <label for="paraLlevar" class="w-100">
+                                                <i class="fas fa-shopping-bag fa-2x d-block mb-2 text-success"></i>
+                                                <strong>Para llevar</strong>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Observaciones:</label>
+                            <textarea id="observaciones" class="form-control" rows="3"
+                                      placeholder="Comentarios adicionales..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning w-100" id="btnProcesar">
+                            <i class="fas fa-check"></i> Confirmar Pedido
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('formPedido').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const tipoServicio = document.querySelector('input[name="tipoServicio"]:checked')?.value;
+        if (!tipoServicio) {
+            alert('Por favor selecciona el tipo de servicio');
+            return;
+        }
+
+        const data = {
+            TipoServicio: tipoServicio,
+            Observaciones: document.getElementById('observaciones').value
+        };
+
+        document.getElementById('btnProcesar').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+
+        fetch('@Url.Action("ProcesarPedido")', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    window.location.href = '@Url.Action("Confirmacion")/' + result.pedidoId;
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            })
+            .catch(() => alert('Error al procesar el pedido'))
+            .finally(() => {
+                document.getElementById('btnProcesar').innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
+            });
+    });
+
+    // Manejar selección de servicio
+    document.querySelectorAll('.service-option').forEach(option => {
+        option.addEventListener('click', function () {
+            const radio = this.querySelector('input[type="radio"]');
+            radio.checked = true;
+            document.querySelectorAll('.service-option').forEach(o => o.classList.remove('selected'));
+            this.classList.add('selected');
+        });
+    });
+</script>
+
+<style>
+    .service-option {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid #dee2e6;
+    }
+
+        .service-option:hover, .service-option.selected {
+            border-color: #F2A900;
+            background-color: #fff8e6;
+            box-shadow: 0 0.25rem 0.5rem rgba(242, 169, 0, 0.25);
+        }
+
+        .service-option input {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .service-option label {
+            cursor: pointer;
+            margin: 0;
+            padding: 1rem 0;
+        }
+
+    .btn-warning {
+        background-color: #F2A900;
+        border-color: #F2A900;
+        color: #fff;
+    }
+
+        .btn-warning:hover {
+            background-color: #e09600;
+            border-color: #d48e00;
+            color: #fff;
+        }
+</style>

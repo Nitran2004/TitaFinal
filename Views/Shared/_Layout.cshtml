@@ -254,6 +254,25 @@
                             </li>
                         }
 
+                        <!-- Agregar en tu menú de navegación (layout) -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-cog"></i> Personalización
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="@Url.Action("Index", "Personalizacion")">
+                                        <i class="fas fa-utensils"></i> Ver Menú
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="@Url.Action("AdminAnalisis", "Personalizacion")">
+                                        <i class="fas fa-chart-line"></i> Análisis de Costos
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+
                         @if (User.IsInRole("Administrador") || User.IsInRole("Cajero"))
                         {
                             <!-- SECCIÓN OPERACIONES -->

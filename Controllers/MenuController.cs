@@ -56,5 +56,11 @@ namespace ProyectoIdentity.Controllers
 
             return View();
         }
+
+        public IActionResult Index()
+        {
+            // Tu código del menú aquí
+            return View();
+        }
     }
 }

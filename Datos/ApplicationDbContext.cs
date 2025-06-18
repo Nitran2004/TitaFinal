@@ -14,6 +14,7 @@ namespace ProyectoIdentity.Datos
         // Método para actualizar DbContext (agregar a ApplicationDbContext.cs)
         public DbSet<Cupon> Cupones { get; set; }
         public DbSet<CuponCanjeado> CuponesCanjeados { get; set; }
+        public DbSet<PedidoDetalle> PedidoDetalles { get; set; }
 
         // Entidades existentes
         public DbSet<AppUsuario> AppUsuario { get; set; }
@@ -50,6 +51,8 @@ namespace ProyectoIdentity.Datos
             .WithMany()
             .HasForeignKey(pr => pr.ProductoId)
             .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<PedidoDetalle>().ToTable("PedidoDetalle"); // ← Agregar esto
 
             // Configuración para Cupon
             modelBuilder.Entity<Cupon>(entity =>

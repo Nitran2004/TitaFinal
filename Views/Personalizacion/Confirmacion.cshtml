@@ -1,0 +1,171 @@
+﻿@model ProyectoIdentity.Models.Pedido
+@{
+    ViewData["Title"] = "Pedido Confirmado";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-success text-white text-center">
+                    <h3><i class="fas fa-check-circle"></i> ¡Pedido Personalizado Confirmado!</h3>
+                    <p class="mb-0">Tu pedido ha sido recibido exitosamente</p>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Información del Pedido</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Número de Pedido:</strong></td>
+                                    <td>#@Model.Id.ToString("D6")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fecha:</strong></td>
+                                    <td>@Model.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Estado:</strong></td>
+                                    <td><span class="badge bg-warning">@Model.Estado</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total:</strong></td>
+                                    <td class="h5 text-success">$@Model.Total.ToString("F2")</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Datos de Entrega</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Usuario:</strong></td>
+                                    <td>@Model.UsuarioId</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Tiempo estimado:</strong></td>
+                                    <td>15-25 minutos</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <h5>Detalle de Productos Personalizados</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Precio Unit.</th>
+                                    <th>Cantidad</th>
+                                    <th>Personalización</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var detalle in Model.Detalles)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@detalle.Producto.Nombre</strong>
+                                            @if (!string.IsNullOrEmpty(detalle.NotasEspeciales))
+                                            {
+                                                <br>
+
+                                                <small class="text-muted">
+                                                    <i class="fas fa-sticky-note"></i> @detalle.NotasEspeciales
+                                                </small>
+                                            }
+                                        </td>
+                                        <td>$@detalle.PrecioUnitario.ToString("F2")</td>
+                                        <td>@detalle.Cantidad</td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(detalle.IngredientesRemovidos))
+                                            {
+                                                try
+                                                {
+                                                    var removidos = System.Text.Json.JsonSerializer.Deserialize<List<string>>(detalle.IngredientesRemovidos);
+                                                    if (removidos.Any())
+                                                    {
+                                                        <small class="text-danger">
+                                                            <i class="fas fa-minus-circle"></i> Sin: @string.Join(", ", removidos)
+                                                        </small>
+                                                    }
+                                                    else
+                                                    {
+                                                        <small class="text-muted">Sin cambios</small>
+                                                    }
+                                                }
+                                                catch
+                                                {
+                                                    <small class="text-muted">Sin cambios</small>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <small class="text-muted">Sin cambios</small>
+                                            }
+                                        </td>
+                                        <td><strong>$@((detalle.PrecioUnitario * detalle.Cantidad).ToString("F2"))</strong></td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-success">
+                                    <th colspan="4">Total a Pagar:</th>
+                                    <th>$@Model.Total.ToString("F2")</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Información Importante:</h6>
+                        <ul class="mb-0">
+                            <li>Tiempo estimado de preparación: 15-25 minutos</li>
+                            <li>Tu pedido está siendo preparado con las personalizaciones solicitadas</li>
+                            <li>El precio no cambia al quitar ingredientes</li>
+                            <li>Recibirás una notificación cuando esté listo</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="@Url.Action("Index")" class="btn btn-warning">
+                            <i class="fas fa-utensils"></i> Hacer Nuevo Pedido
+                        </a>
+                        <a href="@Url.Action("AdminAnalisis")" class="btn btn-outline-primary">
+                            <i class="fas fa-chart-line"></i> Ver Análisis (Admin)
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn-warning {
+        background-color: #F2A900;
+        border-color: #F2A900;
+        color: #fff;
+    }
+
+        .btn-warning:hover {
+            background-color: #e09600;
+            border-color: #d48e00;
+            color: #fff;
+        }
+
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .table-borderless td {
+        border: none;
+        padding: 0.25rem 0;
+    }
+
+    .gap-3 {
+        gap: 1rem !important;
+    }
+</style>

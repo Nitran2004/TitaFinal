@@ -19,7 +19,7 @@ namespace ProyectoIdentity.Models
         public List<Producto> Productos { get; set; } = new List<Producto>();
 
         // Relación con sucursal
-        public int SucursalId { get; set; }
+        public int? SucursalId { get; set; }
         public Sucursal Sucursal { get; set; }
 
         // Nuevos campos para comentarios y calificación
@@ -33,7 +33,7 @@ namespace ProyectoIdentity.Models
 
         public bool EsCupon { get; set; } = false;
         public string? TipoServicio { get; set; }
-
+        public ICollection<DetallePedido> DetallesPedido { get; set; } = new List<DetallePedido>();
 
     }
 

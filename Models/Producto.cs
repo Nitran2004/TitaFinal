@@ -23,8 +23,14 @@ namespace ProyectoIdentity.Models
 
         public byte[]? Imagen { get; set; }
 
+        public string? Ingredientes { get; set; }  // JSON con lista de ingredientes
+
+
         // Relación con PedidoProducto
         public ICollection<PedidoProducto>? PedidoProductos { get; set; }
+
+        public ICollection<DetallePedido> DetallesPedido { get; set; } = new List<DetallePedido>();
+
 
         [NotMapped]
         public bool Seleccionado { get; set; }
