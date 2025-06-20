@@ -290,33 +290,69 @@
                             </li>
                         }
 
-                        @if (User.IsInRole("Administrador") || User.IsInRole("Cajero") || User.IsInRole("Registrado"))
+                        <!-- PARA ADMINISTRADOR Y CAJERO - Dropdown -->
+                        @if (User.IsInRole("Administrador") || User.IsInRole("Cajero"))
                         {
-                            <!-- SECCIÓN CLIENTE/TIENDA -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarProductos" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-store"></i> Tienda
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Productos" asp-action="SeleccionMultiple">
+                                            <i class="fas fa-box"></i> Productos
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Personalizacion" asp-action="Index">
+                                            <i class="fas fa-cog"></i> Productos Personalizables
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="MenuRecomendacion" asp-action="Recomendacion">
+                                            <i class="fas fa-robot"></i> Recomendaciones IA
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="Recompensas">
+                                            <i class="fas fa-gift"></i> Ver Recompensas
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Cupones" asp-action="Index">
+                                            <i class="fas fa-ticket-alt"></i> Mis Cupones
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+
+                        <!-- PARA REGISTRADO - Menú normal como antes -->
+                        @if (User.IsInRole("Registrado"))
+                        {
                             <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Productos" asp-action="SeleccionMultiple">
+                                <a class="nav-link" asp-controller="Productos" asp-action="SeleccionMultiple">
                                     Productos
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="Personalizacion" asp-action="Index">
+                                <a class="nav-link" asp-controller="Personalizacion" asp-action="Index">
                                     Productos Personalizables
                                 </a>
                             </li>
-                            <!-- HERRAMIENTAS -->
                             <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="MenuRecomendacion" asp-action="Recomendacion">
+                                <a class="nav-link" asp-controller="MenuRecomendacion" asp-action="Recomendacion">
                                     Recomendaciones IA
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Fidelizacion" asp-action="Recompensas">
-                                    <i></i> Ver Recompensas
+                                    Ver Recompensas
                                 </a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Cupones" asp-action="Index">
-                                    <i></i> Mis Cupones
+                                    Mis Cupones
                                 </a>
                             </li>
                         }
@@ -356,7 +392,7 @@
                     <partial name="_LoginRegistroVistaParcial" />
                 </div>
             </div>
-        </nav>
+        </nav>a
     </header>
 
     <!-- Botón flotante QR para móviles (solo admin/cajero) -->

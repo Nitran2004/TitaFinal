@@ -5,17 +5,7 @@
 <ul class="navbar-nav ms-auto">
     @if (SignInManager.IsSignedIn(User))
     {
-@*         <!-- Enlace a Mis Puntos -->
-        @if (User.IsInRole("Administrador") || User.IsInRole("Registrado"))
-        {
-            <li class="nav-item">
-                <a class="nav-link text-white" asp-controller="Fidelizacion" asp-action="MisPuntos">
-                    <i class="fas fa-coins me-1"></i> Mis Puntos
-                </a>
-            </li>
-        } *@
-
-        <!-- Indicador de Rol - Entre Mis Puntos y Mi Cuenta -->
+        <!-- Indicador de Rol -->
         @if (User.IsInRole("Administrador"))
         {
             <li class="nav-item">
@@ -41,7 +31,8 @@
             </li>
         }
 
-        <!-- Dropdown Mi Cuenta -->
+        <!-- Dropdown Mi Cuenta según roles -->
+        <!-- Dropdown Mi Cuenta según roles -->
         <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDropdown" role="button"
                data-bs-toggle="dropdown" aria-expanded="false">
@@ -54,80 +45,70 @@
                         Hola, @UserManager.GetUserName(User)
                     </span>
                 </li>
-                <!-- Mostrar puntos aquí -->
-                <li>
-                    <div class="dropdown-item-text bg-success text-white text-center" style="border-radius: 5px; margin: 5px;">
-                        <i class="fas fa-coins"></i> <span id="puntos-usuario">--- pts</span>
-                    </div>
-                </li>
-                <li>
-                    <hr class="dropdown-divider">
-                </li>
-                <li>
-                    <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="MisPuntos">
-                        <i class="fas fa-star text-warning"></i> Ver Mis Puntos
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="Recompensas">
-                        <i class="fas fa-gift text-info"></i> Mis Recompensas
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="Historial">
-                        <i class="fas fa-history text-secondary"></i> Historial Completo
-                    </a>
-                </li>
 
-                <!-- Sección de Acciones Rápidas -->
-                <li>
-                    <hr class="dropdown-divider">
-                </li>
-                <li>
-                    <h6 class="dropdown-header">
-                        <i class="fas fa-bolt text-primary"></i> Acciones Rápidas
-                    </h6>
-                </li>
-                <li>
-                    <a class="dropdown-item" asp-controller="Pedidos" asp-action="VerPedidoTemporal">
-                        <i class="fas fa-shopping-bag text-success"></i> Ver Mi Pedido
-                    </a>
-                </li>
-
-                <!-- Gestión de Canjes solo para Administradores -->
-                @if (User.IsInRole("Administrador"))
+                <!-- PARA CAJERO - Solo editar y cambiar contraseña -->
+                @if (User.IsInRole("Cajero"))
                 {
+                    <li><hr class="dropdown-divider"></li>
                     <li>
-                        <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="AdminCanjesIndex">
-                            <i class="fas fa-users-cog text-purple"></i> Gestión de Canjes
+                        <a class="dropdown-item" asp-controller="Usuarios" asp-action="EditarPerfil"
+                           asp-route-id="@UserManager.GetUserId(User)">
+                            <i class="fas fa-edit text-primary"></i> Editar Perfil
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" asp-controller="Usuarios" asp-action="CambiarPassword">
+                            <i class="fas fa-lock text-danger"></i> Cambiar Contraseña
                         </a>
                     </li>
                 }
 
+                <!-- PARA ADMIN Y REGISTRADO - Más opciones -->
+                @if (User.IsInRole("Administrador") || User.IsInRole("Registrado"))
+                {
+                    <!-- Mostrar puntos -->
+                    <li>
+                        <div class="dropdown-item-text bg-success text-white text-center" style="border-radius: 5px; margin: 5px;">
+                            <i class="fas fa-coins"></i> <span id="puntos-usuario">--- pts</span>
+                        </div>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="MisPuntos">
+                            <i class="fas fa-star text-warning"></i> Ver Mis Puntos
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="Historial">
+                            <i class="fas fa-history text-secondary"></i> Historial Completo
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item" asp-controller="Usuarios" asp-action="EditarPerfil"
+                           asp-route-id="@UserManager.GetUserId(User)">
+                            <i class="fas fa-edit text-primary"></i> Editar Perfil
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" asp-controller="Usuarios" asp-action="CambiarPassword">
+                            <i class="fas fa-lock text-danger"></i> Cambiar Contraseña
+                        </a>
+                    </li>
+                }
+
+                <!-- Separador antes del botón Cerrar Sesión -->
+                <li><hr class="dropdown-divider"></li>
+
+                <!-- Botón Cerrar Sesión -->
                 <li>
-                    <hr class="dropdown-divider">
-                </li>
-                <li>
-                    <a class="dropdown-item" asp-area="" asp-controller="Usuarios" asp-action="EditarPerfil"
-                       asp-route-id="@UserManager.GetUserId(User)">
-                        <i class="fas fa-edit text-primary"></i> Editar Perfil
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item" asp-area="" asp-controller="Usuarios" asp-action="CambiarPassword">
-                        <i class="fas fa-lock text-danger"></i> Cambiar Contraseña
-                    </a>
+                    <form asp-controller="Cuentas" asp-action="SalirAplicacion" method="post" class="d-inline">
+                        <button type="submit" class="dropdown-item">
+                            <i class="fas fa-sign-out-alt text-danger"></i> Cerrar Sesión
+                        </button>
+                    </form>
                 </li>
             </ul>
-        </li>
-
-        <!-- Botón Salir -->
-        <li class="nav-item">
-            <form id="logoutForm" method="post" class="d-inline" asp-controller="Cuentas" asp-action="SalirAplicacion">
-                <button type="submit" class="btn btn-outline-light">
-                    <i class="fas fa-sign-out-alt me-1"></i> SALIR
-                </button>
-            </form>
         </li>
     }
     else
@@ -148,16 +129,21 @@
 @if (SignInManager.IsSignedIn(User))
 {
     <script>
-        // Cargar puntos del usuario al inicializar
+        // Cargar puntos del usuario al inicializar (solo para Admin y Registrado)
         document.addEventListener('DOMContentLoaded', function () {
-            fetch('@Url.Action("ObtenerPuntos", "Fidelizacion")')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('puntos-usuario').textContent = data.puntos + ' pts';
-                })
-                .catch(error => {
-                    document.getElementById('puntos-usuario').textContent = '0 pts';
+        @if (User.IsInRole("Administrador") || User.IsInRole("Registrado"))
+        {
+            <text>
+                    fetch('@Url.Action("ObtenerPuntos", "Fidelizacion")')
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('puntos-usuario').textContent = data.puntos + ' pts';
+                        })
+                        .catch(error => {
+                            document.getElementById('puntos-usuario').textContent = '0 pts';
+                        });
+            </text>
+        }
                 });
-        });
     </script>
 }
