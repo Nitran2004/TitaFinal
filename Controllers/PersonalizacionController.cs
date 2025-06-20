@@ -20,12 +20,9 @@ namespace ProyectoIdentity.Controllers
             _context = context;
         }
 
-        // Vista principal - mostrar todos los productos
         public async Task<IActionResult> Index()
         {
-            var productos = await _context.Productos
-                .Where(p => p.Categoria == "Pizza" || p.Categoria == "Sánduches" || p.Categoria == "Picadas")
-                .ToListAsync();
+            var productos = await _context.Productos.ToListAsync();
             return View(productos);
         }
 
@@ -49,8 +46,12 @@ namespace ProyectoIdentity.Controllers
                 if (producto == null)
                     return Json(new { success = false, message = "Producto no encontrado" });
 
-                // Calcular ahorro interno
-                decimal ahorroInterno = CalcularAhorro(producto, request.IngredientesRemovidos);
+                // Calcular ahorro interno solo para administradores
+                decimal ahorroInterno = 0;
+                if (User.IsInRole("Administrador"))
+                {
+                    ahorroInterno = CalcularAhorro(producto, request.IngredientesRemovidos);
+                }
 
                 // Obtener carrito existente
                 var carrito = GetCarrito();
@@ -71,10 +72,15 @@ namespace ProyectoIdentity.Controllers
                 carrito.Add(itemCarrito);
                 SetCarrito(carrito);
 
+                // Mensaje personalizado según el rol
+                string mensaje = User.IsInRole("Administrador")
+                    ? $"{producto.Nombre} agregado al carrito. Ahorro interno: ${ahorroInterno:F2}"
+                    : "¡Producto agregado al carrito exitosamente!";
+
                 return Json(new
                 {
                     success = true,
-                    message = $"{producto.Nombre} agregado al carrito. Ahorro interno: ${ahorroInterno:F2}",
+                    message = mensaje,
                     totalItems = carrito.Sum(c => c.Cantidad)
                 });
             }
@@ -102,23 +108,41 @@ namespace ProyectoIdentity.Controllers
 
                 // Obtener sucursal
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                Console.WriteLine($"[DEBUG] Usuario ID: {userId}");
+                Console.WriteLine($"[DEBUG] PersonalizacionController - Usuario ID: {userId}");
 
                 var sucursal = await _context.Sucursales.FirstOrDefaultAsync();
+                if (sucursal == null)
+                {
+                    // Crear sucursal por defecto si no existe
+                    sucursal = new Sucursal
+                    {
+                        Nombre = "Verace Pizza",
+                        Direccion = "Av. de los Shyris N35-52",
+                        Latitud = -0.180653,
+                        Longitud = -78.487834
+                    };
+                    _context.Sucursales.Add(sucursal);
+                    await _context.SaveChangesAsync();
+                }
+
+                // Calcular total
+                decimal totalPedido = carrito.Sum(c => c.Subtotal);
 
                 // Crear pedido
                 var pedido = new Pedido
                 {
                     Fecha = DateTime.Now,
-                    UsuarioId = userId, // ← CORREGIDO: usar el ID real del usuario
+                    UsuarioId = userId,
                     Estado = "Preparándose",
-                    Total = carrito.Sum(c => c.Subtotal),
-                    TipoServicio = "Servir aquí",
+                    Total = totalPedido,
+                    TipoServicio = request.TipoServicio,
                     SucursalId = sucursal.Id
                 };
 
                 _context.Pedidos.Add(pedido);
                 await _context.SaveChangesAsync();
+
+                Console.WriteLine($"[DEBUG] PersonalizacionController - Pedido creado con ID: {pedido.Id}, Total: {totalPedido}");
 
                 // Crear detalles CON personalización
                 foreach (var item in carrito)
@@ -134,15 +158,78 @@ namespace ProyectoIdentity.Controllers
                     };
 
                     _context.PedidoDetalles.Add(detalle);
-                    await _context.SaveChangesAsync();
                 }
 
+                await _context.SaveChangesAsync();
+
+                // ✅ AGREGAR PUNTOS AL USUARIO
+                Console.WriteLine($"[DEBUG] PersonalizacionController - Agregando puntos. Total: {totalPedido}");
+                await AgregarPuntosAUsuario(userId, totalPedido);
+
+                // Limpiar carrito
                 HttpContext.Session.Remove("CarritoPersonalizado");
+
                 return Json(new { success = true, pedidoId = pedido.Id });
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[ERROR] PersonalizacionController - Error en ProcesarPedido: {ex.Message}");
                 return Json(new { success = false, message = $"Error: {ex.Message}" });
+            }
+        }
+
+        private async Task AgregarPuntosAUsuario(string usuarioId, decimal totalPedido)
+        {
+            Console.WriteLine($"[DEBUG] PersonalizacionController - AgregarPuntosAUsuario iniciado - UsuarioId: {usuarioId}, Total: {totalPedido}");
+
+            if (string.IsNullOrEmpty(usuarioId))
+            {
+                Console.WriteLine("[DEBUG] UsuarioId es null o vacío - SALIENDO");
+                return;
+            }
+
+            var usuario = await _context.AppUsuario.FindAsync(usuarioId);
+            if (usuario == null)
+            {
+                Console.WriteLine($"[DEBUG] Usuario no encontrado con ID: {usuarioId} - SALIENDO");
+                return;
+            }
+
+            Console.WriteLine($"[DEBUG] Usuario encontrado: {usuario.Email}, Puntos actuales: {usuario.PuntosFidelidad}");
+
+            // Calcular puntos ganados (30 puntos por dólar)
+            int puntosGanados = (int)(totalPedido * 30);
+            Console.WriteLine($"[DEBUG] Puntos a agregar: {puntosGanados}");
+
+            // Agregar puntos al usuario
+            int puntosAnteriores = usuario.PuntosFidelidad ?? 0;
+            usuario.PuntosFidelidad = puntosAnteriores + puntosGanados;
+
+            Console.WriteLine($"[DEBUG] Puntos anteriores: {puntosAnteriores}, Nuevos puntos: {usuario.PuntosFidelidad}");
+
+            try
+            {
+                // Crear registro de transacción de puntos
+                var transaccion = new TransaccionPuntos
+                {
+                    UsuarioId = usuarioId,
+                    Puntos = puntosGanados,
+                    Tipo = "Ganancia",
+                    Descripcion = $"Puntos ganados por pedido personalizado - Total: ${totalPedido:F2}",
+                    Fecha = DateTime.Now
+                };
+
+                _context.TransaccionesPuntos.Add(transaccion);
+
+                // Guardar cambios
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine("[DEBUG] ✅ Cambios guardados exitosamente en la base de datos");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error al guardar en la base de datos: {ex.Message}");
+                Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
             }
         }
         public async Task<IActionResult> Confirmacion(int id)
@@ -263,6 +350,20 @@ namespace ProyectoIdentity.Controllers
 
             Console.WriteLine($"[DEBUG] Redirigiendo a Confirmacion con ID: {ultimoPedido.Id}");
             return RedirectToAction("Confirmacion", new { id = ultimoPedido.Id });
+        }
+
+        [HttpPost]
+        public IActionResult ActualizarCarrito([FromBody] List<ItemCarritoPersonalizado> carrito)
+        {
+            try
+            {
+                SetCarrito(carrito);
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
         }
     }
 
