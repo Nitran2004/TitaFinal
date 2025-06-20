@@ -3,9 +3,12 @@ using ProyectoIdentity.Datos;
 using System.Threading.Tasks;
 using System.IO;
 using System.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ProyectoIdentity.Controllers
 {
+    //[Authorize]
+
     [Route("[controller]")]
     public class RealidadAumentadaController : Controller
     {

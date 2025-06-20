@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using ProyectoIdentity.Datos;
 using ProyectoIdentity.Models;
 using ProyectoIdentity.Servicios;
-using static ProyectoIdentity.Controllers.UsuariosController;
+//using static ProyectoIdentity.Controllers.UsuariosController;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,8 +59,6 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 // Servicios personalizados
-builder.Services.AddScoped<IPasswordHasher<IdentityUser>, PlainTextPasswordHasher>();
-
 // Configuración de cookies de autenticación
 builder.Services.ConfigureApplicationCookie(options =>
 {

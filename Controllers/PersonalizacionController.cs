@@ -3,9 +3,14 @@ using Microsoft.EntityFrameworkCore;
 using ProyectoIdentity.Datos;
 using ProyectoIdentity.Models;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Mailjet.Client.Resources;
 
 namespace ProyectoIdentity.Controllers
 {
+    [Authorize]
+
     public class PersonalizacionController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -96,13 +101,16 @@ namespace ProyectoIdentity.Controllers
                     return Json(new { success = false, message = "El carrito está vacío" });
 
                 // Obtener sucursal
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                Console.WriteLine($"[DEBUG] Usuario ID: {userId}");
+
                 var sucursal = await _context.Sucursales.FirstOrDefaultAsync();
 
                 // Crear pedido
                 var pedido = new Pedido
                 {
                     Fecha = DateTime.Now,
-                    UsuarioId = null,
+                    UsuarioId = userId, // ← CORREGIDO: usar el ID real del usuario
                     Estado = "Preparándose",
                     Total = carrito.Sum(c => c.Subtotal),
                     TipoServicio = "Servir aquí",
@@ -232,6 +240,29 @@ namespace ProyectoIdentity.Controllers
                 }
             }
             return resultados.OrderByDescending(r => r.AhorroTotal).ToList();
+        }
+
+        public async Task<IActionResult> UltimoPedido()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Console.WriteLine($"[DEBUG] Buscando pedidos para usuario: {userId}");
+
+            var ultimoPedido = await _context.Pedidos
+                .Where(p => p.UsuarioId == userId)
+                .OrderByDescending(p => p.Fecha)
+                .FirstOrDefaultAsync();
+
+            Console.WriteLine($"[DEBUG] Pedido encontrado: {ultimoPedido?.Id ?? 0}");
+
+            if (ultimoPedido == null)
+            {
+                Console.WriteLine("[DEBUG] No hay pedidos - redirigiendo a Index");
+                TempData["Mensaje"] = "No tienes pedidos personalizados registrados";
+                return RedirectToAction("Index");
+            }
+
+            Console.WriteLine($"[DEBUG] Redirigiendo a Confirmacion con ID: {ultimoPedido.Id}");
+            return RedirectToAction("Confirmacion", new { id = ultimoPedido.Id });
         }
     }
 

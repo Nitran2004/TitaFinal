@@ -254,25 +254,6 @@
                             </li>
                         }
 
-                        <!-- Agregar en tu menú de navegación (layout) -->
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-cog"></i> Personalización
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item" href="@Url.Action("Index", "Personalizacion")">
-                                        <i class="fas fa-utensils"></i> Ver Menú
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="@Url.Action("AdminAnalisis", "Personalizacion")">
-                                        <i class="fas fa-chart-line"></i> Análisis de Costos
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-
                         @if (User.IsInRole("Administrador") || User.IsInRole("Cajero"))
                         {
                             <!-- SECCIÓN OPERACIONES -->
@@ -302,6 +283,9 @@
                                             <i class="fas fa-qrcode"></i> Escanear Cupones QR
                                         </a>
                                     </li>
+                                    <a class="dropdown-item" href="@Url.Action("AdminAnalisis", "Personalizacion")">
+                                        <i class="fas fa-chart-line"></i> Análisis de Costos
+                                    </a>
                                 </ul>
                             </li>
                         }
@@ -314,22 +298,38 @@
                                     Productos
                                 </a>
                             </li>
-                            
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Pedidos" asp-action="VerPedidoTemporal">
-                                    Ver mi pedido
+                                <a class="nav-link" asp-area="" asp-controller="Personalizacion" asp-action="Index">
+                                    Productos Personalizables
                                 </a>
                             </li>
-
-                            <!-- SECCIÓN FIDELIZACIÓN -->
+                            <!-- HERRAMIENTAS -->
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="MenuRecomendacion" asp-action="Recomendacion">
+                                    Recomendaciones IA
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Fidelizacion" asp-action="Recompensas">
+                                    <i></i> Ver Recompensas
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Cupones" asp-action="Index">
+                                    <i></i> Mis Cupones
+                                </a>
+                            </li>
+                        }
+                        @if (User.IsInRole("Registrado") || User.IsInRole("Administrador"))
+                        {
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="loyaltyDropdown" role="button" data-bs-toggle="dropdown">
-                                    Fidelización
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user-circle"></i> Mis Pedidos
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li>
-                                        <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="Recompensas">
-                                            <i class="fas fa-trophy"></i> Ver Recompensas
+                                        <a class="dropdown-item" asp-controller="Pedidos" asp-action="VerPedidoTemporal">
+                                            <i class="fas fa-shopping-cart"></i> Pedidos Normales
                                         </a>
                                     </li>
                                     <li>
@@ -338,20 +338,18 @@
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item" asp-controller="Cupones" asp-action="Index">
-                                            <i class="fas fa-tags"></i> Mis Cupones
+                                        <a class="dropdown-item" asp-controller="PedidoRecomendacion" asp-action="MisPedidos">
+                                            <i class="fas fa-star"></i> Mis Pedidos Recomendación
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Personalizacion" asp-action="UltimoPedido">
+                                            <i class="fas fa-cog"></i> Mis Pedidos Personalizados
                                         </a>
                                     </li>
                                 </ul>
                             </li>
-
-                            <!-- HERRAMIENTAS -->
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="MenuRecomendacion" asp-action="Recomendacion">
-                                    Recomendaciones IA
-                                </a>
-                            </li>
-                        }
+                        }                    
                     </ul>
 
                     <!-- Vista parcial para acceso (login y registro) -->

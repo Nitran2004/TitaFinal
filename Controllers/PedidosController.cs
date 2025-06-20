@@ -305,15 +305,17 @@ public class PedidosController : Controller
     [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> ResumenAdmin()
     {
-        // CAMBIAR ESTO - usar Admin() que funciona bien, no ResumenAdmin()
+        // ✅ INCLUIR TODAS LAS RELACIONES NECESARIAS
         var pedidos = await _context.Pedidos
-            .Include(p => p.Sucursal)
-            .Include(p => p.PedidoProductos)
+            .Include(p => p.PedidoProductos)           // Para pedidos normales
                 .ThenInclude(pp => pp.Producto)
+            .Include(p => p.Detalles)                  // Para pedidos de recomendación/personalización
+                .ThenInclude(d => d.Producto)
+            .Include(p => p.Sucursal)                  // Información de sucursal
             .OrderByDescending(p => p.Fecha)
             .ToListAsync();
 
-        return View(pedidos); // Devolver List<Pedido> normal
+        return View(pedidos);
     }
 
     // ViewModel para mostrar pedidos con información de cupones

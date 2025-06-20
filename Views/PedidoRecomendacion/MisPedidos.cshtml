@@ -1,4 +1,4 @@
-﻿@model List<ProyectoIdentity.Controllers.PedidoRecomendacionController.Pedido>
+﻿@model List<ProyectoIdentity.Models.Pedido>
 @{
     ViewBag.Title = "Mis Pedidos";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -75,7 +75,7 @@
                                                     case "Pendiente":
                                                         <span class="badge bg-warning">@pedido.Estado</span>
                                                         break;
-                                                    case "En preparación":
+                                                    case "Preparándose":
                                                         <span class="badge bg-info">@pedido.Estado</span>
                                                         break;
                                                     case "Entregado":
@@ -90,11 +90,11 @@
                                                 }
                                             </td>
                                             <td>
-                                                @pedido.Items.Sum(i => i.Cantidad) productos
+                                                @pedido.Detalles.Sum(d => d.Cantidad) productos
                                                 <br>
                                                 <small class="text-muted">
-                                                    @string.Join(", ", pedido.Items.Take(2).Select(i => i.Nombre))
-                                                    @if (pedido.Items.Count > 2)
+                                                    @string.Join(", ", pedido.Detalles.Take(2).Select(d => d.Producto.Nombre))
+                                                    @if (pedido.Detalles.Count > 2)
                                                     {
                                                         <text>...</text>
                                                     }
@@ -145,7 +145,7 @@
                                 <div class="col-md-3">
                                     <div class="card bg-light">
                                         <div class="card-body text-center">
-                                            <h5 class="card-title">@Model.Where(p => p.Estado == "Pendiente").Count()</h5>
+                                            <h5 class="card-title">@Model.Where(p => p.Estado == "Pendiente" || p.Estado == "Preparándose").Count()</h5>
                                             <p class="card-text text-muted">Pendientes</p>
                                         </div>
                                     </div>
@@ -186,7 +186,7 @@
         // Opcional: Auto-refresh cada 30 segundos para ver cambios de estado
         setInterval(function () {
             // Solo recargar si hay pedidos pendientes
-            var pendientes = @Model.Where(p => p.Estado == "Pendiente").Count();
+            var pendientes = @Model.Where(p => p.Estado == "Pendiente" || p.Estado == "Preparándose").Count();
             if (pendientes > 0) {
                 // Verificar si la página sigue siendo visible
                 if (!document.hidden) {

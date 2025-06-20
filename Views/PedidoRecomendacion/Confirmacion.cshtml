@@ -1,4 +1,4 @@
-﻿@model ProyectoIdentity.Controllers.PedidoRecomendacionController.Pedido
+﻿@model ProyectoIdentity.Models.Pedido
 @{
     ViewBag.Title = "Confirmación de Pedido";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -40,15 +40,7 @@
                             <table class="table table-borderless">
                                 <tr>
                                     <td><strong>Usuario:</strong></td>
-                                    <td>@Model.UsuarioEmail</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Cliente:</strong></td>
-                                    <td>@Model.ClienteNombre</td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Teléfono:</strong></td>
-                                    <td>@Model.ClienteTelefono</td>
+                                    <td>@User.Identity.Name</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Tipo de Servicio:</strong></td>
@@ -71,20 +63,6 @@
                                         }
                                     </td>
                                 </tr>
-                                @if (Model.TipoServicio == "Para llevar")
-                                {
-                                    <tr>
-                                        <td><strong>Dirección:</strong></td>
-                                        <td>@Model.Direccion</td>
-                                    </tr>
-                                }
-                                @if (!string.IsNullOrEmpty(Model.Observaciones))
-                                {
-                                    <tr>
-                                        <td><strong>Observaciones:</strong></td>
-                                        <td>@Model.Observaciones</td>
-                                    </tr>
-                                }
                             </table>
                         </div>
                     </div>
@@ -101,13 +79,13 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var item in Model.Items)
+                                @foreach (var detalle in Model.Detalles)
                                 {
                                     <tr>
-                                        <td>@item.Nombre</td>
-                                        <td>$@item.Precio</td>
-                                        <td>@item.Cantidad</td>
-                                        <td>$@item.Subtotal</td>
+                                        <td>@detalle.Producto.Nombre</td>
+                                        <td>$@detalle.PrecioUnitario</td>
+                                        <td>@detalle.Cantidad</td>
+                                        <td>$@((detalle.PrecioUnitario * detalle.Cantidad).ToString("F2"))</td>
                                     </tr>
                                 }
                             </tbody>
@@ -141,7 +119,7 @@
                             }
                             <li>Recibirás una notificación cuando esté listo</li>
                             <li>Métodos de pago disponibles: Efectivo, tarjeta, transferencia</li>
-                            <li>El pedido se registró con tu usuario: <strong>@Model.UsuarioEmail</strong></li>
+                            <li>El pedido se registró con tu usuario: <strong>@User.Identity.Name</strong></li>
                         </ul>
                     </div>
                 </div>
