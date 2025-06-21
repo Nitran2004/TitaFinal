@@ -8,6 +8,78 @@
 <div class="container mt-4">
     <div class="row">
         <div class="col-md-8 mx-auto">
+            
+            <!-- ✅ MOSTRAR MENSAJES DE TEMPDATA -->
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Info"] != null)
+            {
+                <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>@TempData["Info"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            
+            <!-- ✅ NOTIFICACIÓN DE ESTADO DEL PEDIDO -->
+            @if (Model.Estado == "Listo para entregar")
+            {
+                <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-bell fa-2x text-warning me-3"></i>
+                        <div>
+                            <h5 class="alert-heading mb-1">¡Tu pedido está listo para entregar! 🎉</h5>
+                            <p class="mb-0">
+                                <strong>Pedido #@Model.Id.ToString("D6")</strong> - 
+                                Puedes recogerlo en <strong>@(Model.Sucursal?.Nombre ?? "la sucursal")</strong>
+                            </p>
+                            @if (!string.IsNullOrEmpty(Model.TipoServicio) && Model.TipoServicio == "Servir aquí")
+                            {
+                                <small class="text-muted">Nuestro personal te lo llevará a tu mesa.</small>
+                            }
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            else if (Model.Estado == "Entregado")
+            {
+                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle fa-2x text-success me-3"></i>
+                        <div>
+                            <h5 class="alert-heading mb-1">¡Pedido entregado exitosamente! ✅</h5>
+                            <p class="mb-0">Esperamos que hayas disfrutado tu pedido. ¡Gracias por tu preferencia!</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            else if (Model.Estado == "Preparándose")
+            {
+                <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-clock fa-2x text-info me-3"></i>
+                        <div>
+                            <h5 class="alert-heading mb-1">Tu pedido se está preparando 👨‍🍳</h5>
+                            <p class="mb-0">Estamos trabajando en tu pedido. Te notificaremos cuando esté listo.</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
             <div class="card">
                 <div class="card-header bg-success text-white text-center">
                     <h3><i class="fas fa-check-circle"></i> ¡Pedido Personalizado Confirmado!</h3>
@@ -46,7 +118,24 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Estado:</strong></td>
-                                    <td><span class="badge bg-warning">@Model.Estado</span></td>
+                                    <td>
+                                        @if (Model.Estado == "Preparándose")
+                                        {
+                                            <span class="badge bg-info">@Model.Estado</span>
+                                        }
+                                        else if (Model.Estado == "Listo para entregar")
+                                        {
+                                            <span class="badge bg-warning">@Model.Estado</span>
+                                        }
+                                        else if (Model.Estado == "Entregado")
+                                        {
+                                            <span class="badge bg-success">@Model.Estado</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@Model.Estado</span>
+                                        }
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td><strong>Total:</strong></td>
@@ -78,7 +167,20 @@
                                 }
                                 <tr>
                                     <td><strong>Tiempo estimado:</strong></td>
-                                    <td>15-25 minutos</td>
+                                    <td>
+                                        @if (Model.Estado == "Listo para entregar")
+                                        {
+                                            <span class="text-success"><strong>¡Listo para recoger!</strong></span>
+                                        }
+                                        else if (Model.Estado == "Entregado")
+                                        {
+                                            <span class="text-success"><strong>Entregado</strong></span>
+                                        }
+                                        else
+                                        {
+                                            <span>15-25 minutos</span>
+                                        }
+                                    </td>
                                 </tr>
                             </table>
                         </div>
@@ -152,14 +254,104 @@
                         </table>
                     </div>
 
+                    <!-- ✅ SECCIÓN DE COMENTARIOS PARA PEDIDOS ENTREGADOS -->
+                    @if (Model.Estado == "Entregado" && !Model.ComentarioEnviado)
+                    {
+                        <div class="card mt-4 border-warning">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0"><i class="fas fa-star"></i> ¡Cuéntanos tu experiencia!</h5>
+                            </div>
+                            <div class="card-body">
+                                <form asp-controller="Pedidos" asp-action="GuardarComentario" method="post" id="formComentario">
+                                    <input type="hidden" name="pedidoId" value="@Model.Id" />
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Calificación: <span class="text-danger">*</span></strong></label>
+                                        <div class="rating-stars">
+                                            @for (int i = 5; i >= 1; i--)
+                                            {
+                                                <input type="radio" name="calificacion" value="@i" id="star@i" required />
+                                                <label for="star@i" class="star">★</label>
+                                            }
+                                        </div>
+                                        <small class="text-muted">Selecciona de 1 a 5 estrellas</small>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="comentario" class="form-label"><strong>Comentario: <span class="text-danger">*</span></strong></label>
+                                        <textarea name="comentario" id="comentario" class="form-control" rows="4" 
+                                                  placeholder="Comparte tu experiencia con nosotros..." 
+                                                  required minlength="10" maxlength="500"></textarea>
+                                        <div class="form-text">
+                                            <small class="text-muted">Mínimo 10 caracteres, máximo 500. <span id="charCount">0/500</span></small>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-warning btn-lg" id="btnEnviarComentario">
+                                            <i class="fas fa-paper-plane"></i> Enviar Valoración
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                    else if (Model.ComentarioEnviado)
+                    {
+                        <div class="card mt-4 border-success">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0"><i class="fas fa-check-circle"></i> ¡Gracias por tu valoración!</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="me-2"><strong>Tu calificación:</strong></span>
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        if (i <= Model.Calificacion)
+                                        {
+                                            <span class="text-warning fs-5">★</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted fs-5">★</span>
+                                        }
+                                    }
+                                </div>
+                                @if (!string.IsNullOrEmpty(Model.Comentario))
+                                {
+                                    <div>
+                                        <strong>Tu comentario:</strong>
+                                        <p class="mt-2 mb-0">"@Model.Comentario"</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
                     <div class="alert alert-info">
                         <h6><i class="fas fa-info-circle"></i> Información Importante:</h6>
                         <ul class="mb-0">
-                            <li>Tiempo estimado de preparación: 15-25 minutos</li>
+                            @if (Model.Estado == "Listo para entregar")
+                            {
+                                <li><strong>¡Tu pedido está listo!</strong> Puedes recogerlo ahora</li>
+                                <li>Presenta este número de pedido: <strong>#@Model.Id.ToString("D6")</strong></li>
+                            }
+                            else if (Model.Estado == "Entregado")
+                            {
+                                <li>Tu pedido ha sido entregado exitosamente</li>
+                                @if (!Model.ComentarioEnviado)
+                                {
+                                    <li><strong>¡No olvides calificarnos!</strong> Tu opinión es muy importante</li>
+                                }
+                            }
+                            else
+                            {
+                                <li>Tiempo estimado de preparación: 15-25 minutos</li>
+                                <li>Te notificaremos cuando esté listo para recoger</li>
+                            }
                             <li>Tu pedido está siendo preparado con las personalizaciones solicitadas</li>
                             <li>El precio no cambia al quitar ingredientes</li>
                             <li>Has ganado <strong>@puntosGanados puntos</strong> que ya están disponibles en tu cuenta</li>
-                            <li>Recibirás una notificación cuando esté listo</li>
                         </ul>
                     </div>
                 </div>
@@ -236,4 +428,157 @@
             background-color: #218838;
             border-color: #1e7e34;
         }
+
+    /* ✅ ESTILOS PARA LAS ESTRELLAS DE CALIFICACIÓN */
+    .rating-stars {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        gap: 5px;
+    }
+
+    .rating-stars input[type="radio"] {
+        display: none;
+    }
+
+    .rating-stars label.star {
+        font-size: 2rem;
+        color: #ddd;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+
+    .rating-stars input[type="radio"]:checked ~ label.star,
+    .rating-stars label.star:hover,
+    .rating-stars label.star:hover ~ label.star {
+        color: #ffc107;
+    }
+
+    /* ✅ ESTILOS PARA LAS NOTIFICACIONES */
+    .alert {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .alert-warning {
+        background: linear-gradient(45deg, #fff3cd, #ffeaa7);
+        border: 1px solid #ffc107;
+    }
+
+    .alert-info {
+        background: linear-gradient(45deg, #d1ecf1, #bee5eb);
+        border: 1px solid #17a2b8;
+    }
+
+    /* ✅ ANIMACIÓN PARA LAS NOTIFICACIONES */
+    .alert.fade.show {
+        animation: slideInDown 0.5s ease-out;
+    }
+
+    @@keyframes slideInDown {
+        from {
+            transform: translateY(-30px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    /* ✅ BADGE MEJORADOS */
+    .badge {
+        font-size: 0.9em;
+        padding: 0.5em 0.8em;
+    }
 </style>
+
+<script>
+    // ✅ AUTO-REFRESH CADA 30 SEGUNDOS PARA ACTUALIZAR EL ESTADO
+    @if (Model.Estado == "Preparándose" || Model.Estado == "Listo para entregar")
+    {
+        <text>
+        setInterval(function() {
+            // Solo refrescar si la página está visible
+            if (!document.hidden) {
+                window.location.reload();
+            }
+        }, 30000); // 30 segundos
+        </text>
+    }
+
+    // ✅ NOTIFICACIÓN DE ESCRITORIO SI EL ESTADO CAMBIA
+    @if (Model.Estado == "Listo para entregar")
+    {
+        <text>
+        // Solicitar permiso para notificaciones
+        if (Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+        
+        // Mostrar notificación si está permitido
+        if (Notification.permission === "granted") {
+            new Notification("¡Tu pedido está listo! 🍕", {
+                body: "Pedido #@Model.Id.ToString("D6") - Puedes recogerlo en @(Model.Sucursal?.Nombre ?? "la sucursal")",
+                icon: "/images1/logo_bar_verace.png" // Ajusta la ruta del icono
+            });
+        }
+        </text>
+    }
+
+    // ✅ VALIDACIÓN DEL FORMULARIO DE COMENTARIOS
+    const formComentario = document.getElementById('formComentario');
+    const comentarioTextarea = document.getElementById('comentario');
+    const charCount = document.getElementById('charCount');
+    const btnEnviarComentario = document.getElementById('btnEnviarComentario');
+
+    if (comentarioTextarea && charCount) {
+        // Contador de caracteres
+        comentarioTextarea.addEventListener('input', function() {
+            const length = this.value.length;
+            charCount.textContent = length + '/500';
+            
+            if (length < 10) {
+                charCount.classList.add('text-danger');
+                charCount.classList.remove('text-success');
+            } else if (length > 450) {
+                charCount.classList.add('text-warning');
+                charCount.classList.remove('text-success', 'text-danger');
+            } else {
+                charCount.classList.add('text-success');
+                charCount.classList.remove('text-danger', 'text-warning');
+            }
+        });
+    }
+
+    if (formComentario) {
+        formComentario.addEventListener('submit', function(e) {
+            const calificacion = document.querySelector('input[name="calificacion"]:checked');
+            const comentario = document.getElementById('comentario').value.trim();
+            
+            if (!calificacion) {
+                e.preventDefault();
+                alert('Por favor selecciona una calificación de 1 a 5 estrellas');
+                return;
+            }
+            
+            if (comentario.length < 10) {
+                e.preventDefault();
+                alert('El comentario debe tener al menos 10 caracteres');
+                return;
+            }
+            
+            if (comentario.length > 500) {
+                e.preventDefault();
+                alert('El comentario no puede exceder 500 caracteres');
+                return;
+            }
+            
+            // Deshabilitar botón para evitar doble envío
+            if (btnEnviarComentario) {
+                btnEnviarComentario.disabled = true;
+                btnEnviarComentario.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+            }
+        });
+    }
+</script>

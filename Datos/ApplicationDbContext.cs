@@ -10,135 +10,112 @@ namespace ProyectoIdentity.Datos
         {
         }
 
-
-        // Método para actualizar DbContext (agregar a ApplicationDbContext.cs)
-        public DbSet<Cupon> Cupones { get; set; }
-        public DbSet<CuponCanjeado> CuponesCanjeados { get; set; }
-        public DbSet<PedidoDetalle> PedidoDetalles { get; set; }
-
-        // Entidades existentes
+        // ✅ DBSETS
         public DbSet<AppUsuario> AppUsuario { get; set; }
         public DbSet<CollectionPoint> CollectionPoints { get; set; }
         public DbSet<Pedido> Pedidos { get; set; }
         public DbSet<Producto> Productos { get; set; }
         public DbSet<PedidoProducto> PedidoProductos { get; set; }
+        public DbSet<PedidoDetalle> PedidoDetalles { get; set; }
         public DbSet<Sucursal> Sucursales { get; set; }
+        public DbSet<Cupon> Cupones { get; set; }
+        public DbSet<CuponCanjeado> CuponesCanjeados { get; set; }
 
-        // Entidades del sistema de fidelización - existentes (mantenemos tu estructura)
+        // Sistema de fidelización
         public DbSet<ProductoRecompensa> ProductosRecompensa { get; set; }
         public DbSet<UsuarioPuntos> UsuarioPuntos { get; set; }
         public DbSet<HistorialCanje> HistorialCanjes { get; set; }
-
-        // Solo agregamos TransaccionPuntos para el historial
         public DbSet<TransaccionPuntos> TransaccionesPuntos { get; set; }
+        public DbSet<Valoracion> Valoraciones { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder); // Importante: esto debe ir al inicio
+            base.OnModelCreating(modelBuilder);
 
-            // Configuraciones para las tablas existentes (mantenemos tu estructura)
-            modelBuilder.Entity<ProductoRecompensa>().ToTable("ProductosRecompensa");
-            modelBuilder.Entity<UsuarioPuntos>().ToTable("UsuarioPuntos");
-            modelBuilder.Entity<HistorialCanje>().ToTable("HistorialCanjes");
-
-            // Solo agregamos la nueva tabla de transacciones
-            modelBuilder.Entity<TransaccionPuntos>().ToTable("TransaccionesPuntos");
-
-            // Configuraciones específicas para las relaciones
-            // Configurar relación ProductoRecompensa -> Producto
-            modelBuilder.Entity<ProductoRecompensa>()
-            .HasOne(pr => pr.Producto)
-            .WithMany()
-            .HasForeignKey(pr => pr.ProductoId)
-            .OnDelete(DeleteBehavior.SetNull);
-
-            modelBuilder.Entity<PedidoDetalle>().ToTable("PedidoDetalle"); // ← Agregar esto
-
-            // Configuración para Cupon
-            modelBuilder.Entity<Cupon>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.CodigoQR).IsRequired().HasMaxLength(50);
-                entity.Property(e => e.TipoDescuento).IsRequired().HasMaxLength(20);
-                entity.Property(e => e.ValorDescuento).HasColumnType("decimal(10,2)");
-                entity.Property(e => e.MontoMinimo).HasColumnType("decimal(10,2)");
-
-                // Índice único para el código QR
-                entity.HasIndex(e => e.CodigoQR).IsUnique();
-            });
-
-            // Configuración para CuponCanjeado
-            modelBuilder.Entity<CuponCanjeado>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.CodigoQR).IsRequired().HasMaxLength(50);
-                entity.Property(e => e.TotalOriginal).HasColumnType("decimal(10,2)");
-                entity.Property(e => e.DescuentoAplicado).HasColumnType("decimal(10,2)");
-                entity.Property(e => e.TotalConDescuento).HasColumnType("decimal(10,2)");
-
-                // Relación con Cupon
-                entity.HasOne(e => e.Cupon)
-                      .WithMany()
-                      .HasForeignKey(e => e.CuponId)
-                      .OnDelete(DeleteBehavior.Cascade);
-
-                // Relación con Usuario (opcional)
-                entity.HasOne(e => e.Usuario)
-                      .WithMany()
-                      .HasForeignKey(e => e.UsuarioId)
-                      .OnDelete(DeleteBehavior.SetNull);
-
-                // Relación con Pedido (opcional)
-                entity.HasOne(e => e.Pedido)
-                      .WithMany()
-                      .HasForeignKey(e => e.PedidoId)
-                      .OnDelete(DeleteBehavior.SetNull);
-
-            });  // <-- AGREGAR esta llave que falta
-
-            // Configuración de Pedido
+            // ✅ CONFIGURACIÓN CORREGIDA PARA PEDIDO
             modelBuilder.Entity<Pedido>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Total).HasColumnType("decimal(18,2)");
                 entity.Property(e => e.Fecha).IsRequired();
-                entity.Property(e => e.Estado).HasMaxLength(50).HasDefaultValue("Pendiente");
+                entity.Property(e => e.Estado).HasMaxLength(50).HasDefaultValue("Preparándose");
+                entity.Property(e => e.TipoServicio).HasMaxLength(50);
+                entity.Property(e => e.Comentario).HasMaxLength(500);
 
-                // Relación con Sucursal
-                entity.HasOne(e => e.Sucursal)
-                      .WithMany()
-                      .HasForeignKey(e => e.SucursalId)
-                      .OnDelete(DeleteBehavior.Restrict);
-
-                // Relación con Usuario (opcional)
+                // ✅ Relación con Usuario (SIN propiedad de navegación)
                 entity.HasOne<AppUsuario>()
                       .WithMany()
                       .HasForeignKey(e => e.UsuarioId)
+                      .IsRequired(false)
                       .OnDelete(DeleteBehavior.SetNull);
+
+                // ✅ Relación con Sucursal
+                entity.HasOne(e => e.Sucursal)
+                      .WithMany()
+                      .HasForeignKey(e => e.SucursalId)
+                      .IsRequired(true)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // ✅ Relación con PuntoRecoleccion (opcional)
+                entity.HasOne(e => e.PuntoRecoleccion)
+                      .WithMany()
+                      .HasForeignKey(e => e.PuntoRecoleccionId)
+                      .IsRequired(false)
+                      .OnDelete(DeleteBehavior.SetNull);
+
+                // ✅ Relación con PedidoProductos
+                entity.HasMany(e => e.PedidoProductos)
+                      .WithOne(pp => pp.Pedido)
+                      .HasForeignKey(pp => pp.PedidoId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                // ✅ Relación con Detalles
+                entity.HasMany(e => e.Detalles)
+                      .WithOne(d => d.Pedido)
+                      .HasForeignKey(d => d.PedidoId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // Configuración de PedidoProducto
+            // ✅ CONFIGURACIÓN PARA PEDIDOPRODUCTO
             modelBuilder.Entity<PedidoProducto>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Precio).HasColumnType("decimal(18,2)");
                 entity.Property(e => e.Cantidad).IsRequired();
 
-                // Relación con Pedido
                 entity.HasOne(e => e.Pedido)
                       .WithMany(p => p.PedidoProductos)
                       .HasForeignKey(e => e.PedidoId)
                       .OnDelete(DeleteBehavior.Cascade);
 
-                // Relación con Producto
                 entity.HasOne(e => e.Producto)
                       .WithMany()
                       .HasForeignKey(e => e.ProductoId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // Configuración de Producto
+            // ✅ CONFIGURACIÓN PARA PEDIDODETALLE
+            modelBuilder.Entity<PedidoDetalle>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.ToTable("PedidoDetalle");
+                entity.Property(e => e.PrecioUnitario).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.Cantidad).IsRequired();
+                entity.Property(e => e.IngredientesRemovidos).HasMaxLength(1000);
+                entity.Property(e => e.NotasEspeciales).HasMaxLength(500);
+
+                entity.HasOne(e => e.Pedido)
+                      .WithMany(p => p.Detalles)
+                      .HasForeignKey(e => e.PedidoId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Producto)
+                      .WithMany()
+                      .HasForeignKey(e => e.ProductoId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ✅ CONFIGURACIÓN PARA PRODUCTO
             modelBuilder.Entity<Producto>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -146,28 +123,12 @@ namespace ProyectoIdentity.Datos
                 entity.Property(e => e.Precio).HasColumnType("decimal(18,2)").IsRequired();
                 entity.Property(e => e.Categoria).HasMaxLength(50);
                 entity.Property(e => e.Descripcion).HasMaxLength(500);
+                entity.Property(e => e.InfoNutricional).HasMaxLength(1000);
+                entity.Property(e => e.Alergenos).HasMaxLength(500);
+                entity.Property(e => e.Ingredientes).HasColumnType("nvarchar(max)");
             });
 
-            // Configuración de TransaccionPuntos
-            modelBuilder.Entity<TransaccionPuntos>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Puntos).IsRequired();
-                entity.Property(e => e.Tipo).IsRequired().HasMaxLength(20);
-                entity.Property(e => e.Descripcion).HasMaxLength(200);
-                entity.Property(e => e.Fecha).IsRequired().HasDefaultValueSql("GETDATE()");
-
-                // Relación con Usuario
-                entity.HasOne<AppUsuario>()
-                      .WithMany()
-                      .HasForeignKey(e => e.UsuarioId)
-                      .OnDelete(DeleteBehavior.Cascade);
-
-                // Índice para consultas eficientes
-                entity.HasIndex(e => new { e.UsuarioId, e.Fecha });
-            });
-
-            // Configuración de AppUsuario (extendiendo IdentityUser)
+            // ✅ CONFIGURACIÓN PARA APPUSUARIO
             modelBuilder.Entity<AppUsuario>(entity =>
             {
                 entity.Property(e => e.Nombre).HasMaxLength(100);
@@ -180,11 +141,10 @@ namespace ProyectoIdentity.Datos
                 entity.Property(e => e.Url).HasMaxLength(200);
                 entity.Property(e => e.PuntosFidelidad).HasDefaultValue(0);
 
-                // Índice para búsquedas por puntos
                 entity.HasIndex(e => e.PuntosFidelidad);
             });
 
-            // Configuración de Sucursal
+            // ✅ CONFIGURACIÓN PARA SUCURSAL
             modelBuilder.Entity<Sucursal>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -194,44 +154,103 @@ namespace ProyectoIdentity.Datos
                 entity.Property(e => e.Longitud).HasColumnType("decimal(11,8)");
             });
 
-            // Configuración de CollectionPoint
+            // ✅ CONFIGURACIÓN PARA COLLECTIONPOINT
             modelBuilder.Entity<CollectionPoint>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.Address).HasMaxLength(200);
 
-                // Relación con Sucursal
                 entity.HasOne(e => e.Sucursal)
                       .WithMany()
                       .HasForeignKey(e => e.SucursalId)
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // Configuraciones adicionales para las entidades existentes del sistema de recompensas
+            // ✅ CONFIGURACIÓN PARA TRANSACCIONPUNTOS
+            modelBuilder.Entity<TransaccionPuntos>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.ToTable("TransaccionesPuntos");
+                entity.Property(e => e.Puntos).IsRequired();
+                entity.Property(e => e.Tipo).IsRequired().HasMaxLength(20);
+                entity.Property(e => e.Descripcion).HasMaxLength(200);
+                entity.Property(e => e.Fecha).IsRequired().HasDefaultValueSql("GETDATE()");
 
-            // ProductoRecompensa
+                entity.HasOne<AppUsuario>()
+                      .WithMany()
+                      .HasForeignKey(e => e.UsuarioId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(e => new { e.UsuarioId, e.Fecha });
+            });
+
+            // ✅ CONFIGURACIÓN PARA CUPON
+            modelBuilder.Entity<Cupon>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.CodigoQR).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.TipoDescuento).IsRequired().HasMaxLength(20);
+                entity.Property(e => e.ValorDescuento).HasColumnType("decimal(10,2)");
+                entity.Property(e => e.MontoMinimo).HasColumnType("decimal(10,2)");
+
+                entity.HasIndex(e => e.CodigoQR).IsUnique();
+            });
+
+            // ✅ CONFIGURACIÓN PARA CUPONCANJEADO
+            modelBuilder.Entity<CuponCanjeado>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.CodigoQR).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.TotalOriginal).HasColumnType("decimal(10,2)");
+                entity.Property(e => e.DescuentoAplicado).HasColumnType("decimal(10,2)");
+                entity.Property(e => e.TotalConDescuento).HasColumnType("decimal(10,2)");
+
+                entity.HasOne(e => e.Cupon)
+                      .WithMany()
+                      .HasForeignKey(e => e.CuponId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Usuario)
+                      .WithMany()
+                      .HasForeignKey(e => e.UsuarioId)
+                      .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.Pedido)
+                      .WithMany()
+                      .HasForeignKey(e => e.PedidoId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // ✅ CONFIGURACIONES PARA SISTEMA DE RECOMPENSAS
             modelBuilder.Entity<ProductoRecompensa>(entity =>
             {
+                entity.ToTable("ProductosRecompensa");
                 entity.HasKey(e => e.Id);
-                // Agregar configuraciones adicionales si es necesario
+
+                entity.HasOne(pr => pr.Producto)
+                      .WithMany()
+                      .HasForeignKey(pr => pr.ProductoId)
+                      .OnDelete(DeleteBehavior.SetNull);
             });
 
-            // UsuarioPuntos
             modelBuilder.Entity<UsuarioPuntos>(entity =>
             {
+                entity.ToTable("UsuarioPuntos");
                 entity.HasKey(e => e.Id);
-                // Agregar configuraciones adicionales si es necesario
             });
 
-            // HistorialCanje
             modelBuilder.Entity<HistorialCanje>(entity =>
             {
+                entity.ToTable("HistorialCanjes");
                 entity.HasKey(e => e.Id);
-                // Agregar configuraciones adicionales si es necesario
+            });
+
+            modelBuilder.Entity<Valoracion>(entity =>
+            {
+                entity.HasKey(e => e.Id);
             });
         }
-
-
     }
 }

@@ -4,7 +4,7 @@
 }
 
 <style>
-  /* --------- Menú de Categorías --------- */
+    /* --------- Menú de Categorías --------- */
     /* Modificar estos estilos para la barra de categorías */
     .category-nav {
         position: sticky;
@@ -25,541 +25,573 @@
         margin: 0 auto; /* Añadir esta línea para centrar */
         max-width: 900px; /* Opcional: puedes ajustar este valor según necesites */
     }
-  .category-container::-webkit-scrollbar { height:6px; }
-  .category-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius:3px; }
-  
-  /* ✅ Estilos de categorías desde cero - como el original */
-  .category-btn {
-    flex: 0 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    padding: 6px 12px;
-    transition: color .2s, transform .2s;
-    color: #555; /* ✅ Color gris oscuro original */
-    text-decoration: none !important;
-  }
-  
-  .category-btn i {
-    font-size: 1.4rem;
-    margin-bottom: 4px;
-    transition: transform .2s;
-  }
-  
-  .category-btn span {
-    font-size: .85rem;
-    white-space: nowrap;
-  }
-  
-  /* ✅ Efectos hover originales */
-  .category-btn.active,
-  .category-btn:hover {
-    color: #28a745; /* ✅ Verde al hacer hover */
-    transform: translateY(-3px); /* ✅ Elevación */
-    text-decoration: none !important;
-  }
-  
-  .category-btn.active i,
-  .category-btn:hover i {
-    transform: scale(1.2); /* ✅ Icono se agranda */
-  }
-  
-  /* ✅ Barra indicadora original */
-  .category-btn.active::after {
-    content: '';
-    display: block;
-    width: 100%;
-    height: 3px;
-    background: linear-gradient(90deg, #ffc107, #28a745);
-    border-radius: 2px;
-    margin-top: 6px;
-    animation: indicator-in .3s ease-out;
-  }
-  
-  /* ✅ Asegurar que funcione en todos los estados */
-  .category-btn:hover,
-  .category-btn:focus,
-  .category-btn:visited {
-    text-decoration: none !important;
-  }
-  
-  @@keyframes indicator-in { 
-    from{width:0} 
-    to{width:100%} 
-  }
-  
-  @@media(max-width:576px){ 
-    .category-btn i{font-size:1.2rem} 
-    .category-btn span{font-size:.75rem} 
-  }
 
-  /* Imagen de bienvenida */
-  .welcome-container {
-    position: relative;
-    margin: 80px auto 40px;
-    max-width: 1000px; /* Aumentado de 800px a 1000px para hacerlo más ancho */
-    text-align: center;
-  }
-  
-  .welcome-image {
-    width: 100%;
-    height: 600px; /* Reducido de la altura implícita para hacerlo más pequeño */
-    object-fit: cover; /* Asegura que la imagen cubra bien el espacio */
-    object-position: center 30%; /* Muestra más la parte superior (0%) o inferior (100%) */
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
-  }
-  
-  .welcome-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    text-shadow: 0 2px 6px rgba(0,0,0,0.5);
-    padding: 20px; /* Reducido de 24px para ajustar el tamaño */
-    background: rgba(0,0,0,0.4);
-    border-radius: 12px;
-    width: 80%;
-  }
-  
-  .welcome-text h1 {
-    font-size: 2.2rem; /* Reducido de 2.5rem */
-    font-weight: 700;
-    margin-bottom: 10px; /* Reducido de 16px */
-  }
-  
-  .welcome-text p {
-    font-size: 1.1rem; /* Reducido de 1.2rem */
-    margin-bottom: 16px; /* Reducido de 24px */
-  }
-  
-  .btn-explore {
-    background: linear-gradient(45deg, #28a745, #20c997);
-    color: white;
-    border: none;
-    padding: 10px 20px; /* Reducido de 12px 24px */
-    border-radius: 8px;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    transition: transform 0.3s, box-shadow 0.3s;
-    display: inline-block;
-    text-decoration: none !important; /* ✅ CORREGIDO */
-  }
-  
-  .btn-explore:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-    color: white;
-    text-decoration: none !important; /* ✅ CORREGIDO */
-  }
+        .category-container::-webkit-scrollbar {
+            height: 6px;
+        }
 
-  /* Para dispositivos móviles, asegúrate de que se vea bien */
-  @@media (max-width: 768px) {
+        .category-container::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.2);
+            border-radius: 3px;
+        }
+
+    /* ✅ Estilos de categorías desde cero - como el original */
+    .category-btn {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        padding: 6px 12px;
+        transition: color .2s, transform .2s;
+        color: #555; /* ✅ Color gris oscuro original */
+        text-decoration: none !important;
+    }
+
+        .category-btn i {
+            font-size: 1.4rem;
+            margin-bottom: 4px;
+            transition: transform .2s;
+        }
+
+        .category-btn span {
+            font-size: .85rem;
+            white-space: nowrap;
+        }
+
+        /* ✅ Efectos hover originales */
+        .category-btn.active,
+        .category-btn:hover {
+            color: #28a745; /* ✅ Verde al hacer hover */
+            transform: translateY(-3px); /* ✅ Elevación */
+            text-decoration: none !important;
+        }
+
+            .category-btn.active i,
+            .category-btn:hover i {
+                transform: scale(1.2); /* ✅ Icono se agranda */
+            }
+
+            /* ✅ Barra indicadora original */
+            .category-btn.active::after {
+                content: '';
+                display: block;
+                width: 100%;
+                height: 3px;
+                background: linear-gradient(90deg, #ffc107, #28a745);
+                border-radius: 2px;
+                margin-top: 6px;
+                animation: indicator-in .3s ease-out;
+            }
+
+        /* ✅ Asegurar que funcione en todos los estados */
+        .category-btn:hover,
+        .category-btn:focus,
+        .category-btn:visited {
+            text-decoration: none !important;
+        }
+
+    @@keyframes indicator-in {
+        from {
+            width: 0
+        }
+
+        to {
+            width: 100%
+        }
+    }
+
+    @@media(max-width:576px) {
+        .category-btn i {
+            font-size: 1.2rem
+        }
+
+        .category-btn span {
+            font-size: .75rem
+        }
+    }
+
+    /* Imagen de bienvenida */
     .welcome-container {
-      margin-top: 100px;
+        position: relative;
+        margin: 80px auto 40px;
+        max-width: 1000px; /* Aumentado de 800px a 1000px para hacerlo más ancho */
+        text-align: center;
     }
-    
+
     .welcome-image {
-      height: 300px; /* Aún más pequeño en móviles */
+        width: 100%;
+        height: 600px; /* Reducido de la altura implícita para hacerlo más pequeño */
+        object-fit: cover; /* Asegura que la imagen cubra bien el espacio */
+        object-position: center 30%; /* Muestra más la parte superior (0%) o inferior (100%) */
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12);
     }
-    
-    .welcome-text h1 {
-      font-size: 1.8rem;
+
+    .welcome-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+        padding: 20px; /* Reducido de 24px para ajustar el tamaño */
+        background: rgba(0,0,0,0.4);
+        border-radius: 12px;
+        width: 80%;
     }
-  }
-  
-  /* Secciones Adicionales */
-  .feature-card {
-    padding: 30px;
-    border-radius: 10px;
-    text-align: center;
-    background-color: #fff;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-    transition: transform 0.3s, box-shadow 0.3s;
-    height: 100%;
-  }
-  .feature-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
-  }
-  .feature-icon {
-    font-size: 3rem;
-    margin-bottom: 20px;
-    color: #28a745;
-  }
-  
-  .category-card {
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    background-color: #fff;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-    transition: transform 0.3s;
-    margin-bottom: 20px;
-    height: 100%;
-  }
-  .category-card:hover {
-    transform: translateY(-5px);
-  }
-  .category-card img {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-    border-radius: 8px;
-    margin-bottom: 15px;
-  }
-  
-  /* ✅ CORREGIDO: Botones de categorías destacadas */
-  .category-card .btn {
-    text-decoration: none !important;
-    font-weight: 600;
-    padding: 10px 20px;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    display: inline-block;
-    margin-top: 10px;
-  }
-  
-  .category-card .btn:hover {
-    text-decoration: none !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  }
-  
-  /* ✅ Colores específicos para cada botón */
-  .btn-outline-success {
-    color: #28a745 !important;
-    border: 2px solid #28a745 !important;
-    background-color: transparent !important;
-  }
-  
-  .btn-outline-success:hover {
-    color: white !important;
-    background-color: #28a745 !important;
-    border-color: #28a745 !important;
-  }
-  
-  .btn-outline-warning {
-    color: #ffc107 !important;
-    border: 2px solid #ffc107 !important;
-    background-color: transparent !important;
-  }
-  
-  .btn-outline-warning:hover {
-    color: #212529 !important;
-    background-color: #ffc107 !important;
-    border-color: #ffc107 !important;
-  }
-  
-  .btn-outline-danger {
-    color: #dc3545 !important;
-    border: 2px solid #dc3545 !important;
-    background-color: transparent !important;
-  }
-  
-  .btn-outline-danger:hover {
-    color: white !important;
-    background-color: #dc3545 !important;
-    border-color: #dc3545 !important;
-  }
-  
-  .promo-section {
-    background-color: #ffca28;
-    padding: 50px 0;
-    margin: 60px 0;
-  }
-  .promo-content {
-    text-align: center;
-  }
-  .promo-title {
-    font-size: 2rem;
-    font-weight: 700;
-    margin-bottom: 20px;
-    color: #333;
-  }
-  .promo-text {
-    font-size: 1.2rem;
-    margin-bottom: 30px;
-    color: #555;
-  }
-  .btn-register {
-    background-color: white;
-    color: #333;
-    border: none;
-    padding: 12px 30px;
-    border-radius: 8px;
-    font-weight: 600;
-    transition: transform 0.3s, box-shadow 0.3s;
-    text-decoration: none !important; /* ✅ CORREGIDO */
-  }
-  .btn-register:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    text-decoration: none !important; /* ✅ CORREGIDO */
-  }
-  
-  .faq-section {
-    margin: 60px 0;
-  }
-  .faq-item {
-    margin-bottom: 15px;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-  .faq-question {
-    padding: 15px 20px;
-    background-color: #f8f9fa;
-    cursor: pointer;
-    font-weight: 600;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .faq-answer {
-    padding: 15px 20px;
-    border-top: 1px solid #e9ecef;
-    display: none;
-  }
-  .faq-answer.active {
-    display: block;
-  }
-  
-  /* Estilo para el título principal de categorías para que no se tape */
-  .main-categories-section {
-    padding-top: 100px; /* Espacio adicional para evitar que se tape con la barra */
-    margin-bottom: 50px;
-  }
-  .main-categories-title {
-    font-size: 3rem;
-    font-weight: 800;
-    margin-bottom: 20px;
-    color: #333;
-  }
-  .main-categories-subtitle {
-    font-size: 1.3rem;
-    color: #666;
-    margin-bottom: 40px;
-  }
+
+        .welcome-text h1 {
+            font-size: 2.2rem; /* Reducido de 2.5rem */
+            font-weight: 700;
+            margin-bottom: 10px; /* Reducido de 16px */
+        }
+
+        .welcome-text p {
+            font-size: 1.1rem; /* Reducido de 1.2rem */
+            margin-bottom: 16px; /* Reducido de 24px */
+        }
+
+    .btn-explore {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        color: white;
+        border: none;
+        padding: 10px 20px; /* Reducido de 12px 24px */
+        border-radius: 8px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        transition: transform 0.3s, box-shadow 0.3s;
+        display: inline-block;
+        text-decoration: none !important; /* ✅ CORREGIDO */
+    }
+
+        .btn-explore:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+            color: white;
+            text-decoration: none !important; /* ✅ CORREGIDO */
+        }
+
+    /* Para dispositivos móviles, asegúrate de que se vea bien */
+    @@media (max-width: 768px) {
+        .welcome-container {
+            margin-top: 100px;
+        }
+
+        .welcome-image {
+            height: 300px; /* Aún más pequeño en móviles */
+        }
+
+        .welcome-text h1 {
+            font-size: 1.8rem;
+        }
+    }
+
+    /* Secciones Adicionales */
+    .feature-card {
+        padding: 30px;
+        border-radius: 10px;
+        text-align: center;
+        background-color: #fff;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        transition: transform 0.3s, box-shadow 0.3s;
+        height: 100%;
+    }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        color: #28a745;
+    }
+
+    .category-card {
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        background-color: #fff;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        transition: transform 0.3s;
+        margin-bottom: 20px;
+        height: 100%;
+    }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .category-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        /* ✅ CORREGIDO: Botones de categorías destacadas */
+        .category-card .btn {
+            text-decoration: none !important;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+            .category-card .btn:hover {
+                text-decoration: none !important;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+
+    /* ✅ Colores específicos para cada botón */
+    .btn-outline-success {
+        color: #28a745 !important;
+        border: 2px solid #28a745 !important;
+        background-color: transparent !important;
+    }
+
+        .btn-outline-success:hover {
+            color: white !important;
+            background-color: #28a745 !important;
+            border-color: #28a745 !important;
+        }
+
+    .btn-outline-warning {
+        color: #ffc107 !important;
+        border: 2px solid #ffc107 !important;
+        background-color: transparent !important;
+    }
+
+        .btn-outline-warning:hover {
+            color: #212529 !important;
+            background-color: #ffc107 !important;
+            border-color: #ffc107 !important;
+        }
+
+    .btn-outline-danger {
+        color: #dc3545 !important;
+        border: 2px solid #dc3545 !important;
+        background-color: transparent !important;
+    }
+
+        .btn-outline-danger:hover {
+            color: white !important;
+            background-color: #dc3545 !important;
+            border-color: #dc3545 !important;
+        }
+
+    .promo-section {
+        background-color: #ffca28;
+        padding: 50px 0;
+        margin: 60px 0;
+    }
+
+    .promo-content {
+        text-align: center;
+    }
+
+    .promo-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+        color: #333;
+    }
+
+    .promo-text {
+        font-size: 1.2rem;
+        margin-bottom: 30px;
+        color: #555;
+    }
+
+    .btn-register {
+        background-color: white;
+        color: #333;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: transform 0.3s, box-shadow 0.3s;
+        text-decoration: none !important; /* ✅ CORREGIDO */
+    }
+
+        .btn-register:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-decoration: none !important; /* ✅ CORREGIDO */
+        }
+
+    .faq-section {
+        margin: 60px 0;
+    }
+
+    .faq-item {
+        margin-bottom: 15px;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .faq-question {
+        padding: 15px 20px;
+        background-color: #f8f9fa;
+        cursor: pointer;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .faq-answer {
+        padding: 15px 20px;
+        border-top: 1px solid #e9ecef;
+        display: none;
+    }
+
+        .faq-answer.active {
+            display: block;
+        }
+
+    /* Estilo para el título principal de categorías para que no se tape */
+    .main-categories-section {
+        padding-top: 100px; /* Espacio adicional para evitar que se tape con la barra */
+        margin-bottom: 50px;
+    }
+
+    .main-categories-title {
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 20px;
+        color: #333;
+    }
+
+    .main-categories-subtitle {
+        font-size: 1.3rem;
+        color: #666;
+        margin-bottom: 40px;
+    }
 </style>
 
 <h1 class="text-center mt-4">Bienvenido, selecciona una categoría</h1>
 
 <nav class="category-nav">
-  <div class="category-container">
-    <a href="/Productos/SeleccionMultiple" class="category-btn">
-      <i class="fas fa-layer-group"></i>
-      <span>Todas</span>
-    </a>
-    <a href="/Productos/SeleccionMultiple?categoria=Pizza" class="category-btn">
-      <i class="fas fa-pizza-slice"></i>
-      <span>Pizza</span>
-    </a>
-    <a href="/Productos/SeleccionMultiple?categoria=Cerveza" class="category-btn">
-      <i class="fas fa-beer"></i>
-      <span>Cerveza</span>
-    </a>
-    <a href="/Productos/SeleccionMultiple?categoria=Cocteles" class="category-btn">
-      <i class="fas fa-cocktail"></i>
-      <span>Cocteles</span>
-    </a>
-    <a href="/Productos/SeleccionMultiple?categoria=Bebidas" class="category-btn">
-      <i class="fas fa-glass-whiskey"></i>
-      <span>Bebidas</span>
-    </a>
-    <a href="/Productos/SeleccionMultiple?categoria=Promo" class="category-btn">
-      <i class="fas fa-percentage"></i>
-      <span>Promo</span>
-    </a>
-    <a href="/Productos/SeleccionMultiple?categoria=Sánduches" class="category-btn">
-      <i class="fas fa-hamburger"></i>
-      <span>Sánduches</span>
-    </a>
-    <a href="/Productos/SeleccionMultiple?categoria=Shot" class="category-btn">
-      <i class="fas fa-wine-glass-alt"></i>
-      <span>Shot</span>
-    </a>
-    <a href="/Productos/SeleccionMultiple?categoria=Picadas" class="category-btn">
-      <i class="fas fa-cheese"></i>
-      <span>Picadas</span>
-    </a>
-  </div>
+    <div class="category-container">
+        <a href="/Personalizacion" class="category-btn">
+            <i class="fas fa-layer-group"></i>
+            <span>Todas</span>
+        </a>
+        <a href="/Personalizacion?categoria=Pizza" class="category-btn">
+            <i class="fas fa-pizza-slice"></i>
+            <span>Pizza</span>
+        </a>
+        <a href="/Personalizacion?categoria=Cerveza" class="category-btn">
+            <i class="fas fa-beer"></i>
+            <span>Cerveza</span>
+        </a>
+        <a href="/Personalizacion?categoria=Cocteles" class="category-btn">
+            <i class="fas fa-cocktail"></i>
+            <span>Cocteles</span>
+        </a>
+        <a href="/Personalizacion?categoria=Bebidas" class="category-btn">
+            <i class="fas fa-glass-whiskey"></i>
+            <span>Bebidas</span>
+        </a>
+        <a href="/Personalizacion?categoria=Promo" class="category-btn">
+            <i class="fas fa-percentage"></i>
+            <span>Promo</span>
+        </a>
+        <a href="/Personalizacion?categoria=Sánduches" class="category-btn">
+            <i class="fas fa-hamburger"></i>
+            <span>Sánduches</span>
+        </a>
+        <a href="/Personalizacion?categoria=Shot" class="category-btn">
+            <i class="fas fa-wine-glass-alt"></i>
+            <span>Shot</span>
+        </a>
+        <a href="/Personalizacion?categoria=Picadas" class="category-btn">
+            <i class="fas fa-cheese"></i>
+            <span>Picadas</span>
+        </a>
+    </div>
 </nav>
 
 <div class="welcome-container">
     <img src="~/images1/cervesa.webp" alt="Bienvenido" class="welcome-image" onerror="this.src='https://via.placeholder.com/800x400/28a745/FFFFFF?text=Bienvenido+a+nuestro+menú'">
-  <div class="welcome-text">
-    <h1>Disfruta de nuestra variedad de productos</h1>
-    <p>Productos frescos y de la mejor calidad para ti</p>
-    <a href="/Productos/SeleccionMultiple" class="btn btn-explore">Ver Todo el Menú</a>
-  </div>
+    <div class="welcome-text">
+        <h1>Disfruta de nuestra variedad de productos</h1>
+        <p>Productos frescos y de la mejor calidad para ti</p>
+        <a href="/Personalizacion" class="btn btn-explore">Ver Todo el Menú</a>
+    </div>
 </div>
 
 <!-- Sección principal "Explora Nuestras Categorías" con espacio adicional para evitar que se tape -->
 <div class="container main-categories-section text-center">
-  <h2 class="main-categories-title">Explora Nuestras Categorías</h2>
-  <p class="main-categories-subtitle">Selecciona una categoría arriba para ver nuestros productos</p>
-  
-  <!-- Categorías destacadas -->
-  <div class="row">
-    <div class="col-md-4 mb-4">
-      <div class="category-card">
-        <img src="~/images1/pizzas.png" alt="Pizzas">
-        <h3>Pizzas</h3>
-        <p>Deliciosas pizzas con ingredientes frescos y de la mejor calidad.</p>
-        <a href="/Productos/SeleccionMultiple?categoria=Pizza" class="btn btn-outline-success">Ver Pizzas</a>
-      </div>
+    <h2 class="main-categories-title">Explora Nuestras Categorías</h2>
+    <p class="main-categories-subtitle">Selecciona una categoría arriba para ver nuestros productos</p>
+
+    <!-- Categorías destacadas -->
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="category-card">
+                <img src="~/images1/pizzas.png" alt="Pizzas">
+                <h3>Pizzas</h3>
+                <p>Deliciosas pizzas con ingredientes frescos y de la mejor calidad.</p>
+                <a href="/Personalizacion?categoria=Pizza" class="btn btn-outline-success">Ver Pizzas</a>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="category-card">
+                <img src="~/images1/cervesa.webp" alt="Cervezas">
+                <h3>Cervezas</h3>
+                <p>Gran variedad de cervezas nacionales e importadas para todos los gustos.</p>
+                <a href="/Personalizacion?categoria=Cerveza" class="btn btn-outline-warning">Ver Cervezas</a>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="category-card">
+                <img src="~/images1/sanduches.png" alt="Sánduches">
+                <h3>Sánduches</h3>
+                <p>Deliciosos sánduches preparados con ingredientes frescos y de calidad.</p>
+                <a href="/Personalizacion?categoria=Sánduches" class="btn btn-outline-danger">Ver Sánduches</a>
+            </div>
+        </div>
     </div>
-    <div class="col-md-4 mb-4">
-      <div class="category-card">
-        <img src="~/images1/cervesa.webp" alt="Cervezas">
-        <h3>Cervezas</h3>
-        <p>Gran variedad de cervezas nacionales e importadas para todos los gustos.</p>
-        <a href="/Productos/SeleccionMultiple?categoria=Cerveza" class="btn btn-outline-warning">Ver Cervezas</a>
-      </div>
-    </div>
-    <div class="col-md-4 mb-4">
-      <div class="category-card">
-        <img src="~/images1/sanduches.png" alt="Sánduches">
-        <h3>Sánduches</h3>
-        <p>Deliciosos sánduches preparados con ingredientes frescos y de calidad.</p>
-        <a href="/Productos/SeleccionMultiple?categoria=Sánduches" class="btn btn-outline-danger">Ver Sánduches</a>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- Sección similar a "Pide a casa o recoge tu pedido" -->
 <div class="container mt-5 pt-4">
-  <div class="row">
-    <div class="col-md-4 mb-4">
-      <div class="feature-card">
-        <i class="fas fa-home feature-icon"></i>
-        <h3 class="mb-3">Recoge tu pedido</h3>
-        <p>Puedes recogerlo en nuestra sucursal.</p>
-      </div>
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="feature-card">
+                <i class="fas fa-home feature-icon"></i>
+                <h3 class="mb-3">Recoge tu pedido</h3>
+                <p>Puedes recogerlo en nuestra sucursal.</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="feature-card">
+                <i class="fas fa-percentage feature-icon"></i>
+                <h3 class="mb-3">Disfruta de grandes descuentos</h3>
+                <p>Tenemos promociones exclusivas para nuestros clientes registrados. ¡Aprovecha nuestras ofertas!</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="feature-card">
+                <i class="fas fa-heart feature-icon"></i>
+                <h3 class="mb-3">Una experiencia pensada para ti</h3>
+                <p>Nos preocupamos por ofrecerte la mejor calidad y servicio en cada pedido que realizas.</p>
+            </div>
+        </div>
     </div>
-    <div class="col-md-4 mb-4">
-      <div class="feature-card">
-        <i class="fas fa-percentage feature-icon"></i>
-        <h3 class="mb-3">Disfruta de grandes descuentos</h3>
-        <p>Tenemos promociones exclusivas para nuestros clientes registrados. ¡Aprovecha nuestras ofertas!</p>
-      </div>
-    </div>
-    <div class="col-md-4 mb-4">
-      <div class="feature-card">
-        <i class="fas fa-heart feature-icon"></i>
-        <h3 class="mb-3">Una experiencia pensada para ti</h3>
-        <p>Nos preocupamos por ofrecerte la mejor calidad y servicio en cada pedido que realizas.</p>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- Sección de promoción similar a la franja amarilla -->
 <div class="promo-section">
-  <div class="container">
-    <div class="promo-content">
-      <h3 class="promo-title">Regístrate y disfruta de la experiencia completa</h3>
-      <p class="promo-text">Ofertas, descuentos, compras y muchas, muchas sorpresas</p>
-      <a href="/Cuentas/Registro" class="btn btn-register">Ingresa ya!</a>
+    <div class="container">
+        <div class="promo-content">
+            <h3 class="promo-title">Regístrate y disfruta de la experiencia completa</h3>
+            <p class="promo-text">Ofertas, descuentos, compras y muchas, muchas sorpresas</p>
+            <a href="/Cuentas/Registro" class="btn btn-register">Ingresa ya!</a>
+        </div>
     </div>
-  </div>
 </div>
 
 <!-- Sección de preguntas frecuentes -->
 <div class="container faq-section">
-  <h2 class="text-center mb-5">¿Necesitas alguna razón más?</h2>
-  
-  <div class="faq-item">
-    <div class="faq-question">
-      ¿Qué medios de pago aceptan?
-      <i class="fas fa-chevron-down"></i>
+    <h2 class="text-center mb-5">¿Necesitas alguna razón más?</h2>
+
+    <div class="faq-item">
+        <div class="faq-question">
+            ¿Qué medios de pago aceptan?
+            <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+            Aceptamos efectivo, tarjetas de crédito y débito, y transferencias bancarias. Todos nuestros métodos de pago son seguros.
+        </div>
     </div>
-    <div class="faq-answer">
-      Aceptamos efectivo, tarjetas de crédito y débito, y transferencias bancarias. Todos nuestros métodos de pago son seguros.
+
+    <div class="faq-item">
+        <div class="faq-question">
+            ¿Cómo puedo cancelar mi pedido?
+            <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+            Para cancelar tu pedido, puedes comunicarte con nuestro servicio de atención al cliente o utilizar la opción de cancelación disponible en tu cuenta.
+        </div>
     </div>
-  </div>
-  
-  <div class="faq-item">
-    <div class="faq-question">
-      ¿Cómo puedo cancelar mi pedido?
-      <i class="fas fa-chevron-down"></i>
+
+    <div class="faq-item">
+        <div class="faq-question">
+            Seguimiento del estado de mi pedido
+            <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+            Una vez realizado tu pedido, puedes hacer seguimiento del estado del mismo a través de nuestra plataforma o contactando a nuestro servicio de atención al cliente.
+        </div>
     </div>
-    <div class="faq-answer">
-      Para cancelar tu pedido, puedes comunicarte con nuestro servicio de atención al cliente o utilizar la opción de cancelación disponible en tu cuenta.
+
+    <div class="faq-item">
+        <div class="faq-question">
+            Mi pedido no llegó como esperaba
+            <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="faq-answer">
+            Si tu pedido no llegó como esperabas, comunícate de inmediato con nuestro servicio de atención al cliente y te ayudaremos a resolver el problema lo más pronto posible.
+        </div>
     </div>
-  </div>
-  
-  <div class="faq-item">
-    <div class="faq-question">
-      Seguimiento del estado de mi pedido
-      <i class="fas fa-chevron-down"></i>
-    </div>
-    <div class="faq-answer">
-      Una vez realizado tu pedido, puedes hacer seguimiento del estado del mismo a través de nuestra plataforma o contactando a nuestro servicio de atención al cliente.
-    </div>
-  </div>
-  
-  <div class="faq-item">
-    <div class="faq-question">
-      Mi pedido no llegó como esperaba
-      <i class="fas fa-chevron-down"></i>
-    </div>
-    <div class="faq-answer">
-      Si tu pedido no llegó como esperabas, comunícate de inmediato con nuestro servicio de atención al cliente y te ayudaremos a resolver el problema lo más pronto posible.
-    </div>
-  </div>
 </div>
 
 @section Scripts {
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // Destacar la categoría seleccionada si viene de un parámetro
-    const urlParams = new URLSearchParams(window.location.search);
-    const currentCategory = urlParams.get('categoria');
-    
-    if (currentCategory) {
-      const categoryButtons = document.querySelectorAll('.category-btn');
-      categoryButtons.forEach(btn => {
-        const btnCategory = btn.getAttribute('href').split('=')[1];
-        if (btnCategory === currentCategory) {
-          btn.classList.add('active');
-        }
-      });
-    }
-    
-    // Animación suave al hacer scroll a categorías
-    document.querySelectorAll('.category-btn').forEach(btn => {
-      btn.addEventListener('click', function(e) {
-        // Guardar la categoría seleccionada en localStorage para que
-        // la página de SeleccionMultiple pueda activar esa pestaña
-        const categoria = this.getAttribute('href').split('=')[1] || 'todas';
-        localStorage.setItem('selectedCategory', categoria);
-      });
-    });
-    
-    // Funcionalidad de acordeón para las preguntas frecuentes
-    document.querySelectorAll('.faq-question').forEach(question => {
-      question.addEventListener('click', function() {
-        const answer = this.nextElementSibling;
-        const isActive = answer.classList.contains('active');
-        
-        // Cerrar todos los paneles activos
-        document.querySelectorAll('.faq-answer').forEach(item => {
-          item.classList.remove('active');
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Destacar la categoría seleccionada si viene de un parámetro
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentCategory = urlParams.get('categoria');
+
+            if (currentCategory) {
+                const categoryButtons = document.querySelectorAll('.category-btn');
+                categoryButtons.forEach(btn => {
+                    const btnCategory = btn.getAttribute('href').split('=')[1];
+                    if (btnCategory === currentCategory) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+
+            // Animación suave al hacer scroll a categorías
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    // Guardar la categoría seleccionada en localStorage para que
+                    // la página de Personalizacion pueda activar esa pestaña
+                    const categoria = this.getAttribute('href').split('=')[1] || 'todas';
+                    localStorage.setItem('selectedCategory', categoria);
+                });
+            });
+
+            // Funcionalidad de acordeón para las preguntas frecuentes
+            document.querySelectorAll('.faq-question').forEach(question => {
+                question.addEventListener('click', function () {
+                    const answer = this.nextElementSibling;
+                    const isActive = answer.classList.contains('active');
+
+                    // Cerrar todos los paneles activos
+                    document.querySelectorAll('.faq-answer').forEach(item => {
+                        item.classList.remove('active');
+                    });
+
+                    // Abrir el panel seleccionado (si no estaba ya abierto)
+                    if (!isActive) {
+                        answer.classList.add('active');
+                    }
+                });
+            });
         });
-        
-        // Abrir el panel seleccionado (si no estaba ya abierto)
-        if (!isActive) {
-          answer.classList.add('active');
-        }
-      });
-    });
-  });
-</script>
+    </script>
 }

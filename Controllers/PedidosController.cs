@@ -305,17 +305,67 @@ public class PedidosController : Controller
     [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> ResumenAdmin()
     {
-        // ✅ INCLUIR TODAS LAS RELACIONES NECESARIAS
-        var pedidos = await _context.Pedidos
-            .Include(p => p.PedidoProductos)           // Para pedidos normales
-                .ThenInclude(pp => pp.Producto)
-            .Include(p => p.Detalles)                  // Para pedidos de recomendación/personalización
-                .ThenInclude(d => d.Producto)
-            .Include(p => p.Sucursal)                  // Información de sucursal
-            .OrderByDescending(p => p.Fecha)
-            .ToListAsync();
+        try
+        {
+            Console.WriteLine("[DEBUG] ResumenAdmin - Iniciando consulta...");
 
-        return View(pedidos);
+            // ✅ CONSULTA SEGURA SIN INCLUDES PROBLEMÁTICOS
+            var pedidos = await _context.Pedidos
+                .AsNoTracking()
+                .Include(p => p.Sucursal)
+                .OrderByDescending(p => p.Fecha)
+                .ToListAsync();
+
+            Console.WriteLine($"[DEBUG] ResumenAdmin - {pedidos.Count} pedidos encontrados");
+
+            // ✅ CARGAR LAS RELACIONES POR SEPARADO PARA EVITAR CONFLICTOS
+            foreach (var pedido in pedidos)
+            {
+                // Cargar PedidoProductos
+                pedido.PedidoProductos = await _context.PedidoProductos
+                    .AsNoTracking()
+                    .Include(pp => pp.Producto)
+                    .Where(pp => pp.PedidoId == pedido.Id)
+                    .ToListAsync();
+
+                // Cargar Detalles (para pedidos de personalización)
+                pedido.Detalles = await _context.PedidoDetalles
+                    .AsNoTracking()
+                    .Include(d => d.Producto)
+                    .Where(d => d.PedidoId == pedido.Id)
+                    .ToListAsync();
+
+                Console.WriteLine($"[DEBUG] Pedido {pedido.Id} - PedidoProductos: {pedido.PedidoProductos.Count}, Detalles: {pedido.Detalles.Count}");
+            }
+
+            Console.WriteLine("[DEBUG] ResumenAdmin - Enviando a vista...");
+            return View(pedidos);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] ResumenAdmin: {ex.Message}");
+            Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+
+            TempData["Error"] = "Error al cargar los pedidos: " + ex.Message;
+
+            // ✅ FALLBACK: Versión súper simple
+            try
+            {
+                var pedidosSimple = await _context.Pedidos
+                    .AsNoTracking()
+                    .OrderByDescending(p => p.Fecha)
+                    .Take(10) // Solo los últimos 10
+                    .ToListAsync();
+
+                Console.WriteLine($"[DEBUG] Fallback - {pedidosSimple.Count} pedidos cargados");
+                return View(pedidosSimple);
+            }
+            catch (Exception ex2)
+            {
+                Console.WriteLine($"[ERROR] Fallback también falló: {ex2.Message}");
+                return View(new List<Pedido>());
+            }
+        }
     }
 
     // ViewModel para mostrar pedidos con información de cupones
@@ -844,45 +894,137 @@ public class PedidosController : Controller
     [HttpPost]
     public async Task<IActionResult> GuardarComentario(int pedidoId, int calificacion, string comentario)
     {
-        var pedido = await _context.Pedidos.FindAsync(pedidoId);
-
-        if (pedido == null)
+        try
         {
-            return NotFound();
-        }
+            var pedido = await _context.Pedidos
+                .Include(p => p.Detalles) // ✅ Incluir detalles para verificar si es personalización
+                .FirstOrDefaultAsync(p => p.Id == pedidoId);
 
-        // ✅ VALIDACIÓN DE SEGURIDAD: Solo el propietario del pedido puede comentar
-        if (User.Identity.IsAuthenticated)
-        {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (!string.IsNullOrEmpty(pedido.UsuarioId) && pedido.UsuarioId != currentUserId)
+            if (pedido == null)
             {
-                return Forbid();
+                TempData["Error"] = "Pedido no encontrado";
+                return NotFound();
+            }
+
+            // ✅ VALIDACIÓN DE SEGURIDAD: Solo el propietario del pedido puede comentar
+            if (User.Identity.IsAuthenticated)
+            {
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrEmpty(pedido.UsuarioId) && pedido.UsuarioId != currentUserId)
+                {
+                    return Forbid();
+                }
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(pedido.UsuarioId))
+                {
+                    return Forbid();
+                }
+            }
+
+            // Verificar que el pedido esté en estado "Entregado"
+            if (pedido.Estado != "Entregado")
+            {
+                TempData["Error"] = "Solo se pueden comentar pedidos entregados";
+                return BadRequest("Solo se pueden comentar pedidos entregados");
+            }
+
+            // Verificar que no haya comentado ya
+            if (pedido.ComentarioEnviado)
+            {
+                TempData["Info"] = "Ya has enviado tu valoración para este pedido";
+
+                // ✅ REDIRECCIÓN INTELIGENTE - mismo que abajo
+                bool esPersonalizacion = pedido.Detalles != null && pedido.Detalles.Any();
+
+                if (esPersonalizacion)
+                {
+                    return RedirectToAction("Confirmacion", "Personalizacion", new { id = pedidoId });
+                }
+                else
+                {
+                    return RedirectToAction("Resumen", new { id = pedidoId });
+                }
+            }
+
+            // Validar calificación
+            if (calificacion < 1 || calificacion > 5)
+            {
+                TempData["Error"] = "La calificación debe estar entre 1 y 5 estrellas";
+
+                // Redirigir de vuelta sin guardar
+                bool esPersonalizacion = pedido.Detalles != null && pedido.Detalles.Any();
+
+                if (esPersonalizacion)
+                {
+                    return RedirectToAction("Confirmacion", "Personalizacion", new { id = pedidoId });
+                }
+                else
+                {
+                    return RedirectToAction("Resumen", new { id = pedidoId });
+                }
+            }
+
+            // Validar comentario
+            if (string.IsNullOrWhiteSpace(comentario))
+            {
+                TempData["Error"] = "El comentario es obligatorio";
+
+                // Redirigir de vuelta sin guardar
+                bool esPersonalizacion = pedido.Detalles != null && pedido.Detalles.Any();
+
+                if (esPersonalizacion)
+                {
+                    return RedirectToAction("Confirmacion", "Personalizacion", new { id = pedidoId });
+                }
+                else
+                {
+                    return RedirectToAction("Resumen", new { id = pedidoId });
+                }
+            }
+
+            // ✅ ASIGNAR COMENTARIO Y CALIFICACIÓN
+            pedido.Comentario = comentario.Trim();
+            pedido.Calificacion = calificacion;
+            pedido.ComentarioEnviado = true;
+
+            await _context.SaveChangesAsync();
+
+            Console.WriteLine($"[DEBUG] Comentario guardado para pedido {pedidoId} - Calificación: {calificacion}");
+
+            TempData["Success"] = "¡Gracias por tu valoración! Tu opinión es muy importante para nosotros.";
+
+            // ✅ REDIRECCIÓN INTELIGENTE SEGÚN EL TIPO DE PEDIDO
+            bool esPedidoPersonalizacion = pedido.Detalles != null && pedido.Detalles.Any();
+
+            if (esPedidoPersonalizacion)
+            {
+                // Es un pedido de personalización → Redirigir a Personalizacion/Confirmacion
+                Console.WriteLine($"[DEBUG] Redirigiendo a Personalizacion/Confirmacion para pedido {pedidoId}");
+                return RedirectToAction("Confirmacion", "Personalizacion", new { id = pedidoId });
+            }
+            else
+            {
+                // Es un pedido normal → Redirigir a Pedidos/Resumen
+                Console.WriteLine($"[DEBUG] Redirigiendo a Pedidos/Resumen para pedido {pedidoId}");
+                return RedirectToAction("Resumen", new { id = pedidoId });
             }
         }
-        else
+        catch (Exception ex)
         {
-            if (!string.IsNullOrEmpty(pedido.UsuarioId))
-            {
-                return Forbid();
-            }
+            Console.WriteLine($"[ERROR] GuardarComentario: {ex.Message}");
+            TempData["Error"] = "Error al guardar el comentario. Inténtalo de nuevo.";
+
+            // En caso de error, intentar redireccionar de forma segura
+            return RedirectToAction("Index", "Home");
         }
+    }
 
-        // Verificar que el pedido esté en estado "Entregado"
-        if (pedido.Estado != "Entregado")
-        {
-            return BadRequest("Solo se pueden comentar pedidos entregados");
-        }
-
-        // Asignar comentario y calificación
-        pedido.Comentario = comentario;
-        pedido.Calificacion = calificacion;
-        pedido.ComentarioEnviado = true;
-
-        await _context.SaveChangesAsync();
-
-        return RedirectToAction("Resumen", new { id = pedidoId });
+    // ✅ MÉTODO AUXILIAR: Determinar si un pedido es de personalización
+    private async Task<bool> EsPedidoPersonalizacion(int pedidoId)
+    {
+        return await _context.PedidoDetalles.AnyAsync(d => d.PedidoId == pedidoId);
     }
 
     // CORRECCIÓN PARA LÍNEA 524 - Error CS0266: Cannot implicitly convert type 'int?' to 'int'

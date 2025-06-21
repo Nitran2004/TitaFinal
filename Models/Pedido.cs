@@ -1,4 +1,5 @@
 ﻿using ProyectoIdentity.Models;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ProyectoIdentity.Models
 {

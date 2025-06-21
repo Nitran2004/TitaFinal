@@ -133,7 +133,8 @@
                         <p class="mb-0">Se usarán los datos de tu perfil.</p>
                     </div>
 
-                    <form id="formPedido">
+                    <!-- ✅ FORM CORREGIDO -->
+                    <form id="formPedido" onsubmit="return procesarPedido(event)">
                         <div class="mb-4">
                             <label class="form-label fw-bold">Tipo de Servicio *</label>
                             <div class="row">
@@ -211,17 +212,14 @@
 
     function eliminarDelCarrito(index) {
         if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-            // Eliminar del carrito local
             carritoLocal.splice(index, 1);
 
-            // Eliminar fila de la tabla
             const fila = document.querySelector(`tr[data-index="${index}"]`);
             fila.remove();
 
             // Reindexar las filas restantes
             document.querySelectorAll('tbody tr').forEach((fila, nuevoIndex) => {
                 fila.setAttribute('data-index', nuevoIndex);
-                // Actualizar los botones
                 const botones = fila.querySelectorAll('button[onclick*="cambiarCantidadCarrito"]');
                 botones.forEach(boton => {
                     const onclick = boton.getAttribute('onclick');
@@ -237,7 +235,6 @@
             actualizarResumen();
             guardarCarritoEnSesion();
 
-            // Si no hay productos, mostrar mensaje vacío
             if (carritoLocal.length === 0) {
                 location.reload();
             }
@@ -257,13 +254,11 @@
             ahorroElement.textContent = '$' + ahorroTotal.toFixed(2);
         }
 
-        // Habilitar/deshabilitar botón de confirmar
         const btnProcesar = document.getElementById('btnProcesar');
         btnProcesar.disabled = carritoLocal.length === 0;
     }
 
     function guardarCarritoEnSesion() {
-        // Enviar carrito actualizado al servidor
         fetch('@Url.Action("ActualizarCarrito")', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -271,18 +266,19 @@
         }).catch(console.error);
     }
 
-    document.getElementById('formPedido').addEventListener('submit', function (e) {
-        e.preventDefault();
+    // ✅ FUNCIÓN CORREGIDA PARA PROCESAR PEDIDO
+    function procesarPedido(event) {
+        event.preventDefault();
 
         const tipoServicio = document.querySelector('input[name="tipoServicio"]:checked')?.value;
         if (!tipoServicio) {
             alert('Por favor selecciona el tipo de servicio');
-            return;
+            return false;
         }
 
         if (carritoLocal.length === 0) {
             alert('Tu carrito está vacío');
-            return;
+            return false;
         }
 
         const data = {
@@ -290,7 +286,9 @@
             Observaciones: document.getElementById('observaciones').value
         };
 
-        document.getElementById('btnProcesar').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+        const btnProcesar = document.getElementById('btnProcesar');
+        btnProcesar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+        btnProcesar.disabled = true;
 
         fetch('@Url.Action("ProcesarPedido")', {
             method: 'POST',
@@ -303,13 +301,19 @@
                     window.location.href = '@Url.Action("Confirmacion")/' + result.pedidoId;
                 } else {
                     alert('Error: ' + result.message);
+                    btnProcesar.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
+                    btnProcesar.disabled = false;
                 }
             })
-            .catch(() => alert('Error al procesar el pedido'))
-            .finally(() => {
-                document.getElementById('btnProcesar').innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al procesar el pedido');
+                btnProcesar.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
+                btnProcesar.disabled = false;
             });
-    });
+
+        return false;
+    }
 
     // Manejar selección de servicio
     document.querySelectorAll('.service-option').forEach(option => {

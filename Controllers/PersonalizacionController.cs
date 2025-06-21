@@ -10,7 +10,6 @@ using Mailjet.Client.Resources;
 namespace ProyectoIdentity.Controllers
 {
     [Authorize]
-
     public class PersonalizacionController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -20,9 +19,30 @@ namespace ProyectoIdentity.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index()
+        // ✅ MÉTODO ACTUALIZADO: Index con filtros de categoría
+        public async Task<IActionResult> Index(string categoria)
         {
-            var productos = await _context.Productos.ToListAsync();
+            var productosQuery = _context.Productos.AsQueryable();
+
+            // Filtrar por categoría si se especifica
+            if (!string.IsNullOrEmpty(categoria) && categoria.ToLower() != "todas")
+            {
+                productosQuery = productosQuery.Where(p => p.Categoria.ToLower() == categoria.ToLower());
+            }
+
+            var productos = await productosQuery.ToListAsync();
+
+            // Obtener todas las categorías para el menú
+            var categorias = await _context.Productos
+                .Select(p => p.Categoria)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToListAsync();
+
+            // Pasar datos a la vista
+            ViewBag.Categorias = categorias;
+            ViewBag.CategoriaActual = string.IsNullOrEmpty(categoria) ? "todas" : categoria;
+
             return View(productos);
         }
 
@@ -241,6 +261,7 @@ namespace ProyectoIdentity.Controllers
                 Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
             }
         }
+
         public async Task<IActionResult> Confirmacion(int id)
         {
             var pedido = await _context.Pedidos
@@ -269,6 +290,43 @@ namespace ProyectoIdentity.Controllers
         {
             var analisis = await GenerarAnalisisSimple();
             return View(analisis);
+        }
+
+        public async Task<IActionResult> UltimoPedido()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            Console.WriteLine($"[DEBUG] Buscando pedidos para usuario: {userId}");
+
+            var ultimoPedido = await _context.Pedidos
+                .Where(p => p.UsuarioId == userId)
+                .OrderByDescending(p => p.Fecha)
+                .FirstOrDefaultAsync();
+
+            Console.WriteLine($"[DEBUG] Pedido encontrado: {ultimoPedido?.Id ?? 0}");
+
+            if (ultimoPedido == null)
+            {
+                Console.WriteLine("[DEBUG] No hay pedidos - redirigiendo a Index");
+                TempData["Mensaje"] = "No tienes pedidos personalizados registrados";
+                return RedirectToAction("Index");
+            }
+
+            Console.WriteLine($"[DEBUG] Redirigiendo a Confirmacion con ID: {ultimoPedido.Id}");
+            return RedirectToAction("Confirmacion", new { id = ultimoPedido.Id });
+        }
+
+        [HttpPost]
+        public IActionResult ActualizarCarrito([FromBody] List<ItemCarritoPersonalizado> carrito)
+        {
+            try
+            {
+                SetCarrito(carrito);
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
         }
 
         // MÉTODOS PRIVADOS
@@ -349,43 +407,103 @@ namespace ProyectoIdentity.Controllers
             }
             return resultados.OrderByDescending(r => r.AhorroTotal).ToList();
         }
-
-        public async Task<IActionResult> UltimoPedido()
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            Console.WriteLine($"[DEBUG] Buscando pedidos para usuario: {userId}");
-
-            var ultimoPedido = await _context.Pedidos
-                .Where(p => p.UsuarioId == userId)
-                .OrderByDescending(p => p.Fecha)
-                .FirstOrDefaultAsync();
-
-            Console.WriteLine($"[DEBUG] Pedido encontrado: {ultimoPedido?.Id ?? 0}");
-
-            if (ultimoPedido == null)
-            {
-                Console.WriteLine("[DEBUG] No hay pedidos - redirigiendo a Index");
-                TempData["Mensaje"] = "No tienes pedidos personalizados registrados";
-                return RedirectToAction("Index");
-            }
-
-            Console.WriteLine($"[DEBUG] Redirigiendo a Confirmacion con ID: {ultimoPedido.Id}");
-            return RedirectToAction("Confirmacion", new { id = ultimoPedido.Id });
-        }
-
         [HttpPost]
-        public IActionResult ActualizarCarrito([FromBody] List<ItemCarritoPersonalizado> carrito)
+        public async Task<IActionResult> GuardarValoracion([FromBody] ValoracionRequest request)
         {
             try
             {
-                SetCarrito(carrito);
-                return Ok(new { success = true });
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                // Verificar que el pedido pertenezca al usuario
+                var pedido = await _context.Pedidos
+                    .FirstOrDefaultAsync(p => p.Id == request.PedidoId && p.UsuarioId == userId);
+
+                if (pedido == null)
+                {
+                    return Json(new { success = false, message = "Pedido no encontrado" });
+                }
+
+                // Verificar que no haya una valoración previa para este pedido
+                var valoracionExistente = await _context.Valoraciones
+                    .FirstOrDefaultAsync(v => v.PedidoId == request.PedidoId);
+
+                if (valoracionExistente != null)
+                {
+                    return Json(new { success = false, message = "Este pedido ya ha sido valorado" });
+                }
+
+                // Crear nueva valoración
+                var valoracion = new Valoracion
+                {
+                    PedidoId = request.PedidoId,
+                    UsuarioId = userId,
+                    ValoracionGeneral = request.ValoracionGeneral,
+                    ValoracionCalidad = request.ValoracionCalidad,
+                    ValoracionTiempo = request.ValoracionTiempo,
+                    Comentarios = request.Comentarios,
+                    Fecha = DateTime.Now
+                };
+
+                _context.Valoraciones.Add(valoracion);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Valoración guardada exitosamente" });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { success = false, message = ex.Message });
+                Console.WriteLine($"[ERROR] Error al guardar valoración: {ex.Message}");
+                return Json(new { success = false, message = "Error interno del servidor" });
             }
         }
+        // AGREGAR SOLO ESTE MÉTODO SIMPLE en PersonalizacionController
+
+        [HttpPost]
+        public async Task<IActionResult> CambiarEstadoAEntregado([FromBody] dynamic request)
+        {
+            try
+            {
+                int pedidoId = request.PedidoId;
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                var pedido = await _context.Pedidos
+                    .FirstOrDefaultAsync(p => p.Id == pedidoId && p.UsuarioId == userId);
+
+                if (pedido == null)
+                {
+                    return Json(new { success = false, message = "Pedido no encontrado" });
+                }
+
+                if (pedido.Estado != "Listo para entregar")
+                {
+                    return Json(new { success = false, message = "El pedido no está listo para entregar" });
+                }
+
+                pedido.Estado = "Entregado";
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Estado actualizado a Entregado" });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error al cambiar estado: {ex.Message}");
+                return Json(new { success = false, message = "Error interno del servidor" });
+            }
+        }
+    }
+
+    public class ValoracionRequest
+    {
+        public int PedidoId { get; set; }
+        public int ValoracionGeneral { get; set; }
+        public int ValoracionCalidad { get; set; }
+        public int ValoracionTiempo { get; set; }
+        public string? Comentarios { get; set; }
+        public DateTime Fecha { get; set; }
+    }
+
+    public class ConfirmarRecogidaRequest
+    {
+        public int PedidoId { get; set; }
     }
 
     // MODELOS NECESARIOS
@@ -396,6 +514,7 @@ namespace ProyectoIdentity.Controllers
         public List<string> IngredientesRemovidos { get; set; } = new();
         public string? NotasEspeciales { get; set; }
     }
+
     public class PedidoPersonalizadoRequest
     {
         public string TipoServicio { get; set; } = "";
