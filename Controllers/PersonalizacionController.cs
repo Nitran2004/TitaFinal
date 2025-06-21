@@ -26,9 +26,27 @@ namespace ProyectoIdentity.Controllers
             return View(productos);
         }
 
+        public IActionResult IniciarPersonalizacion(int id)
+        {
+            // Guardar el ID del producto en TempData para usarlo después
+            TempData["ProductoPersonalizacionId"] = id;
+
+            // Redirigir a selección de punto de recolección
+            return RedirectToAction("Seleccionar", "Recoleccion", new { esPersonalizacion = true });
+        }
+
         // Detalle del producto con personalización
         public async Task<IActionResult> Detalle(int id)
         {
+            // Verificar que tenga una sucursal seleccionada (viene de recolección)
+            var sucursalSeleccionada = HttpContext.Session.GetInt32("SucursalSeleccionada");
+
+            if (sucursalSeleccionada == null)
+            {
+                // Si no hay sucursal, redirigir a iniciar el flujo
+                return RedirectToAction("IniciarPersonalizacion", new { id = id });
+            }
+
             var producto = await _context.Productos.FindAsync(id);
             if (producto == null) return NotFound();
 
@@ -106,26 +124,21 @@ namespace ProyectoIdentity.Controllers
                 if (!carrito.Any())
                     return Json(new { success = false, message = "El carrito está vacío" });
 
-                // Obtener sucursal
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                Console.WriteLine($"[DEBUG] PersonalizacionController - Usuario ID: {userId}");
 
-                var sucursal = await _context.Sucursales.FirstOrDefaultAsync();
-                if (sucursal == null)
+                // Obtener sucursal seleccionada de la sesión
+                var sucursalId = HttpContext.Session.GetInt32("SucursalSeleccionada");
+                if (sucursalId == null)
                 {
-                    // Crear sucursal por defecto si no existe
-                    sucursal = new Sucursal
-                    {
-                        Nombre = "Verace Pizza",
-                        Direccion = "Av. de los Shyris N35-52",
-                        Latitud = -0.180653,
-                        Longitud = -78.487834
-                    };
-                    _context.Sucursales.Add(sucursal);
-                    await _context.SaveChangesAsync();
+                    return Json(new { success = false, message = "No se ha seleccionado un punto de recolección" });
                 }
 
-                // Calcular total
+                var sucursal = await _context.Sucursales.FindAsync(sucursalId.Value);
+                if (sucursal == null)
+                {
+                    return Json(new { success = false, message = "Punto de recolección no válido" });
+                }
+
                 decimal totalPedido = carrito.Sum(c => c.Subtotal);
 
                 // Crear pedido
@@ -141,8 +154,6 @@ namespace ProyectoIdentity.Controllers
 
                 _context.Pedidos.Add(pedido);
                 await _context.SaveChangesAsync();
-
-                Console.WriteLine($"[DEBUG] PersonalizacionController - Pedido creado con ID: {pedido.Id}, Total: {totalPedido}");
 
                 // Crear detalles CON personalización
                 foreach (var item in carrito)
@@ -162,18 +173,16 @@ namespace ProyectoIdentity.Controllers
 
                 await _context.SaveChangesAsync();
 
-                // ✅ AGREGAR PUNTOS AL USUARIO
-                Console.WriteLine($"[DEBUG] PersonalizacionController - Agregando puntos. Total: {totalPedido}");
+                // Agregar puntos al usuario
                 await AgregarPuntosAUsuario(userId, totalPedido);
 
-                // Limpiar carrito
+                // Limpiar carrito pero MANTENER la sucursal seleccionada para la confirmación
                 HttpContext.Session.Remove("CarritoPersonalizado");
 
                 return Json(new { success = true, pedidoId = pedido.Id });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ERROR] PersonalizacionController - Error en ProcesarPedido: {ex.Message}");
                 return Json(new { success = false, message = $"Error: {ex.Message}" });
             }
         }
@@ -237,9 +246,21 @@ namespace ProyectoIdentity.Controllers
             var pedido = await _context.Pedidos
                 .Include(p => p.Detalles)
                 .ThenInclude(d => d.Producto)
+                .Include(p => p.Sucursal) // ✅ INCLUIR información de sucursal
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (pedido == null) return NotFound();
+
+            // Validación de seguridad - solo el usuario propietario puede ver su pedido
+            if (User.Identity.IsAuthenticated)
+            {
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (pedido.UsuarioId != currentUserId)
+                {
+                    return Forbid();
+                }
+            }
+
             return View(pedido);
         }
 

@@ -65,6 +65,17 @@
                                     <td><strong>Tipo de Servicio:</strong></td>
                                     <td>@(Model.TipoServicio ?? "Servir aquí")</td>
                                 </tr>
+                                @if (Model.Sucursal != null)
+                                {
+                                    <tr>
+                                        <td><strong>Sucursal:</strong></td>
+                                        <td>@Model.Sucursal.Nombre</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Dirección:</strong></td>
+                                        <td>@Model.Sucursal.Direccion</td>
+                                    </tr>
+                                }
                                 <tr>
                                     <td><strong>Tiempo estimado:</strong></td>
                                     <td>15-25 minutos</td>

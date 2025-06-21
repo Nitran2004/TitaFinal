@@ -21,26 +21,25 @@ namespace Proyecto1_MZ_MJ.Controllers
         }
 
         // GET: Recoleccion/Seleccionar
-        public async Task<IActionResult> Seleccionar()
+        public async Task<IActionResult> Seleccionar(bool esPersonalizacion = false)
         {
             try
             {
-                // VERIFICAR SI VIENE DE RECOMPENSAS O DE PRODUCTOS
+                // VERIFICAR SI VIENE DE RECOMPENSAS, PRODUCTOS O PERSONALIZACIÓN
                 bool vieneDeRecompensas = TempData.ContainsKey("RecompensaCanjeada");
                 bool vieneDeProductos = TempData.ContainsKey("ProductosSeleccionados") || TempData.ContainsKey("DatosCarrito");
+                bool vieneDePersonalizacion = esPersonalizacion || TempData.ContainsKey("ProductoPersonalizacionId");
 
-                if (!vieneDeRecompensas && !vieneDeProductos)
+                if (!vieneDeRecompensas && !vieneDeProductos && !vieneDePersonalizacion)
                 {
                     TempData["Error"] = "No hay productos o recompensas seleccionados para procesar";
                     return RedirectToAction("SeleccionMultiple", "Productos");
                 }
 
-                // Tu código existente para obtener puntos de recolección...
                 var puntosRecoleccion = await _context.CollectionPoints
                     .Include(p => p.Sucursal)
                     .ToListAsync();
 
-                // Tu código existente para crear puntos por defecto si es necesario...
                 if (!puntosRecoleccion.Any())
                 {
                     await CrearPuntosRecoleccionPorDefecto();
@@ -67,6 +66,19 @@ namespace Proyecto1_MZ_MJ.Controllers
                 if (TempData.ContainsKey("RecompensaCanjeada"))
                 {
                     TempData.Keep("RecompensaCanjeada");
+                }
+                // ✅ NUEVO: Mantener datos de personalización
+                if (TempData.ContainsKey("ProductoPersonalizacionId"))
+                {
+                    TempData.Keep("ProductoPersonalizacionId");
+                }
+
+                // ✅ NUEVO: Agregar información para la vista
+                ViewBag.EsPersonalizacion = vieneDePersonalizacion;
+                if (vieneDePersonalizacion)
+                {
+                    ViewBag.MensajeEspecial = "Selecciona dónde recoger tu pedido personalizado";
+                    ViewBag.ProductoId = TempData.Peek("ProductoPersonalizacionId");
                 }
 
                 return View(puntosRecoleccion);
@@ -123,11 +135,10 @@ namespace Proyecto1_MZ_MJ.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Confirmar(int id, double userLat, double userLng, string distancia)
+        public async Task<IActionResult> Confirmar(int id, double userLat, double userLng, string distancia, bool esPersonalizacion = false)
         {
             try
             {
-                // Obtener el punto de recolección
                 var puntoRecoleccion = await _context.CollectionPoints
                     .Include(p => p.Sucursal)
                     .FirstOrDefaultAsync(p => p.Id == id);
@@ -138,17 +149,34 @@ namespace Proyecto1_MZ_MJ.Controllers
                     return RedirectToAction("Seleccionar");
                 }
 
-                // Obtener la distancia del parámetro y formatearla exactamente como en la vista Seleccionar
+                // ✅ NUEVO: Si viene de personalización, guardar sucursal y redirigir
+                if (esPersonalizacion || TempData.ContainsKey("ProductoPersonalizacionId"))
+                {
+                    // Guardar en sesión la sucursal seleccionada
+                    HttpContext.Session.SetInt32("SucursalSeleccionada", puntoRecoleccion.SucursalId);
+                    HttpContext.Session.SetString("PuntoRecoleccionNombre", puntoRecoleccion.Name);
+
+                    // Obtener el ID del producto y redirigir al detalle
+                    var productoId = TempData["ProductoPersonalizacionId"];
+                    if (productoId != null)
+                    {
+                        return RedirectToAction("Detalle", "Personalizacion", new { id = productoId });
+                    }
+                    else
+                    {
+                        return RedirectToAction("Index", "Personalizacion");
+                    }
+                }
+
+                // FLUJO NORMAL PARA OTROS TIPOS DE PEDIDO (tu código existente)
                 double distanciaValor;
                 if (!string.IsNullOrEmpty(distancia) && double.TryParse(distancia, NumberStyles.Any, CultureInfo.InvariantCulture, out distanciaValor))
                 {
                     ViewBag.Distancia = distanciaValor;
-                    // Pasamos la misma cadena de texto formateada que viene de la vista Seleccionar
                     ViewBag.DistanciaFormateada = distancia;
                 }
                 else
                 {
-                    // Si no se pudo parsear la distancia, la calculamos
                     ViewBag.Distancia = CalcularDistancia(userLat, userLng,
                         puntoRecoleccion.Sucursal.Latitud, puntoRecoleccion.Sucursal.Longitud);
                 }

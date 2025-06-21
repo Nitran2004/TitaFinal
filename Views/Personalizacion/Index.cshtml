@@ -28,7 +28,8 @@
                                 <span class="h5 text-success mb-0">$@producto.Precio.ToString("F2")</span>
                                 <span class="badge bg-primary">@producto.Categoria</span>
                             </div>
-                            <a href="@Url.Action("Detalle", new { id = producto.Id })"
+                            <!-- ✅ CAMBIO: Usar IniciarPersonalizacion en lugar de Detalle directamente -->
+                            <a href="@Url.Action("IniciarPersonalizacion", new { id = producto.Id })"
                                class="btn btn-warning w-100">
                                 <i class="fas fa-shopping-bag"></i> Seleccionar
                             </a>
@@ -39,7 +40,6 @@
         }
     </div>
 </div>
-
 <style>
     .producto-card {
         transition: transform 0.2s;
