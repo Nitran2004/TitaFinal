@@ -168,10 +168,6 @@
                     <p class="product-description">@producto.Descripcion</p>
                     
                     <div class="mt-auto">
-                        <a href="@Url.Action("Detalle", "Productos", new { id = producto.Id })" 
-                           class="btn btn-info">
-                            <i class="fas fa-eye"></i> Ver Detalle
-                        </a>
                         <a href="@Url.Action("IniciarPersonalizacion", new { id = producto.Id })"
                            class="btn btn-warning">
                             <i class="fas fa-shopping-bag"></i> Seleccionar
