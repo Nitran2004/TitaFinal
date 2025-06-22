@@ -6,6 +6,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Mailjet.Client.Resources;
+using static ProyectoIdentity.Controllers.PedidoRecomendacionController;
 
 namespace ProyectoIdentity.Controllers
 {
@@ -46,12 +47,14 @@ namespace ProyectoIdentity.Controllers
             return View(productos);
         }
 
+        // ACTUALIZAR ESTE MÉTODO EN PersonalizacionController.cs
+
         public IActionResult IniciarPersonalizacion(int id)
         {
-            // Guardar el ID del producto en TempData para usarlo después
+            // ✅ GUARDAR EL ID DEL PRODUCTO EN TEMPDATA PARA MANTENERLO EN EL FLUJO
             TempData["ProductoPersonalizacionId"] = id;
 
-            // Redirigir a selección de punto de recolección
+            // Redirigir a selección de punto de recolección indicando que es personalización
             return RedirectToAction("Seleccionar", "Recoleccion", new { esPersonalizacion = true });
         }
 
@@ -135,77 +138,80 @@ namespace ProyectoIdentity.Controllers
             return View(carrito);
         }
 
+        private List<ItemCarritoPersonalizado> ObtenerCarritoDeSession()
+        {
+            var carritoJson = HttpContext.Session.GetString("CarritoPersonalizado");
+            if (string.IsNullOrEmpty(carritoJson))
+            {
+                return new List<ItemCarritoPersonalizado>();
+            }
+
+            try
+            {
+                return JsonSerializer.Deserialize<List<ItemCarritoPersonalizado>>(carritoJson)
+                       ?? new List<ItemCarritoPersonalizado>();
+            }
+            catch
+            {
+                return new List<ItemCarritoPersonalizado>();
+            }
+        }
+
         [HttpPost]
-        public async Task<IActionResult> ProcesarPedido([FromBody] PedidoPersonalizadoRequest request)
+        public IActionResult ProcesarPedido([FromBody] PedidoRequest request)
         {
             try
             {
-                var carrito = GetCarrito();
-                if (!carrito.Any())
+                var carritoItems = ObtenerCarritoDeSession();
+
+                if (!carritoItems.Any())
+                {
                     return Json(new { success = false, message = "El carrito está vacío" });
-
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-                // Obtener sucursal seleccionada de la sesión
-                var sucursalId = HttpContext.Session.GetInt32("SucursalSeleccionada");
-                if (sucursalId == null)
-                {
-                    return Json(new { success = false, message = "No se ha seleccionado un punto de recolección" });
                 }
 
-                var sucursal = await _context.Sucursales.FindAsync(sucursalId.Value);
-                if (sucursal == null)
+                var total = carritoItems.Sum(item => item.Subtotal);
+                var sucursalPorDefecto = _context.Sucursales.FirstOrDefault();
+
+                if (sucursalPorDefecto == null)
                 {
-                    return Json(new { success = false, message = "Punto de recolección no válido" });
+                    return Json(new { success = false, message = "No hay sucursales disponibles" });
                 }
 
-                decimal totalPedido = carrito.Sum(c => c.Subtotal);
-
-                // Crear pedido
                 var pedido = new Pedido
                 {
-                    Fecha = DateTime.Now,
-                    UsuarioId = userId,
-                    Estado = "Preparándose",
-                    Total = totalPedido,
+                    UsuarioId = null,
+                    SucursalId = sucursalPorDefecto.Id,
                     TipoServicio = request.TipoServicio,
-                    SucursalId = sucursal.Id
+                    Comentario = request.Observaciones,
+                    Fecha = DateTime.Now,
+                    Estado = "Preparándose", // ✅ CAMBIAR A "Preparándose" EN LUGAR DE "Pendiente"
+                    Total = total,
+                    Detalles = carritoItems.Select(item => new PedidoDetalle
+                    {
+                        ProductoId = item.Id,
+                        PrecioUnitario = item.Precio,
+                        Cantidad = item.Cantidad,
+                        // ✅ GUARDAR COMO JSON CORRECTAMENTE
+                        IngredientesRemovidos = item.IngredientesRemovidos.Any()
+                            ? JsonSerializer.Serialize(item.IngredientesRemovidos)
+                            : null,
+                        NotasEspeciales = item.NotasEspeciales
+                    }).ToList()
                 };
 
                 _context.Pedidos.Add(pedido);
-                await _context.SaveChangesAsync();
+                _context.SaveChanges();
 
-                // Crear detalles CON personalización
-                foreach (var item in carrito)
-                {
-                    var detalle = new PedidoDetalle
-                    {
-                        PedidoId = pedido.Id,
-                        ProductoId = item.Id,
-                        Cantidad = item.Cantidad,
-                        PrecioUnitario = item.Precio,
-                        IngredientesRemovidos = JsonSerializer.Serialize(item.IngredientesRemovidos),
-                        NotasEspeciales = item.NotasEspeciales
-                    };
-
-                    _context.PedidoDetalles.Add(detalle);
-                }
-
-                await _context.SaveChangesAsync();
-
-                // Agregar puntos al usuario
-                await AgregarPuntosAUsuario(userId, totalPedido);
-
-                // Limpiar carrito pero MANTENER la sucursal seleccionada para la confirmación
-                HttpContext.Session.Remove("CarritoPersonalizado");
+                LimpiarCarritoDeSession();
 
                 return Json(new { success = true, pedidoId = pedido.Id });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error: {ex.Message}" });
+                return Json(new { success = false, message = ex.InnerException?.Message ?? ex.Message });
             }
         }
+
 
         private async Task AgregarPuntosAUsuario(string usuarioId, decimal totalPedido)
         {
@@ -262,24 +268,17 @@ namespace ProyectoIdentity.Controllers
             }
         }
 
-        public async Task<IActionResult> Confirmacion(int id)
+        public IActionResult Confirmacion(int id)
         {
-            var pedido = await _context.Pedidos
+            var pedido = _context.Pedidos
                 .Include(p => p.Detalles)
-                .ThenInclude(d => d.Producto)
-                .Include(p => p.Sucursal) // ✅ INCLUIR información de sucursal
-                .FirstOrDefaultAsync(p => p.Id == id);
+                .ThenInclude(d => d.Producto) // Si necesitas el producto
+                .FirstOrDefault(p => p.Id == id);
 
-            if (pedido == null) return NotFound();
-
-            // Validación de seguridad - solo el usuario propietario puede ver su pedido
-            if (User.Identity.IsAuthenticated)
+            if (pedido == null)
             {
-                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                if (pedido.UsuarioId != currentUserId)
-                {
-                    return Forbid();
-                }
+                TempData["Error"] = "Pedido no encontrado";
+                return RedirectToAction("Index");
             }
 
             return View(pedido);
@@ -320,15 +319,24 @@ namespace ProyectoIdentity.Controllers
         {
             try
             {
-                SetCarrito(carrito);
-                return Ok(new { success = true });
+                GuardarCarritoEnSession(carrito);
+                return Json(new { success = true });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = ex.Message });
             }
         }
+        private void GuardarCarritoEnSession(List<ItemCarritoPersonalizado> carrito)
+        {
+            var carritoJson = JsonSerializer.Serialize(carrito);
+            HttpContext.Session.SetString("CarritoPersonalizado", carritoJson);
+        }
 
+        private void LimpiarCarritoDeSession()
+        {
+            HttpContext.Session.Remove("CarritoPersonalizado");
+        }
         // MÉTODOS PRIVADOS
         private List<Ingrediente> GetIngredientesProducto(Producto producto)
         {
@@ -489,6 +497,8 @@ namespace ProyectoIdentity.Controllers
                 return Json(new { success = false, message = "Error interno del servidor" });
             }
         }
+
+
     }
 
     public class ValoracionRequest
@@ -499,6 +509,14 @@ namespace ProyectoIdentity.Controllers
         public int ValoracionTiempo { get; set; }
         public string? Comentarios { get; set; }
         public DateTime Fecha { get; set; }
+    }
+
+    public class PedidoRequest
+    {
+        public string TipoServicio { get; set; }
+
+        public string Observaciones { get; set; }
+
     }
 
     public class ConfirmarRecogidaRequest
@@ -518,6 +536,5 @@ namespace ProyectoIdentity.Controllers
     public class PedidoPersonalizadoRequest
     {
         public string TipoServicio { get; set; } = "";
-        public string? Observaciones { get; set; }
     }
 }

@@ -134,6 +134,8 @@ namespace Proyecto1_MZ_MJ.Controllers
             }
         }
 
+        // REEMPLAZAR EL MÉTODO Confirmar ACTUAL CON ESTE:
+
         [HttpPost]
         public async Task<IActionResult> Confirmar(int id, double userLat, double userLng, string distancia, bool esPersonalizacion = false)
         {
@@ -149,26 +151,7 @@ namespace Proyecto1_MZ_MJ.Controllers
                     return RedirectToAction("Seleccionar");
                 }
 
-                // ✅ NUEVO: Si viene de personalización, guardar sucursal y redirigir
-                if (esPersonalizacion || TempData.ContainsKey("ProductoPersonalizacionId"))
-                {
-                    // Guardar en sesión la sucursal seleccionada
-                    HttpContext.Session.SetInt32("SucursalSeleccionada", puntoRecoleccion.SucursalId);
-                    HttpContext.Session.SetString("PuntoRecoleccionNombre", puntoRecoleccion.Name);
-
-                    // Obtener el ID del producto y redirigir al detalle
-                    var productoId = TempData["ProductoPersonalizacionId"];
-                    if (productoId != null)
-                    {
-                        return RedirectToAction("Detalle", "Personalizacion", new { id = productoId });
-                    }
-                    else
-                    {
-                        return RedirectToAction("Index", "Personalizacion");
-                    }
-                }
-
-                // FLUJO NORMAL PARA OTROS TIPOS DE PEDIDO (tu código existente)
+                // Calcular distancia
                 double distanciaValor;
                 if (!string.IsNullOrEmpty(distancia) && double.TryParse(distancia, NumberStyles.Any, CultureInfo.InvariantCulture, out distanciaValor))
                 {
@@ -181,11 +164,29 @@ namespace Proyecto1_MZ_MJ.Controllers
                         puntoRecoleccion.Sucursal.Latitud, puntoRecoleccion.Sucursal.Longitud);
                 }
 
+                // Configurar ViewBag
                 ViewBag.UserLat = userLat;
                 ViewBag.UserLng = userLng;
                 ViewBag.PuntoRecoleccionId = id;
 
-                // Mantener los datos en TempData
+                // ✅ VERIFICAR SI ES PERSONALIZACIÓN Y CONFIGURAR ViewBag
+                if (esPersonalizacion || TempData.ContainsKey("ProductoPersonalizacionId"))
+                {
+                    ViewBag.EsPersonalizacion = true;
+                    var productoId = TempData["ProductoPersonalizacionId"];
+                    if (productoId != null)
+                    {
+                        ViewBag.ProductoPersonalizacionId = productoId;
+                        // Mantener el ID para la siguiente acción
+                        TempData.Keep("ProductoPersonalizacionId");
+                    }
+                }
+                else
+                {
+                    ViewBag.EsPersonalizacion = false;
+                }
+
+                // Mantener otros datos en TempData
                 if (TempData.ContainsKey("ProductosSeleccionados"))
                 {
                     TempData.Keep("ProductosSeleccionados");
@@ -195,11 +196,41 @@ namespace Proyecto1_MZ_MJ.Controllers
                     TempData.Keep("DatosCarrito");
                 }
 
+                // ✅ AHORA SIEMPRE MOSTRAR LA PANTALLA DE CONFIRMACIÓN
                 return View(puntoRecoleccion);
             }
             catch (Exception ex)
             {
                 TempData["Error"] = "Error al confirmar punto de recolección: " + ex.Message;
+                return RedirectToAction("Seleccionar");
+            }
+        }
+
+        [HttpPost]
+        public IActionResult ContinuarPersonalizacion(int puntoRecoleccionId, int productoId)
+        {
+            try
+            {
+                var puntoRecoleccion = _context.CollectionPoints
+                    .Include(p => p.Sucursal)
+                    .FirstOrDefault(p => p.Id == puntoRecoleccionId);
+
+                if (puntoRecoleccion == null)
+                {
+                    TempData["Error"] = "Punto de recolección no encontrado";
+                    return RedirectToAction("Seleccionar");
+                }
+
+                // ✅ GUARDAR DATOS EN SESIÓN (sin tipoServicio por ahora)
+                HttpContext.Session.SetInt32("SucursalSeleccionada", puntoRecoleccion.SucursalId);
+                HttpContext.Session.SetInt32("PuntoRecoleccionSeleccionado", puntoRecoleccionId);
+                HttpContext.Session.SetString("PuntoRecoleccionNombre", puntoRecoleccion.Name);
+
+                return RedirectToAction("Detalle", "Personalizacion", new { id = productoId });
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Error al continuar: " + ex.Message;
                 return RedirectToAction("Seleccionar");
             }
         }

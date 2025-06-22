@@ -1,11 +1,28 @@
 ﻿@model IEnumerable<ProyectoIdentity.Models.CollectionPoint>
 @{
     ViewData["Title"] = "Seleccionar Punto de Recolección";
+
+    // ✅ OBTENER EL PARÁMETRO DE PERSONALIZACIÓN
+    bool esPersonalizacion = ViewBag.EsPersonalizacion ?? false;
+    if (Context.Request.Query.ContainsKey("esPersonalizacion"))
+    {
+        bool.TryParse(Context.Request.Query["esPersonalizacion"], out esPersonalizacion);
+    }
 }
+
 <div class="container mt-4">
     <div class="card">
         <div class="card-header bg-primary text-white">
-            <h2 class="mb-0">Selecciona un punto de recolección</h2>
+            <h2 class="mb-0">
+                @if (esPersonalizacion)
+                {
+                    <text>Selecciona un punto de recolección</text>
+                }
+                else
+                {
+                    <text>Selecciona un punto de recolección</text>
+                }
+            </h2>
         </div>
         <div class="card-body">
             <p class="lead">Selecciona el punto donde recogerás tu pedido:</p>
@@ -33,8 +50,6 @@
                                 <p class="card-text">
                                     <strong>Sucursal:</strong> @punto.Sucursal.Nombre<br />
                                     <strong>Dirección:</strong> @punto.Address<br />
-                                    @*                                     <strong>Descripción:</strong> @punto.Descripcion
-                                *@
                                 </p>
                                 <p class="card-text">
                                     <strong>Distancia:</strong>
@@ -51,9 +66,19 @@
                                     <input type="hidden" name="id" value="@punto.Id" />
                                     <input type="hidden" name="userLat" class="userLat-input" id="userLat-@punto.Id" value="" />
                                     <input type="hidden" name="userLng" class="userLng-input" id="userLng-@punto.Id" value="" />
-                                    <!-- Campo adicional para la distancia -->
                                     <input type="hidden" name="distancia" class="distancia-input" id="distancia-@punto.Id" value="" />
-                                    <button type="submit" class="btn btn-primary w-100">Seleccionar</button>
+                                    <!-- ✅ AGREGAR EL PARÁMETRO DE PERSONALIZACIÓN -->
+                                    <input type="hidden" name="esPersonalizacion" value="@esPersonalizacion.ToString().ToLower()" />
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        @if (esPersonalizacion)
+                                        {
+                                            <text>Seleccionar sucursal</text>
+                                        }
+                                        else
+                                        {
+                                            <text>Seleccionar</text>
+                                        }
+                                    </button>
                                 </form>
                             </div>
                         </div>

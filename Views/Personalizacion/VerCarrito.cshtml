@@ -133,46 +133,37 @@
                         <p class="mb-0">Se usarán los datos de tu perfil.</p>
                     </div>
 
-                    <!-- ✅ FORM CORREGIDO -->
-                    <form id="formPedido" onsubmit="return procesarPedido(event)">
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">Tipo de Servicio *</label>
-                            <div class="row">
-                                <div class="col-6">
-                                    <div class="card service-option" data-service="Servir aquí">
-                                        <div class="card-body text-center">
-                                            <input type="radio" name="tipoServicio" id="servirAqui" value="Servir aquí" required>
-                                            <label for="servirAqui" class="w-100">
-                                                <i class="fas fa-chair fa-2x d-block mb-2 text-primary"></i>
-                                                <strong>Servir aquí</strong>
-                                            </label>
-                                        </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Tipo de Servicio *</label>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="card service-option" data-service="Servir aquí">
+                                    <div class="card-body text-center">
+                                        <input type="radio" name="tipoServicio" id="servirAqui" value="Servir aquí" required>
+                                        <label for="servirAqui" class="w-100">
+                                            <i class="fas fa-chair fa-2x d-block mb-2 text-primary"></i>
+                                            <strong>Servir aquí</strong>
+                                        </label>
                                     </div>
                                 </div>
-                                <div class="col-6">
-                                    <div class="card service-option" data-service="Para llevar">
-                                        <div class="card-body text-center">
-                                            <input type="radio" name="tipoServicio" id="paraLlevar" value="Para llevar" required>
-                                            <label for="paraLlevar" class="w-100">
-                                                <i class="fas fa-shopping-bag fa-2x d-block mb-2 text-success"></i>
-                                                <strong>Para llevar</strong>
-                                            </label>
-                                        </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card service-option" data-service="Para llevar">
+                                    <div class="card-body text-center">
+                                        <input type="radio" name="tipoServicio" id="paraLlevar" value="Para llevar" required>
+                                        <label for="paraLlevar" class="w-100">
+                                            <i class="fas fa-shopping-bag fa-2x d-block mb-2 text-success"></i>
+                                            <strong>Para llevar</strong>
+                                        </label>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Observaciones:</label>
-                            <textarea id="observaciones" class="form-control" rows="3"
-                                      placeholder="Comentarios adicionales..."></textarea>
-                        </div>
-
-                        <button type="submit" class="btn btn-warning w-100" id="btnProcesar" @(Model.Any() ? "" : "disabled")>
-                            <i class="fas fa-check"></i> Confirmar Pedido
-                        </button>
-                    </form>
+                    <button type="button" class="btn btn-warning w-100" id="btnProcesar" @(Model.Any() ? "" : "disabled") onclick="procesarPedido()">
+                        <i class="fas fa-check"></i> Confirmar Pedido
+                    </button>
                 </div>
             </div>
         </div>
@@ -266,24 +257,20 @@
         }).catch(console.error);
     }
 
-    // ✅ FUNCIÓN CORREGIDA PARA PROCESAR PEDIDO
-    function procesarPedido(event) {
-        event.preventDefault();
-
+    function procesarPedido() {
         const tipoServicio = document.querySelector('input[name="tipoServicio"]:checked')?.value;
         if (!tipoServicio) {
             alert('Por favor selecciona el tipo de servicio');
-            return false;
+            return;
         }
 
         if (carritoLocal.length === 0) {
             alert('Tu carrito está vacío');
-            return false;
+            return;
         }
 
         const data = {
-            TipoServicio: tipoServicio,
-            Observaciones: document.getElementById('observaciones').value
+            TipoServicio: tipoServicio
         };
 
         const btnProcesar = document.getElementById('btnProcesar');
@@ -298,7 +285,7 @@
             .then(response => response.json())
             .then(result => {
                 if (result.success) {
-                    window.location.href = '@Url.Action("Confirmacion")/' + result.pedidoId;
+                    window.location.href = '@Url.Action("Confirmacion", "Personalizacion")?id=' + result.pedidoId;
                 } else {
                     alert('Error: ' + result.message);
                     btnProcesar.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
@@ -311,8 +298,6 @@
                 btnProcesar.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
                 btnProcesar.disabled = false;
             });
-
-        return false;
     }
 
     // Manejar selección de servicio
