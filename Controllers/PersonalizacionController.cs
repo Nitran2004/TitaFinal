@@ -158,7 +158,7 @@ namespace ProyectoIdentity.Controllers
         }
 
         [HttpPost]
-        public IActionResult ProcesarPedido([FromBody] PedidoRequest request)
+        public async Task<IActionResult> ProcesarPedido([FromBody] PedidoRequest request)
         {
             try
             {
@@ -177,21 +177,26 @@ namespace ProyectoIdentity.Controllers
                     return Json(new { success = false, message = "No hay sucursales disponibles" });
                 }
 
+                // ✅ CORRECCIÓN: Asignar el UsuarioId correctamente
+                var userId = User.Identity.IsAuthenticated ? User.FindFirstValue(ClaimTypes.NameIdentifier) : null;
+
+                Console.WriteLine($"[DEBUG] ProcesarPedido - Usuario autenticado: {User.Identity.IsAuthenticated}");
+                Console.WriteLine($"[DEBUG] ProcesarPedido - UsuarioId obtenido: {userId}");
+
                 var pedido = new Pedido
                 {
-                    UsuarioId = null,
+                    UsuarioId = userId, // ✅ CAMBIAR DE null A userId
                     SucursalId = sucursalPorDefecto.Id,
                     TipoServicio = request.TipoServicio,
                     Comentario = request.Observaciones,
                     Fecha = DateTime.Now,
-                    Estado = "Preparándose", // ✅ CAMBIAR A "Preparándose" EN LUGAR DE "Pendiente"
+                    Estado = "Preparándose",
                     Total = total,
                     Detalles = carritoItems.Select(item => new PedidoDetalle
                     {
                         ProductoId = item.Id,
                         PrecioUnitario = item.Precio,
                         Cantidad = item.Cantidad,
-                        // ✅ GUARDAR COMO JSON CORRECTAMENTE
                         IngredientesRemovidos = item.IngredientesRemovidos.Any()
                             ? JsonSerializer.Serialize(item.IngredientesRemovidos)
                             : null,
@@ -199,8 +204,19 @@ namespace ProyectoIdentity.Controllers
                     }).ToList()
                 };
 
+                Console.WriteLine($"[DEBUG] ProcesarPedido - Pedido creado con UsuarioId: {pedido.UsuarioId}");
+
                 _context.Pedidos.Add(pedido);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine("[DEBUG] ProcesarPedido - Pedido guardado en BD");
+
+                // ✅ AGREGAR PUNTOS AL USUARIO SI ESTÁ AUTENTICADO
+                if (User.Identity.IsAuthenticated && total > 0)
+                {
+                    Console.WriteLine($"[DEBUG] ProcesarPedido - Llamando AgregarPuntosAUsuario");
+                    await AgregarPuntosAUsuario(userId, total);
+                }
 
                 LimpiarCarritoDeSession();
 
@@ -208,6 +224,7 @@ namespace ProyectoIdentity.Controllers
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[ERROR] ProcesarPedido: {ex.Message}");
                 return Json(new { success = false, message = ex.InnerException?.Message ?? ex.Message });
             }
         }

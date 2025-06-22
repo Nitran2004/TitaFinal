@@ -66,25 +66,25 @@
     <!-- Navegación por pestañas CON BOOTSTRAP JS -->
     <div class="card">
         <div class="card-header">
-            <!-- ✅ Pestañas mejoradas con Bootstrap que funciona -->
+            <!-- ✅ Pestañas mejoradas CON COLORES SIEMPRE VISIBLES -->
             <ul class="nav nav-pills nav-fill" id="historialTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="pedidos-tab" onclick="showTab('pedidos')" type="button">
+                    <button class="nav-link active" id="pedidos-tab" onclick="showTab('pedidos')" type="button" style="background: linear-gradient(135deg, #28a745, #1e7e34) !important; color: white !important; border-color: #28a745 !important;">
                         <i class="fas fa-shopping-bag me-2"></i>Mis Pedidos (@Model.Pedidos.Count)
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="mis-canjes-tab" onclick="showTab('mis-canjes')" type="button">
+                    <button class="nav-link" id="mis-canjes-tab" onclick="showTab('mis-canjes')" type="button" style="background: linear-gradient(135deg, #ffc107, #e0a800) !important; color: #212529 !important; border-color: #ffc107 !important;">
                         <i class="fas fa-ticket-alt me-2"></i>Mis Canjes (@Model.CanjesRecompensas.GroupBy(c => new { c.FechaCanje.Date, c.FechaCanje.Hour, c.FechaCanje.Minute }).Count())
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="canjes-tab" onclick="showTab('canjes')" type="button">
+                    <button class="nav-link" id="canjes-tab" onclick="showTab('canjes')" type="button" style="background: linear-gradient(135deg, #dc3545, #bd2130) !important; color: white !important; border-color: #dc3545 !important;">
                         <i class="fas fa-gift me-2"></i>Recompensas (@Model.CanjesRecompensas.Count)
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="transacciones-tab" onclick="showTab('transacciones')" type="button">
+                    <button class="nav-link" id="transacciones-tab" onclick="showTab('transacciones')" type="button" style="background: linear-gradient(135deg, #17a2b8, #117a8b) !important; color: white !important; border-color: #17a2b8 !important;">
                         <i class="fas fa-exchange-alt me-2"></i>Movimientos (@Model.TransaccionesPuntos.Count)
                     </button>
                 </li>
@@ -125,23 +125,69 @@
                                                 </div>
                                             </div>
 
-                                            <!-- Productos del pedido -->
+                                            <!-- ✅ PRODUCTOS DEL PEDIDO CORREGIDO -->
                                             <div class="mt-2">
                                                 <small class="text-muted"><strong>Productos:</strong></small>
                                                 <ul class="list-unstyled mb-2">
-                                                    @if (pedido.PedidoProductos != null && pedido.PedidoProductos.Any())
+                                                    @{
+                                                        var todosLosProductos = new List<dynamic>();
+                                                        
+                                                        // ✅ AGREGAR PRODUCTOS NORMALES (PedidoProductos)
+                                                        if (pedido.PedidoProductos != null && pedido.PedidoProductos.Any())
+                                                        {
+                                                            foreach (var item in pedido.PedidoProductos)
+                                                            {
+                                                                todosLosProductos.Add(new {
+                                                                    Nombre = item.Producto?.Nombre ?? "Producto no disponible",
+                                                                    Cantidad = item.Cantidad ?? 0,
+                                                                    Precio = item.Precio ?? 0,
+                                                                    NotasEspeciales = (string)null,
+                                                                    TipoServicio = (string)null,
+                                                                    EsPersonalizado = false
+                                                                });
+                                                            }
+                                                        }
+                                                        
+                                                        // ✅ AGREGAR PRODUCTOS DE PERSONALIZACIÓN (Detalles)
+                                                        if (pedido.Detalles != null && pedido.Detalles.Any())
+                                                        {
+                                                            foreach (var detalle in pedido.Detalles)
+                                                            {
+                                                                todosLosProductos.Add(new {
+                                                                    Nombre = detalle.Producto?.Nombre ?? "Producto personalizado",
+                                                                    Cantidad = detalle.Cantidad,
+                                                                    Precio = detalle.PrecioUnitario,
+                                                                    NotasEspeciales = detalle.NotasEspeciales,
+                                                                    TipoServicio = pedido.TipoServicio,
+                                                                    EsPersonalizado = true
+                                                                });
+                                                            }
+                                                        }
+                                                    }
+                                                    
+                                                    @if (todosLosProductos.Any())
                                                     {
-                                                        @foreach (var item in pedido.PedidoProductos.Take(3))
+                                                        @foreach (var producto in todosLosProductos.Take(3))
                                                         {
                                                             <li class="small">
-                                                                • @(item.Producto?.Nombre ?? "Producto no disponible")
-                                                                <span class="text-muted">(x@(item.Cantidad ?? 0))</span>
-                                                                <span class="text-success">- $@((item.Precio ?? 0).ToString("F2"))</span>
+                                                                • @producto.Nombre
+                                                                @if (producto.Cantidad > 1)
+                                                                {
+                                                                    <span class="text-muted"> x@(producto.Cantidad)</span>
+                                                                }
+                                                                <span class="text-success"> - $@(producto.Precio.ToString("F2"))</span>
+                                                                
+                                                                @if (!string.IsNullOrEmpty(producto.NotasEspeciales))
+                                                                {
+                                                                    <br><div class="text-info ms-3">
+                                                                        <i class="fas fa-sticky-note"></i> <strong>Notas especiales:</strong> @producto.NotasEspeciales
+                                                                    </div>
+                                                                }
                                                             </li>
                                                         }
-                                                        @if (pedido.PedidoProductos.Count > 3)
+                                                        @if (todosLosProductos.Count > 3)
                                                         {
-                                                            <li class="small text-muted">... y @(pedido.PedidoProductos.Count - 3) más productos</li>
+                                                            <li class="small text-muted">... y @(todosLosProductos.Count - 3) más productos</li>
                                                         }
                                                     }
                                                     else
@@ -149,6 +195,17 @@
                                                         <li class="small text-muted">• Sin productos registrados</li>
                                                     }
                                                 </ul>
+                                                
+                                                <!-- ✅ MOSTRAR SOLO TIPO DE SERVICIO -->
+                                                @if (!string.IsNullOrEmpty(pedido.TipoServicio))
+                                                {
+                                                    <div class="mt-2">
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-concierge-bell"></i> 
+                                                            <strong>Tipo de servicio:</strong> @pedido.TipoServicio
+                                                        </small>
+                                                    </div>
+                                                }
                                             </div>
 
                                             <div class="text-end">
@@ -467,15 +524,6 @@
 
 <style>
     /* ✅ Estilos para pestañas visibles */
-    .nav-pills .nav-link {
-        background-color: #f8f9fa !important;
-        color: #495057 !important;
-        border: 1px solid #dee2e6 !important;
-        margin: 0 2px !important;
-        border-radius: 8px !important;
-        transition: all 0.3s ease !important;
-    }
-
     .nav-pills .nav-link:hover {
         background-color: #e9ecef !important;
         color: #212529 !important;
@@ -507,7 +555,7 @@
         animation: bounce 2s infinite;
     }
 
-    keyframes bounce {
+    @@keyframes bounce {
         0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
         40% { transform: translateY(-10px); }
         60% { transform: translateY(-5px); }
@@ -579,7 +627,7 @@
 </style>
 
 <script>
-    // ✅ JavaScript simple para manejar las pestañas sin Bootstrap JS
+    // ✅ JavaScript SIMPLE - Solo cambiar contenido
     function showTab(tabName) {
         // Ocultar todas las pestañas
         const allTabs = document.querySelectorAll('.tab-pane');
@@ -610,4 +658,13 @@
     document.addEventListener('DOMContentLoaded', function() {
         showTab('pedidos');
     });
-</script>
+</script> .nav-link {
+        background-color: #f8f9fa !important;
+        color: #495057 !important;
+        border: 1px solid #dee2e6 !important;
+        margin: 0 2px !important;
+        border-radius: 8px !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .nav-pills

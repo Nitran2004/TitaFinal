@@ -610,47 +610,62 @@ namespace ProyectoIdentity.Controllers
             var usuario = await _context.AppUsuario.FindAsync(userId);
             if (usuario == null) return NotFound();
 
-            // 1. Obtener transacciones de puntos (ganancias y canjes)
+            // 1. Obtener transacciones de puntos - AUMENTADO A 70
             var transacciones = await _context.TransaccionesPuntos
                 .Where(t => t.UsuarioId == userId)
                 .OrderByDescending(t => t.Fecha)
-                .Take(50) // Últimas 50 transacciones
+                .Take(70) // ✅ CAMBIADO DE 50 A 70
                 .ToListAsync();
 
-            // 2. Obtener pedidos del usuario CON DATOS COMPLETOS
+            // 2. ✅ OBTENER PEDIDOS CON TODOS LOS DATOS NECESARIOS - AUMENTADO A 50
             var pedidos = await _context.Pedidos
                 .Include(p => p.PedidoProductos)
                     .ThenInclude(pp => pp.Producto)
+                .Include(p => p.Detalles) // Para pedidos de personalización
+                    .ThenInclude(d => d.Producto)
                 .Include(p => p.Sucursal)
-                .Where(p => p.UsuarioId == userId)
+                .Where(p => p.UsuarioId == userId || p.UsuarioId == null) // Temporal hasta corregir todos
                 .OrderByDescending(p => p.Fecha)
-                .Take(20) // Últimos 20 pedidos
+                .Take(50) // ✅ CAMBIADO DE 20 A 50
                 .ToListAsync();
 
             // ✅ DEBUG: Verificar que los datos se cargan correctamente
-            Console.WriteLine($"[DEBUG] Usuario {userId} tiene {pedidos.Count} pedidos");
+            Console.WriteLine($"[DEBUG] Historial - Usuario {userId} tiene {pedidos.Count} pedidos");
             foreach (var pedido in pedidos.Take(3))
             {
-                Console.WriteLine($"[DEBUG] Pedido {pedido.Id} tiene {pedido.PedidoProductos?.Count ?? 0} productos");
+                Console.WriteLine($"[DEBUG] Pedido {pedido.Id}:");
+                Console.WriteLine($"  - PedidoProductos: {pedido.PedidoProductos?.Count ?? 0}");
+                Console.WriteLine($"  - Detalles: {pedido.Detalles?.Count ?? 0}");
+                Console.WriteLine($"  - Estado: {pedido.Estado}");
+                Console.WriteLine($"  - TipoServicio: {pedido.TipoServicio}");
+
                 if (pedido.PedidoProductos != null)
                 {
                     foreach (var pp in pedido.PedidoProductos.Take(2))
                     {
-                        Console.WriteLine($"[DEBUG] Producto: {pp.Producto?.Nombre}, Cantidad: {pp.Cantidad}");
+                        Console.WriteLine($"  - Producto Normal: {pp.Producto?.Nombre}, Cantidad: {pp.Cantidad}");
+                    }
+                }
+
+                if (pedido.Detalles != null)
+                {
+                    foreach (var d in pedido.Detalles.Take(2))
+                    {
+                        Console.WriteLine($"  - Producto Personalizado: {d.Producto?.Nombre}, Cantidad: {d.Cantidad}");
+                        Console.WriteLine($"  - Notas: {d.NotasEspeciales}");
                     }
                 }
             }
 
-            // 3. Obtener recompensas canjeadas
+            // 3. Obtener recompensas canjeadas - AUMENTADO A 40
             var canjes = await _context.HistorialCanjes
                 .Include(h => h.ProductoRecompensa)
                     .ThenInclude(pr => pr.Producto)
                 .Where(h => h.UsuarioId == userId)
                 .OrderByDescending(h => h.FechaCanje)
-                .Take(20) // Últimos 20 canjes
+                .Take(40) // ✅ CAMBIADO DE 20 A 40
                 .ToListAsync();
 
-            // Crear el modelo de vista
             var model = new HistorialCompletoViewModel
             {
                 Usuario = usuario,
@@ -677,8 +692,10 @@ namespace ProyectoIdentity.Controllers
             var pedido = await _context.Pedidos
                 .Include(p => p.PedidoProductos)
                     .ThenInclude(pp => pp.Producto)
+                .Include(p => p.Detalles) // ✅ INCLUIR DETALLES PARA DETECTAR PERSONALIZACIÓN
+                    .ThenInclude(d => d.Producto)
                 .Include(p => p.Sucursal)
-                .FirstOrDefaultAsync(p => p.Id == id && p.UsuarioId == userId);
+                .FirstOrDefaultAsync(p => p.Id == id && (p.UsuarioId == userId || p.UsuarioId == null)); // Temporal
 
             if (pedido == null)
             {
@@ -686,8 +703,21 @@ namespace ProyectoIdentity.Controllers
                 return RedirectToAction("Historial");
             }
 
-            // ✅ REDIRIGIR AL MÉTODO CORRECTO EN PEDIDOSCONTROLLER
-            return RedirectToAction("DetallePedido", "Pedidos", new { id = id });
+            // ✅ REDIRIGIR SEGÚN EL TIPO DE PEDIDO
+            bool esPedidoPersonalizacion = pedido.Detalles != null && pedido.Detalles.Any();
+
+            if (esPedidoPersonalizacion)
+            {
+                // Es un pedido de personalización → Redirigir a Personalizacion/Confirmacion
+                Console.WriteLine($"[DEBUG] Redirigiendo a Personalizacion/Confirmacion para pedido {id}");
+                return RedirectToAction("Confirmacion", "Personalizacion", new { id = id });
+            }
+            else
+            {
+                // Es un pedido normal → Redirigir a Pedidos/Resumen
+                Console.WriteLine($"[DEBUG] Redirigiendo a Pedidos/Resumen para pedido {id}");
+                return RedirectToAction("Resumen", "Pedidos", new { id = id });
+            }
         }
         // Método estático para calcular puntos que se ganarán
         public static int CalcularPuntosAGanar(decimal precio)
