@@ -414,8 +414,7 @@
                     @if (ingredientes.Any(i => i.Removible))
                     {
                         <div class="mb-4">
-                            <h6>Quitar ingredientes:</h6>
-                            <div class="ingredients-container">
+                            <h6>Quitar ingredientes: <small class="text-muted">(opcional)</small></h6>                            <div class="ingredients-container">
                                 @foreach (var ingrediente in ingredientes.Where(i => i.Removible))
                                 {
                                     <div class="form-check ingredient-item">
