@@ -285,12 +285,15 @@ namespace ProyectoIdentity.Controllers
             }
         }
 
-        public IActionResult Confirmacion(int id)
+        public async Task<IActionResult> Confirmacion(int id)
         {
-            var pedido = _context.Pedidos
+            // ✅ OBTENER EL USUARIO ACTUAL
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var pedido = await _context.Pedidos
                 .Include(p => p.Detalles)
-                .ThenInclude(d => d.Producto) // Si necesitas el producto
-                .FirstOrDefault(p => p.Id == id);
+                .ThenInclude(d => d.Producto)
+                .FirstOrDefaultAsync(p => p.Id == id);
 
             if (pedido == null)
             {
@@ -298,10 +301,40 @@ namespace ProyectoIdentity.Controllers
                 return RedirectToAction("Index");
             }
 
+            // ✅ VALIDACIÓN DE SEGURIDAD: Solo el propietario puede ver el pedido
+            if (User.Identity.IsAuthenticated)
+            {
+                // Si el usuario está autenticado, debe ser el dueño del pedido
+                if (!string.IsNullOrEmpty(pedido.UsuarioId) && pedido.UsuarioId != userId)
+                {
+                    TempData["Error"] = "No tienes permisos para ver este pedido";
+                    return RedirectToAction("Index");
+                }
+
+                // Si el pedido no tiene usuario asignado pero el usuario actual sí está autenticado,
+                // solo permitir si es administrador
+                if (string.IsNullOrEmpty(pedido.UsuarioId) && !User.IsInRole("Administrador"))
+                {
+                    TempData["Error"] = "No tienes permisos para ver este pedido";
+                    return RedirectToAction("Index");
+                }
+            }
+            else
+            {
+                // Si el usuario no está autenticado, solo puede ver pedidos sin usuario asignado
+                if (!string.IsNullOrEmpty(pedido.UsuarioId))
+                {
+                    TempData["Error"] = "Debes iniciar sesión para ver este pedido";
+                    return RedirectToAction("Acceso", "Cuentas");
+                }
+            }
+
             return View(pedido);
         }
 
         // Panel de administrador
+        [Authorize(Roles = "Administrador")]
+
         public async Task<IActionResult> AdminAnalisis()
         {
             var analisis = await GenerarAnalisisSimple();

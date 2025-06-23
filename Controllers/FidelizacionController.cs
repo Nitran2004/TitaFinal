@@ -28,6 +28,7 @@ namespace ProyectoIdentity.Controllers
         }
 
         // Mostrar los puntos del usuario actual
+        [Authorize(Roles = "Administrador,Registrado")]
         public async Task<IActionResult> MisPuntos()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -513,6 +514,7 @@ namespace ProyectoIdentity.Controllers
 
 
         // Método para mostrar todos los canjes del usuario
+        [Authorize(Roles = "Administrador,Registrado")]
         public async Task<IActionResult> MisCanjes()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -521,19 +523,35 @@ namespace ProyectoIdentity.Controllers
             var usuario = await _context.AppUsuario.FindAsync(userId);
             if (usuario == null) return NotFound();
 
-            // Obtener todos los canjes del usuario agrupados por código de canje
-            var canjes = await _context.HistorialCanjes
-                .Include(h => h.ProductoRecompensa)
-                    .ThenInclude(pr => pr.Producto)
-                .Where(h => h.UsuarioId == userId)
-                .OrderByDescending(h => h.FechaCanje)
-                .ToListAsync();
+            // ✅ VERIFICAR SI ES ADMINISTRADOR
+            bool esAdministrador = User.IsInRole("Administrador");
+
+            List<HistorialCanje> canjes;
+
+            if (esAdministrador)
+            {
+                // ✅ ADMINISTRADOR: VER TODOS LOS CANJES
+                canjes = await _context.HistorialCanjes
+                    .Include(h => h.ProductoRecompensa)
+                        .ThenInclude(pr => pr.Producto)
+                    .OrderByDescending(h => h.FechaCanje)
+                    .ToListAsync();
+                Console.WriteLine($"DEBUG: Administrador {userId} - Mostrando TODOS los canjes ({canjes.Count})");
+            }
+            else
+            {
+                // ✅ USUARIO NORMAL: SOLO SUS CANJES
+                canjes = await _context.HistorialCanjes
+                    .Include(h => h.ProductoRecompensa)
+                        .ThenInclude(pr => pr.Producto)
+                    .Where(h => h.UsuarioId == userId)
+                    .OrderByDescending(h => h.FechaCanje)
+                    .ToListAsync();
+                Console.WriteLine($"DEBUG: Usuario {userId} - Mostrando solo sus canjes ({canjes.Count})");
+            }
 
             // ✅ DEBUG: Verificar qué datos tenemos
-            Console.WriteLine($"DEBUG: Usuario ID: {userId}");
-            Console.WriteLine($"DEBUG: Total canjes encontrados: {canjes.Count}");
-
-            foreach (var canje in canjes)
+            foreach (var canje in canjes.Take(3))
             {
                 Console.WriteLine($"DEBUG: Canje ID: {canje.Id}, Puntos: {canje.PuntosUtilizados}, Producto: {canje.ProductoRecompensa?.Nombre}");
                 if (canje.ProductoRecompensa?.Producto != null)
@@ -563,10 +581,11 @@ namespace ProyectoIdentity.Controllers
 
             // ✅ DEBUG: Verificar datos agrupados
             Console.WriteLine($"DEBUG: Grupos de canjes: {canjesAgrupados.Count}");
-            foreach (var grupo in canjesAgrupados)
+            foreach (var grupo in canjesAgrupados.Take(3))
             {
                 Console.WriteLine($"DEBUG: Grupo - Código: {grupo.CodigoCanje}, Productos: {grupo.CantidadRecompensas}, Puntos: {grupo.TotalPuntosUtilizados}");
             }
+
             var model = new MisCanjesViewModel
             {
                 Usuario = usuario,
@@ -610,51 +629,44 @@ namespace ProyectoIdentity.Controllers
             var usuario = await _context.AppUsuario.FindAsync(userId);
             if (usuario == null) return NotFound();
 
+            // ✅ VERIFICAR SI ES ADMINISTRADOR O CAJERO
+            bool esAdminOCajero = User.IsInRole("Administrador") || User.IsInRole("Cajero");
+
             // 1. Obtener transacciones de puntos - AUMENTADO A 70
             var transacciones = await _context.TransaccionesPuntos
                 .Where(t => t.UsuarioId == userId)
                 .OrderByDescending(t => t.Fecha)
-                .Take(70) // ✅ CAMBIADO DE 50 A 70
+                .Take(70)
                 .ToListAsync();
 
-            // 2. ✅ OBTENER PEDIDOS CON TODOS LOS DATOS NECESARIOS - AUMENTADO A 50
-            var pedidos = await _context.Pedidos
+            // 2. ✅ OBTENER PEDIDOS CON LÓGICA CORREGIDA
+            var pedidosQuery = _context.Pedidos
                 .Include(p => p.PedidoProductos)
                     .ThenInclude(pp => pp.Producto)
-                .Include(p => p.Detalles) // Para pedidos de personalización
+                .Include(p => p.Detalles)
                     .ThenInclude(d => d.Producto)
-                .Include(p => p.Sucursal)
-                .Where(p => p.UsuarioId == userId || p.UsuarioId == null) // Temporal hasta corregir todos
-                .OrderByDescending(p => p.Fecha)
-                .Take(50) // ✅ CAMBIADO DE 20 A 50
-                .ToListAsync();
+                .Include(p => p.Sucursal);
 
-            // ✅ DEBUG: Verificar que los datos se cargan correctamente
-            Console.WriteLine($"[DEBUG] Historial - Usuario {userId} tiene {pedidos.Count} pedidos");
-            foreach (var pedido in pedidos.Take(3))
+            List<Pedido> pedidos;
+
+            if (esAdminOCajero)
             {
-                Console.WriteLine($"[DEBUG] Pedido {pedido.Id}:");
-                Console.WriteLine($"  - PedidoProductos: {pedido.PedidoProductos?.Count ?? 0}");
-                Console.WriteLine($"  - Detalles: {pedido.Detalles?.Count ?? 0}");
-                Console.WriteLine($"  - Estado: {pedido.Estado}");
-                Console.WriteLine($"  - TipoServicio: {pedido.TipoServicio}");
-
-                if (pedido.PedidoProductos != null)
-                {
-                    foreach (var pp in pedido.PedidoProductos.Take(2))
-                    {
-                        Console.WriteLine($"  - Producto Normal: {pp.Producto?.Nombre}, Cantidad: {pp.Cantidad}");
-                    }
-                }
-
-                if (pedido.Detalles != null)
-                {
-                    foreach (var d in pedido.Detalles.Take(2))
-                    {
-                        Console.WriteLine($"  - Producto Personalizado: {d.Producto?.Nombre}, Cantidad: {d.Cantidad}");
-                        Console.WriteLine($"  - Notas: {d.NotasEspeciales}");
-                    }
-                }
+                // ✅ ADMIN/CAJERO: VER TODOS LOS PEDIDOS
+                pedidos = await pedidosQuery
+                    .OrderByDescending(p => p.Fecha)
+                    .Take(50)
+                    .ToListAsync();
+                Console.WriteLine($"[DEBUG] Usuario {userId} (Admin/Cajero) - Mostrando TODOS los pedidos");
+            }
+            else
+            {
+                // ✅ USUARIO NORMAL: SOLO SUS PEDIDOS
+                pedidos = await pedidosQuery
+                    .Where(p => p.UsuarioId == userId) // SIN "|| p.UsuarioId == null"
+                    .OrderByDescending(p => p.Fecha)
+                    .Take(50)
+                    .ToListAsync();
+                Console.WriteLine($"[DEBUG] Usuario {userId} (Normal) - Mostrando solo sus pedidos");
             }
 
             // 3. Obtener recompensas canjeadas - AUMENTADO A 40
@@ -663,8 +675,10 @@ namespace ProyectoIdentity.Controllers
                     .ThenInclude(pr => pr.Producto)
                 .Where(h => h.UsuarioId == userId)
                 .OrderByDescending(h => h.FechaCanje)
-                .Take(40) // ✅ CAMBIADO DE 20 A 40
+                .Take(40)
                 .ToListAsync();
+
+            Console.WriteLine($"[DEBUG] Historial - Usuario {userId} tiene {pedidos.Count} pedidos");
 
             var model = new HistorialCompletoViewModel
             {
@@ -788,7 +802,7 @@ namespace ProyectoIdentity.Controllers
         }
 
 
-        [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador,Cajero")]
         public async Task<IActionResult> AdminCanjesIndex()
         {
             try

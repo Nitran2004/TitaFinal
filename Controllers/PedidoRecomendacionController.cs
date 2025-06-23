@@ -123,6 +123,8 @@ namespace ProyectoIdentity.Controllers
         }
 
         // Listar pedidos del usuario logueado - DESDE BASE DE DATOS
+
+        [Authorize(Roles = "Administrador,Registrado")]
         public async Task<IActionResult> MisPedidos()
         {
             var usuario = await _userManager.GetUserAsync(User);

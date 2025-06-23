@@ -302,7 +302,7 @@ public class PedidosController : Controller
         return RedirectToAction("Seleccionar", "Recoleccion");
     }
 
-    [Authorize(Roles = "Administrador")]
+    [Authorize(Roles = "Administrador,Cajero")]
     public async Task<IActionResult> ResumenAdmin()
     {
         try
