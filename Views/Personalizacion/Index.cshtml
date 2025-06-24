@@ -1,6 +1,6 @@
 ﻿@model List<ProyectoIdentity.Models.Producto>
 @{
-    ViewData["Title"] = "Menú Personalizable";
+    ViewData["Title"] = "Menú ";
 }
 
 <style>
@@ -126,7 +126,7 @@
     }
 </style>
 
-<h1 class="text-center mt-4">@(string.IsNullOrEmpty(ViewBag.CategoriaActual) || ViewBag.CategoriaActual.ToLower() == "todas" ? "Menú Personalizable" : $"{ViewBag.CategoriaActual} - Personalizable")</h1>
+<h1 class="text-center mt-4">@(string.IsNullOrEmpty(ViewBag.CategoriaActual) || ViewBag.CategoriaActual.ToLower() == "todas" ? "Menú " : $"{ViewBag.CategoriaActual} - Personalizable")</h1>
 
 <nav class="category-nav">
     <div class="category-container">
