@@ -548,6 +548,282 @@ namespace ProyectoIdentity.Controllers
             }
         }
 
+        // AGREGAR ESTOS MÉTODOS AL PersonalizacionController.cs
+
+        // ============== CRUD PRODUCTOS - SOLO ADMINISTRADORES ==============
+
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> AdminProductos()
+        {
+            var productos = await _context.Productos.ToListAsync();
+            return View(productos);
+        }
+
+        // REEMPLAZAR los métodos CrearProducto y EditarProducto en PersonalizacionController.cs
+
+        [Authorize(Roles = "Administrador")]
+        public IActionResult CrearProducto()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Administrador")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CrearProducto(ProductoViewModel model, IFormFile? imagen)
+        {
+            Console.WriteLine($"Imagen recibida: {imagen?.FileName ?? "NULL"}");
+            Console.WriteLine($"Tamaño: {imagen?.Length ?? 0} bytes");
+            Console.WriteLine($"Content-Type: {imagen?.ContentType ?? "NULL"}");
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var producto = new Producto
+                    {
+                        Nombre = model.Nombre,
+                        Descripcion = model.Descripcion,
+                        Categoria = model.Categoria,
+                        Precio = model.Precio,
+                        InfoNutricional = model.InfoNutricional,
+                        Alergenos = model.Alergenos
+                    };
+
+                    // ✅ PROCESAR INGREDIENTES DESDE JAVASCRIPT (Nombre, Costo, Removible)
+                    var ingredientesJson = Request.Form["IngredientesJson"].ToString();
+                    if (!string.IsNullOrEmpty(ingredientesJson))
+                    {
+                        try
+                        {
+                            // Validar que el JSON sea válido antes de guardarlo
+                            var testParse = JsonSerializer.Deserialize<List<dynamic>>(ingredientesJson);
+                            producto.Ingredientes = ingredientesJson;
+                        }
+                        catch (JsonException)
+                        {
+                            // Si el JSON es inválido, no guardamos ingredientes
+                            producto.Ingredientes = null;
+                        }
+                    }
+
+                    // Procesar imagen si se subió una
+                    if (imagen != null && imagen.Length > 0)
+                    {
+                        Console.WriteLine($"Procesando imagen: {imagen.FileName}, {imagen.Length} bytes");
+
+                        try
+                        {
+                            using (var memoryStream = new MemoryStream())
+                            {
+                                await imagen.CopyToAsync(memoryStream);
+                                producto.Imagen = memoryStream.ToArray();// ← Aquí se convierte a byte[]
+                                Console.WriteLine($"Imagen guardada: {producto.Imagen.Length} bytes");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error al procesar imagen: {ex.Message}");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("No se recibió imagen o está vacía");
+                    }
+
+                    _context.Productos.Add(producto);
+                    await _context.SaveChangesAsync();
+
+                    TempData["Success"] = "Producto creado exitosamente";
+                    return RedirectToAction("AdminProductos");
+                }
+                catch (Exception ex)
+                {
+                    TempData["Error"] = "Error al crear el producto: " + ex.Message;
+                }
+            }
+
+            return View(model);
+        }
+
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> EditarProducto(int id)
+        {
+            var producto = await _context.Productos.FindAsync(id);
+            if (producto == null) return NotFound();
+
+            var model = new ProductoViewModel
+            {
+                Id = producto.Id,
+                Nombre = producto.Nombre,
+                Descripcion = producto.Descripcion,
+                Categoria = producto.Categoria,
+                Precio = producto.Precio,
+                InfoNutricional = producto.InfoNutricional,
+                Alergenos = producto.Alergenos,
+                ImagenExistente = producto.Imagen,
+                IngredientesJson = producto.Ingredientes // ✅ PASAR JSON COMPLETO A LA VISTA
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Administrador")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditarProducto(ProductoViewModel model, IFormFile? imagen)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var producto = await _context.Productos.FindAsync(model.Id);
+                    if (producto == null) return NotFound();
+
+                    producto.Nombre = model.Nombre;
+                    producto.Descripcion = model.Descripcion;
+                    producto.Categoria = model.Categoria;
+                    producto.Precio = model.Precio;
+                    producto.InfoNutricional = model.InfoNutricional;
+                    producto.Alergenos = model.Alergenos;
+
+                    // ✅ PROCESAR INGREDIENTES DESDE JAVASCRIPT (Nombre, Costo, Removible)
+                    var ingredientesJson = Request.Form["IngredientesJson"].ToString();
+                    if (!string.IsNullOrEmpty(ingredientesJson))
+                    {
+                        try
+                        {
+                            // Validar que el JSON sea válido antes de guardarlo
+                            var testParse = JsonSerializer.Deserialize<List<dynamic>>(ingredientesJson);
+                            producto.Ingredientes = ingredientesJson;
+                        }
+                        catch (JsonException)
+                        {
+                            // Si el JSON es inválido, mantener el valor anterior
+                            // producto.Ingredientes no se modifica
+                        }
+                    }
+                    else
+                    {
+                        producto.Ingredientes = null;
+                    }
+
+                    // Procesar nueva imagen si se subió una
+                    if (imagen != null && imagen.Length > 0)
+                    {
+                        using (var memoryStream = new MemoryStream())
+                        {
+                            await imagen.CopyToAsync(memoryStream);
+                            producto.Imagen = memoryStream.ToArray();
+                        }
+                    }
+
+                    _context.Update(producto);
+                    await _context.SaveChangesAsync();
+
+                    TempData["Success"] = "Producto actualizado exitosamente";
+                    return RedirectToAction("AdminProductos");
+                }
+                catch (Exception ex)
+                {
+                    TempData["Error"] = "Error al actualizar el producto: " + ex.Message;
+                }
+            }
+
+            // Si hay error, recargar datos existentes
+            if (model.Id > 0)
+            {
+                var productoExistente = await _context.Productos.FindAsync(model.Id);
+                if (productoExistente != null)
+                {
+                    model.ImagenExistente = productoExistente.Imagen;
+                    model.IngredientesJson = productoExistente.Ingredientes;
+                }
+            }
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> EliminarProducto([FromBody] EliminarProductoRequest request)
+        {
+            try
+            {
+                var producto = await _context.Productos.FindAsync(request.Id);
+                if (producto == null)
+                {
+                    return Json(new { success = false, message = "Producto no encontrado" });
+                }
+
+                // Verificar si el producto tiene pedidos asociados
+                var tienePedidos = await _context.PedidoProductos
+                    .AnyAsync(pp => pp.ProductoId == producto.Id);
+
+                if (tienePedidos)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "No se puede eliminar el producto porque tiene pedidos asociados"
+                    });
+                }
+
+                // Verificar si el producto tiene detalles de pedido
+                var tieneDetalles = await _context.PedidoDetalles
+                    .AnyAsync(pd => pd.ProductoId == producto.Id);
+
+                if (tieneDetalles)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "No se puede eliminar el producto porque tiene detalles de pedido asociados"
+                    });
+                }
+
+                _context.Productos.Remove(producto);
+                await _context.SaveChangesAsync();
+
+                return Json(new
+                {
+                    success = true,
+                    message = $"Producto '{producto.Nombre}' eliminado exitosamente"
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error al eliminar producto: {ex.Message}");
+                return Json(new
+                {
+                    success = false,
+                    message = "Error interno del servidor al eliminar el producto"
+                });
+            }
+        }
+
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> DetalleProducto(int id)
+        {
+            var producto = await _context.Productos.FindAsync(id);
+            if (producto == null) return NotFound();
+
+            return View(producto);
+        }
+
+        // Método para obtener categorías existentes para el formulario
+        [Authorize(Roles = "Administrador")]
+        public async Task<JsonResult> ObtenerCategorias()
+        {
+            var categorias = await _context.Productos
+                .Where(p => !string.IsNullOrEmpty(p.Categoria))
+                .Select(p => p.Categoria)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToListAsync();
+
+            return Json(categorias);
+        }
+
 
     }
 
