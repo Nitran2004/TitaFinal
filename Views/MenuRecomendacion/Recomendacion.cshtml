@@ -105,6 +105,11 @@
                 var presupuesto = $("#presupuestoSlider").val();
                 var ingredientes = $("#ingredientes").val() || "";
 
+                // ✅ AGREGAR LOADING AL BOTÓN
+                const btnOriginal = $(this);
+                const textoOriginal = btnOriginal.html();
+                btnOriginal.html('<i class="fas fa-spinner fa-spin"></i> Analizando...').prop('disabled', true);
+
                 $.ajax({
                     url: '@Url.Action("ObtenerRecomendaciones", "MenuRecomendacion")',
                     type: 'POST',
@@ -122,6 +127,10 @@
                     },
                     error: function () {
                         alert("Error al procesar la solicitud");
+                    },
+                    complete: function () {
+                        // ✅ RESTAURAR BOTÓN AL TERMINAR
+                        btnOriginal.html(textoOriginal).prop('disabled', false);
                     }
                 });
             });

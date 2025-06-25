@@ -485,14 +485,17 @@
             @{
                 int maxPuntosRegla = 2000;
                 double porcentajeProgreso = Math.Min(100, (double)Model.PuntosUsuario / maxPuntosRegla * 100);
-                double anchoBarraAjustado = 15 + (porcentajeProgreso * 0.85);
+                // ✅ CORREGIR: La barra debe coincidir exactamente con el porcentaje
+                double anchoBarraAjustado = porcentajeProgreso;
                 int siguienteNivel = ((Model.PuntosUsuario / 200) + 1) * 200;
                 if (siguienteNivel > 2000) siguienteNivel = 2000;
                 int puntosFaltantesProximoNivel = Math.Max(0, siguienteNivel - Model.PuntosUsuario);
-                double posicionIndicador = 15 + (porcentajeProgreso * 0.7);
+                // ✅ CORREGIR: El indicador también debe estar en la posición exacta
+                double posicionIndicador = porcentajeProgreso;
             }
 
-            <div class="progress-bar-ruler" style="width: calc(@anchoBarraAjustado% + 15px)"></div>
+            <!-- ✅ USAR EL PORCENTAJE REAL SIN AJUSTES -->
+            <div class="progress-bar-ruler" style="width: @anchoBarraAjustado%"></div>
 
             <!-- Marcas de la regla -->
             <div class="ruler-marks">
@@ -508,13 +511,12 @@
                 }
             </div>
 
-            <!-- Indicador de posición actual -->
+            <!-- ✅ INDICADOR EN LA POSICIÓN CORRECTA -->
             <div class="current-position" style="left: @porcentajeProgreso%">
                 <div class="position-marker"></div>
                 <div class="position-label">@Model.PuntosUsuario pts</div>
             </div>
         </div>
-    </div>
 
     <!-- Mensajes de estado -->
     @if (TempData["Exito"] != null)

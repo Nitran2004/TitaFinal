@@ -1,16 +1,25 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ProyectoIdentity.Datos;
 using System.Text.RegularExpressions;
+using System.Text.Json;
 
 namespace ProyectoIdentity.Controllers
 {
     [Authorize] // Requiere que el usuario esté logueado
     public class MenuRecomendacionController : Controller
     {
+        private readonly ApplicationDbContext _context;
+
+        public MenuRecomendacionController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
         public class Plato
         {
-            public int Id { get; set; } // Agregar propiedad Id
+            public int Id { get; set; }
             public string Nombre { get; set; }
             public decimal Precio { get; set; }
             public int Calorias { get; set; }
@@ -19,84 +28,6 @@ namespace ProyectoIdentity.Controllers
             public double? Similitud { get; set; }
         }
 
-        // Datos completos del menú (traducidos desde React) - AHORA CON IDs
-        private readonly List<Plato> _data = new List<Plato>
-        {
-            // Pizzas
-            new Plato { Id = 1, Nombre = "Margarita", Precio = 8, Calorias = 250, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, tomate cherry, albahaca" },
-            new Plato { Id = 2, Nombre = "Pepperoni", Precio = 9, Calorias = 300, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, pepperoni" },
-            new Plato { Id = 3, Nombre = "Hawaiana", Precio = 11, Calorias = 320, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, jamón, piña" },
-            new Plato { Id = 4, Nombre = "Veggie Lovers", Precio = 12, Calorias = 260, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, pimientos, champiñones, cebolla" },
-            new Plato { Id = 5, Nombre = "Mi Champ", Precio = 8, Calorias = 270, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, champiñones" },
-            new Plato { Id = 6, Nombre = "Cheddar", Precio = 10, Calorias = 330, Categoria = "Pizzas", Ingredientes = "Queso cheddar, queso mozzarella" },
-            new Plato { Id = 7, Nombre = "Diavola", Precio = 10, Calorias = 310, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, salami picante, aceite de chile" },
-            new Plato { Id = 8, Nombre = "Meat Lovers", Precio = 10, Calorias = 350, Categoria = "Pizzas", Ingredientes = "Queso mozzarella, pepperoni, jamón, carne molida, tocino" },
-            new Plato { Id = 9, Nombre = "Say Cheese", Precio = 12, Calorias = 360, Categoria = "Pizzas", Ingredientes = "Mezcla de quesos: mozzarella, cheddar, parmesano, gorgonzola" },
-            new Plato { Id = 10, Nombre = "Verace", Precio = 12, Calorias = 290, Categoria = "Pizzas", Ingredientes = "Queso mozzarella de búfala, tomate cherry, albahaca, aceite de oliva extra virgen" },
-            
-            // Sánduches
-            new Plato { Id = 11, Nombre = "Tradicional", Precio = 5, Calorias = 300, Categoria = "Sanduches", Ingredientes = "Jamón, queso, tomate, lechuga" },
-            new Plato { Id = 12, Nombre = "Carne Mechada", Precio = 5, Calorias = 350, Categoria = "Sanduches", Ingredientes = "Carne desmenuzada, queso, cebolla caramelizada" },
-            new Plato { Id = 13, Nombre = "Veggie", Precio = 5, Calorias = 220, Categoria = "Sanduches", Ingredientes = "Queso, tomate, lechuga, pepino, palta" },
-            
-            // Picadas
-            new Plato { Id = 14, Nombre = "Nachos Cheddar", Precio = 5, Calorias = 400, Categoria = "Picadas", Ingredientes = "Nachos, queso cheddar, jalapeños" },
-            new Plato { Id = 15, Nombre = "Nachos Verace", Precio = 8, Calorias = 450, Categoria = "Picadas", Ingredientes = "Nachos, queso cheddar, guacamole, pico de gallo, crema agria" },
-            new Plato { Id = 16, Nombre = "Bread Sticks", Precio = 5, Calorias = 280, Categoria = "Picadas", Ingredientes = "Masa de pizza, ajo, parmesano" },
-            new Plato { Id = 17, Nombre = "Bread Sticks Verace", Precio = 8, Calorias = 310, Categoria = "Picadas", Ingredientes = "Masa de pizza artesanal, ajo asado, parmesano reggiano, salsa marinara" },
-            
-            // Bebidas
-            new Plato { Id = 18, Nombre = "Agua sin gas", Precio = 1, Calorias = 0, Categoria = "Bebidas", Ingredientes = "Agua purificada" },
-            new Plato { Id = 19, Nombre = "Agua mineral", Precio = 1.5m, Calorias = 0, Categoria = "Bebidas", Ingredientes = "Agua mineral con gas natural" },
-            new Plato { Id = 20, Nombre = "Limonada", Precio = 3.5m, Calorias = 80, Categoria = "Bebidas", Ingredientes = "Limón, agua, azúcar" },
-            new Plato { Id = 21, Nombre = "Limonada Rosa", Precio = 3.5m, Calorias = 90, Categoria = "Bebidas", Ingredientes = "Limón, agua, azúcar, frutos rojos" },
-            new Plato { Id = 22, Nombre = "Té caliente", Precio = 1.5m, Calorias = 5, Categoria = "Bebidas", Ingredientes = "Té, agua caliente" },
-            new Plato { Id = 23, Nombre = "Coca-Cola", Precio = 1.5m, Calorias = 140, Categoria = "Bebidas", Ingredientes = "Refresco carbonatado" },
-            new Plato { Id = 24, Nombre = "Fanta", Precio = 1.5m, Calorias = 160, Categoria = "Bebidas", Ingredientes = "Refresco carbonatado sabor naranja" },
-            new Plato { Id = 25, Nombre = "Fioravanti", Precio = 1.5m, Calorias = 150, Categoria = "Bebidas", Ingredientes = "Refresco carbonatado sabor fresa" },
-            new Plato { Id = 26, Nombre = "Sprite", Precio = 1.5m, Calorias = 140, Categoria = "Bebidas", Ingredientes = "Refresco carbonatado sabor lima limón" },
-            new Plato { Id = 27, Nombre = "Café americano", Precio = 1.5m, Calorias = 5, Categoria = "Bebidas", Ingredientes = "Café, agua caliente" },
-            new Plato { Id = 28, Nombre = "Capuccino", Precio = 2.5m, Calorias = 120, Categoria = "Bebidas", Ingredientes = "Café espresso, leche espumada" },
-            new Plato { Id = 29, Nombre = "Iced Coffee", Precio = 3.5m, Calorias = 90, Categoria = "Bebidas", Ingredientes = "Café, hielo, leche, azúcar" },
-            
-            // Promos
-            new Plato { Id = 30, Nombre = "Promo Pilas", Precio = 16, Calorias = 750, Categoria = "Promos", Ingredientes = "Pizza mediana, 2 bebidas, postre" },
-            new Plato { Id = 31, Nombre = "Promo Lovers", Precio = 20, Calorias = 1000, Categoria = "Promos", Ingredientes = "Pizza grande, 2 bebidas, postre, pan de ajo" },
-            new Plato { Id = 32, Nombre = "Promo King", Precio = 24, Calorias = 1500, Categoria = "Promos", Ingredientes = "Pizza familiar, 4 bebidas, 2 postres, 2 panes de ajo" },
-            new Plato { Id = 33, Nombre = "Promo Sanduchera", Precio = 10, Calorias = 650, Categoria = "Promos", Ingredientes = "2 sánduches a elección, 2 bebidas" },
-            new Plato { Id = 34, Nombre = "Promo Piqueo", Precio = 18, Calorias = 1200, Categoria = "Promos", Ingredientes = "Nachos cheddar, bread sticks, 4 bebidas" },
-            
-            // Cerveza
-            new Plato { Id = 35, Nombre = "Jarro Cerveza", Precio = 4, Calorias = 150, Categoria = "Cerveza", Ingredientes = "Cerveza artesanal" },
-            new Plato { Id = 36, Nombre = "Pinta Cerveza", Precio = 6, Calorias = 200, Categoria = "Cerveza", Ingredientes = "Cerveza artesanal" },
-            new Plato { Id = 37, Nombre = "Litro Cerveza", Precio = 12, Calorias = 400, Categoria = "Cerveza", Ingredientes = "Cerveza artesanal" },
-            new Plato { Id = 38, Nombre = "Growler", Precio = 15, Calorias = 1200, Categoria = "Cerveza", Ingredientes = "Cerveza artesanal" },
-            new Plato { Id = 39, Nombre = "Stella Artois", Precio = 5, Calorias = 150, Categoria = "Cerveza", Ingredientes = "Cerveza lager premium" },
-            new Plato { Id = 40, Nombre = "Corona", Precio = 5, Calorias = 140, Categoria = "Cerveza", Ingredientes = "Cerveza lager mexicana" },
-            new Plato { Id = 41, Nombre = "Pilsener", Precio = 4, Calorias = 150, Categoria = "Cerveza", Ingredientes = "Cerveza lager nacional" },
-            new Plato { Id = 42, Nombre = "Club", Precio = 4.5m, Calorias = 150, Categoria = "Cerveza", Ingredientes = "Cerveza lager premium nacional" },
-            new Plato { Id = 43, Nombre = "Michelada Clásica", Precio = 1.5m, Calorias = 180, Categoria = "Cerveza", Ingredientes = "Cerveza, limón, sal, salsa" },
-            new Plato { Id = 44, Nombre = "Michelada Maracuyá", Precio = 1.5m, Calorias = 190, Categoria = "Cerveza", Ingredientes = "Cerveza, limón, sal, salsa, jugo de maracuyá" },
-            new Plato { Id = 45, Nombre = "3 jarros cerveza artesanal", Precio = 10, Calorias = 450, Categoria = "Cerveza", Ingredientes = "Cerveza artesanal" },
-            new Plato { Id = 46, Nombre = "3 pintas cualquier estilo", Precio = 15, Calorias = 600, Categoria = "Cerveza", Ingredientes = "Cerveza artesanal" },
-            new Plato { Id = 47, Nombre = "3 Stella Artois / Corona", Precio = 20, Calorias = 450, Categoria = "Cerveza", Ingredientes = "Cerveza premium" },
-            new Plato { Id = 48, Nombre = "Combo 3 Pilsener", Precio = 10, Calorias = 450, Categoria = "Cerveza", Ingredientes = "Cerveza lager nacional" },
-            new Plato { Id = 49, Nombre = "Combo 3 Club", Precio = 12, Calorias = 450, Categoria = "Cerveza", Ingredientes = "Cerveza lager premium nacional" },
-            
-            // Cocteles (lista parcial por espacio)
-            new Plato { Id = 50, Nombre = "Copa de vino tinto", Precio = 5, Calorias = 120, Categoria = "Cocteles", Ingredientes = "Vino tinto" },
-            new Plato { Id = 51, Nombre = "Copa de calimotcho", Precio = 6, Calorias = 150, Categoria = "Cocteles", Ingredientes = "Vino tinto, coca-cola" },
-            new Plato { Id = 52, Nombre = "Copa de tinto de verano", Precio = 6, Calorias = 130, Categoria = "Cocteles", Ingredientes = "Vino tinto, limón, gaseosa" },
-            new Plato { Id = 53, Nombre = "Mojito", Precio = 6, Calorias = 210, Categoria = "Cocteles", Ingredientes = "Ron, lima, azúcar, hierbabuena, soda" },
-            new Plato { Id = 54, Nombre = "Margarita clásica", Precio = 6, Calorias = 220, Categoria = "Cocteles", Ingredientes = "Tequila, triple sec, lima" },
-            
-            // Shots
-            new Plato { Id = 55, Nombre = "Shot de tequila", Precio = 3, Calorias = 100, Categoria = "Shots", Ingredientes = "Tequila" },
-            new Plato { Id = 56, Nombre = "Shot de aguardiente", Precio = 3, Calorias = 110, Categoria = "Shots", Ingredientes = "Aguardiente" },
-            new Plato { Id = 57, Nombre = "Shot de Jager", Precio = 6, Calorias = 110, Categoria = "Shots", Ingredientes = "Jagermeister" },
-            new Plato { Id = 58, Nombre = "Jager Bomb", Precio = 10, Calorias = 240, Categoria = "Shots", Ingredientes = "Jagermeister, bebida energética" }
-        };
-
         // Estructura TF-IDF
         private class TFIDFData
         {
@@ -104,23 +35,102 @@ namespace ProyectoIdentity.Controllers
             public List<string> Terminos { get; set; }
         }
 
-        // Vista principal
-        public IActionResult Recomendacion()
+        // ✅ MÉTODO PARA EXTRAER CALORÍAS DEL STRING DE INFO NUTRICIONAL
+        private int ExtraerCalorias(string infoNutricional)
         {
-            // Obtener todas las categorías distintas
-            var categorias = _data.Select(p => p.Categoria).Distinct().ToList();
+            if (string.IsNullOrEmpty(infoNutricional))
+                return 0;
+
+            try
+            {
+                // Buscar patrón "Calorías:517" o "Calorías:517Kcal"
+                var match = Regex.Match(infoNutricional, @"Calorías:(\d+)", RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    return int.Parse(match.Groups[1].Value);
+                }
+            }
+            catch
+            {
+                // Si no se puede extraer, retornar 0
+            }
+
+            return 0;
+        }
+
+        // ✅ MÉTODO PARA CONVERTIR PRODUCTOS DE BD A PLATOS
+        private List<Plato> ConvertirProductosAPlatos(List<ProyectoIdentity.Models.Producto> productos)
+        {
+            var platos = new List<Plato>();
+
+            foreach (var producto in productos)
+            {
+                // Extraer ingredientes del JSON o usar descripción
+                string ingredientesTexto = producto.Descripcion ?? "";
+
+                if (!string.IsNullOrEmpty(producto.Ingredientes))
+                {
+                    try
+                    {
+                        // Intentar parsear el JSON de ingredientes
+                        var ingredientesJson = JsonSerializer.Deserialize<List<Dictionary<string, object>>>(producto.Ingredientes);
+                        if (ingredientesJson != null && ingredientesJson.Any())
+                        {
+                            ingredientesTexto = string.Join(", ", ingredientesJson.Select(i => i["Nombre"].ToString()));
+                        }
+                    }
+                    catch
+                    {
+                        // Si falla el JSON, usar la descripción
+                        ingredientesTexto = producto.Descripcion ?? "";
+                    }
+                }
+
+                var plato = new Plato
+                {
+                    Id = producto.Id,
+                    Nombre = producto.Nombre,
+                    Precio = producto.Precio,
+                    Calorias = ExtraerCalorias(producto.InfoNutricional), // ✅ EXTRAER CALORÍAS
+                    Categoria = producto.Categoria,
+                    Ingredientes = ingredientesTexto
+                };
+
+                platos.Add(plato);
+            }
+
+            return platos;
+        }
+
+        // Vista principal
+        public async Task<IActionResult> Recomendacion()
+        {
+            // ✅ OBTENER CATEGORÍAS DESDE LA BD
+            var categorias = await _context.Productos
+                .Where(p => !string.IsNullOrEmpty(p.Categoria))
+                .Select(p => p.Categoria)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToListAsync();
+
             ViewBag.Categorias = categorias;
             return View();
         }
 
         // Método para obtener recomendaciones
         [HttpPost]
-        public IActionResult ObtenerRecomendaciones(string categoria, decimal presupuesto, string ingredientes)
+        public async Task<IActionResult> ObtenerRecomendaciones(string categoria, decimal presupuesto, string ingredientes)
         {
             try
             {
                 // Logging para debug
                 Console.WriteLine($"Categoría: {categoria}, Presupuesto: {presupuesto}, Ingredientes: {ingredientes}");
+
+                // ✅ OBTENER PRODUCTOS DESDE LA BD
+                var productosDB = await _context.Productos.ToListAsync();
+                var _data = ConvertirProductosAPlatos(productosDB);
+
+                Console.WriteLine($"Productos cargados desde BD: {_data.Count}");
 
                 // Filtrado inicial por precio y categoría
                 var filtrado = _data.Where(item => item.Precio <= presupuesto).ToList();
@@ -316,13 +326,13 @@ namespace ProyectoIdentity.Controllers
                         var platosConSimilitud = new List<Plato>();
                         foreach (var plato in filtrado)
                         {
-                            var indice = _data.FindIndex(item => item.Id == plato.Id); // Usar ID en lugar de nombre
+                            var indice = _data.FindIndex(item => item.Id == plato.Id);
                             if (indice != -1 && indice < tfidfData.VectoresTFIDF.Count)
                             {
                                 var similitud = SimilitudCoseno(vectorConsulta, tfidfData.VectoresTFIDF[indice]);
                                 platosConSimilitud.Add(new Plato
                                 {
-                                    Id = plato.Id, // Mantener el ID original
+                                    Id = plato.Id,
                                     Nombre = plato.Nombre,
                                     Precio = plato.Precio,
                                     Calorias = plato.Calorias,
@@ -354,7 +364,7 @@ namespace ProyectoIdentity.Controllers
                 // Serialización manual para evitar problemas con el formato
                 var result = recomendaciones.Select(p => new
                 {
-                    id = p.Id, // Incluir el ID real
+                    id = p.Id,
                     nombre = p.Nombre,
                     precio = p.Precio,
                     calorias = p.Calorias,
@@ -454,23 +464,33 @@ namespace ProyectoIdentity.Controllers
             return producto / (normaA * normaB);
         }
 
-        public IActionResult Detalle(int id)
+        // ✅ DETALLE DESDE BD
+        public async Task<IActionResult> Detalle(int id)
         {
             try
             {
-                // Buscar el plato por ID
-                var plato = _data.FirstOrDefault(p => p.Id == id);
+                // ✅ BUSCAR EL PRODUCTO EN LA BD
+                var producto = await _context.Productos.FindAsync(id);
+                if (producto == null)
+                {
+                    return NotFound();
+                }
+
+                // ✅ CONVERTIR A PLATO
+                var platos = ConvertirProductosAPlatos(new List<ProyectoIdentity.Models.Producto> { producto });
+                var plato = platos.FirstOrDefault();
+
                 if (plato == null)
                 {
                     return NotFound();
                 }
 
-                ViewBag.IndiceProducto = id; // Pasar el ID para JavaScript
+                ViewBag.IndiceProducto = id;
                 return View(plato);
             }
             catch (Exception ex)
             {
-                // Log del error si es necesario
+                Console.WriteLine($"Error en Detalle: {ex.Message}");
                 return View("Error");
             }
         }
