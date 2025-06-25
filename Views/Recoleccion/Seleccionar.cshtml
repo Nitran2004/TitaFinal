@@ -27,64 +27,87 @@
         <div class="card-body">
             <p class="lead">Selecciona el punto donde recogerás tu pedido:</p>
 
-            <div style="display: none;">
-                <div id="loadingLocation">
+            <!-- ✅ MENSAJE DE UBICACIÓN REQUERIDA -->
+            <div id="locationRequired" class="alert alert-info">
+                <i class="fas fa-map-marker-alt"></i>
+                <strong>Solicitando acceso a tu ubicación...</strong>
+                <p class="mb-0">Acepta el permiso que aparece en tu navegador para continuar.</p>
+            </div>
+
+            <div id="loadingLocation" style="display: none;">
+                <div class="alert alert-warning">
                     <i class="fas fa-spinner fa-spin"></i> Obteniendo tu ubicación para calcular distancias...
-                </div>
-                <div id="locationError" style="display: none;">
-                    <i class="fas fa-exclamation-triangle"></i> No se pudo obtener tu ubicación.
-                    <button id="retryLocation" class="btn btn-sm btn-warning ms-2">Reintentar</button>
-                </div>
-                <div id="coordsDebug" style="display: none;" class="mt-2">
-                    <strong>Coordenadas:</strong> <span id="coordValues">Calculando...</span>
                 </div>
             </div>
 
-            <div class="row row-cols-1 row-cols-md-2 g-4">
-                @foreach (var punto in Model)
-                {
-                    <div class="col">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h5 class="card-title">@punto.Name</h5>
-                                <p class="card-text">
-                                    <strong>Sucursal:</strong> @punto.Sucursal.Nombre<br />
-                                    <strong>Dirección:</strong> @punto.Address<br />
-                                </p>
-                                <p class="card-text">
-                                    <strong>Distancia:</strong>
-                                    <span class="distance-value"
-                                          data-id="@punto.Id"
-                                          data-lat="@punto.Sucursal.Latitud.ToString(System.Globalization.CultureInfo.InvariantCulture)"
-                                          data-lng="@punto.Sucursal.Longitud.ToString(System.Globalization.CultureInfo.InvariantCulture)">
-                                        Calculando...
-                                    </span>
-                                </p>
-                            </div>
-                            <div class="card-footer bg-transparent">
-                                <form asp-action="Confirmar" asp-controller="Recoleccion" method="post" class="distance-form">
-                                    <input type="hidden" name="id" value="@punto.Id" />
-                                    <input type="hidden" name="userLat" class="userLat-input" id="userLat-@punto.Id" value="" />
-                                    <input type="hidden" name="userLng" class="userLng-input" id="userLng-@punto.Id" value="" />
-                                    <input type="hidden" name="distancia" class="distancia-input" id="distancia-@punto.Id" value="" />
-                                    <!-- ✅ AGREGAR EL PARÁMETRO DE PERSONALIZACIÓN -->
-                                    <input type="hidden" name="esPersonalizacion" value="@esPersonalizacion.ToString().ToLower()" />
-                                    <button type="submit" class="btn btn-primary w-100">
-                                        @if (esPersonalizacion)
-                                        {
-                                            <text>Seleccionar sucursal</text>
-                                        }
-                                        else
-                                        {
-                                            <text>Seleccionar</text>
-                                        }
-                                    </button>
-                                </form>
+            <!-- ✅ MENSAJE DE ERROR MÁS CLARO -->
+            <div id="locationError" style="display: none;">
+                <div class="alert alert-danger">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Ubicación denegada</h5>
+                    <p>Para continuar, necesitas permitir el acceso a tu ubicación:</p>
+                    <ol>
+                        <li><strong>Haz clic en el botón "Intentar de nuevo"</strong></li>
+                        <li><strong>Acepta el permiso</strong> cuando aparezca la ventana del navegador</li>
+                        <li>Si no aparece la ventana, haz clic en el <strong>ícono de ubicación</strong> en la barra de direcciones</li>
+                    </ol>
+                    <button id="retryLocation" class="btn btn-warning btn-lg">
+                        <i class="fas fa-location-arrow"></i> Intentar de nuevo
+                    </button>
+                    <small class="d-block mt-3 text-muted">
+                        <strong>💡 Tip:</strong> Busca el ícono <i class="fas fa-map-marker-alt"></i> o <i class="fas fa-lock"></i> en la barra de direcciones y haz clic para permitir la ubicación.
+                    </small>
+                </div>
+            </div>
+
+            <!-- ✅ CONTENEDOR DE PUNTOS (OCULTO HASTA OBTENER UBICACIÓN) -->
+            <div id="puntosContainer" style="display: none;">
+                <div class="row row-cols-1 row-cols-md-2 g-4">
+                    @foreach (var punto in Model)
+                    {
+                        <div class="col">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">@punto.Name</h5>
+                                    <p class="card-text">
+                                        <strong>Sucursal:</strong> @punto.Sucursal.Nombre<br />
+                                        <strong>Dirección:</strong> @punto.Address<br />
+                                    </p>
+                                    <p class="card-text">
+                                        <strong>Distancia:</strong>
+                                        <span class="distance-value"
+                                              data-id="@punto.Id"
+                                              data-lat="@punto.Sucursal.Latitud.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                              data-lng="@punto.Sucursal.Longitud.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                                            Calculando...
+                                        </span>
+                                    </p>
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <form asp-action="Confirmar" asp-controller="Recoleccion" method="post" class="distance-form">
+                                        <input type="hidden" name="id" value="@punto.Id" />
+                                        <input type="hidden" name="userLat" class="userLat-input" id="userLat-@punto.Id" value="" />
+                                        <input type="hidden" name="userLng" class="userLng-input" id="userLng-@punto.Id" value="" />
+                                        <input type="hidden" name="distancia" class="distancia-input" id="distancia-@punto.Id" value="" />
+                                        <!-- ✅ AGREGAR EL PARÁMETRO DE PERSONALIZACIÓN -->
+                                        <input type="hidden" name="esPersonalizacion" value="@esPersonalizacion.ToString().ToLower()" />
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            @if (esPersonalizacion)
+                                            {
+                                                <text>Seleccionar sucursal</text>
+                                            }
+                                            else
+                                            {
+                                                <text>Seleccionar</text>
+                                            }
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                }
+                    }
+                </div>
             </div>
+
             <div class="mt-4">
                 <a href="javascript:history.back()"
                    class="btn btn-outline-secondary navigation-btn"
@@ -100,11 +123,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Elementos del DOM
+            const locationRequired = document.getElementById('locationRequired');
             const loadingLocation = document.getElementById('loadingLocation');
             const locationError = document.getElementById('locationError');
             const retryLocationBtn = document.getElementById('retryLocation');
-            const coordsDebug = document.getElementById('coordsDebug');
-            const coordValues = document.getElementById('coordValues');
+            const puntosContainer = document.getElementById('puntosContainer');
             const distanceElements = document.querySelectorAll('.distance-value');
             const userLatInputs = document.querySelectorAll('.userLat-input');
             const userLngInputs = document.querySelectorAll('.userLng-input');
@@ -113,9 +136,6 @@
             // Variables globales para guardar las coordenadas
             let currentUserLat = null;
             let currentUserLng = null;
-
-            // Objeto para almacenar las distancias calculadas
-            let distanciasCalculadas = {};
 
             // Función para calcular la distancia usando exactamente la misma fórmula que en el servidor
             function calcularDistancia(lat1, lon1, lat2, lon2) {
@@ -161,9 +181,6 @@
                 currentUserLat = userLat;
                 currentUserLng = userLng;
 
-                // Actualizar los valores en el elemento oculto
-                coordValues.textContent = `${userLat}, ${userLng}`;
-
                 console.log(`Actualizando distancias con coordenadas: ${userLat}, ${userLng}`);
 
                 // Actualizar los campos de entrada ocultos con formato invariante
@@ -185,9 +202,6 @@
                     // Calcular la distancia
                     const distancia = calcularDistancia(userLat, userLng, sucursalLat, sucursalLng);
                     const distanciaRedondeada = distancia.toFixed(2);
-
-                    // Guardar la distancia calculada
-                    distanciasCalculadas[puntoId] = distanciaRedondeada;
 
                     // Actualizar el campo oculto de distancia
                     const distanciaInput = document.getElementById(`distancia-${puntoId}`);
@@ -212,16 +226,20 @@
                     }
                 });
 
-                // Ocultar indicador de carga
+                // ✅ MOSTRAR LOS PUNTOS SOLO CUANDO SE OBTENGA LA UBICACIÓN
+                locationRequired.style.display = 'none';
                 loadingLocation.style.display = 'none';
-                // Mantener oculto el div de coordenadas
-                coordsDebug.style.display = 'none';
+                locationError.style.display = 'none';
+                puntosContainer.style.display = 'block';
             }
 
-            // Función para obtener la ubicación
+            // ✅ FUNCIÓN PARA OBTENER LA UBICACIÓN (SIN COORDENADAS PREDETERMINADAS)
             function obtenerUbicacion() {
+                // Ocultar mensaje inicial y mostrar loading
+                locationRequired.style.display = 'none';
                 loadingLocation.style.display = 'block';
                 locationError.style.display = 'none';
+                puntosContainer.style.display = 'none';
 
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
@@ -236,15 +254,32 @@
                         },
                         function (error) {
                             console.error(`Error al obtener ubicación: ${error.message}`);
+
+                            // ✅ MOSTRAR ERROR Y NO CONTINUAR SIN UBICACIÓN
                             loadingLocation.style.display = 'none';
                             locationError.style.display = 'block';
+                            puntosContainer.style.display = 'none';
 
-                            // Usar coordenadas predeterminadas para Quito
-                            actualizarDistancias(-0.1857, -78.4954);
+                            // Agregar mensaje específico según el tipo de error
+                            const errorMsg = locationError.querySelector('.alert-danger p');
+                            switch (error.code) {
+                                case error.PERMISSION_DENIED:
+                                    errorMsg.innerHTML = "Has denegado el acceso a tu ubicación. Para continuar, debes permitir el acceso desde la configuración de tu navegador.";
+                                    break;
+                                case error.POSITION_UNAVAILABLE:
+                                    errorMsg.innerHTML = "No se pudo determinar tu ubicación. Verifica que tengas GPS activado o una conexión a internet estable.";
+                                    break;
+                                case error.TIMEOUT:
+                                    errorMsg.innerHTML = "El tiempo de espera se agotó. Inténtalo de nuevo.";
+                                    break;
+                                default:
+                                    errorMsg.innerHTML = "Ocurrió un error desconocido al obtener tu ubicación.";
+                                    break;
+                            }
                         },
                         {
                             enableHighAccuracy: true,
-                            timeout: 10000,
+                            timeout: 15000, // Aumentar timeout a 15 segundos
                             maximumAge: 0
                         }
                     );
@@ -252,9 +287,10 @@
                     console.error('Geolocalización no es soportada por este navegador');
                     loadingLocation.style.display = 'none';
                     locationError.style.display = 'block';
+                    puntosContainer.style.display = 'none';
 
-                    // Usar coordenadas predeterminadas para Quito
-                    actualizarDistancias(-0.1857, -78.4954);
+                    const errorMsg = locationError.querySelector('.alert-danger p');
+                    errorMsg.innerHTML = "Tu navegador no soporta geolocalización. Usa un navegador más moderno como Chrome, Firefox o Safari.";
                 }
             }
 
@@ -265,7 +301,7 @@
                 });
             }
 
-            // Obtener ubicación al cargar la página
+            // ✅ OBTENER UBICACIÓN AUTOMÁTICAMENTE AL CARGAR
             obtenerUbicacion();
         });
     </script>
