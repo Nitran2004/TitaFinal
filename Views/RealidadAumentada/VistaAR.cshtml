@@ -23,7 +23,6 @@
             user-select: none;
         }
 
-        /* Canvas Container */
         .canvas-container {
             position: fixed;
             top: 0;
@@ -44,21 +43,19 @@
                 cursor: grabbing;
             }
 
-        /* Modern Header - Simplified */
         .header {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
+            z-index: 20;
             background: rgba(0, 0, 0, 0.15);
             backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             padding: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 20;
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -85,7 +82,6 @@
             .header-content .subtitle {
                 opacity: 0.8;
                 font-size: 0.9rem;
-                font-weight: 400;
                 color: rgba(255, 255, 255, 0.9);
             }
 
@@ -98,7 +94,6 @@
             gap: 12px;
         }
 
-        /* Modern Buttons */
         .btn {
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
@@ -137,29 +132,19 @@
             border: none;
         }
 
-        .btn-warning {
-            background: linear-gradient(45deg, #d97706, #ea580c);
-            border: none;
-        }
-
-        /* Floating Panels - Mobile Style for All Devices */
         .panel {
             position: fixed;
-            background: rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 25px 25px 0 0;
-            padding: 24px;
-            z-index: 15;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-            /* Position all panels at bottom, stacked */
             bottom: 0;
             left: 0;
             right: 0;
-            width: auto;
-            max-width: 100vw;
+            z-index: 15;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 25px 25px 0 0;
+            padding: 24px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
             transform: translateY(100%);
         }
 
@@ -172,6 +157,11 @@
                 opacity: 1;
                 pointer-events: none;
             }
+
+        .ai-panel {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.25);
+        }
 
         .panel-header {
             display: flex;
@@ -216,12 +206,6 @@
                 transform: scale(1.1);
             }
 
-        /* Specific Panel Styling */
-        .ai-panel {
-            background: rgba(16, 185, 129, 0.12);
-            border-color: rgba(16, 185, 129, 0.25);
-        }
-
         .control-group {
             margin-bottom: 16px;
         }
@@ -230,7 +214,6 @@
                 margin-bottom: 0;
             }
 
-        /* Stats Panel Content */
         .stat-item {
             display: flex;
             justify-content: space-between;
@@ -262,25 +245,24 @@
             font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
         }
 
-        /* AI Panel Content */
+        .ai-decision, .ai-reasoning {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border-left: 3px solid #10b981;
+        }
+
         .ai-decision {
             color: #10b981;
             font-weight: 600;
-            margin-bottom: 10px;
-            padding: 8px 12px;
             background: rgba(16, 185, 129, 0.1);
-            border-radius: 8px;
-            border-left: 3px solid #10b981;
         }
 
         .ai-reasoning {
             color: #6ee7b7;
             font-style: italic;
             opacity: 0.9;
-            margin-bottom: 8px;
-            padding: 6px 12px;
             background: rgba(110, 231, 183, 0.05);
-            border-radius: 6px;
             font-size: 0.9rem;
         }
 
@@ -326,16 +308,6 @@
                     box-shadow: 0 4px 12px rgba(96, 165, 250, 0.4);
                 }
 
-            .control-slider::-moz-range-thumb {
-                width: 18px;
-                height: 18px;
-                border-radius: 50%;
-                background: linear-gradient(45deg, #60a5fa, #3b82f6);
-                cursor: pointer;
-                border: none;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-            }
-
         .control-buttons {
             display: flex;
             gap: 8px;
@@ -343,8 +315,7 @@
             margin-top: 16px;
         }
 
-        /* Loading & Error States */
-        .loading {
+        .loading, .error {
             position: fixed;
             top: 50%;
             left: 50%;
@@ -358,6 +329,12 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        .error {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.4);
+            display: none;
+        }
+
         .loading-spinner {
             width: 40px;
             height: 40px;
@@ -367,7 +344,6 @@
             animation: spin 1s ease-in-out infinite;
             margin: 0 auto 16px;
         }
-
         @@keyframes spin {
             to
 
@@ -377,84 +353,40 @@
 
         }
 
-        .error {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(239, 68, 68, 0.2);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(239, 68, 68, 0.4);
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
-            max-width: 400px;
-            z-index: 30;
-            display: none;
-        }
-
-            .error h3 {
-                margin-bottom: 12px;
-                color: #fca5a5;
-            }
-
-        /* Panel Toggle Button - Now for All Devices */
-        .panel-toggle {
+        .panel-toggle, .ar-toggle {
             position: fixed;
             bottom: 30px;
+            border: none;
+            border-radius: 50%;
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            cursor: pointer;
+            z-index: 25;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .panel-toggle {
             right: 30px;
             background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            border: none;
-            border-radius: 50%;
-            width: 64px;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            color: white;
-            cursor: pointer;
-            z-index: 25;
             box-shadow: 0 12px 30px rgba(79, 70, 229, 0.4);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-            .panel-toggle:hover {
-                transform: scale(1.1);
-                box-shadow: 0 15px 35px rgba(79, 70, 229, 0.6);
-            }
-
-            .panel-toggle:active {
-                transform: scale(0.95);
-            }
-
-        /* AR Toggle Button - Bottom Left */
         .ar-toggle {
-            position: fixed;
-            bottom: 30px;
             left: 30px;
             background: linear-gradient(135deg, #f97316, #ea580c);
-            border: none;
-            border-radius: 50%;
-            width: 64px;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            color: white;
-            cursor: pointer;
-            z-index: 25;
             box-shadow: 0 12px 30px rgba(249, 115, 22, 0.4);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-            .ar-toggle:hover {
+            .panel-toggle:hover, .ar-toggle:hover {
                 transform: scale(1.1);
-                box-shadow: 0 15px 35px rgba(249, 115, 22, 0.6);
             }
 
-            .ar-toggle:active {
+            .panel-toggle:active, .ar-toggle:active {
                 transform: scale(0.95);
             }
 
@@ -463,35 +395,6 @@
                 box-shadow: 0 12px 30px rgba(16, 185, 129, 0.4);
             }
 
-                .ar-toggle.active:hover {
-                    box-shadow: 0 15px 35px rgba(16, 185, 129, 0.6);
-                }
-
-        /* Hide Header Toggle */
-        .header-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            cursor: pointer;
-            z-index: 21;
-            transition: all 0.3s ease;
-        }
-
-            .header-toggle:hover {
-                background: rgba(0, 0, 0, 0.5);
-            }
-
-        /* Responsive Design - Unified Experience */
         @@media (max-width: 768px) {
             .header-actions
 
@@ -508,40 +411,27 @@
         }
 
         .panel {
-            margin: 0;
             padding: 20px 16px;
-            border-radius: 25px 25px 0 0;
+        }
+
+        .panel-toggle, .ar-toggle {
+            width: 56px;
+            height: 56px;
+            bottom: 20px;
+            font-size: 24px;
         }
 
         .panel-toggle {
-            width: 56px;
-            height: 56px;
-            bottom: 20px;
             right: 20px;
-            font-size: 24px;
         }
 
         .ar-toggle {
-            width: 56px;
-            height: 56px;
-            bottom: 20px;
             left: 20px;
-            font-size: 24px;
         }
 
         .header {
             padding: 16px 20px;
-            justify-content: center;
         }
-
-        .control-slider {
-            height: 8px;
-        }
-
-            .control-slider::-webkit-slider-thumb {
-                width: 24px;
-                height: 24px;
-            }
 
         }
 
@@ -566,57 +456,9 @@
 
         }
 
-        /* Desktop specific enhancements */
-        @@media (min-width: 769px) {
-            .panel
-
-        {
-            margin: 0 60px;
-            border-radius: 25px 25px 0 0;
-            max-width: calc(100vw - 120px);
-        }
-
-        .panel:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-        }
-
-        .panel.visible:hover {
-            transform: translateY(-5px);
-        }
-
-        .header:hover {
-            background: rgba(0, 0, 0, 0.25);
-            backdrop-filter: blur(35px);
-        }
-
-        /* Subtle glow effects for desktop */
-        .ai-panel::before {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(16, 185, 129, 0.1));
-            border-radius: 27px;
-            z-index: -1;
-            opacity: 0.6;
-            filter: blur(8px);
-        }
-
-        }
-
-        /* Hover Effects - Enhanced */
-        .panel:hover {
-            border-color: rgba(255, 255, 255, 0.15);
-        }
-
-        /* Smooth Animations */
         .fade-in {
             animation: fadeIn 0.5s ease-out;
         }
-
         @@keyframes fadeIn {
             from
 
@@ -634,7 +476,6 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
     <div class="header" id="header">
         <div class="header-content">
             <h1>@ViewBag.ProductoNombre</h1>
@@ -647,39 +488,31 @@
         </div>
     </div>
 
-    <!-- Canvas -->
     <div class="canvas-container">
         <canvas id="canvas3d"></canvas>
     </div>
 
-    <!-- Loading -->
     <div class="loading" id="loading">
         <div class="loading-spinner"></div>
         <div>Cargando modelo 3D...</div>
     </div>
 
-    <!-- Error -->
     <div class="error" id="error">
         <h3>⚠️ Error al cargar</h3>
         <p id="error-message">Ha ocurrido un error</p>
         <button class="btn btn-primary" onclick="app.reload()" style="margin-top: 16px;">🔄 Reintentar</button>
     </div>
 
-    <!-- Stats Panel -->
     <div class="panel stats-panel fade-in" id="stats-panel">
         <div class="panel-header">
             <div class="panel-title">📊 Estadísticas</div>
             <button class="panel-close" onclick="togglePanel('stats-panel')">&times;</button>
         </div>
         <div id="stats-content">
-            <div class="stat-item">
-                <span class="stat-label">Analizando...</span>
-                <span class="stat-value">⏳</span>
-            </div>
+            <div class="stat-item"><span class="stat-label">Analizando...</span><span class="stat-value">⏳</span></div>
         </div>
     </div>
 
-    <!-- AI Panel -->
     <div class="panel ai-panel fade-in" id="ai-panel">
         <div class="panel-header">
             <div class="panel-title">🤖 Sistema IA</div>
@@ -690,7 +523,6 @@
         </div>
     </div>
 
-    <!-- Controls Panel -->
     <div class="panel controls-panel fade-in" id="controls-panel">
         <div class="panel-header">
             <div class="panel-title">🎮 Controles</div>
@@ -698,26 +530,17 @@
         </div>
 
         <div class="control-group">
-            <div class="control-label">
-                <span>Escala</span>
-                <span class="control-value" id="scale-value">1.0</span>
-            </div>
+            <div class="control-label"><span>Escala</span><span class="control-value" id="scale-value">1.0</span></div>
             <input type="range" id="scale-slider" class="control-slider" min="0.1" max="10" step="0.1" value="1.0">
         </div>
 
         <div class="control-group">
-            <div class="control-label">
-                <span>Posición Y</span>
-                <span class="control-value" id="posY-value">0.0</span>
-            </div>
+            <div class="control-label"><span>Posición Y</span><span class="control-value" id="posY-value">0.0</span></div>
             <input type="range" id="posY-slider" class="control-slider" min="-5" max="5" step="0.1" value="0.0">
         </div>
 
         <div class="control-group">
-            <div class="control-label">
-                <span>Rotación Y</span>
-                <span class="control-value" id="rotY-value">0°</span>
-            </div>
+            <div class="control-label"><span>Rotación Y</span><span class="control-value" id="rotY-value">0°</span></div>
             <input type="range" id="rotY-slider" class="control-slider" min="0" max="360" step="5" value="0">
         </div>
 
@@ -727,48 +550,24 @@
         </div>
     </div>
 
-    <!-- Panel Toggle Button (All Devices) -->
     <button class="panel-toggle" id="panel-toggle" onclick="togglePanels()">🎮</button>
-
-    <!-- AR Toggle Button (All Devices) -->
     <button class="ar-toggle" id="ar-toggle" onclick="toggleAR()">📷</button>
 
     <script>
-        // Desktop 3D Viewer Class - Enhanced UX
         class DesktopViewer {
             constructor() {
-                // Core variables
-                this.scene = null;
-                this.camera = null;
-                this.renderer = null;
-                this.controls = null;
-                this.model = null;
+                this.scene = null; this.camera = null; this.renderer = null; this.controls = null; this.model = null;
+                this.reticle = null; this.arSession = null; this.hitTestSource = null;
+                this.isARActive = false; this.isARSupported = false; this.modelStateBeforeAR = null;
+                this.aiAnalysis = null; this.aiDecision = null;
+                this.panelsVisible = false; this.headerVisible = true; this.currentPanel = null;
 
-                // AR variables
-                this.reticle = null;
-                this.arSession = null;
-                this.hitTestSource = null;
-                this.isARActive = false;
-                this.isARSupported = false;
-                this.modelStateBeforeAR = null; // Store model state before AR
-
-                // Config
                 this.config = {
                     modelPath: '@ViewBag.ModeloPath',
                     modelFile: '@ViewBag.ModeloArchivo',
                     modelId: '@ViewBag.ProductoId'
                 };
 
-                // AI system
-                this.aiAnalysis = null;
-                this.aiDecision = null;
-
-                // UI State
-                this.panelsVisible = false; // Always start with panels hidden
-                this.headerVisible = true;
-                this.currentPanel = null;
-
-                // DOM references
                 this.dom = {
                     loading: document.getElementById('loading'),
                     error: document.getElementById('error'),
@@ -790,20 +589,12 @@
                 this.init();
             }
 
-            // Initialize Three.js
             init() {
                 console.log('🚀 Inicializando Enhanced Desktop Viewer:', this.config.modelFile);
-
                 try {
-                    this.setupScene();
-                    this.setupCamera();
-                    this.setupRenderer();
-                    this.setupLights();
-                    this.setupControls();
-                    this.setupEventListeners();
-                    this.setupUI();
-                    this.loadModel();
-                    this.animate();
+                    this.setupScene(); this.setupCamera(); this.setupRenderer(); this.setupLights();
+                    this.setupControls(); this.setupEventListeners(); this.setupUI();
+                    this.loadModel(); this.animate();
                 } catch (error) {
                     this.showError('Error de inicialización: ' + error.message);
                 }
@@ -811,16 +602,10 @@
 
             setupScene() {
                 this.scene = new THREE.Scene();
-                // Create a more sophisticated background for normal view
-                const loader = new THREE.CubeTextureLoader();
-                this.backgroundTexture = new THREE.CubeTextureLoader().load([
-                    'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="%23667eea"/></svg>',
-                    'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="%23667eea"/></svg>',
-                    'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="%23764ba2"/></svg>',
-                    'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="%23764ba2"/></svg>',
-                    'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="%23667eea"/></svg>',
-                    'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="%23667eea"/></svg>'
-                ]);
+                const colors = ['%23667eea', '%23667eea', '%23764ba2', '%23764ba2', '%23667eea', '%23667eea'];
+                this.backgroundTexture = new THREE.CubeTextureLoader().load(
+                    colors.map(c => `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="${c}"/></svg>`)
+                );
                 this.scene.background = this.backgroundTexture;
             }
 
@@ -831,82 +616,57 @@
 
             setupRenderer() {
                 const canvas = document.getElementById('canvas3d');
-                this.renderer = new THREE.WebGLRenderer({
-                    canvas: canvas,
-                    antialias: true,
-                    alpha: true // Enable alpha for AR transparency
-                });
+                this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
                 this.renderer.setSize(window.innerWidth, window.innerHeight);
                 this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 this.renderer.shadowMap.enabled = true;
                 this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
                 this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
                 this.renderer.toneMappingExposure = 1.2;
-
-                // Enable AR support
                 this.renderer.xr.enabled = true;
                 this.checkARSupport();
             }
 
             setupLights() {
-                // Enhanced lighting setup
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-                this.scene.add(ambientLight);
+                const lights = [
+                    new THREE.AmbientLight(0xffffff, 0.4),
+                    new THREE.DirectionalLight(0xffffff, 1.0),
+                    new THREE.DirectionalLight(0x64b5f6, 0.5),
+                    new THREE.DirectionalLight(0xffffff, 0.3)
+                ];
 
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
-                directionalLight.position.set(5, 10, 5);
-                directionalLight.castShadow = true;
-                directionalLight.shadow.mapSize.width = 2048;
-                directionalLight.shadow.mapSize.height = 2048;
-                directionalLight.shadow.camera.near = 0.5;
-                directionalLight.shadow.camera.far = 50;
-                this.scene.add(directionalLight);
+                lights[1].position.set(5, 10, 5);
+                lights[1].castShadow = true;
+                lights[1].shadow.mapSize.setScalar(2048);
+                lights[1].shadow.camera.near = 0.5;
+                lights[1].shadow.camera.far = 50;
+                lights[2].position.set(-3, 2, -3);
+                lights[3].position.set(0, -5, 10);
 
-                // Add rim lighting
-                const rimLight = new THREE.DirectionalLight(0x64b5f6, 0.5);
-                rimLight.position.set(-3, 2, -3);
-                this.scene.add(rimLight);
-
-                // Add fill light
-                const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
-                fillLight.position.set(0, -5, 10);
-                this.scene.add(fillLight);
+                lights.forEach(light => this.scene.add(light));
             }
 
             setupControls() {
                 this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-                this.controls.enableDamping = true;
-                this.controls.dampingFactor = 0.05;
-                this.controls.screenSpacePanning = false;
-                this.controls.minDistance = 1;
-                this.controls.maxDistance = 20;
-                this.controls.maxPolarAngle = Math.PI / 1.8;
+                Object.assign(this.controls, {
+                    enableDamping: true, dampingFactor: 0.05, screenSpacePanning: false,
+                    minDistance: 1, maxDistance: 20, maxPolarAngle: Math.PI / 1.8
+                });
             }
 
             setupEventListeners() {
                 window.addEventListener('resize', () => this.onResize());
 
-                // Control sliders with enhanced feedback
-                if (this.dom.scaleSlider) {
-                    this.dom.scaleSlider.addEventListener('input', (e) => {
-                        this.updateScale(e.target.value);
-                        this.addControlFeedback(e.target);
-                    });
-                }
-                if (this.dom.posYSlider) {
-                    this.dom.posYSlider.addEventListener('input', (e) => {
-                        this.updatePositionY(e.target.value);
-                        this.addControlFeedback(e.target);
-                    });
-                }
-                if (this.dom.rotYSlider) {
-                    this.dom.rotYSlider.addEventListener('input', (e) => {
-                        this.updateRotationY(e.target.value);
-                        this.addControlFeedback(e.target);
-                    });
-                }
+                ['scale', 'posY', 'rotY'].forEach(type => {
+                    const slider = this.dom[`${type}Slider`];
+                    if (slider) {
+                        slider.addEventListener('input', (e) => {
+                            this[`update${type === 'posY' ? 'PositionY' : type === 'rotY' ? 'RotationY' : 'Scale'}`](e.target.value);
+                            this.addControlFeedback(e.target);
+                        });
+                    }
+                });
 
-                // Auto-hide header on scroll/interaction
                 let headerTimeout;
                 document.addEventListener('mousemove', () => {
                     if (this.config.isMobile) return;
@@ -917,52 +677,30 @@
             }
 
             setupUI() {
-                // Initialize all panels as hidden for unified experience
-                this.dom.statsPanel.classList.add('hidden');
-                this.dom.aiPanel.classList.add('hidden');
-                this.dom.controlsPanel.classList.add('hidden');
+                [this.dom.statsPanel, this.dom.aiPanel, this.dom.controlsPanel].forEach(panel => {
+                    panel.classList.add('hidden');
+                });
                 this.currentPanel = null;
-
-                // Add panel animations
                 setTimeout(() => {
-                    this.dom.statsPanel.classList.add('fade-in');
-                    this.dom.aiPanel.classList.add('fade-in');
-                    this.dom.controlsPanel.classList.add('fade-in');
+                    [this.dom.statsPanel, this.dom.aiPanel, this.dom.controlsPanel].forEach(panel => {
+                        panel.classList.add('fade-in');
+                    });
                 }, 500);
             }
 
             addControlFeedback(element) {
                 element.style.boxShadow = '0 0 20px rgba(96, 165, 250, 0.6)';
-                setTimeout(() => {
-                    element.style.boxShadow = '';
-                }, 200);
+                setTimeout(() => element.style.boxShadow = '', 200);
             }
 
-            showHeader() {
-                if (this.dom.header) {
-                    this.dom.header.classList.remove('hidden');
-                    this.headerVisible = true;
-                }
-            }
+            showHeader() { if (this.dom.header) { this.dom.header.classList.remove('hidden'); this.headerVisible = true; } }
+            hideHeader() { if (this.dom.header && !this.config.isMobile) { this.dom.header.classList.add('hidden'); this.headerVisible = false; } }
 
-            hideHeader() {
-                if (this.dom.header && !this.config.isMobile) {
-                    this.dom.header.classList.add('hidden');
-                    this.headerVisible = false;
-                }
-            }
-
-            // Model Loading with enhanced progress
             loadModel() {
                 console.log('🔄 Cargando modelo:', this.config.modelPath);
-
-                if (!this.config.modelPath) {
-                    this.showError('Ruta del modelo no definida');
-                    return;
-                }
+                if (!this.config.modelPath) { this.showError('Ruta del modelo no definida'); return; }
 
                 const loader = new THREE.GLTFLoader();
-
                 loader.load(
                     this.config.modelPath,
                     (gltf) => this.onModelLoaded(gltf),
@@ -973,61 +711,37 @@
 
             onModelLoaded(gltf) {
                 console.log('✅ Modelo cargado:', this.config.modelFile);
-
                 this.hideLoading();
                 this.model = gltf.scene;
 
-                // Enhanced model configuration
                 this.model.traverse((node) => {
                     if (node.isMesh) {
-                        node.castShadow = true;
-                        node.receiveShadow = true;
-
-                        // Enhance materials
-                        if (node.material) {
-                            node.material.envMapIntensity = 0.8;
-                        }
+                        node.castShadow = true; node.receiveShadow = true;
+                        if (node.material) node.material.envMapIntensity = 0.8;
                     }
                 });
 
                 this.scene.add(this.model);
                 this.model.visible = true;
+                this.runAI(); this.analyzeModel();
 
-                this.runAI();
-                this.analyzeModel();
-
-                // Smooth entrance animation with auto-fit
                 this.model.scale.set(0, 0, 0);
                 const targetScale = this.aiDecision ? this.aiDecision.scale : 1;
                 this.animateScale(targetScale, () => {
-                    // Auto-fit camera after model loads and IA is applied
-                    setTimeout(() => {
-                        this.autoFit();
-                        console.log('✨ Modelo autoajustado automáticamente');
-                    }, 300);
+                    setTimeout(() => { this.autoFit(); console.log('✨ Modelo autoajustado automáticamente'); }, 300);
                 });
             }
 
             animateScale(targetScale, callback) {
-                const startScale = 0;
-                const duration = 1000;
-                const startTime = Date.now();
-
-                const animate = () => {
+                const animate = (startTime = Date.now()) => {
                     const elapsed = Date.now() - startTime;
-                    const progress = Math.min(elapsed / duration, 1);
+                    const progress = Math.min(elapsed / 1000, 1);
                     const easeOut = 1 - Math.pow(1 - progress, 3);
-                    const currentScale = startScale + (targetScale - startScale) * easeOut;
-
-                    this.model.scale.set(currentScale, currentScale, currentScale);
-
-                    if (progress < 1) {
-                        requestAnimationFrame(animate);
-                    } else if (callback) {
-                        callback(); // Execute callback when animation is complete
-                    }
+                    const currentScale = targetScale * easeOut;
+                    this.model.scale.setScalar(currentScale);
+                    if (progress < 1) requestAnimationFrame(() => animate(startTime));
+                    else if (callback) callback();
                 };
-
                 animate();
             }
 
@@ -1043,88 +757,60 @@
                 this.showError(`Error de carga: ${error.message || 'Error desconocido'}`);
             }
 
-            // Enhanced AI System
             runAI() {
                 try {
                     this.aiAnalysis = this.analyzeModelAI();
                     this.aiDecision = this.makeAIDecision();
-                    this.updateAIPanel();
-                    this.applyAIDecisions();
+                    this.updateAIPanel(); this.applyAIDecisions();
                     console.log('🤖 IA aplicada exitosamente');
-                } catch (error) {
-                    console.error('🔴 Error en IA:', error);
-                }
+                } catch (error) { console.error('🔴 Error en IA:', error); }
             }
 
             analyzeModelAI() {
                 if (!this.model) return null;
-
                 const box = new THREE.Box3().setFromObject(this.model);
                 const center = box.getCenter(new THREE.Vector3());
                 const size = box.getSize(new THREE.Vector3());
                 const maxDim = Math.max(size.x, size.y, size.z);
-
                 return {
-                    center,
-                    size,
-                    maxDim,
+                    center, size, maxDim,
                     problemType: this.classifyProblem(),
                     sizeType: maxDim < 0.5 ? 'small' : maxDim > 10 ? 'large' : 'normal'
                 };
             }
 
             classifyProblem() {
-                if (this.config.modelFile.includes('pizza3') || this.config.modelFile.includes('pizza4')) {
-                    return 'displaced_center_small';
-                }
-                return 'normal';
+                return (this.config.modelFile.includes('pizza3') || this.config.modelFile.includes('pizza4'))
+                    ? 'displaced_center_small' : 'normal';
             }
 
             makeAIDecision() {
                 if (!this.aiAnalysis) return null;
-
-                let decision = {
-                    scale: 1.0,
-                    rotationY: 0,
-                    centerCorrection: false,
-                    strategy: 'standard'
-                };
+                let decision = { scale: 1.0, rotationY: 0, centerCorrection: false, strategy: 'standard' };
 
                 if (this.aiAnalysis.problemType === 'displaced_center_small') {
-                    decision.strategy = 'fix_displacement';
-                    decision.centerCorrection = true;
-                    decision.scale = this.aiAnalysis.maxDim < 0.5 ? 20.0 : 8.0;
-
-                    if (this.config.modelFile.includes('pizza3')) {
-                        decision.rotationY = 50;
-                    } else if (this.config.modelFile.includes('pizza4')) {
-                        decision.rotationY = 45;
-                    }
+                    Object.assign(decision, {
+                        strategy: 'fix_displacement', centerCorrection: true,
+                        scale: this.aiAnalysis.maxDim < 0.5 ? 20.0 : 8.0,
+                        rotationY: this.config.modelFile.includes('pizza3') ? 50 :
+                                  this.config.modelFile.includes('pizza4') ? 45 : 0
+                    });
                 } else if (this.aiAnalysis.sizeType === 'small') {
                     decision.scale = 4.0 / Math.max(this.aiAnalysis.maxDim, 0.1);
                 }
-
                 return decision;
             }
 
             applyAIDecisions() {
                 if (!this.model || !this.aiDecision) return;
-
                 console.log('🤖 Aplicando decisiones IA');
-
-                if (this.aiDecision.centerCorrection) {
-                    this.model.position.copy(this.aiAnalysis.center).negate();
-                }
-
+                if (this.aiDecision.centerCorrection) this.model.position.copy(this.aiAnalysis.center).negate();
                 this.model.rotation.y = this.aiDecision.rotationY * Math.PI / 180;
-
-                // Update UI controls (but don't fit camera yet - will be done in autoFit)
                 this.updateControlValues();
             }
 
             updateAIPanel() {
                 if (!this.aiDecision || !this.dom.aiContent) return;
-
                 this.dom.aiContent.innerHTML = `
                     <div class="ai-decision">✨ Estrategia: ${this.aiDecision.strategy}</div>
                     <div class="ai-decision">📏 Escala: ${this.aiDecision.scale.toFixed(1)}x</div>
@@ -1134,145 +820,98 @@
                 `;
             }
 
-            // Enhanced Control Functions
             updateScale(value) {
                 if (this.model) {
-                    const scale = parseFloat(value);
-                    this.model.scale.set(scale, scale, scale);
-                    if (this.dom.scaleValue) this.dom.scaleValue.textContent = scale.toFixed(1) + 'x';
+                    this.model.scale.setScalar(parseFloat(value));
+                    if (this.dom.scaleValue) this.dom.scaleValue.textContent = parseFloat(value).toFixed(1) + 'x';
                 }
             }
-
             updatePositionY(value) {
                 if (this.model) {
-                    const posY = parseFloat(value);
-                    this.model.position.y = posY;
-                    if (this.dom.posYValue) this.dom.posYValue.textContent = posY.toFixed(1);
+                    this.model.position.y = parseFloat(value);
+                    if (this.dom.posYValue) this.dom.posYValue.textContent = parseFloat(value).toFixed(1);
                 }
             }
-
             updateRotationY(value) {
                 if (this.model) {
-                    const rotY = parseFloat(value) * Math.PI / 180;
-                    this.model.rotation.y = rotY;
+                    this.model.rotation.y = parseFloat(value) * Math.PI / 180;
                     if (this.dom.rotYValue) this.dom.rotYValue.textContent = value + '°';
                 }
             }
 
             updateControlValues() {
                 if (!this.model || !this.aiDecision) return;
-
-                if (this.dom.scaleSlider) this.dom.scaleSlider.value = this.aiDecision.scale;
-                if (this.dom.scaleValue) this.dom.scaleValue.textContent = this.aiDecision.scale.toFixed(1) + 'x';
-                if (this.dom.posYSlider) this.dom.posYSlider.value = this.model.position.y;
-                if (this.dom.posYValue) this.dom.posYValue.textContent = this.model.position.y.toFixed(1);
-                if (this.dom.rotYSlider) this.dom.rotYSlider.value = this.aiDecision.rotationY;
-                if (this.dom.rotYValue) this.dom.rotYValue.textContent = this.aiDecision.rotationY + '°';
+                const updates = [
+                    ['scale', this.aiDecision.scale, this.aiDecision.scale.toFixed(1) + 'x'],
+                    ['posY', this.model.position.y, this.model.position.y.toFixed(1)],
+                    ['rotY', this.aiDecision.rotationY, this.aiDecision.rotationY + '°']
+                ];
+                updates.forEach(([type, sliderVal, displayVal]) => {
+                    if (this.dom[`${type}Slider`]) this.dom[`${type}Slider`].value = sliderVal;
+                    if (this.dom[`${type}Value`]) this.dom[`${type}Value`].textContent = displayVal;
+                });
             }
 
-            // Enhanced Model Analysis
             analyzeModel() {
                 if (!this.model || !this.dom.statsContent) return;
-
                 const box = new THREE.Box3().setFromObject(this.model);
-                const center = box.getCenter(new THREE.Vector3());
                 const size = box.getSize(new THREE.Vector3());
 
-                let meshCount = 0;
-                let vertexCount = 0;
-                let materialCount = 0;
+                let meshCount = 0, vertexCount = 0;
                 const materials = new Set();
 
                 this.model.traverse((node) => {
                     if (node.isMesh) {
                         meshCount++;
-                        if (node.geometry?.attributes.position) {
-                            vertexCount += node.geometry.attributes.position.count;
-                        }
+                        if (node.geometry?.attributes.position) vertexCount += node.geometry.attributes.position.count;
                         if (node.material) {
-                            if (Array.isArray(node.material)) {
-                                node.material.forEach(mat => materials.add(mat));
-                            } else {
-                                materials.add(node.material);
-                            }
+                            (Array.isArray(node.material) ? node.material : [node.material])
+                                .forEach(mat => materials.add(mat));
                         }
                     }
                 });
 
-                materialCount = materials.size;
-
-                this.dom.statsContent.innerHTML = `
-                    <div class="stat-item">
-                        <span class="stat-label">📄 Archivo</span>
-                        <span class="stat-value">${this.config.modelFile}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">📐 Dimensiones</span>
-                        <span class="stat-value">${size.x.toFixed(1)} × ${size.y.toFixed(1)} × ${size.z.toFixed(1)}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">🔷 Meshes</span>
-                        <span class="stat-value">${meshCount}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">📊 Vértices</span>
-                        <span class="stat-value">${vertexCount.toLocaleString()}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">🎨 Materiales</span>
-                        <span class="stat-value">${materialCount}</span>
-                    </div>
-                `;
+                this.dom.statsContent.innerHTML = [
+                    ['📄 Archivo', this.config.modelFile],
+                    ['📐 Dimensiones', `${size.x.toFixed(1)} × ${size.y.toFixed(1)} × ${size.z.toFixed(1)}`],
+                    ['🔷 Meshes', meshCount],
+                    ['📊 Vértices', vertexCount.toLocaleString()],
+                    ['🎨 Materiales', materials.size]
+                ].map(([label, value]) =>
+                    `<div class="stat-item"><span class="stat-label">${label}</span><span class="stat-value">${value}</span></div>`
+                ).join('');
             }
 
-            // Enhanced Utility Functions
             autoFit() {
                 if (!this.model) return;
-
                 const box = new THREE.Box3().setFromObject(this.model);
                 const center = box.getCenter(new THREE.Vector3());
                 const size = box.getSize(new THREE.Vector3());
                 const maxDim = Math.max(size.x, size.y, size.z);
-
                 const targetScale = maxDim > 0 ? 3 / maxDim : 1;
-
-                // Animate the auto-fit
-                this.animateToValues({
-                    scale: targetScale,
-                    position: center.clone().negate(),
-                    camera: true
-                });
+                this.animateToValues({ scale: targetScale, position: center.clone().negate(), camera: true });
             }
 
             center() {
                 if (!this.model) return;
-
                 const box = new THREE.Box3().setFromObject(this.model);
                 const center = box.getCenter(new THREE.Vector3());
-
-                this.animateToValues({
-                    position: center.clone().negate()
-                });
+                this.animateToValues({ position: center.clone().negate() });
             }
 
             animateToValues(targets) {
                 if (!this.model) return;
-
-                const duration = 800;
-                const startTime = Date.now();
                 const startScale = this.model.scale.x;
                 const startPos = this.model.position.clone();
 
-                const animate = () => {
+                const animate = (startTime = Date.now()) => {
                     const elapsed = Date.now() - startTime;
-                    const progress = Math.min(elapsed / duration, 1);
-                    const easeInOut = progress < 0.5
-                        ? 2 * progress * progress
-                        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+                    const progress = Math.min(elapsed / 800, 1);
+                    const easeInOut = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
 
                     if (targets.scale !== undefined) {
                         const currentScale = startScale + (targets.scale - startScale) * easeInOut;
-                        this.model.scale.set(currentScale, currentScale, currentScale);
+                        this.model.scale.setScalar(currentScale);
                         if (this.dom.scaleSlider) this.dom.scaleSlider.value = currentScale;
                         if (this.dom.scaleValue) this.dom.scaleValue.textContent = currentScale.toFixed(1) + 'x';
                     }
@@ -1283,102 +922,67 @@
                         if (this.dom.posYValue) this.dom.posYValue.textContent = this.model.position.y.toFixed(1);
                     }
 
-                    if (progress < 1) {
-                        requestAnimationFrame(animate);
-                    } else if (targets.camera) {
-                        this.fitCameraToModel();
-                    }
+                    if (progress < 1) requestAnimationFrame(() => animate(startTime));
+                    else if (targets.camera) this.fitCameraToModel();
                 };
-
                 animate();
             }
 
             resetCamera() {
-                // Smooth camera reset
                 const startPos = this.camera.position.clone();
                 const targetPos = new THREE.Vector3(0, 2, 5);
-                const duration = 1000;
-                const startTime = Date.now();
 
-                const animate = () => {
+                const animate = (startTime = Date.now()) => {
                     const elapsed = Date.now() - startTime;
-                    const progress = Math.min(elapsed / duration, 1);
+                    const progress = Math.min(elapsed / 1000, 1);
                     const easeOut = 1 - Math.pow(1 - progress, 3);
 
                     this.camera.position.lerpVectors(startPos, targetPos, easeOut);
                     this.camera.lookAt(0, 0, 0);
+                    if (this.controls) { this.controls.target.set(0, 0, 0); this.controls.update(); }
 
-                    if (this.controls) {
-                        this.controls.target.set(0, 0, 0);
-                        this.controls.update();
-                    }
-
-                    if (progress < 1) {
-                        requestAnimationFrame(animate);
-                    }
+                    if (progress < 1) requestAnimationFrame(() => animate(startTime));
                 };
-
                 animate();
             }
 
             toggleWireframe() {
                 if (!this.model) return;
-
                 this.model.traverse((node) => {
                     if (node.isMesh && node.material) {
-                        if (Array.isArray(node.material)) {
-                            node.material.forEach(mat => mat.wireframe = !mat.wireframe);
-                        } else {
-                            node.material.wireframe = !node.material.wireframe;
-                        }
+                        (Array.isArray(node.material) ? node.material : [node.material])
+                            .forEach(mat => mat.wireframe = !mat.wireframe);
                     }
                 });
             }
 
             fitCameraToModel() {
                 if (!this.model || !this.camera) return;
-
                 const box = new THREE.Box3().setFromObject(this.model);
                 const center = box.getCenter(new THREE.Vector3());
                 const size = box.getSize(new THREE.Vector3());
                 const maxDim = Math.max(size.x, size.y, size.z);
-
                 const fov = this.camera.fov * (Math.PI / 180);
                 const cameraZ = Math.abs(maxDim / (2 * Math.tan(fov / 2))) * 1.5;
-
                 const targetPos = new THREE.Vector3(center.x, center.y + size.y / 4, center.z + cameraZ);
-
-                // Smooth camera movement
                 const startPos = this.camera.position.clone();
-                const duration = 1000;
-                const startTime = Date.now();
 
-                const animate = () => {
+                const animate = (startTime = Date.now()) => {
                     const elapsed = Date.now() - startTime;
-                    const progress = Math.min(elapsed / duration, 1);
+                    const progress = Math.min(elapsed / 1000, 1);
                     const easeOut = 1 - Math.pow(1 - progress, 3);
 
                     this.camera.position.lerpVectors(startPos, targetPos, easeOut);
+                    if (this.controls) { this.controls.target.lerp(center, easeOut); this.controls.update(); }
+                    else this.camera.lookAt(center);
 
-                    if (this.controls) {
-                        this.controls.target.lerp(center, easeOut);
-                        this.controls.update();
-                    } else {
-                        this.camera.lookAt(center);
-                    }
-
-                    if (progress < 1) {
-                        requestAnimationFrame(animate);
-                    }
+                    if (progress < 1) requestAnimationFrame(() => animate(startTime));
                 };
-
                 animate();
             }
 
-            // Event Handlers
             onResize() {
                 if (!this.camera || !this.renderer) return;
-
                 this.camera.aspect = window.innerWidth / window.innerHeight;
                 this.camera.updateProjectionMatrix();
                 this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -1391,43 +995,26 @@
                 if (this.dom.error) this.dom.error.style.display = 'block';
             }
 
-            hideLoading() {
-                if (this.dom.loading) this.dom.loading.style.display = 'none';
-            }
+            hideLoading() { if (this.dom.loading) this.dom.loading.style.display = 'none'; }
+            reload() { location.reload(); }
 
-            reload() {
-                location.reload();
-            }
-
-            // Animation Loop
             animate() {
                 requestAnimationFrame(() => this.animate());
-
-                if (this.controls) {
-                    this.controls.update();
-                }
-
-                // Enhanced auto rotation with smooth motion
+                if (this.controls) this.controls.update();
                 if (this.model && this.aiDecision && this.aiDecision.strategy !== 'standard' &&
                     this.dom.rotYSlider && this.dom.rotYSlider.value == 0) {
                     this.model.rotation.y += 0.002;
                 }
-
-                if (this.renderer && this.scene && this.camera) {
-                    this.renderer.render(this.scene, this.camera);
-                }
+                if (this.renderer && this.scene && this.camera) this.renderer.render(this.scene, this.camera);
             }
 
-            // AR Functionality
+            // AR Functionality (simplified)
             async checkARSupport() {
                 try {
                     if (navigator.xr) {
                         this.isARSupported = await navigator.xr.isSessionSupported('immersive-ar');
                         console.log('AR Support:', this.isARSupported);
-
-                        if (this.isARSupported) {
-                            this.createReticle();
-                        }
+                        if (this.isARSupported) this.createReticle();
                     }
                 } catch (error) {
                     console.log('AR no disponible:', error);
@@ -1437,378 +1024,219 @@
 
             createReticle() {
                 this.reticle = new THREE.Group();
-
-                // Main ring
                 const ring = new THREE.Mesh(
                     new THREE.RingGeometry(0.05, 0.07, 24),
-                    new THREE.MeshBasicMaterial({
-                        color: 0x0099ff,
-                        side: THREE.DoubleSide,
-                        transparent: true,
-                        opacity: 0.8
-                    })
+                    new THREE.MeshBasicMaterial({ color: 0x0099ff, side: THREE.DoubleSide, transparent: true, opacity: 0.8 })
                 );
-                this.reticle.add(ring);
-
-                // Outer ring with animation
                 const outerRing = new THREE.Mesh(
                     new THREE.RingGeometry(0.08, 0.09, 24),
-                    new THREE.MeshBasicMaterial({
-                        color: 0xffffff,
-                        side: THREE.DoubleSide,
-                        transparent: true,
-                        opacity: 0.5
-                    })
+                    new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.5 })
                 );
-                this.reticle.add(outerRing);
+                const grid = new THREE.Mesh(
+                    new THREE.PlaneGeometry(0.5, 0.5, 10, 10),
+                    new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3, wireframe: true, side: THREE.DoubleSide })
+                );
 
-                // Horizontal Grid pattern for surface detection
-                const gridGeometry = new THREE.PlaneGeometry(0.5, 0.5, 10, 10);
-                const gridMaterial = new THREE.MeshBasicMaterial({
-                    color: 0x00ff00,
-                    transparent: true,
-                    opacity: 0.3,
-                    wireframe: true,
-                    side: THREE.DoubleSide
-                });
-                const grid = new THREE.Mesh(gridGeometry, gridMaterial);
-
-                this.reticle.add(grid);
-                this.reticle.rotation.x = -Math.PI / 2;  // Make horizontal
+                [ring, outerRing, grid].forEach(mesh => this.reticle.add(mesh));
+                this.reticle.rotation.x = -Math.PI / 2;
                 this.reticle.visible = false;
                 this.scene.add(this.reticle);
 
-                // Animate the reticle
                 const animateReticle = () => {
                     if (this.reticle && this.reticle.visible) {
                         const time = Date.now() * 0.005;
-                        outerRing.scale.set(
-                            1 + Math.sin(time) * 0.2,
-                            1 + Math.sin(time) * 0.2,
-                            1
-                        );
+                        outerRing.scale.setScalar(1 + Math.sin(time) * 0.2);
                         grid.material.opacity = 0.2 + Math.sin(time * 2) * 0.1;
                     }
                     requestAnimationFrame(animateReticle);
                 };
                 animateReticle();
-
                 console.log('✅ Reticle horizontal creado');
             }
 
             async startAR() {
-                if (!this.isARSupported) {
-                    alert('AR no está disponible en este dispositivo/navegador');
-                    return;
-                }
+                if (!this.isARSupported) { alert('AR no está disponible en este dispositivo/navegador'); return; }
 
                 try {
                     console.log('🚀 Iniciando AR');
-
-                    // Request camera permissions
                     const stream = await navigator.mediaDevices.getUserMedia({
-                        video: {
-                            facingMode: 'environment',
-                            width: { ideal: 1280 },
-                            height: { ideal: 720 }
-                        }
+                        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
                     });
+                    stream.getTracks().forEach(track => track.stop());
 
-                    stream.getTracks().forEach(track => track.stop()); // Stop test stream
-
-                    // Request AR session
-                    const sessionInit = {
-                        requiredFeatures: ['hit-test'],
-                        optionalFeatures: ['dom-overlay']
-                    };
-
-                    this.arSession = await navigator.xr.requestSession('immersive-ar', sessionInit);
+                    this.arSession = await navigator.xr.requestSession('immersive-ar', {
+                        requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay']
+                    });
                     console.log('✅ Sesión AR creada');
 
-                    // Configure renderer for AR
                     this.renderer.xr.setReferenceSpaceType('local');
                     await this.renderer.xr.setSession(this.arSession);
 
-                    // Setup AR event handlers
                     this.arSession.addEventListener('select', () => this.onARSelect());
                     this.arSession.addEventListener('end', () => this.onAREnd());
 
-                    // Store current model state before entering AR
                     if (this.model) {
                         this.modelStateBeforeAR = {
-                            position: this.model.position.clone(),
-                            rotation: this.model.rotation.clone(),
-                            scale: this.model.scale.clone(),
-                            visible: this.model.visible
+                            position: this.model.position.clone(), rotation: this.model.rotation.clone(),
+                            scale: this.model.scale.clone(), visible: this.model.visible
                         };
                         this.model.visible = false;
                     }
 
-                    // Set transparent background for AR
                     this.scene.background = null;
-
                     this.isARActive = true;
 
-                    // Update AR button
                     const arButton = document.getElementById('ar-toggle');
-                    if (arButton) {
-                        arButton.classList.add('active');
-                        arButton.textContent = '🔴';
-                    }
+                    if (arButton) { arButton.classList.add('active'); arButton.textContent = '🔴'; }
 
                     console.log('🎯 AR iniciado correctamente');
-
-                    // Start AR render loop
                     this.renderer.setAnimationLoop((timestamp, frame) => this.renderAR(timestamp, frame));
 
                 } catch (error) {
                     console.error('❌ Error iniciando AR:', error);
-
                     let errorMsg = error.message;
-                    if (error.name === 'NotAllowedError') {
-                        errorMsg = 'Permisos de cámara denegados.';
-                    } else if (error.name === 'NotFoundError') {
-                        errorMsg = 'No se encontró cámara trasera.';
-                    } else if (error.name === 'NotSupportedError') {
-                        errorMsg = 'AR no soportado en este navegador.';
-                    }
-
+                    if (error.name === 'NotAllowedError') errorMsg = 'Permisos de cámara denegados.';
+                    else if (error.name === 'NotFoundError') errorMsg = 'No se encontró cámara trasera.';
+                    else if (error.name === 'NotSupportedError') errorMsg = 'AR no soportado en este navegador.';
                     alert('Error AR: ' + errorMsg);
                 }
             }
 
             renderAR(timestamp, frame) {
                 if (!frame || !this.isARActive) return;
-
                 const session = this.renderer.xr.getSession();
                 const referenceSpace = this.renderer.xr.getReferenceSpace();
 
-                // Initialize hit test source
                 if (!this.hitTestSource) {
                     session.requestReferenceSpace('viewer').then(viewerSpace => {
                         session.requestHitTestSource({ space: viewerSpace })
-                            .then(source => {
-                                this.hitTestSource = source;
-                                console.log('✅ Hit test source inicializado');
-                            })
-                            .catch(err => {
-                                console.error('❌ Error inicializando hit test:', err);
-                            });
+                            .then(source => { this.hitTestSource = source; console.log('✅ Hit test source inicializado'); })
+                            .catch(err => console.error('❌ Error inicializando hit test:', err));
                     });
                     return;
                 }
 
-                // Perform hit testing only if model is not placed
                 if (!this.model.visible) {
                     const hitTestResults = frame.getHitTestResults(this.hitTestSource);
-
                     if (hitTestResults.length > 0) {
                         const hit = hitTestResults[0];
                         const pose = hit.getPose(referenceSpace);
-
                         if (pose) {
-                            // Show reticle on detected surface
                             this.reticle.visible = true;
                             this.reticle.matrix.fromArray(pose.transform.matrix);
-                            this.reticle.matrix.decompose(
-                                this.reticle.position,
-                                this.reticle.quaternion,
-                                this.reticle.scale
-                            );
+                            this.reticle.matrix.decompose(this.reticle.position, this.reticle.quaternion, this.reticle.scale);
                         }
-                    } else {
-                        this.reticle.visible = false;
-                    }
-                } else {
-                    this.reticle.visible = false;
-                }
+                    } else this.reticle.visible = false;
+                } else this.reticle.visible = false;
 
-                // Render the scene
                 this.renderer.render(this.scene, this.camera);
             }
 
             onARSelect() {
                 console.log('🎯 Superficie tocada para colocar modelo');
+                if (!this.reticle.visible || this.model.visible) { console.log('⚠️ No se puede colocar'); return; }
 
-                if (!this.reticle.visible || this.model.visible) {
-                    console.log('⚠️ No se puede colocar');
-                    return;
-                }
-
-                // Get surface position
                 const position = new THREE.Vector3();
                 const quaternion = new THREE.Quaternion();
                 const scale = new THREE.Vector3();
                 this.reticle.matrix.decompose(position, quaternion, scale);
-
                 console.log('📍 Posición de superficie:', position);
 
-                // Restore base model transformations but adapt for AR
-                if (this.modelStateBeforeAR) {
-                    // Copy rotation from original state (IA applied)
-                    this.model.rotation.copy(this.modelStateBeforeAR.rotation);
-                    console.log('✅ Rotación IA aplicada:', this.model.rotation.y * 180 / Math.PI);
-                }
+                if (this.modelStateBeforeAR) this.model.rotation.copy(this.modelStateBeforeAR.rotation);
 
-                // Position on detected surface
-                this.model.position.x = position.x;
-                this.model.position.z = position.z;
-                this.model.position.y = position.y + 0.02; // Slightly above surface
+                this.model.position.set(position.x, position.y + 0.02, position.z);
 
-                // Special handling for pizza3/4 (displaced center models) in AR
                 if (this.aiAnalysis && this.aiAnalysis.problemType === 'displaced_center_small') {
                     console.log('🍕 Aplicando configuración especial AR para pizza3/4');
-
-                    // For pizza3/4, use a consistent AR scale regardless of IA scale
-                    this.model.scale.set(0.8, 0.8, 0.8); // Bigger scale for displaced models
-
-                    // Apply the center correction from IA but in AR context
+                    this.model.scale.setScalar(0.8);
                     const center = this.aiAnalysis.center.clone();
-                    center.y = 0; // Don't offset Y in AR
+                    center.y = 0;
                     this.model.position.add(center.negate());
-
-                    console.log('📊 Pizza3/4 AR - Posición:', this.model.position);
-                    console.log('📊 Pizza3/4 AR - Escala:', this.model.scale);
                 } else {
-                    // Normal models: use standard AR scaling based on original scale
                     const originalScale = this.modelStateBeforeAR ? this.modelStateBeforeAR.scale.x : 1.0;
-                    const arScale = Math.min(0.5, originalScale * 0.3); // Cap AR scale
-                    this.model.scale.set(arScale, arScale, arScale);
-
-                    console.log('📊 Modelo normal AR - Escala:', arScale);
+                    const arScale = Math.min(0.5, originalScale * 0.3);
+                    this.model.scale.setScalar(arScale);
                 }
 
-                // Force visibility and ensure materials are properly set
                 this.model.visible = true;
                 this.model.traverse((child) => {
                     if (child.isMesh) {
                         child.visible = true;
                         if (child.material) {
-                            child.material.transparent = false;
-                            child.material.opacity = 1.0;
-                            child.material.side = THREE.DoubleSide;
-
-                            // Force material update
+                            Object.assign(child.material, { transparent: false, opacity: 1.0, side: THREE.DoubleSide });
                             child.material.needsUpdate = true;
                         }
                     }
                 });
 
                 this.reticle.visible = false;
-                console.log('🎯 Modelo colocado en AR (tratamiento especial aplicado)');
-                console.log('📊 Posición final:', this.model.position);
-                console.log('📊 Escala final:', this.model.scale);
-                console.log('📊 Visible:', this.model.visible);
+                console.log('🎯 Modelo colocado en AR');
             }
 
             onAREnd() {
                 console.log('🔚 Sesión AR finalizada');
-
                 this.isARActive = false;
                 this.hitTestSource = null;
+                if (this.reticle) this.reticle.visible = false;
 
-                if (this.reticle) {
-                    this.reticle.visible = false;
-                }
-
-                // Restore exact model state from before AR (no changes)
                 if (this.model && this.modelStateBeforeAR) {
-                    this.model.position.copy(this.modelStateBeforeAR.position);
-                    this.model.rotation.copy(this.modelStateBeforeAR.rotation);
-                    this.model.scale.copy(this.modelStateBeforeAR.scale);
-                    this.model.visible = this.modelStateBeforeAR.visible;
+                    ['position', 'rotation', 'scale', 'visible'].forEach(prop => {
+                        this.model[prop] = typeof this.modelStateBeforeAR[prop].copy === 'function'
+                            ? this.model[prop].copy(this.modelStateBeforeAR[prop])
+                            : this.modelStateBeforeAR[prop];
+                    });
                     console.log('✅ Estado del modelo restaurado completamente');
                 }
 
-                // Restore background
                 this.scene.background = this.backgroundTexture;
-
-                // Update AR button
                 const arButton = document.getElementById('ar-toggle');
-                if (arButton) {
-                    arButton.classList.remove('active');
-                    arButton.textContent = '📷';
-                }
-
-                // Clear stored state
+                if (arButton) { arButton.classList.remove('active'); arButton.textContent = '📷'; }
                 this.modelStateBeforeAR = null;
-
-                // Return to normal animation loop
                 this.renderer.setAnimationLoop(null);
                 this.animate();
-
                 console.log('🎯 Regreso a vista 3D tradicional sin cambios');
             }
 
-            stopAR() {
-                if (this.arSession) {
-                    this.arSession.end();
-                }
-            }
+            stopAR() { if (this.arSession) this.arSession.end(); }
         }
 
-        // Global app instance
         let app;
 
-        // UI Helper Functions
         function togglePanel(panelId) {
             const panel = document.getElementById(panelId);
-            if (panel) {
-                panel.classList.toggle('hidden');
-            }
+            if (panel) panel.classList.toggle('hidden');
         }
 
         function togglePanels() {
             if (!app) return;
-
             const panels = ['controls-panel', 'stats-panel', 'ai-panel'];
             const currentIndex = panels.indexOf(app.currentPanel);
             const nextIndex = (currentIndex + 1) % panels.length;
 
-            // Hide current panel
             if (app.currentPanel) {
                 const currentPanel = document.getElementById(app.currentPanel);
-                if (currentPanel) {
-                    currentPanel.classList.remove('visible');
-                    currentPanel.classList.add('hidden');
-                }
+                if (currentPanel) { currentPanel.classList.remove('visible'); currentPanel.classList.add('hidden'); }
             }
 
-            // Show next panel
             app.currentPanel = panels[nextIndex];
             const nextPanel = document.getElementById(app.currentPanel);
-            if (nextPanel) {
-                nextPanel.classList.remove('hidden');
-                nextPanel.classList.add('visible');
-            }
+            if (nextPanel) { nextPanel.classList.remove('hidden'); nextPanel.classList.add('visible'); }
 
-            // Update toggle button icon
             const toggleBtn = document.getElementById('panel-toggle');
             const icons = ['🎮', '📊', '🤖'];
-            if (toggleBtn) {
-                toggleBtn.textContent = icons[nextIndex];
-            }
+            if (toggleBtn) toggleBtn.textContent = icons[nextIndex];
         }
 
         function toggleAR() {
             if (!app) return;
-
-            if (app.isARActive) {
-                // Stop AR
-                app.stopAR();
-            } else {
-                // Start AR
-                app.startAR();
-            }
+            app.isARActive ? app.stopAR() : app.startAR();
         }
 
-        // Initialize when DOM is ready
         document.addEventListener('DOMContentLoaded', () => {
             console.log('🚀 Iniciando Enhanced Desktop Viewer');
             app = new DesktopViewer();
         });
 
-        // Global error handler
         window.addEventListener('error', (e) => {
             console.error('🔴 Error global:', e.error);
             if (app) app.showError('Error global: ' + e.message);
