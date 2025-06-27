@@ -105,7 +105,6 @@
                 var presupuesto = $("#presupuestoSlider").val();
                 var ingredientes = $("#ingredientes").val() || "";
 
-                // ✅ AGREGAR LOADING AL BOTÓN
                 const btnOriginal = $(this);
                 const textoOriginal = btnOriginal.html();
                 btnOriginal.html('<i class="fas fa-spinner fa-spin"></i> Analizando...').prop('disabled', true);
@@ -129,13 +128,12 @@
                         alert("Error al procesar la solicitud");
                     },
                     complete: function () {
-                        // ✅ RESTAURAR BOTÓN AL TERMINAR
                         btnOriginal.html(textoOriginal).prop('disabled', false);
                     }
                 });
             });
 
-            // Mostrar resultados - CON ID CORRECTO
+            // Mostrar resultados
             function mostrarResultados(data) {
                 var tbody = $("#tbodyResultados");
                 tbody.empty();
@@ -148,20 +146,18 @@
 
                 for (var i = 0; i < data.length; i++) {
                     var item = data[i];
-
-                    // Extraer propiedades de manera segura
-                    var id = item.id || item.Id || 0; // USAR EL ID REAL DEL PRODUCTO
+                    var id = item.id || item.Id || 0;
                     var nombre = item.nombre || item.Nombre || "Sin nombre";
                     var precio = item.precio || item.Precio || "0";
                     var calorias = item.calorias || item.Calorias || "0";
-
-                    console.log("ID del producto:", id); // Para debug
 
                     var row = '<tr>' +
                         '<td>' + nombre + '</td>' +
                         '<td>$' + precio + '</td>' +
                         '<td>' + calorias + '</td>' +
-                        '<td><a href="@Url.Action("Detalle", "MenuRecomendacion")/' + id + '" class="btn btn-sm btn-info">Ver detalles</a></td>' +
+                        '<td>' +
+                        '<a href="@Url.Action("SeleccionarRecoleccion", "MenuRecomendacion")?productoId=' + id + '" class="btn btn-sm btn-warning">Seleccionar</a>' +
+                        '</td>' +
                         '</tr>';
 
                     tbody.append(row);

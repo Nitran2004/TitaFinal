@@ -37,7 +37,8 @@ namespace ProyectoIdentity.Controllers
             return View();
         }
 
-        // Procesar pedido desde el carrito - GUARDANDO EN BASE DE DATOS
+        // Actualizar SOLO este método en PedidoRecomendacionController
+
         [HttpPost]
         public async Task<IActionResult> ProcesarPedido([FromBody] PedidoRequest request)
         {
@@ -50,44 +51,53 @@ namespace ProyectoIdentity.Controllers
                     return Json(new { success = false, message = "Usuario no encontrado" });
                 }
 
-                // Obtener sucursal
-                var sucursal = await _context.Sucursales.FirstOrDefaultAsync();
+                // ✅ OBTENER SUCURSAL DESDE TEMPDATA SI EXISTE, SINO LA PRIMERA
+                int? sucursalId = TempData["SucursalId"] as int?;
+                var sucursal = sucursalId.HasValue
+                    ? await _context.Sucursales.FindAsync(sucursalId.Value)
+                    : await _context.Sucursales.FirstOrDefaultAsync();
+
                 if (sucursal == null)
                 {
                     return Json(new { success = false, message = "No hay sucursales disponibles" });
                 }
 
-                // ✅ CREAR PEDIDO EN LA BASE DE DATOS
-                var pedido = new ProyectoIdentity.Models.Pedido // ← Especificar namespace completo
+                // ✅ CREAR PEDIDO
+                var pedido = new ProyectoIdentity.Models.Pedido
                 {
                     Fecha = DateTime.Now,
                     UsuarioId = usuario.Id,
                     Estado = "Preparándose",
                     Total = request.Items.Sum(i => i.Subtotal),
-                    TipoServicio = request.TipoServicio ?? "Servir aquí",
+                    TipoServicio = request.TipoServicio ?? "Servir aquí", // ✅ USAR EL TIPO SELECCIONADO
                     SucursalId = sucursal.Id
                 };
 
                 _context.Pedidos.Add(pedido);
                 await _context.SaveChangesAsync();
 
-                // ✅ CREAR DETALLES DE PEDIDO
+                // ✅ CREAR DETALLES
                 foreach (var item in request.Items)
                 {
-                    var detalle = new ProyectoIdentity.Models.PedidoDetalle // ← Especificar namespace completo
+                    var detalle = new ProyectoIdentity.Models.PedidoDetalle
                     {
                         PedidoId = pedido.Id,
                         ProductoId = item.Id,
                         Cantidad = item.Cantidad,
                         PrecioUnitario = item.Precio,
-                        IngredientesRemovidos = "[]", // Sin personalización
-                        NotasEspeciales = "Pedido por recomendación IA" // Usar NotasEspeciales del detalle
+                        IngredientesRemovidos = "[]",
+                        NotasEspeciales = "Pedido por recomendación IA"
                     };
 
                     _context.PedidoDetalles.Add(detalle);
                 }
 
                 await _context.SaveChangesAsync();
+
+                // ✅ MANTENER INFO DE SUCURSAL PARA CONFIRMACIÓN
+                TempData.Keep("SucursalSeleccionada");
+                TempData.Keep("DireccionSeleccionada");
+                TempData.Keep("SucursalId");
 
                 return Json(new
                 {
@@ -107,17 +117,42 @@ namespace ProyectoIdentity.Controllers
         }
 
         // Ver confirmación del pedido - DESDE BASE DE DATOS
+        // ACTUALIZAR el método Confirmacion en PedidoRecomendacionController
+
+        // Ver confirmación del pedido - DESDE BASE DE DATOS
         public async Task<IActionResult> Confirmacion(int id)
         {
             var pedido = await _context.Pedidos
                 .Include(p => p.Detalles)
                 .ThenInclude(d => d.Producto)
+                .Include(p => p.Sucursal) // ✅ INCLUIR SUCURSAL
                 .FirstOrDefaultAsync(p => p.Id == id);
 
             if (pedido == null)
             {
                 return NotFound();
             }
+
+            // ✅ SI NO HAY DATOS EN TEMPDATA, USAR LA SUCURSAL DEL PEDIDO
+            if (TempData["SucursalSeleccionada"] == null && pedido.Sucursal != null)
+            {
+                TempData["SucursalSeleccionada"] = pedido.Sucursal.Nombre;
+
+                // Buscar el CollectionPoint para obtener la dirección
+                var collectionPoint = await _context.CollectionPoints
+                    .Include(cp => cp.Sucursal)
+                    .FirstOrDefaultAsync(cp => cp.Sucursal.Id == pedido.SucursalId);
+
+                if (collectionPoint != null)
+                {
+                    TempData["DireccionSeleccionada"] = collectionPoint.Address;
+                }
+            }
+
+            // ✅ MANTENER DATOS DE TEMPDATA PARA LA VISTA
+            TempData.Keep("SucursalSeleccionada");
+            TempData.Keep("DireccionSeleccionada");
+            TempData.Keep("SucursalId");
 
             return View(pedido);
         }

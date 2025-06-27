@@ -141,6 +141,9 @@ namespace Proyecto1_MZ_MJ.Controllers
         {
             try
             {
+
+                Console.WriteLine($"[DEBUG RECOLECCION] Distancia recibida: '{distancia}'");
+                Console.WriteLine($"[DEBUG RECOLECCION] UserLat: {userLat}, UserLng: {userLng}");
                 var puntoRecoleccion = await _context.CollectionPoints
                     .Include(p => p.Sucursal)
                     .FirstOrDefaultAsync(p => p.Id == id);
@@ -156,13 +159,18 @@ namespace Proyecto1_MZ_MJ.Controllers
                 if (!string.IsNullOrEmpty(distancia) && double.TryParse(distancia, NumberStyles.Any, CultureInfo.InvariantCulture, out distanciaValor))
                 {
                     ViewBag.Distancia = distanciaValor;
-                    ViewBag.DistanciaFormateada = distancia;
+                    ViewBag.DistanciaFormateada = distancia; // ✅ USA EL STRING ORIGINAL
+                    Console.WriteLine($"[DEBUG RECOLECCION] Parsing exitoso: {distanciaValor}"); // ✅ AGREGAR ESTA LÍNEA
+
                 }
                 else
                 {
                     ViewBag.Distancia = CalcularDistancia(userLat, userLng,
                         puntoRecoleccion.Sucursal.Latitud, puntoRecoleccion.Sucursal.Longitud);
+                    Console.WriteLine($"[DEBUG RECOLECCION] Parsing falló, calculado: {ViewBag.Distancia}"); // ✅ AGREGAR ESTA LÍNEA
+
                 }
+                Console.WriteLine($"[DEBUG RECOLECCION] Distancia final: {ViewBag.Distancia}"); // ✅ AGREGAR ESTA LÍNEA
 
                 // Configurar ViewBag
                 ViewBag.UserLat = userLat;

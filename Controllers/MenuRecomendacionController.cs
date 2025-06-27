@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ProyectoIdentity.Datos;
 using System.Text.RegularExpressions;
 using System.Text.Json;
+using System.Globalization;
 
 namespace ProyectoIdentity.Controllers
 {
@@ -493,6 +494,103 @@ namespace ProyectoIdentity.Controllers
                 Console.WriteLine($"Error en Detalle: {ex.Message}");
                 return View("Error");
             }
+        }
+
+        // AGREGAR ESTOS 3 MÉTODOS AL FINAL DEL MenuRecomendacionController EXISTENTE
+
+        // 1. SELECCIONAR PUNTO DE RECOLECCIÓN
+        public async Task<IActionResult> SeleccionarRecoleccion(int productoId)
+        {
+            var producto = await _context.Productos.FindAsync(productoId);
+            if (producto == null) return RedirectToAction("Recomendacion");
+
+            // Solo usar el punto con ID=1
+            var puntos = await _context.CollectionPoints
+                .Include(cp => cp.Sucursal)
+                .Where(cp => cp.Id == 1)
+                .ToListAsync();
+
+            ViewBag.ProductoId = productoId;
+            ViewBag.ProductoNombre = producto.Nombre;
+
+            return View(puntos);
+        }
+
+        // 2. CONFIRMAR PUNTO DE RECOLECCIÓN - RECIBE DATOS DE GEOLOCALIZACIÓN
+        [HttpPost]
+        public async Task<IActionResult> ConfirmarRecoleccion(int id, int productoId, double userLat = -0.1857, double userLng = -78.4954, double distancia = 0)
+        {
+            Console.WriteLine($"[DEBUG] Valores recibidos:");
+            Console.WriteLine($"[DEBUG] userLat: {userLat}");
+            Console.WriteLine($"[DEBUG] userLng: {userLng}");
+            Console.WriteLine($"[DEBUG] distancia: {distancia}");
+            var punto = await _context.CollectionPoints
+                .Include(cp => cp.Sucursal)
+                .FirstOrDefaultAsync(cp => cp.Id == id);
+
+            if (punto == null) return RedirectToAction("SeleccionarRecoleccion", new { productoId });
+
+            var producto = await _context.Productos.FindAsync(productoId);
+            if (producto == null) return RedirectToAction("Recomendacion");
+
+            // ✅ USAR LA DISTANCIA QUE VIENE DEL FORM, NO CALCULAR DE NUEVO
+            // NO CALCULAR NADA, SOLO USAR LO QUE VIENE
+
+            // GUARDAR INFO DE SUCURSAL PARA USAR EN CONFIRMACIÓN
+            TempData["SucursalSeleccionada"] = punto.Sucursal.Nombre;
+            TempData["DireccionSeleccionada"] = punto.Address;
+            TempData["SucursalId"] = punto.Sucursal.Id;
+
+            // ✅ PASAR LA DISTANCIA TAL COMO VIENE
+            ViewBag.ProductoId = productoId;
+            ViewBag.ProductoNombre = producto.Nombre;
+            ViewBag.PuntoRecoleccionId = id;
+            if (distancia <= 0 || distancia > 100) // Si la distancia es sospechosa
+            {
+                Console.WriteLine("[DEBUG] Distancia sospechosa, recalculando...");
+                distancia = CalcularDistancia(userLat, userLng,
+                    (double)punto.Sucursal.Latitud, (double)punto.Sucursal.Longitud);
+                Console.WriteLine($"[DEBUG] Distancia recalculada: {distancia}");
+            }
+            ViewBag.Distancia = distancia; // ✅ LA MISMA QUE VIENE DEL FORM
+
+            return View(punto);
+        }
+
+        // 3. REDIRIGIR AUTOMÁTICAMENTE AL DETALLE CON EL ID
+        [HttpPost]
+        public async Task<IActionResult> ContinuarConDetalle(int productoId, int puntoRecoleccionId)
+        {
+            // MANTENER LA INFO DE SUCURSAL EN TEMPDATA
+            var punto = await _context.CollectionPoints
+                .Include(cp => cp.Sucursal)
+                .FirstOrDefaultAsync(cp => cp.Id == puntoRecoleccionId);
+
+            if (punto != null)
+            {
+                TempData["SucursalSeleccionada"] = punto.Sucursal.Nombre;
+                TempData["DireccionSeleccionada"] = punto.Address;
+                TempData["SucursalId"] = punto.Sucursal.Id;
+            }
+
+            // REDIRIGIR AL DETALLE CON EL ID DEL PRODUCTO SELECCIONADO
+            return RedirectToAction("Detalle", new { id = productoId });
+        }
+
+        // 4. MÉTODO AUXILIAR PARA CALCULAR DISTANCIA
+        private double CalcularDistancia(double lat1, double lon1, double lat2, double lon2)
+        {
+            const double R = 6371; // Radio de la Tierra en kilómetros
+
+            double dLat = (lat2 - lat1) * Math.PI / 180;
+            double dLon = (lon2 - lon1) * Math.PI / 180;
+
+            double a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                       Math.Cos(lat1 * Math.PI / 180) * Math.Cos(lat2 * Math.PI / 180) *
+                       Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+
+            double c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+            return R * c;
         }
     }
 }

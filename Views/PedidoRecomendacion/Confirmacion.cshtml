@@ -2,6 +2,11 @@
 @{
     ViewBag.Title = "Confirmación de Pedido";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    
+    // ✅ OBTENER INFORMACIÓN DE SUCURSAL DESDE TEMPDATA
+    string sucursalSeleccionada = TempData["SucursalSeleccionada"]?.ToString();
+    string direccionSeleccionada = TempData["DireccionSeleccionada"]?.ToString();
+    bool tieneSucursalPersonalizada = !string.IsNullOrEmpty(sucursalSeleccionada);
 }
 
 <div class="container">
@@ -36,12 +41,27 @@
                             </table>
                         </div>
                         <div class="col-md-6">
-                            <h5>Datos de Entrega</h5>
+                            <h5>Datos de Recolección</h5>
                             <table class="table table-borderless">
                                 <tr>
                                     <td><strong>Usuario:</strong></td>
                                     <td>@User.Identity.Name</td>
                                 </tr>
+                                @if (tieneSucursalPersonalizada)
+                                {
+                                    <tr>
+                                        <td><strong>Sucursal:</strong></td>
+                                        <td>
+                                            <span class="badge bg-primary">
+                                                <i class="fas fa-map-marker-alt"></i> @sucursalSeleccionada
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Dirección:</strong></td>
+                                        <td>@direccionSeleccionada</td>
+                                    </tr>
+                                }
                                 <tr>
                                     <td><strong>Tipo de Servicio:</strong></td>
                                     <td>
@@ -61,6 +81,14 @@
                                         {
                                             <span class="badge bg-secondary">@Model.TipoServicio</span>
                                         }
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Tiempo estimado:</strong></td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-clock"></i> 15-25 minutos
+                                        </span>
                                     </td>
                                 </tr>
                             </table>
@@ -101,22 +129,24 @@
                     <div class="alert alert-info">
                         <h6><i class="fas fa-info-circle"></i> Información Importante:</h6>
                         <ul class="mb-0">
-                            @if (Model.TipoServicio == "Servir aquí")
+                            @if (tieneSucursalPersonalizada)
+                            {
+                                <li><strong>Sucursal seleccionada:</strong> @sucursalSeleccionada</li>
+                                <li><strong>Dirección:</strong> @direccionSeleccionada</li>
+                                <li>Recoge tu pedido en el punto seleccionado</li>
+                                <li>Cuando llegues, menciona el número de tu pedido: <strong>#@Model.Id.ToString("D6")</strong></li>
+                            }
+                            else if (Model.TipoServicio == "Servir aquí")
                             {
                                 <li>Tu mesa te será asignada cuando llegues al restaurante</li>
-                                <li>Tiempo estimado de preparación: 15-25 minutos</li>
                                 <li>Puedes esperar en el área de recepción</li>
-                            }
-                            else if (Model.TipoServicio == "Para llevar")
-                            {
-                                <li>Tiempo estimado de preparación: 15-20 minutos</li>
-                                <li>Recoge tu pedido en el mostrador</li>
-                                <li>Te avisaremos cuando esté listo</li>
                             }
                             else
                             {
-                                <li>Tiempo estimado de preparación: 15-25 minutos</li>
+                                <li>Recoge tu pedido en el mostrador</li>
+                                <li>Te avisaremos cuando esté listo</li>
                             }
+                            <li>Tiempo estimado de preparación: 15-25 minutos</li>
                             <li>Recibirás una notificación cuando esté listo</li>
                             <li>Métodos de pago disponibles: Efectivo, tarjeta, transferencia</li>
                             <li>El pedido se registró con tu usuario: <strong>@User.Identity.Name</strong></li>
@@ -166,6 +196,10 @@
     
     .gap-3 {
         gap: 1rem !important;
+    }
+    
+    .badge {
+        font-size: 0.875em;
     }
     
     @@media print {
