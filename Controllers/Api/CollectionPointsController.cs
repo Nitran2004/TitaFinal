@@ -97,5 +97,7 @@ namespace ProyectoIdentity.Controllers
 
             return Ok(points);
         }
+
+
     }
 }

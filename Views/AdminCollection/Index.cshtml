@@ -1,0 +1,190 @@
+﻿@model List<ProyectoIdentity.Models.CollectionPoint>
+
+@{
+    ViewData["Title"] = "Puntos de Recolección";
+}
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3><i class="fas fa-map-marker-alt"></i> Puntos de Recolección</h3>
+                <a href="@Url.Action("Create")" class="btn"
+                   style="background-color: #28a745; color: white; font-weight: bold; padding: 12px 24px; border: none; text-decoration: none;">
+                    <i class="fas fa-plus"></i> Nuevo Punto
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show">
+                    <i class="fas fa-check"></i> @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <i class="fas fa-times"></i> @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Dirección</th>
+                                <th>Sucursal</th>
+                                <th>Coordenadas</th>
+                                <th>Estado</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@item.Id</td>
+                                    <td>
+                                        <strong>@item.Name?.Replace(" [INACTIVO]", "")</strong>
+                                        @if (item.Name != null && item.Name.Contains("[INACTIVO]"))
+                                        {
+                                            <br>
+
+                                            <small class="text-danger"><i class="fas fa-times-circle"></i> Inactivo</small>
+                                        }
+                                    </td>
+                                    <td>@item.Address</td>
+                                    <td>
+                                        @if (item.Sucursal != null)
+                                        {
+                                            <span class="badge bg-info">@item.Sucursal.Nombre</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning">Sin sucursal</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            Lat: @item.Latitude<br>
+                                            Lng: @item.Longitude
+                                        </small>
+                                        <br>
+                                        <a href="https://maps.app.goo.gl/s5QAbXq8kAH8t3Cy6"
+                                           target="_blank" class="btn btn-sm" style="background-color: #4285f4; color: white;">
+                                            <i class="fas fa-map"></i> Ver en Maps
+                                        </a>
+                                    </td>
+                                    <td>
+                                        @{
+                                            var isActive = item.Name == null || !item.Name.Contains("[INACTIVO]");
+                                        }
+                                        <button onclick="toggleStatus(@item.Id, @isActive.ToString().ToLower())"
+                                                class="btn btn-sm" style="background-color: @(isActive ? "#28a745" : "#6c757d"); color: white; border: none;">
+                                            <i class="fas @(isActive ? "fa-check" : "fa-times")"></i>
+                                            @(isActive ? "Activo" : "Inactivo")
+                                        </button>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group">
+                                            <a href="@Url.Action("Edit", new { id = item.Id })"
+                                               class="btn btn-sm" style="background-color: #ffc107; color: black; border: none;" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button onclick="eliminarPunto(@item.Id)"
+                                                    class="btn btn-sm" style="background-color: #dc3545; color: white; border: none;" title="Eliminar">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-3">
+                    <p class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        Total: <strong>@Model.Count</strong> punto(s) de recolección
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+                    <h4>No hay puntos registrados</h4>
+                    <p class="text-muted">Crea tu primer punto de recolección</p>
+                    <a href="@Url.Action("Create")" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Crear Primer Punto
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    function eliminarPunto(id) {
+        if (!confirm('¿Está seguro de eliminar este punto de recolección?')) {
+            return;
+        }
+
+        fetch('@Url.Action("Delete")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(id)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Punto eliminado exitosamente');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error de conexión');
+            });
+    }
+
+    function toggleStatus(id, isCurrentlyActive) {
+        var action = isCurrentlyActive ? 'desactivar' : 'activar';
+        if (!confirm('¿Está seguro de ' + action + ' este punto?')) {
+            return;
+        }
+
+        fetch('@Url.Action("ToggleActive")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(id)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error de conexión');
+            });
+    }
+</script>

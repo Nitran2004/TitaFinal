@@ -1,0 +1,85 @@
+﻿@model ProyectoIdentity.Models.CollectionPoint
+
+@{
+    ViewData["Title"] = "Crear Punto";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h3><i class="fas fa-plus"></i> Crear Punto de Recolección</h3>
+                </div>
+                <div class="card-body">
+
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger">
+                            <i class="fas fa-times"></i> @TempData["Error"]
+                        </div>
+                    }
+
+                    <form asp-action="Create" method="post">
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Name" class="form-label">
+                                <i class="fas fa-tag"></i> Nombre del Punto *
+                            </label>
+                            <input asp-for="Name" class="form-control" placeholder="Ej: Punto Centro" required />
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Address" class="form-label">
+                                <i class="fas fa-map-marker-alt"></i> Dirección *
+                            </label>
+                            <textarea asp-for="Address" class="form-control" rows="3"
+                                      placeholder="Dirección completa" required></textarea>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label class="form-label">
+                                <i class="fas fa-map-pin"></i> Latitud *
+                            </label>
+                            <input name="Latitude" class="form-control" type="text"
+                                   placeholder="-0.240653" required pattern="^-?\d+(\.\d+)?$"
+                                   title="Formato: -0.240653" />
+                            <small class="text-muted">Formato: -0.240653 (usar punto como decimal)</small>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label class="form-label">
+                                <i class="fas fa-map-pin"></i> Longitud *
+                            </label>
+                            <input name="Longitude" class="form-control" type="text"
+                                   placeholder="-78.487834" required pattern="^-?\d+(\.\d+)?$"
+                                   title="Formato: -78.487834" />
+                            <small class="text-muted">Formato: -78.487834 (usar punto como decimal)</small>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle"></i> Ayuda para coordenadas:</h6>
+                            <p class="mb-2">Para obtener coordenadas precisas:</p>
+                            <ol class="mb-2">
+                                <li>Ve a <a href="https://www.google.com/maps" target="_blank">Google Maps</a></li>
+                                <li>Busca la dirección exacta</li>
+                                <li>Haz clic derecho en el punto exacto</li>
+                                <li>Copia las coordenadas que aparecen</li>
+                            </ol>
+                            <p class="mb-0"><strong>Ejemplo:</strong> Quito Centro: -0.1857, -78.4954</p>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Volver
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Crear Punto
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
