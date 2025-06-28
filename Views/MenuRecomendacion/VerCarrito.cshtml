@@ -1,0 +1,523 @@
+﻿@model List<ProyectoIdentity.Models.ItemCarritoPersonalizado>
+@{
+    ViewData["Title"] = "Mi Carrito de Recomendaciones IA";
+    bool esAdministrador = User.IsInRole("Administrador");
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h3><i class="fas fa-robot"></i> Mi Carrito de Recomendaciones IA</h3>
+                    <a href="@Url.Action("Recomendacion")" class="btn btn-outline-light">
+                        <i class="fas fa-plus"></i> Agregar Más Productos
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (!Model.Any())
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-robot fa-3x text-muted"></i>
+                            <h4 class="mt-3">Tu carrito está vacío</h4>
+                            <p class="text-muted">Explora nuestras recomendaciones personalizadas</p>
+                            <a href="@Url.Action("Recomendacion")" class="btn btn-warning">
+                                <i class="fas fa-robot"></i> Ver Recomendaciones IA
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Precio</th>
+                                        <th>Cantidad</th>
+                                        <th>Puntos</th>
+                                        <th>Subtotal</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < Model.Count; i++)
+                                    {
+                                        var item = Model[i];
+                                        var puntosItem = (int)(item.Subtotal * 30);
+                                        <tr data-index="@i">
+                                            <td>
+                                                <strong>@item.Nombre</strong>
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-robot"></i> Recomendado por IA
+                                                </small>
+                                                @if (!string.IsNullOrEmpty(item.NotasEspeciales) && item.NotasEspeciales != "Producto recomendado por IA")
+                                                {
+                                                    <br>
+                                                    <small class="text-info"><i class="fas fa-sticky-note"></i> @item.NotasEspeciales</small>
+                                                }
+                                            </td>
+                                            <td>$@item.Precio.ToString("F2")</td>
+                                            <td>
+                                                <div class="quantity-control-small">
+                                                    <button type="button" class="btn-quantity-small" onclick="cambiarCantidadCarrito(@i, -1)">-</button>
+                                                    <span class="cantidad-display" data-cantidad="@item.Cantidad">@item.Cantidad</span>
+                                                    <button type="button" class="btn-quantity-small" onclick="cambiarCantidadCarrito(@i, 1)">+</button>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success puntos-item">
+                                                    <i class="fas fa-star"></i> @puntosItem pts
+                                                </span>
+                                            </td>
+                                            <td><strong class="subtotal-display">$@item.Subtotal.ToString("F2")</strong></td>
+                                            <td>
+                                                <button type="button" class="btn btn-sm btn-danger" onclick="eliminarDelCarrito(@i)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6 offset-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h5>Resumen del Pedido</h5>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Total Items:</span>
+                                            <span id="totalItems">@Model.Sum(m => m.Cantidad)</span>
+                                        </div>
+                                                                              <hr>
+                                        <div class="d-flex justify-content-between">
+                                            <strong>Total a Pagar:</strong>
+                                            <strong class="text-success" id="totalPagar">$@Model.Sum(m => m.Subtotal).ToString("F2")</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5><i class="fas fa-utensils"></i> Finalizar Pedido</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Datos de Entrega</h6>
+                        <p class="mb-1"><strong>Usuario:</strong> @User.Identity.Name</p>
+                        @if (TempData["SucursalSeleccionada"] != null)
+                        {
+                            <p class="mb-1"><strong>Sucursal:</strong> @TempData["SucursalSeleccionada"]</p>
+                            <p class="mb-0"><strong>Dirección:</strong> @TempData["DireccionSeleccionada"]</p>
+                        }
+                        else
+                        {
+                            <p class="mb-0">Se usará la sucursal por defecto.</p>
+                        }
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Tipo de Servicio *</label>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="card service-option" data-service="Servir aquí">
+                                    <div class="card-body text-center">
+                                        <input type="radio" name="tipoServicio" id="servirAqui" value="Servir aquí" required>
+                                        <label for="servirAqui" class="w-100">
+                                            <i class="fas fa-chair fa-2x d-block mb-2 text-primary"></i>
+                                            <strong>Servir aquí</strong>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card service-option" data-service="Para llevar">
+                                    <div class="card-body text-center">
+                                        <input type="radio" name="tipoServicio" id="paraLlevar" value="Para llevar" required>
+                                        <label for="paraLlevar" class="w-100">
+                                            <i class="fas fa-shopping-bag fa-2x d-block mb-2 text-success"></i>
+                                            <strong>Para llevar</strong>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-warning w-100" id="btnProcesar" @(Model.Any() ? "" : "disabled") onclick="procesarPedido()">
+                        <i class="fas fa-check"></i> Confirmar Pedido IA
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let carritoLocal = @Html.Raw(Json.Serialize(Model));
+
+    // ✅ FUNCIÓN PARA VALIDAR Y LIMPIAR NÚMEROS
+    function validarNumero(valor, valorPorDefecto = 0) {
+        if (isNaN(valor) || valor === null || valor === undefined) {
+            return valorPorDefecto;
+        }
+        return parseFloat(valor) || valorPorDefecto;
+    }
+
+    // ✅ FUNCIÓN MEJORADA PARA CALCULAR PUNTOS
+    function calcularPuntosItem(precio, cantidad) {
+        const precioValido = validarNumero(precio, 0);
+        const cantidadValida = validarNumero(cantidad, 1);
+        const subtotal = precioValido * cantidadValida;
+        const puntos = Math.floor(subtotal * 30);
+
+        console.log(`[DEBUG] Cálculo puntos: precio=${precioValido}, cantidad=${cantidadValida}, subtotal=${subtotal}, puntos=${puntos}`);
+
+        return puntos;
+    }
+
+    function cambiarCantidadCarrito(index, cambio) {
+        const fila = document.querySelector(`tr[data-index="${index}"]`);
+        if (!fila) {
+            console.error(`[ERROR] No se encontró la fila con índice ${index}`);
+            return;
+        }
+
+        const cantidadDisplay = fila.querySelector('.cantidad-display');
+        if (!cantidadDisplay) {
+            console.error('[ERROR] No se encontró elemento cantidad-display');
+            return;
+        }
+
+        let nuevaCantidad = parseInt(cantidadDisplay.getAttribute('data-cantidad')) + cambio;
+
+        if (nuevaCantidad < 1) {
+            eliminarDelCarrito(index);
+            return;
+        }
+
+        if (nuevaCantidad > 10) nuevaCantidad = 10;
+
+        // ✅ VALIDAR QUE EL ITEM EXISTE EN EL CARRITO
+        if (!carritoLocal[index]) {
+            console.error(`[ERROR] Item no existe en carritoLocal[${index}]`);
+            return;
+        }
+
+        // ✅ VALIDAR PRECIO ANTES DE CALCULAR
+        const precio = validarNumero(carritoLocal[index].Precio, 0);
+        if (precio <= 0) {
+            console.error(`[ERROR] Precio inválido para item ${index}: ${carritoLocal[index].Precio}`);
+            return;
+        }
+
+        // Actualizar carrito local con validaciones
+        carritoLocal[index].Cantidad = nuevaCantidad;
+        carritoLocal[index].Subtotal = precio * nuevaCantidad;
+
+        // Actualizar display
+        cantidadDisplay.textContent = nuevaCantidad;
+        cantidadDisplay.setAttribute('data-cantidad', nuevaCantidad);
+
+        // Actualizar subtotal
+        const subtotalDisplay = fila.querySelector('.subtotal-display');
+        if (subtotalDisplay) {
+            subtotalDisplay.textContent = '$' + carritoLocal[index].Subtotal.toFixed(2);
+        }
+
+        // ✅ ACTUALIZAR PUNTOS CON VALIDACIÓN
+        const puntosItem = calcularPuntosItem(precio, nuevaCantidad);
+        const puntosDisplay = fila.querySelector('.puntos-item');
+        if (puntosDisplay) {
+            puntosDisplay.innerHTML = `<i class="fas fa-star"></i> ${puntosItem} pts`;
+        }
+
+        actualizarResumen();
+        guardarCarritoEnSesion();
+    }
+
+    function eliminarDelCarrito(index) {
+        if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+            carritoLocal.splice(index, 1);
+
+            const fila = document.querySelector(`tr[data-index="${index}"]`);
+            if (fila) {
+                fila.remove();
+            }
+
+            // Reindexar las filas restantes
+            document.querySelectorAll('tbody tr').forEach((fila, nuevoIndex) => {
+                fila.setAttribute('data-index', nuevoIndex);
+                const botones = fila.querySelectorAll('button[onclick*="cambiarCantidadCarrito"]');
+                botones.forEach(boton => {
+                    const onclick = boton.getAttribute('onclick');
+                    boton.setAttribute('onclick', onclick.replace(/\d+/, nuevoIndex));
+                });
+
+                const botonEliminar = fila.querySelector('button[onclick*="eliminarDelCarrito"]');
+                if (botonEliminar) {
+                    botonEliminar.setAttribute('onclick', `eliminarDelCarrito(${nuevoIndex})`);
+                }
+            });
+
+            actualizarResumen();
+            guardarCarritoEnSesion();
+
+            if (carritoLocal.length === 0) {
+                location.reload();
+            }
+        }
+    }
+
+    // ✅ FUNCIÓN MEJORADA PARA ACTUALIZAR RESUMEN
+    function actualizarResumen() {
+        console.log('[DEBUG] Actualizando resumen...');
+        console.log('[DEBUG] CarritoLocal:', carritoLocal);
+
+        // ✅ VALIDAR QUE CARRITOLOCAL NO ESTÉ VACÍO
+        if (!carritoLocal || carritoLocal.length === 0) {
+            console.log('[DEBUG] Carrito vacío, deshabilitando botón');
+
+            // Actualizar todos los elementos a 0
+            const elementos = [
+                'totalItems', 'totalPagar', 'puntosTotal',
+                'puntosGrandes', 'puntosResumen', 'puntosCard'
+            ];
+
+            elementos.forEach(id => {
+                const elemento = document.getElementById(id);
+                if (elemento) {
+                    if (id.includes('puntos')) {
+                        elemento.textContent = '0 puntos';
+                    } else if (id === 'totalPagar') {
+                        elemento.textContent = '$0.00';
+                    } else {
+                        elemento.textContent = '0';
+                    }
+                }
+            });
+
+            const btnProcesar = document.getElementById('btnProcesar');
+            if (btnProcesar) {
+                btnProcesar.disabled = carritoLocal.length === 0 || totalPagar <= 0;
+            }
+            return;
+        }
+
+        // ✅ CALCULAR TOTALES CON VALIDACIÓN
+        let totalItems = 0;
+        let totalPagar = 0;
+
+        carritoLocal.forEach((item, index) => {
+            const cantidad = validarNumero(item.Cantidad, 0);
+            const subtotal = validarNumero(item.Subtotal, 0);
+
+            console.log(`[DEBUG] Item ${index}: cantidad=${cantidad}, subtotal=${subtotal}`);
+
+            totalItems += cantidad;
+            totalPagar += subtotal;
+        });
+
+        const puntosTotal = Math.floor(totalPagar * 30);
+
+        console.log(`[DEBUG] Totales calculados: items=${totalItems}, pagar=${totalPagar}, puntos=${puntosTotal}`);
+
+        // ✅ ACTUALIZAR ELEMENTOS CON VALIDACIÓN
+        const actualizarElemento = (id, valor) => {
+            const elemento = document.getElementById(id);
+            if (elemento) {
+                elemento.textContent = valor;
+            } else {
+                console.warn(`[WARN] Elemento ${id} no encontrado`);
+            }
+        };
+
+        actualizarElemento('totalItems', totalItems);
+        actualizarElemento('totalPagar', '$' + totalPagar.toFixed(2));
+        actualizarElemento('puntosTotal', puntosTotal + ' puntos');
+        actualizarElemento('puntosGrandes', puntosTotal);
+        actualizarElemento('puntosResumen', puntosTotal + ' puntos');
+        actualizarElemento('puntosCard', puntosTotal + ' puntos');
+
+        const btnProcesar = document.getElementById('btnProcesar');
+        if (btnProcesar) {
+            btnProcesar.disabled = false;
+        }
+    }
+
+    function guardarCarritoEnSesion() {
+        fetch('@Url.Action("ActualizarCarrito")', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(carritoLocal)
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (!result.success) {
+                    console.error('[ERROR] Error al guardar carrito:', result.message);
+                }
+            })
+            .catch(error => {
+                console.error('[ERROR] Error de red al guardar carrito:', error);
+            });
+    }
+
+    // ✅ FUNCIÓN SIMPLIFICADA PARA PROCESAR PEDIDO
+    function procesarPedido() {
+        const tipoServicio = document.querySelector('input[name="tipoServicio"]:checked')?.value;
+        if (!tipoServicio) {
+            alert('Por favor selecciona el tipo de servicio');
+            return;
+        }
+
+        // Confirmación simple
+        if (!confirm('¿Confirmas tu pedido?')) return;
+
+        const data = {
+            TipoServicio: tipoServicio,
+            Observaciones: "Pedido generado por recomendación IA"
+        };
+
+        const btnProcesar = document.getElementById('btnProcesar');
+        btnProcesar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+        btnProcesar.disabled = true;
+
+        fetch('@Url.Action("ProcesarPedido")', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('✅ ¡Pedido confirmado exitosamente!');
+                    window.location.href = '@Url.Action("Confirmacion", "Personalizacion")?id=' + result.pedidoId;
+                } else {
+                    alert('❌ Error: ' + result.message);
+                    btnProcesar.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido IA';
+                    btnProcesar.disabled = false;
+                }
+            })
+            .catch(error => {
+                alert('❌ Error de conexión');
+                btnProcesar.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido IA';
+                btnProcesar.disabled = false;
+            });
+    }
+
+    // Manejar selección de servicio
+    document.querySelectorAll('.service-option').forEach(option => {
+        option.addEventListener('click', function () {
+            const radio = this.querySelector('input[type="radio"]');
+            radio.checked = true;
+            document.querySelectorAll('.service-option').forEach(o => o.classList.remove('selected'));
+            this.classList.add('selected');
+        });
+    });
+
+    // ✅ INICIALIZAR AL CARGAR LA PÁGINA
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('[DEBUG] Página cargada, inicializando...');
+        actualizarResumen();
+    });
+</script>
+
+<style>
+    .btn-warning {
+        background-color: #F2A900;
+        border-color: #F2A900;
+        color: #fff;
+    }
+
+        .btn-warning:hover {
+            background-color: #e09600;
+            border-color: #d48e00;
+            color: #fff;
+        }
+
+        .btn-warning:disabled {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            opacity: 0.65;
+        }
+
+    .quantity-control-small {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-quantity-small {
+        width: 25px;
+        height: 25px;
+        border: 1px solid #ddd;
+        background: #f8f9fa;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+    }
+
+        .btn-quantity-small:hover {
+            background: #e9ecef;
+        }
+
+    .cantidad-display {
+        min-width: 25px;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .service-option {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid #dee2e6;
+    }
+
+        .service-option:hover, .service-option.selected {
+            border-color: #F2A900;
+            background-color: #fff8e6;
+            box-shadow: 0 0.25rem 0.5rem rgba(242, 169, 0, 0.25);
+        }
+
+        .service-option input {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .service-option label {
+            cursor: pointer;
+            margin: 0;
+            padding: 1rem 0;
+        }
+
+    /* ✅ ESTILOS PARA PUNTOS */
+    .points-display {
+        background: linear-gradient(45deg, #fff3cd, #ffeaa7);
+        padding: 15px;
+        border-radius: 10px;
+        border: 2px solid #ffc107;
+    }
+
+    .alert-success {
+        background: linear-gradient(45deg, #d1edff, #e8f5e8);
+        border: 1px solid #28a745;
+        border-radius: 10px;
+    }
+
+    .badge.bg-success {
+        background: linear-gradient(45deg, #28a745, #20c997) !important;
+    }
+</style>

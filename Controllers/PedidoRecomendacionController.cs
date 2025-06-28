@@ -69,7 +69,7 @@ namespace ProyectoIdentity.Controllers
                     UsuarioId = usuario.Id,
                     Estado = "Preparándose",
                     Total = request.Items.Sum(i => i.Subtotal),
-                    TipoServicio = request.TipoServicio ?? "Servir aquí", // ✅ USAR EL TIPO SELECCIONADO
+                    TipoServicio = request.TipoServicio ?? "Servir aquí",
                     SucursalId = sucursal.Id
                 };
 
@@ -94,6 +94,9 @@ namespace ProyectoIdentity.Controllers
 
                 await _context.SaveChangesAsync();
 
+                // ✅ NUEVO: AGREGAR PUNTOS DE FIDELIDAD
+                await AgregarPuntosPorPedidoRecomendacion(usuario.Id, pedido.Total);
+
                 // ✅ MANTENER INFO DE SUCURSAL PARA CONFIRMACIÓN
                 TempData.Keep("SucursalSeleccionada");
                 TempData.Keep("DireccionSeleccionada");
@@ -103,7 +106,8 @@ namespace ProyectoIdentity.Controllers
                 {
                     success = true,
                     pedidoId = pedido.Id,
-                    message = "Pedido creado exitosamente"
+                    message = "Pedido creado exitosamente",
+                    puntosGanados = (int)(pedido.Total * 30) // ✅ DEVOLVER PUNTOS GANADOS
                 });
             }
             catch (Exception ex)
@@ -116,7 +120,45 @@ namespace ProyectoIdentity.Controllers
             }
         }
 
-        // Ver confirmación del pedido - DESDE BASE DE DATOS
+        // ✅ NUEVO MÉTODO - Agregar al final del controlador
+        private async Task<bool> AgregarPuntosPorPedidoRecomendacion(string usuarioId, decimal totalPedido)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(usuarioId)) return false;
+
+                var usuario = await _context.AppUsuario.FindAsync(usuarioId);
+                if (usuario == null) return false;
+
+                // Calcular puntos ganados (30 puntos por dólar)
+                int puntosGanados = (int)(totalPedido * 30);
+
+                // Agregar puntos al usuario
+                usuario.PuntosFidelidad = (usuario.PuntosFidelidad ?? 0) + puntosGanados;
+
+                // Crear registro de transacción de puntos
+                var transaccion = new ProyectoIdentity.Models.TransaccionPuntos
+                {
+                    UsuarioId = usuarioId,
+                    Puntos = puntosGanados,
+                    Tipo = "Ganancia",
+                    Descripcion = $"Puntos ganados por pedido de recomendación IA - Total: ${totalPedido:F2}",
+                    Fecha = DateTime.Now
+                };
+
+                _context.TransaccionesPuntos.Add(transaccion);
+                await _context.SaveChangesAsync();
+
+                Console.WriteLine($"[PUNTOS] Usuario {usuarioId} ganó {puntosGanados} puntos por pedido de ${totalPedido}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error al agregar puntos: {ex.Message}");
+                return false;
+            }
+        }
+
         // ACTUALIZAR el método Confirmacion en PedidoRecomendacionController
 
         // Ver confirmación del pedido - DESDE BASE DE DATOS

@@ -1,23 +1,85 @@
 ﻿@model ProyectoIdentity.Models.Pedido
 @{
-    ViewBag.Title = "Confirmación de Pedido";
-    Layout = "~/Views/Shared/_Layout.cshtml";
-    
-    // ✅ OBTENER INFORMACIÓN DE SUCURSAL DESDE TEMPDATA
-    string sucursalSeleccionada = TempData["SucursalSeleccionada"]?.ToString();
-    string direccionSeleccionada = TempData["DireccionSeleccionada"]?.ToString();
-    bool tieneSucursalPersonalizada = !string.IsNullOrEmpty(sucursalSeleccionada);
+    ViewData["Title"] = "Pedido Confirmado";
+    int puntosGanados = (int)(Model.Total * 30);
+    bool esAdministrador = User.IsInRole("Administrador");
 }
 
-<div class="container">
+<div class="container mt-4">
     <div class="row">
         <div class="col-md-8 mx-auto">
-            <div class="card mt-4">
-                <div class="card-header bg-success text-white text-center">
-                    <h3><i class="fas fa-check-circle"></i> ¡Pedido Confirmado!</h3>
+            
+            <!-- ✅ MOSTRAR MENSAJES DE TEMPDATA -->
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <!-- ✅ NOTIFICACIÓN DE ESTADO DEL PEDIDO -->
+            @if (Model.Estado == "Listo para entregar")
+            {
+                <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-bell fa-2x text-warning me-3"></i>
+                        <div>
+                            <h5 class="alert-heading mb-1">¡Tu pedido está listo para entregar! 🎉</h5>
+                            <p class="mb-0">
+                                <strong>Pedido #@Model.Id.ToString("D6")</strong> - 
+                                Puedes recogerlo en <strong>@(Model.Sucursal?.Nombre ?? "la sucursal")</strong>
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            else if (Model.Estado == "Entregado")
+            {
+                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle fa-2x text-success me-3"></i>
+                        <div>
+                            <h5 class="alert-heading mb-1">¡Pedido entregado exitosamente! ✅</h5>
+                            <p class="mb-0">Esperamos que hayas disfrutado tu pedido. ¡Gracias por tu preferencia!</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <div class="card">
+                <div class="card-header bg-warning text-white text-center">
+                    <h3><i class="fas fa-check-circle"></i> ¡Pedido de Recomendación IA Confirmado!</h3>
                     <p class="mb-0">Tu pedido ha sido recibido exitosamente</p>
                 </div>
                 <div class="card-body">
+                    <!-- ✅ SECCIÓN DE PUNTOS GANADOS -->
+                    <div class="alert alert-success mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h5 class="mb-1"><i class="fas fa-star text-warning"></i> ¡Felicitaciones!</h5>
+                                <p class="mb-0">Has ganado <strong>@puntosGanados puntos</strong> con este pedido de $@Model.Total.ToString("F2")</p>
+                                <small class="text-muted">@Model.Total.ToString("F2") × 30 puntos por dólar = @puntosGanados puntos</small>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <div class="points-earned">
+                                    <span class="h2 text-warning">@puntosGanados</span>
+                                    <br>
+                                    <small>puntos ganados</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <h5>Información del Pedido</h5>
@@ -32,70 +94,90 @@
                                 </tr>
                                 <tr>
                                     <td><strong>Estado:</strong></td>
-                                    <td><span class="badge bg-warning">@Model.Estado</span></td>
+                                    <td>
+                                        @if (Model.Estado == "Preparándose")
+                                        {
+                                            <span class="badge bg-info">@Model.Estado</span>
+                                        }
+                                        else if (Model.Estado == "Listo para entregar")
+                                        {
+                                            <span class="badge bg-warning">@Model.Estado</span>
+                                        }
+                                        else if (Model.Estado == "Entregado")
+                                        {
+                                            <span class="badge bg-success">@Model.Estado</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@Model.Estado</span>
+                                        }
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td><strong>Total:</strong></td>
-                                    <td class="h5 text-success">$@Model.Total</td>
+                                    <td class="h5 text-success">$@Model.Total.ToString("F2")</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Origen:</strong></td>
+                                    <td><span class="badge bg-warning">Recomendación IA</span></td>
                                 </tr>
                             </table>
                         </div>
                         <div class="col-md-6">
-                            <h5>Datos de Recolección</h5>
+                            <h5>Datos de Entrega</h5>
                             <table class="table table-borderless">
                                 <tr>
                                     <td><strong>Usuario:</strong></td>
                                     <td>@User.Identity.Name</td>
                                 </tr>
-                                @if (tieneSucursalPersonalizada)
+                                <tr>
+                                    <td><strong>Tipo de Servicio:</strong></td>
+                                    <td>@(Model.TipoServicio ?? "Servir aquí")</td>
+                                </tr>
+                                @if (Model.Sucursal != null)
                                 {
                                     <tr>
                                         <td><strong>Sucursal:</strong></td>
-                                        <td>
-                                            <span class="badge bg-primary">
-                                                <i class="fas fa-map-marker-alt"></i> @sucursalSeleccionada
-                                            </span>
-                                        </td>
+                                        <td>@Model.Sucursal.Nombre</td>
                                     </tr>
                                     <tr>
                                         <td><strong>Dirección:</strong></td>
-                                        <td>@direccionSeleccionada</td>
+                                        <td>@Model.Sucursal.Direccion</td>
+                                    </tr>
+                                }
+                                else if (TempData["SucursalSeleccionada"] != null)
+                                {
+                                    <tr>
+                                        <td><strong>Sucursal:</strong></td>
+                                        <td>@TempData["SucursalSeleccionada"]</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Dirección:</strong></td>
+                                        <td>@TempData["DireccionSeleccionada"]</td>
                                     </tr>
                                 }
                                 <tr>
-                                    <td><strong>Tipo de Servicio:</strong></td>
+                                    <td><strong>Tiempo estimado:</strong></td>
                                     <td>
-                                        @if (Model.TipoServicio == "Servir aquí")
+                                        @if (Model.Estado == "Listo para entregar")
                                         {
-                                            <span class="badge bg-primary">
-                                                <i class="fas fa-chair"></i> @Model.TipoServicio
-                                            </span>
+                                            <span class="text-success"><strong>¡Listo para recoger!</strong></span>
                                         }
-                                        else if (Model.TipoServicio == "Para llevar")
+                                        else if (Model.Estado == "Entregado")
                                         {
-                                            <span class="badge bg-success">
-                                                <i class="fas fa-shopping-bag"></i> @Model.TipoServicio
-                                            </span>
+                                            <span class="text-success"><strong>Entregado</strong></span>
                                         }
                                         else
                                         {
-                                            <span class="badge bg-secondary">@Model.TipoServicio</span>
+                                            <span>15-25 minutos</span>
                                         }
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Tiempo estimado:</strong></td>
-                                    <td>
-                                        <span class="badge bg-info">
-                                            <i class="fas fa-clock"></i> 15-25 minutos
-                                        </span>
                                     </td>
                                 </tr>
                             </table>
                         </div>
                     </div>
-                    
-                    <h5>Detalle de Productos</h5>
+
+                    <h5>Detalle de Productos Recomendados</h5>
                     <div class="table-responsive">
                         <table class="table table-striped">
                             <thead>
@@ -103,67 +185,87 @@
                                     <th>Producto</th>
                                     <th>Precio Unit.</th>
                                     <th>Cantidad</th>
+                                    <th>Puntos</th>
                                     <th>Subtotal</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach (var detalle in Model.Detalles)
                                 {
+                                    var puntosProducto = (int)(detalle.PrecioUnitario * detalle.Cantidad * 30);
                                     <tr>
-                                        <td>@detalle.Producto.Nombre</td>
-                                        <td>$@detalle.PrecioUnitario</td>
+                                        <td>
+                                            <strong>@detalle.Producto.Nombre</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="fas fa-robot"></i> Recomendado por IA
+                                            </small>
+                                        </td>
+                                        <td>$@detalle.PrecioUnitario.ToString("F2")</td>
                                         <td>@detalle.Cantidad</td>
-                                        <td>$@((detalle.PrecioUnitario * detalle.Cantidad).ToString("F2"))</td>
+                                        <td>
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-star"></i> @puntosProducto pts
+                                            </span>
+                                        </td>
+                                        <td><strong>$@((detalle.PrecioUnitario * detalle.Cantidad).ToString("F2"))</strong></td>
                                     </tr>
                                 }
                             </tbody>
                             <tfoot>
-                                <tr class="table-success">
+                                <tr class="table-warning">
                                     <th colspan="3">Total a Pagar:</th>
-                                    <th>$@Model.Total</th>
+                                    <th>
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-star"></i> @puntosGanados pts
+                                        </span>
+                                    </th>
+                                    <th>$@Model.Total.ToString("F2")</th>
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
-                    
+
                     <div class="alert alert-info">
                         <h6><i class="fas fa-info-circle"></i> Información Importante:</h6>
                         <ul class="mb-0">
-                            @if (tieneSucursalPersonalizada)
+                            @if (Model.Estado == "Listo para entregar")
                             {
-                                <li><strong>Sucursal seleccionada:</strong> @sucursalSeleccionada</li>
-                                <li><strong>Dirección:</strong> @direccionSeleccionada</li>
-                                <li>Recoge tu pedido en el punto seleccionado</li>
-                                <li>Cuando llegues, menciona el número de tu pedido: <strong>#@Model.Id.ToString("D6")</strong></li>
+                                <li><strong>¡Tu pedido está listo!</strong> Puedes recogerlo ahora</li>
+                                <li>Presenta este número de pedido: <strong>#@Model.Id.ToString("D6")</strong></li>
                             }
-                            else if (Model.TipoServicio == "Servir aquí")
+                            else if (Model.Estado == "Entregado")
                             {
-                                <li>Tu mesa te será asignada cuando llegues al restaurante</li>
-                                <li>Puedes esperar en el área de recepción</li>
+                                <li>Tu pedido ha sido entregado exitosamente</li>
                             }
                             else
                             {
-                                <li>Recoge tu pedido en el mostrador</li>
-                                <li>Te avisaremos cuando esté listo</li>
+                                <li>Tiempo estimado de preparación: 15-25 minutos</li>
+                                <li>Te notificaremos cuando esté listo para recoger</li>
                             }
-                            <li>Tiempo estimado de preparación: 15-25 minutos</li>
-                            <li>Recibirás una notificación cuando esté listo</li>
-                            <li>Métodos de pago disponibles: Efectivo, tarjeta, transferencia</li>
-                            <li>El pedido se registró con tu usuario: <strong>@User.Identity.Name</strong></li>
+                            <li><strong>Pedido generado por Recomendación IA</strong> - Productos seleccionados especialmente para ti</li>
+                            <li>Has ganado <strong>@puntosGanados puntos</strong> que ya están disponibles en tu cuenta</li>
+                            <li>Usa tus puntos para canjear recompensas en el programa de fidelidad</li>
                         </ul>
                     </div>
                 </div>
                 <div class="card-footer text-center">
                     <div class="d-flex justify-content-center gap-3">
                         <a href="@Url.Action("Recomendacion", "MenuRecomendacion")" class="btn btn-warning">
-                            <i class="fas fa-utensils"></i> Hacer Nuevo Pedido
+                            <i class="fas fa-robot"></i> Nueva Recomendación
                         </a>
-                        <a href="@Url.Action("MisPedidos", "PedidoRecomendacion")" class="btn btn-outline-secondary">
-                            <i class="fas fa-list"></i> Ver Mis Pedidos
+                        <a href="@Url.Action("MisPuntos", "Fidelizacion")" class="btn btn-success">
+                            <i class="fas fa-star"></i> Ver Mis Puntos
                         </a>
-                        <a href="@Url.Action("ListarPedidos", "PedidoRecomendacion")" class="btn btn-outline-primary">
-                            <i class="fas fa-cog"></i> Administrar Pedidos
+                        <a href="@Url.Action("Recompensas", "Fidelizacion")" class="btn btn-info">
+                            <i class="fas fa-gift"></i> Canjear Recompensas
                         </a>
+                        @if (esAdministrador)
+                        {
+                            <a href="@Url.Action("AdminAnalisis")" class="btn btn-outline-primary">
+                                <i class="fas fa-chart-line"></i> Ver Análisis (Admin)
+                            </a>
+                        }
                     </div>
                 </div>
             </div>
@@ -171,41 +273,166 @@
     </div>
 </div>
 
-@section styles {
+<!-- ✅ ESTILOS CSS -->
 <style>
     .btn-warning {
-        color: #fff;
         background-color: #F2A900;
         border-color: #F2A900;
+        color: #fff;
     }
 
-    .btn-warning:hover {
-        color: #fff;
-        background-color: #e09600;
-        border-color: #d48e00;
-    }
+        .btn-warning:hover {
+            background-color: #e09600;
+            border-color: #d48e00;
+            color: #fff;
+        }
 
     .card {
         box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border-radius: 10px;
     }
-    
+
     .table-borderless td {
         border: none;
         padding: 0.25rem 0;
     }
-    
+
     .gap-3 {
         gap: 1rem !important;
     }
-    
-    .badge {
-        font-size: 0.875em;
+
+    .points-earned {
+        background: linear-gradient(45deg, #fff3cd, #ffeaa7);
+        padding: 15px;
+        border-radius: 10px;
+        border: 2px solid #ffc107;
     }
-    
-    @@media print {
-        .card-footer {
-            display: none !important;
+
+    .alert-success {
+        background: linear-gradient(45deg, #d1edff, #e8f5e8);
+        border: 1px solid #28a745;
+        border-radius: 10px;
+    }
+
+    .text-warning {
+        color: #ffc107 !important;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+
+    .btn-info {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+    }
+
+        .btn-info:hover {
+            background-color: #138496;
+            border-color: #117a8b;
+        }
+
+    /* ✅ ESTILOS PARA LAS NOTIFICACIONES */
+    .alert {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .alert-warning {
+        background: linear-gradient(45deg, #fff3cd, #ffeaa7);
+        border: 1px solid #ffc107;
+    }
+
+    .alert-info {
+        background: linear-gradient(45deg, #d1ecf1, #bee5eb);
+        border: 1px solid #17a2b8;
+    }
+
+    /* ✅ ANIMACIÓN PARA LAS NOTIFICACIONES */
+    .alert.fade.show {
+        animation: slideInDown 0.5s ease-out;
+    }
+
+    @@keyframes slideInDown {
+        from {
+            transform: translateY(-30px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
         }
     }
+
+    /* ✅ BADGE MEJORADOS */
+    .badge {
+        font-size: 0.9em;
+        padding: 0.5em 0.8em;
+    }
+
+    /* ✅ DESTACAR ELEMENTOS DE IA */
+    .table-warning {
+        background-color: rgba(242, 169, 0, 0.1) !important;
+    }
+
+    .card-header.bg-warning {
+        background: linear-gradient(45deg, #F2A900, #ffc107) !important;
+    }
 </style>
-}
+
+<script>
+    // ✅ AUTO-REFRESH CADA 30 SEGUNDOS PARA ACTUALIZAR EL ESTADO
+    @if (Model.Estado == "Preparándose" || Model.Estado == "Listo para entregar")
+    {
+        <text>
+        setInterval(function() {
+            // Solo refrescar si la página está visible
+            if (!document.hidden) {
+                window.location.reload();
+            }
+        }, 30000); // 30 segundos
+        </text>
+    }
+
+    // ✅ NOTIFICACIÓN DE ESCRITORIO SI EL ESTADO CAMBIA
+    @if (Model.Estado == "Listo para entregar")
+    {
+        <text>
+        // Solicitar permiso para notificaciones
+        if (Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+        
+        // Mostrar notificación si está permitido
+        if (Notification.permission === "granted") {
+            new Notification("¡Tu pedido de IA está listo! 🤖🍕", {
+                body: "Pedido #@Model.Id.ToString("D6") - Puedes recogerlo en @(Model.Sucursal?.Nombre ?? "la sucursal")",
+                icon: "/images1/logo_bar_verace.png" // Ajusta la ruta del icono
+            });
+        }
+        </text>
+    }
+
+    // ✅ MOSTRAR MENSAJE DE BIENVENIDA PARA NUEVOS USUARIOS DEL PROGRAMA
+    document.addEventListener('DOMContentLoaded', function() {
+        // Opcional: mostrar un toast con información sobre los puntos ganados
+        console.log('Puntos ganados con este pedido de IA: @puntosGanados');
+        
+        // Si es el primer pedido de recomendación, mostrar ayuda
+        const esPrimerPedidoIA = '@TempData["PrimerPedidoIA"]' === 'True';
+        if (esPrimerPedidoIA) {
+            setTimeout(function() {
+                alert('🎉 ¡Felicitaciones por tu primer pedido con Recomendación IA!\n\n' +
+                      '✅ Has ganado @puntosGanados puntos\n' +
+                      '🎁 Usa tus puntos para canjear recompensas\n' +
+                      '🤖 La IA aprenderá de tus preferencias para futuras recomendaciones');
+            }, 2000);
+        }
+    });
+</script>

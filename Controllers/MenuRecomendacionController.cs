@@ -5,6 +5,8 @@ using ProyectoIdentity.Datos;
 using System.Text.RegularExpressions;
 using System.Text.Json;
 using System.Globalization;
+using ProyectoIdentity.Models;
+using System.Security.Claims;
 
 namespace ProyectoIdentity.Controllers
 {
@@ -465,7 +467,7 @@ namespace ProyectoIdentity.Controllers
             return producto / (normaA * normaB);
         }
 
-        // ✅ DETALLE DESDE BD
+        // ✅ REEMPLAZAR el método Detalle existente
         public async Task<IActionResult> Detalle(int id)
         {
             try
@@ -486,7 +488,12 @@ namespace ProyectoIdentity.Controllers
                     return NotFound();
                 }
 
+                // ✅ PASAR EL PRODUCTO COMPLETO PARA IMAGEN E INFORMACIÓN
+                ViewBag.ProductoCompleto = producto;
                 ViewBag.IndiceProducto = id;
+
+                Console.WriteLine($"[DEBUG] Producto: {producto.Nombre}, Imagen: {producto.Imagen?.Length ?? 0} bytes");
+
                 return View(plato);
             }
             catch (Exception ex)
@@ -496,7 +503,262 @@ namespace ProyectoIdentity.Controllers
             }
         }
 
-        // AGREGAR ESTOS 3 MÉTODOS AL FINAL DEL MenuRecomendacionController EXISTENTE
+        // ✅ MÉTODO AGREGAR AL CARRITO CORREGIDO
+        [HttpPost]
+        public async Task<IActionResult> AgregarAlCarrito([FromBody] PersonalizacionRequest request)
+        {
+            try
+            {
+                var producto = await _context.Productos.FindAsync(request.ProductoId);
+                if (producto == null)
+                    return Json(new { success = false, message = "Producto no encontrado" });
+
+                var carrito = GetCarritoRecomendacion();
+
+                var itemCarrito = new ItemCarritoPersonalizado
+                {
+                    Id = request.ProductoId,
+                    Nombre = producto.Nombre,
+                    Precio = producto.Precio,
+                    Cantidad = request.Cantidad,
+                    IngredientesRemovidos = request.IngredientesRemovidos ?? new List<string>(),
+                    NotasEspeciales = request.NotasEspeciales ?? "",
+                    AhorroInterno = 0,
+                    Subtotal = producto.Precio * request.Cantidad
+                };
+
+                carrito.Add(itemCarrito);
+                SetCarritoRecomendacion(carrito);
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Producto agregado",
+                    totalItems = carrito.Sum(c => c.Cantidad),
+                    totalCarrito = carrito.Sum(c => c.Subtotal)
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        public IActionResult VerCarrito()
+        {
+            try
+            {
+                var carrito = GetCarritoRecomendacion();
+
+                Console.WriteLine($"[DEBUG] VerCarrito - Cantidad de items: {carrito.Count}");
+
+                // Validar que todos los items tengan datos válidos
+                foreach (var item in carrito)
+                {
+                    if (item.Subtotal <= 0 && item.Precio > 0 && item.Cantidad > 0)
+                    {
+                        item.Subtotal = item.Precio * item.Cantidad;
+                        Console.WriteLine($"[DEBUG] Recalculando subtotal para {item.Nombre}: {item.Subtotal}");
+                    }
+
+                    Console.WriteLine($"[DEBUG] Item: {item.Nombre}, Precio: {item.Precio}, Cantidad: {item.Cantidad}, Total: {item.Subtotal}");
+                }
+
+                return View(carrito);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error en VerCarrito: {ex.Message}");
+                // Devolver carrito vacío en caso de error
+                return View(new List<ItemCarritoPersonalizado>());
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ProcesarPedido([FromBody] PedidoRequest request)
+        {
+            try
+            {
+                var carritoItems = GetCarritoRecomendacion();
+
+                Console.WriteLine($"[DEBUG] Carrito obtenido: {carritoItems.Count} items");
+
+                // ✅ VALIDACIÓN MEJORADA DEL CARRITO
+                if (carritoItems == null || !carritoItems.Any())
+                {
+                    Console.WriteLine("[DEBUG] Carrito está vacío o es null");
+                    return Json(new { success = false, message = "El carrito está vacío" });
+                }
+
+                // ✅ VALIDAR QUE TODOS LOS ITEMS TENGAN DATOS VÁLIDOS
+                var itemsValidos = carritoItems.Where(item =>
+                    item.Id > 0 &&
+                    item.Cantidad > 0 &&
+                    item.Precio > 0 &&
+                    !string.IsNullOrEmpty(item.Nombre)
+                ).ToList();
+
+                if (!itemsValidos.Any())
+                {
+                    Console.WriteLine("[DEBUG] No hay items válidos en el carrito");
+                    return Json(new { success = false, message = "No hay productos válidos en el carrito" });
+                }
+
+                // ✅ RECALCULAR SUBTOTALES PARA EVITAR NaN
+                foreach (var item in itemsValidos)
+                {
+                    item.Subtotal = item.Precio * item.Cantidad;
+                    Console.WriteLine($"[DEBUG] Item: {item.Nombre}, Precio: {item.Precio}, Cantidad: {item.Cantidad}, Subtotal: {item.Subtotal}");
+                }
+
+                var total = itemsValidos.Sum(item => item.Subtotal);
+                Console.WriteLine($"[DEBUG] Total calculado: {total}");
+
+                // ✅ VALIDAR QUE EL TOTAL SEA VÁLIDO
+                if (total <= 0)
+                {
+                    return Json(new { success = false, message = "El total del pedido no es válido" });
+                }
+
+                // ✅ USAR SUCURSAL DE TEMPDATA SI EXISTE
+                int? sucursalId = TempData["SucursalId"] as int?;
+                var sucursal = sucursalId.HasValue
+                    ? await _context.Sucursales.FindAsync(sucursalId.Value)
+                    : await _context.Sucursales.FirstOrDefaultAsync();
+
+                if (sucursal == null)
+                {
+                    return Json(new { success = false, message = "No hay sucursales disponibles" });
+                }
+
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                var pedido = new Pedido
+                {
+                    UsuarioId = userId,
+                    SucursalId = sucursal.Id,
+                    TipoServicio = request.TipoServicio,
+                    Comentario = request.Observaciones,
+                    Fecha = DateTime.Now,
+                    Estado = "Preparándose",
+                    Total = total,
+                    Detalles = itemsValidos.Select(item => new PedidoDetalle
+                    {
+                        ProductoId = item.Id,
+                        PrecioUnitario = item.Precio,
+                        Cantidad = item.Cantidad,
+                        IngredientesRemovidos = "[]",
+                        NotasEspeciales = item.NotasEspeciales ?? "Pedido por recomendación IA"
+                    }).ToList()
+                };
+
+                _context.Pedidos.Add(pedido);
+                await _context.SaveChangesAsync();
+
+                // ✅ AGREGAR PUNTOS AL USUARIO CON VALIDACIÓN
+                if (User.Identity.IsAuthenticated && total > 0)
+                {
+                    await AgregarPuntosAUsuarioRecomendacion(userId, total);
+                }
+
+                LimpiarCarritoRecomendacion();
+
+                Console.WriteLine($"[DEBUG] Pedido creado exitosamente: ID {pedido.Id}");
+
+                return Json(new
+                {
+                    success = true,
+                    pedidoId = pedido.Id,
+                    total = total,
+                    puntosGanados = (int)(total * 30)
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error en ProcesarPedido: {ex.Message}");
+                Console.WriteLine($"[ERROR] StackTrace: {ex.StackTrace}");
+                return Json(new { success = false, message = "Error interno del servidor: " + ex.Message });
+            }
+        }
+
+        private async Task AgregarPuntosAUsuarioRecomendacion(string usuarioId, decimal totalPedido)
+        {
+            if (string.IsNullOrEmpty(usuarioId)) return;
+
+            var usuario = await _context.AppUsuario.FindAsync(usuarioId);
+            if (usuario == null) return;
+
+            int puntosGanados = (int)(totalPedido * 30);
+            usuario.PuntosFidelidad = (usuario.PuntosFidelidad ?? 0) + puntosGanados;
+
+            var transaccion = new TransaccionPuntos
+            {
+                UsuarioId = usuarioId,
+                Puntos = puntosGanados,
+                Tipo = "Ganancia",
+                Descripcion = $"Puntos ganados por pedido de recomendación IA - Total: ${totalPedido:F2}",
+                Fecha = DateTime.Now
+            };
+
+            _context.TransaccionesPuntos.Add(transaccion);
+            await _context.SaveChangesAsync();
+        }
+
+        // ✅ MÉTODOS DE CARRITO USANDO MODELS
+        private List<ItemCarritoPersonalizado> GetCarritoRecomendacion()
+        {
+            try
+            {
+                var carritoJson = HttpContext.Session.GetString("CarritoRecomendacion");
+                if (string.IsNullOrEmpty(carritoJson))
+                {
+                    return new List<ItemCarritoPersonalizado>();
+                }
+
+                var carrito = JsonSerializer.Deserialize<List<ItemCarritoPersonalizado>>(carritoJson);
+                return carrito ?? new List<ItemCarritoPersonalizado>();
+            }
+            catch
+            {
+                return new List<ItemCarritoPersonalizado>();
+            }
+        }
+
+        private void SetCarritoRecomendacion(List<ItemCarritoPersonalizado> carrito)
+        {
+            try
+            {
+                var carritoJson = JsonSerializer.Serialize(carrito);
+                HttpContext.Session.SetString("CarritoRecomendacion", carritoJson);
+            }
+            catch
+            {
+                // Error al guardar
+            }
+        }
+
+        private void LimpiarCarritoRecomendacion()
+        {
+            HttpContext.Session.Remove("CarritoRecomendacion");
+            Console.WriteLine("[DEBUG] Carrito limpiado de la sesión");
+        }
+
+        // ✅ MÉTODO PARA DEBUG - TEMPORAL
+        [HttpGet]
+        public IActionResult DebugCarrito()
+        {
+            var carrito = GetCarritoRecomendacion();
+            return Json(new
+            {
+                success = true,
+                carrito = carrito,
+                count = carrito.Count,
+                total = carrito.Sum(c => c.Subtotal),
+                sessionId = HttpContext.Session.Id
+            });
+        }
+
+        // AGREGAR ESTOS MÉTODOS AL FINAL DEL MenuRecomendacionController EXISTENTE
 
         // 1. SELECCIONAR PUNTO DE RECOLECCIÓN
         public async Task<IActionResult> SeleccionarRecoleccion(int productoId)
@@ -557,11 +819,38 @@ namespace ProyectoIdentity.Controllers
             return View(punto);
         }
 
+        [HttpPost]
+        public IActionResult ActualizarCarrito([FromBody] List<ItemCarritoPersonalizado> carrito)
+        {
+            try
+            {
+                Console.WriteLine($"[DEBUG] ActualizarCarrito - Recibidos {carrito.Count} items");
+
+                // Validar items antes de guardar
+                foreach (var item in carrito)
+                {
+                    if (item.Subtotal <= 0 && item.Precio > 0 && item.Cantidad > 0)
+                    {
+                        item.Subtotal = item.Precio * item.Cantidad;
+                    }
+                }
+
+                SetCarritoRecomendacion(carrito);
+                return Json(new { success = true, totalItems = carrito.Sum(c => c.Cantidad) });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error en ActualizarCarrito: {ex.Message}");
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
         // 3. REDIRIGIR AUTOMÁTICAMENTE AL DETALLE CON EL ID
+        // ✅ REEMPLAZAR el método ContinuarConDetalle existente
         [HttpPost]
         public async Task<IActionResult> ContinuarConDetalle(int productoId, int puntoRecoleccionId)
         {
-            // MANTENER LA INFO DE SUCURSAL EN TEMPDATA
+            // MANTENER LA INFO DE SUCURSAL EN TEMPDATA para el carrito
             var punto = await _context.CollectionPoints
                 .Include(cp => cp.Sucursal)
                 .FirstOrDefaultAsync(cp => cp.Id == puntoRecoleccionId);
@@ -571,9 +860,15 @@ namespace ProyectoIdentity.Controllers
                 TempData["SucursalSeleccionada"] = punto.Sucursal.Nombre;
                 TempData["DireccionSeleccionada"] = punto.Address;
                 TempData["SucursalId"] = punto.Sucursal.Id;
+
+                // ✅ MANTENER ESTOS DATOS PARA MÚLTIPLES REQUESTS
+                TempData.Keep("SucursalSeleccionada");
+                TempData.Keep("DireccionSeleccionada");
+                TempData.Keep("SucursalId");
             }
 
-            // REDIRIGIR AL DETALLE CON EL ID DEL PRODUCTO SELECCIONADO
+            // ✅ REDIRIGIR AL DETALLE CON EL ID DEL PRODUCTO SELECCIONADO
+            // Esto permite al usuario ver los puntos y agregar al carrito
             return RedirectToAction("Detalle", new { id = productoId });
         }
 
@@ -591,6 +886,20 @@ namespace ProyectoIdentity.Controllers
 
             double c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
             return R * c;
+        }
+
+        public class PersonalizacionRequest
+        {
+            public int ProductoId { get; set; }
+            public int Cantidad { get; set; } = 1;
+            public List<string> IngredientesRemovidos { get; set; } = new();
+            public string? NotasEspeciales { get; set; }
+        }
+
+        public class PedidoRequest
+        {
+            public string TipoServicio { get; set; }
+            public string Observaciones { get; set; }
         }
     }
 }
