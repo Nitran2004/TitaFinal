@@ -8,7 +8,7 @@
 <div class="container mt-4">
     <div class="row">
         <div class="col-md-8 mx-auto">
-            
+
             <!-- ✅ MOSTRAR MENSAJES DE TEMPDATA -->
             @if (TempData["Success"] != null)
             {
@@ -31,7 +31,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             }
-            
+
             <!-- ✅ NOTIFICACIÓN DE ESTADO DEL PEDIDO -->
             @if (Model.Estado == "Listo para entregar")
             {
@@ -41,7 +41,7 @@
                         <div>
                             <h5 class="alert-heading mb-1">¡Tu pedido está listo para entregar! 🎉</h5>
                             <p class="mb-0">
-                                <strong>Pedido #@Model.Id.ToString("D6")</strong> - 
+                                <strong>Pedido #@Model.Id.ToString("D6")</strong> -
                                 Puedes recogerlo en <strong>@(Model.Sucursal?.Nombre ?? "la sucursal")</strong>
                             </p>
                             @if (!string.IsNullOrEmpty(Model.TipoServicio) && Model.TipoServicio == "Servir aquí")
@@ -82,7 +82,7 @@
 
             <div class="card">
                 <div class="card-header bg-success text-white text-center">
-                    <h3><i class="fas fa-check-circle"></i> ¡Pedido Personalizado Confirmado!</h3>
+                    <h3><i class="fas fa-check-circle"></i> ¡Pedido Confirmado!</h3>
                     <p class="mb-0">Tu pedido ha sido recibido exitosamente</p>
                 </div>
                 <div class="card-body">
@@ -186,7 +186,7 @@
                         </div>
                     </div>
 
-                    <h5>Detalle de Productos Personalizados</h5>
+                    <h5>Detalle de Productos</h5>
                     <div class="table-responsive">
                         <table class="table table-striped">
                             <thead>
@@ -199,49 +199,92 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var detalle in Model.Detalles)
+                                @* ✅ MOSTRAR PEDIDOS DE PERSONALIZACIÓN (Detalles) *@
+                                @if (Model.Detalles != null && Model.Detalles.Any())
                                 {
-                                    <tr>
-                                        <td>
-                                            <strong>@detalle.Producto.Nombre</strong>
-                                            @if (!string.IsNullOrEmpty(detalle.NotasEspeciales))
-                                            {
-                                                <br>
-                                                <small class="text-muted">
-                                                    <i class="fas fa-sticky-note"></i> @detalle.NotasEspeciales
-                                                </small>
-                                            }
-                                        </td>
-                                        <td>$@detalle.PrecioUnitario.ToString("F2")</td>
-                                        <td>@detalle.Cantidad</td>
-                                        <td>
-                                            @if (!string.IsNullOrEmpty(detalle.IngredientesRemovidos))
-                                            {
-                                                try
+                                    @foreach (var detalle in Model.Detalles)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@detalle.Producto.Nombre</strong>
+                                                @if (!string.IsNullOrEmpty(detalle.NotasEspeciales))
                                                 {
-                                                    var removidos = System.Text.Json.JsonSerializer.Deserialize<List<string>>(detalle.IngredientesRemovidos);
-                                                    if (removidos.Any())
+                                                    <br>
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-sticky-note"></i> @detalle.NotasEspeciales
+                                                    </small>
+                                                }
+                                            </td>
+                                            <td>$@detalle.PrecioUnitario.ToString("F2")</td>
+                                            <td>@detalle.Cantidad</td>
+                                            <td>
+                                                @if (!string.IsNullOrEmpty(detalle.IngredientesRemovidos))
+                                                {
+                                                    try
                                                     {
-                                                        <small class="text-danger">
-                                                            <i class="fas fa-minus-circle"></i> Sin: @string.Join(", ", removidos)
-                                                        </small>
+                                                        var removidos = System.Text.Json.JsonSerializer.Deserialize<List<string>>(detalle.IngredientesRemovidos);
+                                                        if (removidos.Any())
+                                                        {
+                                                            <small class="text-danger">
+                                                                <i class="fas fa-minus-circle"></i> Sin: @string.Join(", ", removidos)
+                                                            </small>
+                                                        }
+                                                        else
+                                                        {
+                                                            <small class="text-muted">Sin cambios</small>
+                                                        }
                                                     }
-                                                    else
+                                                    catch
                                                     {
                                                         <small class="text-muted">Sin cambios</small>
                                                     }
                                                 }
-                                                catch
+                                                else
                                                 {
                                                     <small class="text-muted">Sin cambios</small>
                                                 }
-                                            }
-                                            else
-                                            {
-                                                <small class="text-muted">Sin cambios</small>
-                                            }
+                                            </td>
+                                            <td><strong>$@((detalle.PrecioUnitario * detalle.Cantidad).ToString("F2"))</strong></td>
+                                        </tr>
+                                    }
+                                }
+
+                                @* ✅ MOSTRAR PEDIDOS NORMALES Y DE CUPONES (PedidoProductos) *@
+                                @if (Model.PedidoProductos != null && Model.PedidoProductos.Any())
+                                {
+                                    @foreach (var item in Model.PedidoProductos)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@item.Producto.Nombre</strong>
+                                                @* Mostrar si es pedido por cupón *@
+                                                @if (Model.EsCupon == true)
+                                                {
+                                                    <br>
+                                                    <small class="text-info">
+                                                        <i class="fas fa-ticket-alt"></i> Pedido por cupón
+                                                    </small>
+                                                }
+                                            </td>
+                                            <td>$@String.Format("{0:F2}", item.Precio)</td>
+                                            <td>@item.Cantidad</td>
+                                            <td>
+                                                <small class="text-muted">Sin personalización</small>
+                                            </td>
+                                            <td><strong>$@String.Format("{0:F2}", (item.Precio * item.Cantidad))</strong></td>
+                                        </tr>
+                                    }
+                                }
+
+                                @* ✅ MOSTRAR SI NO HAY PRODUCTOS *@
+                                @if ((Model.Detalles == null || !Model.Detalles.Any()) &&
+                                (Model.PedidoProductos == null || !Model.PedidoProductos.Any()))
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            No hay productos en este pedido
                                         </td>
-                                        <td><strong>$@((detalle.PrecioUnitario * detalle.Cantidad).ToString("F2"))</strong></td>
                                     </tr>
                                 }
                             </tbody>
@@ -264,7 +307,7 @@
                             <div class="card-body">
                                 <form asp-controller="Pedidos" asp-action="GuardarComentario" method="post" id="formComentario">
                                     <input type="hidden" name="pedidoId" value="@Model.Id" />
-                                    
+
                                     <div class="mb-3">
                                         <label class="form-label"><strong>Calificación: <span class="text-danger">*</span></strong></label>
                                         <div class="rating-stars">
@@ -279,8 +322,8 @@
 
                                     <div class="mb-3">
                                         <label for="comentario" class="form-label"><strong>Comentario: <span class="text-danger">*</span></strong></label>
-                                        <textarea name="comentario" id="comentario" class="form-control" rows="4" 
-                                                  placeholder="Comparte tu experiencia con nosotros..." 
+                                        <textarea name="comentario" id="comentario" class="form-control" rows="4"
+                                                  placeholder="Comparte tu experiencia con nosotros..."
                                                   required minlength="10" maxlength="500"></textarea>
                                         <div class="form-text">
                                             <small class="text-muted">Mínimo 10 caracteres, máximo 500. <span id="charCount">0/500</span></small>
