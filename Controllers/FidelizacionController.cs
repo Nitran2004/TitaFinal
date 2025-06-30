@@ -1474,25 +1474,29 @@ namespace ProyectoIdentity.Controllers
             {
                 try
                 {
+                    // AGREGAR ESTA CORRECCIÓN AL INICIO:
+                    // Normalizar el precio para evitar problemas de cultura
+                    if (model.PrecioOriginal > 100)
+                    {
+                        model.PrecioOriginal = model.PrecioOriginal / 100;
+                    }
+
                     var recompensa = await _context.ProductosRecompensa.FindAsync(model.Id);
                     if (recompensa == null)
                     {
                         TempData["Error"] = "Recompensa no encontrada";
                         return RedirectToAction("AdminRecompensas");
                     }
-
                     // Si cambió el producto, verificar que no esté ya como recompensa
                     if (model.ProductoId.HasValue && model.ProductoId != recompensa.ProductoId)
                     {
                         var yaExiste = await _context.ProductosRecompensa
                             .AnyAsync(r => r.ProductoId == model.ProductoId && r.Id != model.Id);
-
                         if (yaExiste)
                         {
                             TempData["Error"] = "Este producto ya está configurado como recompensa";
                             return RedirectToAction("AdminRecompensas");
                         }
-
                         // Actualizar imagen del nuevo producto
                         if (model.ProductoId.HasValue)
                         {
@@ -1503,16 +1507,13 @@ namespace ProyectoIdentity.Controllers
                             }
                         }
                     }
-
                     recompensa.ProductoId = model.ProductoId;
                     recompensa.Nombre = model.Nombre;
                     recompensa.PrecioOriginal = model.PrecioOriginal;
                     recompensa.PuntosNecesarios = model.PuntosNecesarios;
                     recompensa.Categoria = model.Categoria;
-
                     _context.Update(recompensa);
                     await _context.SaveChangesAsync();
-
                     TempData["Success"] = "Recompensa actualizada exitosamente";
                     return RedirectToAction("AdminRecompensas");
                 }
@@ -1521,7 +1522,6 @@ namespace ProyectoIdentity.Controllers
                     TempData["Error"] = "Error al actualizar la recompensa: " + ex.Message;
                 }
             }
-
             return RedirectToAction("AdminRecompensas");
         }
 

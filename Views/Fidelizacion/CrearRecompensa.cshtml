@@ -124,7 +124,10 @@
                                     </label>
                                     <div class="input-group">
                                         <span class="input-group-text">$</span>
-                                        <input asp-for="PrecioOriginal" type="number" step="0.01" min="0" class="form-control" placeholder="8.00" required />
+                                        <input asp-for="PrecioOriginal" type="number" step="0.01" min="0" class="form-control"
+                                               placeholder="8.00" lang="en" required
+                                               style="ime-mode: disabled;"
+                                               inputmode="decimal" />
                                     </div>
                                     <div class="form-text">
                                         Valor monetario del producto
@@ -158,11 +161,6 @@
                                         <small class="text-muted">
                                             Recomendado: 120-180 pts/$ • Estándar del sistema: 30 pts/$
                                         </small>
-                                    </div>
-                                    <div class="col-md-4 text-end">
-                                        <button type="button" class="btn btn-outline-info btn-sm" onclick="aplicarRatioRecomendado()">
-                                            <i class="fas fa-lightbulb me-1"></i>Usar Recomendado
-                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -220,27 +218,46 @@
 </style>
 
 <script>
+    // RATIOS POR CATEGORÍA
+    const ratios = {
+        'Sánduches': 160,
+        'Shot': 167,
+        'Cocteles': 167,
+        'Picadas': 170,
+        'Pizza': 175,
+        'Cerveza': 175,
+        'Bebidas': 185,
+        'Promo': 200
+    };
+
     function cargarDatosProducto() {
         const select = document.getElementById('ProductoId');
         const selectedOption = select.options[select.selectedIndex];
 
         if (selectedOption.value) {
             const nombre = selectedOption.dataset.nombre;
-            const precio = parseFloat(selectedOption.dataset.precio);
+            let precio = selectedOption.dataset.precio;
             const categoria = selectedOption.dataset.categoria;
-            const puntosRecomendados = Math.round(precio * 150); // 150 puntos por dólar
+
+            // NORMALIZAR PRECIO
+            precio = precio.replace(',', '.');
+            const precioNumerico = parseFloat(precio);
+
+            // USAR RATIO POR CATEGORÍA
+            const ratioCategoria = ratios[categoria] || 175;
+            const puntosRecomendados = Math.round(precioNumerico * ratioCategoria);
 
             // Mostrar vista previa
             document.getElementById('preview-producto').style.display = 'block';
             document.getElementById('preview-nombre').textContent = nombre;
-            document.getElementById('preview-precio').textContent = precio.toFixed(2);
+            document.getElementById('preview-precio').textContent = precioNumerico.toFixed(2);
             document.getElementById('preview-categoria').textContent = categoria;
             document.getElementById('preview-puntos-sugeridos').textContent = puntosRecomendados;
 
             // Almacenar valores para auto-completar
             window.productoSeleccionado = {
                 nombre: nombre,
-                precio: precio,
+                precio: precioNumerico,
                 categoria: categoria,
                 puntosRecomendados: puntosRecomendados
             };
@@ -263,7 +280,10 @@
     }
 
     function calcularRatio() {
-        const precio = parseFloat(document.querySelector('input[name="PrecioOriginal"]').value) || 0;
+        let precioTexto = document.querySelector('input[name="PrecioOriginal"]').value || '0';
+        // NORMALIZAR PRECIO
+        precioTexto = precioTexto.replace(',', '.');
+        const precio = parseFloat(precioTexto) || 0;
         const puntos = parseInt(document.querySelector('input[name="PuntosNecesarios"]').value) || 0;
 
         if (precio > 0) {
@@ -287,9 +307,16 @@
     }
 
     function aplicarRatioRecomendado() {
-        const precio = parseFloat(document.querySelector('input[name="PrecioOriginal"]').value) || 0;
+        let precioTexto = document.querySelector('input[name="PrecioOriginal"]').value || '0';
+        // NORMALIZAR PRECIO
+        precioTexto = precioTexto.replace(',', '.');
+        const precio = parseFloat(precioTexto) || 0;
+        const categoria = document.querySelector('input[name="Categoria"]').value || '';
+
         if (precio > 0) {
-            const puntosRecomendados = Math.round(precio * 150); // 150 pts/$
+            // USAR RATIO POR CATEGORÍA
+            const ratioCategoria = ratios[categoria] || 175;
+            const puntosRecomendados = Math.round(precio * ratioCategoria);
             document.querySelector('input[name="PuntosNecesarios"]').value = puntosRecomendados;
             calcularRatio();
         } else {
@@ -303,9 +330,23 @@
         document.querySelector('input[name="PrecioOriginal"]').addEventListener('input', calcularRatio);
         document.querySelector('input[name="PuntosNecesarios"]').addEventListener('input', calcularRatio);
 
-        // Validación del formulario
+        // NORMALIZAR PRECIO ANTES DEL SUBMIT
         document.getElementById('formCrearRecompensa').addEventListener('submit', function (e) {
-            const precio = parseFloat(document.querySelector('input[name="PrecioOriginal"]').value) || 0;
+            // NORMALIZAR PRECIO CON MÁS ROBUSTEZ
+            const precioInput = document.querySelector('input[name="PrecioOriginal"]');
+            if (precioInput.value) {
+                let valor = precioInput.value;
+                // Remover cualquier cosa que no sea número, punto o coma
+                valor = valor.replace(/[^\d.,]/g, '');
+                // Reemplazar coma con punto
+                valor = valor.replace(',', '.');
+                // Asegurar formato correcto
+                const numero = parseFloat(valor) || 0;
+                precioInput.value = numero.toString();
+                console.log('Precio normalizado:', precioInput.value);
+            }
+
+            const precio = parseFloat(precioInput.value) || 0;
             const puntos = parseInt(document.querySelector('input[name="PuntosNecesarios"]').value) || 0;
 
             if (precio <= 0) {

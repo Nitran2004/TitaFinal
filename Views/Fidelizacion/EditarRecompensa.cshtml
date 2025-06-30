@@ -174,7 +174,7 @@
 
                         <!-- Comparación de Cambios -->
                         <div class="alert alert-light border">
-                            <h6><i class="fas fa-balance-scale me-2"></i>Comparación de Cambios</h6>
+                            <h6><i class="fas fa-balance-scale me-2"></i>Comparación de Cambios Antiguos</h6>
                             <div class="row">
                                 <div class="col-md-6">
                                     <h6 class="text-muted">Valores Actuales</h6>
@@ -183,34 +183,11 @@
                                     </p>
                                     <p class="mb-1">
                                         <strong>Puntos:</strong> @Model.PuntosNecesarios pts
-                                    </p>
-                                    <p class="mb-0">
-                                        <strong>Ratio:</strong>
-                                        <span class="badge @(ratioActual > 200 ? "bg-danger" : ratioActual > 150 ? "bg-warning text-dark" : "bg-success")">
-                                            @ratioActual.ToString("F0") pts/$
-                                        </span>
-                                    </p>
-                                </div>
-                                <div class="col-md-6">
-                                    <h6 class="text-primary">Nuevos Valores</h6>
-                                    <p class="mb-1">
-                                        <strong>Precio:</strong> $<span id="nuevo-precio">@Model.PrecioOriginal.ToString("F2")</span>
-                                    </p>
-                                    <p class="mb-1">
-                                        <strong>Puntos:</strong> <span id="nuevos-puntos">@Model.PuntosNecesarios</span> pts
-                                    </p>
-                                    <p class="mb-0">
-                                        <strong>Ratio:</strong>
-                                        <span id="nuevo-ratio" class="badge bg-secondary">@ratioActual.ToString("F0") pts/$</span>
-                                    </p>
-                                </div>
+                                    </p>                                 
+                                </div>                         
                             </div>
 
-                            <div class="text-center mt-3">
-                                <button type="button" class="btn btn-outline-info btn-sm" onclick="aplicarRatioRecomendado()">
-                                    <i class="fas fa-lightbulb me-1"></i>Aplicar Ratio Recomendado (150 pts/$)
-                                </button>
-                            </div>
+
                         </div>
 
                         <!-- Información sobre impacto -->
@@ -291,7 +268,7 @@
 
         if (selectedOption.value) {
             const nombre = selectedOption.dataset.nombre;
-            const precio = parseFloat(selectedOption.dataset.precio);
+            const precio = parseFloat(selecteformEditarRecompensadOption.dataset.precio);
             const categoria = selectedOption.dataset.categoria;
             const puntosRecomendados = Math.round(precio * 150); // 150 puntos por dólar
 
@@ -381,6 +358,21 @@
 
         // Validación del formulario
         document.getElementById('formEditarRecompensa').addEventListener('submit', function (e) {
+            // NORMALIZAR Y VALIDAR PRECIO ANTES DE ENVIAR
+            const precioInput = document.querySelector('input[name="PrecioOriginal"]');
+            if (precioInput.value) {
+                let valor = precioInput.value;
+
+                // VALIDAR QUE USE PUNTO COMO DECIMAL
+                if (valor.includes(',')) {
+                    alert('⚠️ Por favor usa punto (.) como separador decimal, no coma (,)\n\nEjemplo: 2.50 en lugar de 2,50');
+                    e.preventDefault();
+                    return;
+                }
+
+                precioInput.value = valor;
+            }
+
             const precio = parseFloat(document.querySelector('input[name="PrecioOriginal"]').value) || 0;
             const puntos = parseInt(document.querySelector('input[name="PuntosNecesarios"]').value) || 0;
 
