@@ -947,30 +947,52 @@ namespace ProyectoIdentity.Controllers
         // AGREGAR ESTOS MÉTODOS AL FidelizacionController.cs
 
         [HttpPost]
-        [Authorize(Roles = "Administrador")]
-        public async Task<IActionResult> ActualizarEstadoCanje(int id, string estado)
+        [Authorize(Roles = "Administrador,Cajero")]
+        public async Task<IActionResult> ActualizarEstadoCanje(string codigoCanje, string estado, string usuarioId)
         {
             try
             {
-                var canje = await _context.HistorialCanjes.FindAsync(id);
-                if (canje == null)
+                // ✅ BUSCAR TODOS LOS CANJES DEL MISMO CÓDIGO (MISMA TRANSACCIÓN)
+                var fechaLimite = DateTime.Now.AddDays(-30); // Últimos 30 días
+
+                var todosLosCanjes = await _context.HistorialCanjes
+                    .Where(h => h.UsuarioId == usuarioId && h.FechaCanje >= fechaLimite)
+                    .ToListAsync();
+
+                // Agrupar por fecha/hora y encontrar el grupo que corresponde al código
+                var canjesDelCodigo = todosLosCanjes
+                    .GroupBy(h => new {
+                        Fecha = h.FechaCanje.Date,
+                        Hora = h.FechaCanje.Hour,
+                        Minuto = h.FechaCanje.Minute
+                    })
+                    .FirstOrDefault(grupo => {
+                        var primerCanje = grupo.First();
+                        var codigoGrupo = GenerarCodigoCanjePorFecha(primerCanje.FechaCanje, primerCanje.Id);
+                        return codigoGrupo == codigoCanje;
+                    });
+
+                if (canjesDelCodigo == null || !canjesDelCodigo.Any())
                 {
-                    TempData["Error"] = "Canje no encontrado";
-                    return RedirectToAction("AdminCanjesIndex");
+                    TempData["Error"] = "No se encontraron canjes para este código";
+                    return RedirectToAction("AdminCanjesDetalle", new { usuarioId = usuarioId });
                 }
 
-                canje.Estado = estado;
+                // ✅ ACTUALIZAR EL ESTADO DE TODOS LOS CANJES DEL GRUPO
+                foreach (var canje in canjesDelCodigo)
+                {
+                    canje.Estado = estado;
+                }
+
                 await _context.SaveChangesAsync();
 
-                TempData["Success"] = $"Estado del canje actualizado a: {estado}";
-
-                // Obtener el usuarioId para redirigir de vuelta al detalle
-                return RedirectToAction("AdminCanjesDetalle", new { usuarioId = canje.UsuarioId });
+                TempData["Success"] = $"Estado actualizado a '{estado}' para {canjesDelCodigo.Count()} recompensas del código {codigoCanje}";
+                return RedirectToAction("AdminCanjesDetalle", new { usuarioId = usuarioId });
             }
             catch (Exception ex)
             {
                 TempData["Error"] = "Error al actualizar el estado del canje";
-                return RedirectToAction("AdminCanjesIndex");
+                return RedirectToAction("AdminCanjesDetalle", new { usuarioId = usuarioId });
             }
         }
 
@@ -1045,7 +1067,7 @@ namespace ProyectoIdentity.Controllers
             }
         }
 
-        [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador,Cajero")]
         public async Task<IActionResult> AdminCanjesDetalle(string usuarioId)
         {
             if (string.IsNullOrEmpty(usuarioId))
@@ -1075,35 +1097,59 @@ namespace ProyectoIdentity.Controllers
                     .Where(pr => productosRecompensaIds.Contains(pr.Id))
                     .ToListAsync();
 
-                var historialCanjes = canjesUsuario.Select(h =>
-                {
-                    var productoRecompensa = productosRecompensa.FirstOrDefault(pr => pr.Id == h.ProductoRecompensaId);
+                // ✅ AGRUPAR CANJES POR FECHA Y HORA (TRANSACCIONES DEL MISMO MOMENTO)
+                var canjesAgrupados = canjesUsuario
+                    .GroupBy(h => new {
+                        Fecha = h.FechaCanje.Date,
+                        Hora = h.FechaCanje.Hour,
+                        Minuto = h.FechaCanje.Minute
+                    })
+                    .Select(grupo => {
+                        var canjesDelGrupo = grupo.ToList();
+                        var primerCanje = canjesDelGrupo.First();
 
-                    return new CanjeDetalleViewModel
-                    {
-                        Id = h.Id,
-                        ProductoRecompensaId = h.ProductoRecompensaId,
-                        NombreProducto = productoRecompensa?.Nombre ?? "Producto eliminado",
-                        CategoriaProducto = productoRecompensa?.Categoria ?? "N/A",
-                        PuntosUtilizados = h.PuntosUtilizados,
-                        FechaCanje = h.FechaCanje,
-                        PrecioOriginal = productoRecompensa?.PrecioOriginal ?? 0,
-                        CodigoCanje = GenerarCodigoCanjePorFecha(h.FechaCanje, h.Id),
-                        Estado = h.Estado ?? "Preparándose",
-                        ComentarioEnviado = h.ComentarioEnviado,
-                        Calificacion = h.Calificacion,
-                        Comentario = h.Comentario,
-                        TipoServicio = h.TipoServicio
-                    };
-                }).ToList();
+                        return new CanjeAgrupadoAdminViewModel
+                        {
+                            CodigoCanje = GenerarCodigoCanjePorFecha(primerCanje.FechaCanje, primerCanje.Id),
+                            FechaCanje = primerCanje.FechaCanje,
+                            TipoServicio = primerCanje.TipoServicio,
+                            Estado = primerCanje.Estado ?? "Preparándose", // Todos deben tener el mismo estado
+                            TotalPuntosUtilizados = canjesDelGrupo.Sum(c => c.PuntosUtilizados),
+                            CantidadRecompensas = canjesDelGrupo.Count,
+                            CanjesIndividuales = canjesDelGrupo.Select(c => {
+                                var productoRecompensa = productosRecompensa.FirstOrDefault(pr => pr.Id == c.ProductoRecompensaId);
+                                return new CanjeDetalleViewModel
+                                {
+                                    Id = c.Id,
+                                    ProductoRecompensaId = c.ProductoRecompensaId,
+                                    NombreProducto = productoRecompensa?.Nombre ?? "Producto eliminado",
+                                    CategoriaProducto = productoRecompensa?.Categoria ?? "N/A",
+                                    PuntosUtilizados = c.PuntosUtilizados,
+                                    FechaCanje = c.FechaCanje,
+                                    PrecioOriginal = productoRecompensa?.PrecioOriginal ?? 0,
+                                    Estado = c.Estado ?? "Preparándose",
+                                    TipoServicio = c.TipoServicio,
+                                    ComentarioEnviado = c.ComentarioEnviado,
+                                    Calificacion = c.Calificacion,
+                                    Comentario = c.Comentario
+                                };
+                            }).ToList(),
+                            ValorTotalAhorrado = canjesDelGrupo.Sum(c => {
+                                var pr = productosRecompensa.FirstOrDefault(p => p.Id == c.ProductoRecompensaId);
+                                return pr?.PrecioOriginal ?? 0;
+                            })
+                        };
+                    })
+                    .OrderByDescending(g => g.FechaCanje)
+                    .ToList();
 
-                var model = new AdminCanjesDetalleViewModel
+                var model = new AdminCanjesDetalleAgrupadoViewModel
                 {
                     Usuario = usuario,
-                    HistorialCanjes = historialCanjes,
+                    CanjesAgrupados = canjesAgrupados,
                     TotalCanjes = canjesUsuario.Count,
                     TotalPuntosUtilizados = canjesUsuario.Sum(c => c.PuntosUtilizados),
-                    TotalValorAhorrado = historialCanjes.Sum(h => h.PrecioOriginal)
+                    TotalValorAhorrado = canjesAgrupados.Sum(g => g.ValorTotalAhorrado)
                 };
 
                 return View(model);

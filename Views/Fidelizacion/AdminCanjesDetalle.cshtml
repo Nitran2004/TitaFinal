@@ -1,348 +1,154 @@
-﻿@model ProyectoIdentity.Models.AdminCanjesDetalleViewModel
-@{
-    ViewData["Title"] = "Detalle de Canjes - " + Model.Usuario.Nombre;
-}
+﻿@model ProyectoIdentity.Models.AdminCanjesDetalleAgrupadoViewModel
 
-<div class="container-fluid mt-4">
-    <!-- Botón volver -->
-    <div class="row mb-3">
-        <div class="col-12">
-            <a href="@Url.Action("AdminCanjesIndex", "Fidelizacion")" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Volver al Índice
-            </a>
-        </div>
-    </div>
-
-    <!-- Mensajes de TempData -->
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-
-    <!-- Información del usuario -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow border-0" style="border-radius: 15px;">
-                <div class="card-header text-center py-4" style="background: linear-gradient(135deg, #28a745, #20c997); color: white; border-radius: 15px 15px 0 0;">
-                    <h2 class="mb-1">
-                        <i class="fas fa-user-circle me-3"></i>
-                        Historial de Canjes
-                    </h2>
-                    <p class="mb-0 opacity-75">Usuario: @Model.Usuario.Nombre (@Model.Usuario.UserName)</p>
-                </div>
-                
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="info-item">
-                                <i class="fas fa-envelope text-primary"></i>
-                                <div>
-                                    <strong>Email:</strong>
-                                    <div>@Model.Usuario.Email</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="info-item">
-                                <i class="fas fa-star text-warning"></i>
-                                <div>
-                                    <strong>Puntos Actuales:</strong>
-                                    <div class="text-warning fw-bold">@Model.Usuario.PuntosFidelidad pts</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="info-item">
-                                <i class="fas fa-receipt text-info"></i>
-                                <div>
-                                    <strong>Total Canjes:</strong>
-                                    <div class="text-info fw-bold">@Model.TotalCanjes</div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="info-item">
-                                <i class="fas fa-dollar-sign text-success"></i>
-                                <div>
-                                    <strong>Valor Ahorrado:</strong>
-                                    <div class="text-success fw-bold">$@Model.TotalValorAhorrado.ToString("F2")</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+<!-- Tabla del historial de canjes AGRUPADOS -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-history text-primary me-2"></i>
+                    Historial de Canjes Agrupados
+                    <span class="badge bg-primary ms-2">@Model.CanjesAgrupados.Count grupos</span>
+                </h5>
             </div>
-        </div>
-    </div>
-
-    <!-- Estadísticas rápidas -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card bg-primary text-white text-center">
-                <div class="card-body">
-                    <i class="fas fa-shopping-cart fa-2x mb-2"></i>
-                    <h4>@Model.TotalCanjes</h4>
-                    <p class="mb-0">Canjes Realizados</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card bg-danger text-white text-center">
-                <div class="card-body">
-                    <i class="fas fa-star fa-2x mb-2"></i>
-                    <h4>@Model.TotalPuntosUtilizados</h4>
-                    <p class="mb-0">Puntos Utilizados</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card bg-success text-white text-center">
-                <div class="card-body">
-                    <i class="fas fa-money-bill-wave fa-2x mb-2"></i>
-                    <h4>$@Model.TotalValorAhorrado.ToString("F2")</h4>
-                    <p class="mb-0">Total Ahorrado</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tabla del historial de canjes con estados -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card border-0 shadow">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">
-                        <i class="fas fa-history text-primary me-2"></i>
-                        Historial Completo de Canjes
-                        <span class="badge bg-primary ms-2">@Model.HistorialCanjes.Count registros</span>
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Código Canje</th>
+                                <th>Fecha</th>
+                                <th>Productos</th>
+                                <th>Puntos Totales</th>
+                                <th>Tipo Servicio</th>
+                                <th>Estado</th>
+                                <th>Actualizar Estado</th>
+                                <th>Valoración</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var grupo in Model.CanjesAgrupados)
+                            {
                                 <tr>
-                                    <th>ID Canje</th>
-                                    <th>Producto</th>
-                                    <th>Categoría</th>
-                                    <th>Puntos Utilizados</th>
-                                    <th>Fecha Canje</th>
-                                    <th>Tipo Servicio</th>
-                                    <th>Estado</th>
-                                    <th>Actualizar Estado</th>
-                                    <th>Valoración</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var canje in Model.HistorialCanjes)
-                                {
-                                    <tr>
-                                        <td>
-                                            <code>#@canje.Id</code>
-                                        </td>
-                                        <td>
-                                            <strong>@canje.NombreProducto</strong>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-info">@canje.CategoriaProducto</span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-danger">-@canje.PuntosUtilizados pts</span>
-                                        </td>
-                                        <td>
-                                            <div>
-                                                <div>@canje.FechaCanje.ToString("dd/MM/yyyy")</div>
-                                                <small class="text-muted">@canje.FechaCanje.ToString("HH:mm:ss")</small>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            @{
-                                                string tipoServicio = !string.IsNullOrEmpty(canje.TipoServicio) ? canje.TipoServicio : "No seleccionado";
-                                            }
-                                            @if (tipoServicio == "Servir aquí")
+                                    <td>
+                                        <code class="bg-warning text-dark px-2 py-1 rounded">@grupo.CodigoCanje</code>
+                                    </td>
+                                    <td>
+                                        <div>@grupo.FechaCanje.ToString("dd/MM/yyyy")</div>
+                                        <small class="text-muted">@grupo.FechaCanje.ToString("HH:mm:ss")</small>
+                                    </td>
+                                    <td>
+                                        <div class="productos-grupo">
+                                            @foreach (var canje in grupo.CanjesIndividuales)
                                             {
-                                                <span class="badge bg-primary">
-                                                    <i class="fas fa-chair"></i> Servir aquí
-                                                </span>
-                                            }
-                                            else if (tipoServicio == "Para llevar")
-                                            {
-                                                <span class="badge bg-success">
-                                                    <i class="fas fa-shopping-bag"></i> Para llevar
-                                                </span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-secondary">
-                                                    <i class="fas fa-question"></i> No seleccionado
-                                                </span>
-                                            }
-                                        </td>
-                                        <td>
-                                            @{
-                                                string estadoActual = !string.IsNullOrEmpty(canje.Estado) ? canje.Estado : "Preparándose";
-                                            }
-                                            @if (estadoActual == "Preparándose")
-                                            {
-                                                <span class="badge bg-info">@estadoActual</span>
-                                            }
-                                            else if (estadoActual == "Listo para entregar")
-                                            {
-                                                <span class="badge bg-warning">@estadoActual</span>
-                                            }
-                                            else if (estadoActual == "Entregado")
-                                            {
-                                                <span class="badge bg-success">@estadoActual</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-secondary">@estadoActual</span>
-                                            }
-                                        </td>
-                                        <td>
-                                            <form asp-action="ActualizarEstadoCanje" asp-controller="Fidelizacion" method="post" class="d-inline">
-                                                <input type="hidden" name="id" value="@canje.Id" />
-                                                <select name="estado" class="form-select form-select-sm" onchange="this.form.submit()" style="width: auto;">
-                                                    @{
-                                                        string estadoSeleccionado = !string.IsNullOrEmpty(canje.Estado) ? canje.Estado : "Preparándose";
-                                                    }
-                                                    <option value="Preparándose" selected="@(estadoSeleccionado == "Preparándose")">Preparándose</option>
-                                                    <option value="Listo para entregar" selected="@(estadoSeleccionado == "Listo para entregar")">Listo para entregar</option>
-                                                    <option value="Entregado" selected="@(estadoSeleccionado == "Entregado")">Entregado</option>
-                                                </select>
-                                            </form>
-                                        </td>
-                                        <td>
-                                            @{
-                                                bool comentarioEnviado = canje.ComentarioEnviado ?? false;
-                                                int? calificacion = canje.Calificacion;
-                                            }
-                                            @if (comentarioEnviado && calificacion.HasValue)
-                                            {
-                                                <div>
-                                                    @for (int i = 1; i <= 5; i++)
-                                                    {
-                                                        if (i <= calificacion.Value)
-                                                        {
-                                                            <span class="text-warning">★</span>
-                                                        }
-                                                        else
-                                                        {
-                                                            <span class="text-muted">★</span>
-                                                        }
-                                                    }
+                                                <div class="producto-item">
+                                                    <strong>@canje.NombreProducto</strong>
+                                                    <span class="badge bg-info ms-2">@canje.CategoriaProducto</span>
+                                                    <small class="text-danger">(-@canje.PuntosUtilizados pts)</small>
                                                 </div>
-                                                @if (!string.IsNullOrEmpty(canje.Comentario))
+                                            }
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-danger">-@grupo.TotalPuntosUtilizados pts</span>
+                                        <div><small class="text-muted">@grupo.CantidadRecompensas productos</small></div>
+                                    </td>
+                                    <td>
+                                        @if (grupo.TipoServicio == "Servir aquí")
+                                        {
+                                            <span class="badge bg-primary">
+                                                <i class="fas fa-chair"></i> Servir aquí
+                                            </span>
+                                        }
+                                        else if (grupo.TipoServicio == "Para llevar")
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-shopping-bag"></i> Para llevar
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">No seleccionado</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (grupo.Estado == "Preparándose")
+                                        {
+                                            <span class="badge bg-info">@grupo.Estado</span>
+                                        }
+                                        else if (grupo.Estado == "Listo para entregar")
+                                        {
+                                            <span class="badge bg-warning">@grupo.Estado</span>
+                                        }
+                                        else if (grupo.Estado == "Entregado")
+                                        {
+                                            <span class="badge bg-success">@grupo.Estado</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <form asp-action="ActualizarEstadoCanje" method="post" class="d-inline">
+                                            <input type="hidden" name="codigoCanje" value="@grupo.CodigoCanje" />
+                                            <input type="hidden" name="usuarioId" value="@Model.Usuario.Id" />
+                                            <select name="estado" class="form-select form-select-sm" onchange="this.form.submit()" style="width: auto;">
+                                                <option value="Preparándose" selected="@(grupo.Estado == "Preparándose")">Preparándose</option>
+                                                <option value="Listo para entregar" selected="@(grupo.Estado == "Listo para entregar")">Listo para entregar</option>
+                                                <option value="Entregado" selected="@(grupo.Estado == "Entregado")">Entregado</option>
+                                            </select>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        @{
+                                            var primerCanjeConComentario = grupo.CanjesIndividuales.FirstOrDefault(c => c.ComentarioEnviado == true);
+                                        }
+                                        @if (primerCanjeConComentario != null)
+                                        {
+                                            <div>
+                                                @for (int i = 1; i <= 5; i++)
                                                 {
-                                                    <small class="text-muted" title="@canje.Comentario">
-                                                        "@(canje.Comentario.Length > 30 ? canje.Comentario.Substring(0, 30) + "..." : canje.Comentario)"
-                                                    </small>
+                                                    if (i <= (primerCanjeConComentario.Calificacion ?? 0))
+                                                    {
+                                                        <span class="text-warning">★</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">★</span>
+                                                    }
                                                 }
-                                            }
-                                            else
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(primerCanjeConComentario.Comentario))
                                             {
-                                                <small class="text-muted">Sin valoración</small>
+                                                <small class="text-muted" title="@primerCanjeConComentario.Comentario">
+                                                    "@(primerCanjeConComentario.Comentario.Length > 30 ? primerCanjeConComentario.Comentario.Substring(0, 30) + "..." : primerCanjeConComentario.Comentario)"
+                                                </small>
                                             }
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted">Sin valoración</small>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
-
-    @if (!Model.HistorialCanjes.Any())
-    {
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="alert alert-warning text-center">
-                    <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
-                    <h4>No hay canjes registrados</h4>
-                    <p>Este usuario aún no ha realizado ningún canje.</p>
-                </div>
-            </div>
-        </div>
-    }
 </div>
 
 <style>
-    .info-item {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        padding: 1rem;
-        border-radius: 10px;
-        background: #f8f9fa;
-        margin-bottom: 1rem;
-        transition: transform 0.2s ease;
+    .productos-grupo {
+        max-width: 200px;
     }
-    
-    .info-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+
+    .producto-item {
+        margin-bottom: 5px;
+        padding: 2px 0;
+        border-bottom: 1px solid #eee;
     }
-    
-    .info-item i {
-        font-size: 1.5rem;
-        width: 30px;
-    }
-    
-    .table th {
-        border-top: none;
-        font-weight: 600;
-        color: #495057;
-        font-size: 0.9rem;
-    }
-    
-    .table td {
-        vertical-align: middle;
-    }
-    
-    .badge {
-        font-size: 0.75rem;
-    }
-    
-    code {
-        background: #f8f9fa;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 0.8rem;
-    }
-    
-    .card {
-        transition: transform 0.2s ease;
-    }
-    
-    .card:hover {
-        transform: translateY(-2px);
-    }
-    
-    .form-select-sm {
-        font-size: 0.8rem;
-        padding: 0.25rem 0.5rem;
-    }
-    
-    @@media (max-width: 768px) {
-        .info-item {
-            flex-direction: column;
-            text-align: center;
+
+        .producto-item:last-child {
+            border-bottom: none;
         }
-        
-        .table-responsive {
-            font-size: 0.875rem;
-        }
-    }
 </style>
