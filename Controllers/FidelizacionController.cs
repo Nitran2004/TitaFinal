@@ -14,6 +14,8 @@ namespace ProyectoIdentity.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
         private const int PUNTOS_POR_DOLAR = 30; // 30 puntos por cada dólar gastado
+        private const decimal RATIO_ESTANDAR_PUNTOS_DOLLAR = 175m;
+
 
         public FidelizacionController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
         {
@@ -1161,7 +1163,534 @@ namespace ProyectoIdentity.Controllers
             }
         }
 
+        // ============== CRUD RECOMPENSAS - SOLO ADMINISTRADORES ==============
 
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> AdminRecompensas()
+        {
+            var recompensasActuales = await _context.ProductosRecompensa
+                .Include(r => r.Producto)
+                .OrderBy(r => r.PuntosNecesarios)
+                .ToListAsync();
+
+            // Productos que NO están como recompensas
+            var idsProductosEnRecompensas = recompensasActuales
+                .Where(r => r.ProductoId.HasValue)
+                .Select(r => r.ProductoId.Value)
+                .ToList();
+
+            var productosDisponibles = await _context.Productos
+                .Where(p => !idsProductosEnRecompensas.Contains(p.Id))
+                .OrderBy(p => p.Categoria)
+                .ThenBy(p => p.Nombre)
+                .ToListAsync();
+
+            var model = new AdminRecompensasViewModel
+            {
+                RecompensasActuales = recompensasActuales,
+                ProductosDisponibles = productosDisponibles,
+                TotalRecompensas = recompensasActuales.Count,
+                ValorTotalRecompensas = recompensasActuales.Sum(r => r.PrecioOriginal)
+            };
+
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CrearRecompensa()
+        {
+            try
+            {
+                // Obtener todos los productos disponibles
+                var productos = await _context.Productos
+                    .OrderBy(p => p.Categoria)
+                    .ThenBy(p => p.Nombre)
+                    .ToListAsync(); // ← QUITAR .Select(), usar objetos completos
+
+                // Debug: Verificar que se obtengan productos
+                Console.WriteLine($"[DEBUG] Productos obtenidos: {productos.Count}");
+                foreach (var p in productos.Take(3))
+                {
+                    Console.WriteLine($"[DEBUG] Producto: {p.Nombre} - ${p.Precio} - {p.Categoria}");
+                }
+
+                // CAMBIAR ESTAS LÍNEAS:
+                // ViewBag.Productos = productos;
+                // var model = new ProductoRecompensa();
+
+                // POR ESTAS:
+                var model = new CrearRecompensaViewModel
+                {
+                    ProductosDisponibles = productos
+                };
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error en CrearRecompensa GET: {ex.Message}");
+                TempData["Error"] = "Error al cargar la página de crear recompensa";
+                return RedirectToAction("AdminRecompensas");
+            }
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Administrador")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CrearRecompensa(ProductoRecompensa model)
+        {
+            try
+            {
+                Console.WriteLine($"[DEBUG] Creando recompensa: {model.Nombre}");
+                Console.WriteLine($"[DEBUG] ProductoId: {model.ProductoId}");
+                Console.WriteLine($"[DEBUG] PuntosNecesarios: {model.PuntosNecesarios}");
+                Console.WriteLine($"[DEBUG] PrecioOriginal: {model.PrecioOriginal}");
+
+                // Validaciones del modelo
+                if (ModelState.IsValid)
+                {
+                    // Verificar que el producto existe
+                    var productoExiste = await _context.Productos
+                        .AnyAsync(p => p.Id == model.ProductoId);
+
+                    if (!productoExiste)
+                    {
+                        ModelState.AddModelError("ProductoId", "El producto seleccionado no existe");
+                    }
+
+                    // Verificar que no exista ya una recompensa para este producto
+                    var recompensaExiste = await _context.ProductosRecompensa
+                        .AnyAsync(pr => pr.ProductoId == model.ProductoId);
+
+                    if (recompensaExiste)
+                    {
+                        ModelState.AddModelError("ProductoId", "Ya existe una recompensa para este producto");
+                    }
+
+                    // Validaciones de negocio
+                    if (model.PuntosNecesarios <= 0)
+                    {
+                        ModelState.AddModelError("PuntosNecesarios", "Los puntos necesarios deben ser mayor a 0");
+                    }
+
+                    if (model.PrecioOriginal <= 0)
+                    {
+                        ModelState.AddModelError("PrecioOriginal", "El precio original debe ser mayor a 0");
+                    }
+
+                    // Si todo está válido, crear la recompensa
+                    if (ModelState.IsValid)
+                    {
+                        // Agregar a la base de datos
+                        _context.ProductosRecompensa.Add(model);
+                        await _context.SaveChangesAsync();
+
+                        Console.WriteLine($"[DEBUG] ✅ Recompensa creada exitosamente con ID: {model.Id}");
+
+                        TempData["Success"] = $"Recompensa '{model.Nombre}' creada exitosamente";
+                        return RedirectToAction("AdminRecompensas");
+                    }
+                }
+
+                // Si llegamos aquí, hay errores de validación
+                Console.WriteLine("[DEBUG] ❌ Errores de validación:");
+                foreach (var error in ModelState)
+                {
+                    Console.WriteLine($"[DEBUG] Campo {error.Key}: {string.Join(", ", error.Value.Errors.Select(e => e.ErrorMessage))}");
+                }
+
+                // Recargar productos para el formulario
+                await CargarProductosParaFormulario();
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error en CrearRecompensa POST: {ex.Message}");
+                Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+
+                TempData["Error"] = "Error al crear la recompensa: " + ex.Message;
+
+                // Recargar productos para el formulario
+                await CargarProductosParaFormulario();
+
+                return View(model);
+            }
+        }
+
+        private async Task CargarProductosParaFormulario()
+        {
+            try
+            {
+                var productos = await _context.Productos
+                    .OrderBy(p => p.Categoria)
+                    .ThenBy(p => p.Nombre)
+                    .Select(p => new {
+                        p.Id,
+                        p.Nombre,
+                        p.Precio,
+                        p.Categoria
+                    })
+                    .ToListAsync();
+
+                ViewBag.Productos = productos;
+                Console.WriteLine($"[DEBUG] Productos recargados: {productos.Count}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error al cargar productos: {ex.Message}");
+                ViewBag.Productos = new List<object>();
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ObtenerProductos()
+        {
+            try
+            {
+                var productos = await _context.Productos
+                    .OrderBy(p => p.Categoria)
+                    .ThenBy(p => p.Nombre)
+                    .Select(p => new {
+                        id = p.Id,
+                        nombre = p.Nombre,
+                        precio = p.Precio,
+                        categoria = p.Categoria
+                    })
+                    .ToListAsync();
+
+                return Json(new { success = true, productos = productos });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error en ObtenerProductos: {ex.Message}");
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> EditarRecompensa(int id)
+        {
+            var recompensa = await _context.ProductosRecompensa
+                .Include(r => r.Producto)
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (recompensa == null)
+            {
+                TempData["Error"] = "Recompensa no encontrada";
+                return RedirectToAction("AdminRecompensas");
+            }
+
+            // Productos disponibles + el producto actual de la recompensa
+            var idsProductosEnRecompensas = await _context.ProductosRecompensa
+                .Where(r => r.ProductoId.HasValue && r.Id != id) // Excluir la recompensa actual
+                .Select(r => r.ProductoId.Value)
+                .ToListAsync();
+
+            var productosDisponibles = await _context.Productos
+                .Where(p => !idsProductosEnRecompensas.Contains(p.Id))
+                .OrderBy(p => p.Categoria)
+                .ThenBy(p => p.Nombre)
+                .ToListAsync();
+
+            var model = new EditarRecompensaViewModel
+            {
+                Id = recompensa.Id,
+                ProductoId = recompensa.ProductoId,
+                Nombre = recompensa.Nombre,
+                PrecioOriginal = recompensa.PrecioOriginal,
+                PuntosNecesarios = recompensa.PuntosNecesarios,
+                Categoria = recompensa.Categoria,
+                ImagenExistente = recompensa.Imagen,
+                ProductosDisponibles = productosDisponibles
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ValidarRecompensa([FromBody] ValidarRecompensaRequest request)
+        {
+            try
+            {
+                var errores = new List<string>();
+
+                // Verificar que el producto existe
+                var producto = await _context.Productos.FindAsync(request.ProductoId);
+                if (producto == null)
+                {
+                    errores.Add("El producto seleccionado no existe");
+                }
+
+                // Verificar que no exista ya una recompensa para este producto
+                var recompensaExiste = await _context.ProductosRecompensa
+                    .AnyAsync(pr => pr.ProductoId == request.ProductoId);
+
+                if (recompensaExiste)
+                {
+                    errores.Add("Ya existe una recompensa para este producto");
+                }
+
+                // Validar puntos
+                if (request.PuntosNecesarios <= 0)
+                {
+                    errores.Add("Los puntos necesarios deben ser mayor a 0");
+                }
+
+                // Calcular ratio y validar
+                if (request.PrecioOriginal > 0 && request.PuntosNecesarios > 0)
+                {
+                    var ratio = request.PuntosNecesarios / request.PrecioOriginal;
+                    if (ratio < 50)
+                    {
+                        errores.Add("El ratio puntos/precio es muy bajo (mínimo recomendado: 50 pts/$)");
+                    }
+                    else if (ratio > 300)
+                    {
+                        errores.Add("El ratio puntos/precio es muy alto (máximo recomendado: 300 pts/$)");
+                    }
+                }
+
+                return Json(new
+                {
+                    valido = !errores.Any(),
+                    errores = errores,
+                    ratio = request.PrecioOriginal > 0 ? Math.Round(request.PuntosNecesarios / request.PrecioOriginal, 1) : 0
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { valido = false, errores = new[] { ex.Message } });
+            }
+        }
+
+
+        [HttpPost]
+        [Authorize(Roles = "Administrador")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditarRecompensa(EditarRecompensaViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    var recompensa = await _context.ProductosRecompensa.FindAsync(model.Id);
+                    if (recompensa == null)
+                    {
+                        TempData["Error"] = "Recompensa no encontrada";
+                        return RedirectToAction("AdminRecompensas");
+                    }
+
+                    // Si cambió el producto, verificar que no esté ya como recompensa
+                    if (model.ProductoId.HasValue && model.ProductoId != recompensa.ProductoId)
+                    {
+                        var yaExiste = await _context.ProductosRecompensa
+                            .AnyAsync(r => r.ProductoId == model.ProductoId && r.Id != model.Id);
+
+                        if (yaExiste)
+                        {
+                            TempData["Error"] = "Este producto ya está configurado como recompensa";
+                            return RedirectToAction("AdminRecompensas");
+                        }
+
+                        // Actualizar imagen del nuevo producto
+                        if (model.ProductoId.HasValue)
+                        {
+                            var producto = await _context.Productos.FindAsync(model.ProductoId.Value);
+                            if (producto?.Imagen != null)
+                            {
+                                recompensa.Imagen = producto.Imagen;
+                            }
+                        }
+                    }
+
+                    recompensa.ProductoId = model.ProductoId;
+                    recompensa.Nombre = model.Nombre;
+                    recompensa.PrecioOriginal = model.PrecioOriginal;
+                    recompensa.PuntosNecesarios = model.PuntosNecesarios;
+                    recompensa.Categoria = model.Categoria;
+
+                    _context.Update(recompensa);
+                    await _context.SaveChangesAsync();
+
+                    TempData["Success"] = "Recompensa actualizada exitosamente";
+                    return RedirectToAction("AdminRecompensas");
+                }
+                catch (Exception ex)
+                {
+                    TempData["Error"] = "Error al actualizar la recompensa: " + ex.Message;
+                }
+            }
+
+            return RedirectToAction("AdminRecompensas");
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> EliminarRecompensa([FromBody] EliminarRecompensaRequest request)
+        {
+            try
+            {
+                var recompensa = await _context.ProductosRecompensa.FindAsync(request.Id);
+                if (recompensa == null)
+                {
+                    return Json(new { success = false, message = "Recompensa no encontrada" });
+                }
+
+                // Verificar si la recompensa tiene canjes asociados
+                var tieneCanjes = await _context.HistorialCanjes
+                    .AnyAsync(h => h.ProductoRecompensaId == recompensa.Id);
+
+                if (tieneCanjes)
+                {
+                    return Json(new
+                    {
+                        success = false,
+                        message = "No se puede eliminar la recompensa porque tiene canjes asociados"
+                    });
+                }
+
+                _context.ProductosRecompensa.Remove(recompensa);
+                await _context.SaveChangesAsync();
+
+                return Json(new
+                {
+                    success = true,
+                    message = $"Recompensa '{recompensa.Nombre}' eliminada exitosamente"
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Error interno del servidor al eliminar la recompensa"
+                });
+            }
+        }
+
+        // Método para obtener datos del producto vía AJAX
+        [HttpGet]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> ObtenerDatosProducto(int productoId)
+        {
+            var producto = await _context.Productos.FindAsync(productoId);
+            if (producto == null)
+            {
+                return Json(new { success = false });
+            }
+
+            var ratioCategoria = ObtenerRatioPorCategoria(producto.Categoria);
+            var puntosRecomendados = CalcularPuntosRecomendados(producto.Precio, producto.Categoria);
+
+            return Json(new
+            {
+                success = true,
+                nombre = producto.Nombre,
+                precio = producto.Precio,
+                categoria = producto.Categoria,
+                puntosRecomendados = puntosRecomendados,
+                ratioCategoria = ratioCategoria,
+                explicacion = $"Ratio para {producto.Categoria}: {ratioCategoria} pts/$"
+            });
+        }
+
+        private static readonly Dictionary<string, decimal> RatiosPorCategoria = new()
+    {
+        { "Sánduches", 160m },      // Más generoso para comida básica
+        { "Shot", 167m },           // Shots accesibles
+        { "Cocteles", 167m },       // Misma accesibilidad que shots
+        { "Picadas", 170m },        // Para compartir
+        { "Pizza", 175m },          // Plato principal
+        { "Cerveza", 175m },        // Bebida popular
+        { "Bebidas", 185m },        // Bebidas normales
+        { "Promo", 200m }           // Promociones especiales (menos generoso)
+    };
+
+        private const decimal RATIO_DEFAULT = 175m;
+
+        private decimal ObtenerRatioPorCategoria(string categoria)
+        {
+            if (string.IsNullOrEmpty(categoria))
+                return RATIO_DEFAULT;
+
+            // Buscar coincidencia exacta
+            if (RatiosPorCategoria.ContainsKey(categoria))
+                return RatiosPorCategoria[categoria];
+
+            // Buscar coincidencia parcial (case-insensitive)
+            var categoriaKey = RatiosPorCategoria.Keys
+                .FirstOrDefault(k => k.Equals(categoria, StringComparison.OrdinalIgnoreCase));
+
+            return categoriaKey != null ? RatiosPorCategoria[categoriaKey] : RATIO_DEFAULT;
+        }
+
+        private int CalcularPuntosRecomendados(decimal precio, string categoria)
+        {
+            var ratio = ObtenerRatioPorCategoria(categoria);
+            return (int)Math.Round(precio * ratio);
+        }
+
+        private (bool esValido, string mensaje) ValidarCoherenciaCategoria(decimal precio, int puntos, string categoria)
+        {
+            var ratioEsperado = ObtenerRatioPorCategoria(categoria);
+            var ratioActual = precio > 0 ? puntos / precio : 0;
+            var diferenciaPorcentaje = Math.Abs((ratioActual - ratioEsperado) / ratioEsperado) * 100;
+
+            if (diferenciaPorcentaje <= 15) // Tolerancia del 15%
+            {
+                return (true, "Coherente con el sistema");
+            }
+            else if (diferenciaPorcentaje <= 30) // Tolerancia del 30%
+            {
+                return (true, $"Aceptable. Diferencia del {diferenciaPorcentaje:F1}% respecto al estándar de {categoria} ({ratioEsperado} pts/$)");
+            }
+            else
+            {
+                return (false, $"Se aleja mucho del estándar de {categoria}. Esperado: ~{ratioEsperado} pts/$, Actual: {ratioActual:F0} pts/$");
+            }
+        }
+
+        [HttpGet]
+        [Authorize(Roles = "Administrador")]
+        public IActionResult ObtenerRatiosPorCategoria()
+        {
+            var ratios = RatiosPorCategoria.Select(kvp => new
+            {
+                categoria = kvp.Key,
+                ratio = kvp.Value,
+                descripcion = GetDescripcionRatio(kvp.Value) // Cambiar nombre del método
+            }).ToList();
+
+            return Json(new { success = true, ratios = ratios });
+        }
+
+        // AGREGAR ESTE MÉTODO JUSTO DESPUÉS
+        private string GetDescripcionRatio(decimal ratio)
+        {
+            return ratio switch
+            {
+                <= 165m => "Muy generoso",
+                <= 175m => "Generoso",
+                <= 185m => "Estándar",
+                <= 195m => "Moderado",
+                _ => "Costoso"
+            };
+        }
+
+        // Clase para el request de eliminación
+        public class EliminarRecompensaRequest
+        {
+            public int Id { get; set; }
+        }
+
+        public class ValidarRecompensaRequest
+        {
+            public int ProductoId { get; set; }
+            public int PuntosNecesarios { get; set; }
+            public decimal PrecioOriginal { get; set; }
+            public string Nombre { get; set; }
+        }
     }
 
 }

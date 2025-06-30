@@ -1,0 +1,350 @@
+﻿@model ProyectoIdentity.Models.AdminRecompensasViewModel
+@{
+    ViewData["Title"] = "Gestión de Recompensas";
+}
+
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow" style="border-radius: 15px;">
+                <div class="card-header text-center py-4" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 15px 15px 0 0;">
+                    <h2 class="mb-1">
+                        <i class="fas fa-gift me-3"></i>
+                        Gestión de Recompensas
+                    </h2>
+                    <p class="mb-0 opacity-75">Administrar productos disponibles como recompensas</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensajes de estado -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-gifts fa-3x mb-3"></i>
+                    <h3>@Model.TotalRecompensas</h3>
+                    <p class="mb-0">Recompensas Activas</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-dollar-sign fa-3x mb-3"></i>
+                    <h3>$@Model.ValorTotalRecompensas.ToString("F2")</h3>
+                    <p class="mb-0">Valor Total</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-box fa-3x mb-3"></i>
+                    <h3>@Model.ProductosDisponibles.Count</h3>
+                    <p class="mb-0">Productos Disponibles</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón para crear nueva recompensa -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <a href="@Url.Action("CrearRecompensa")" class="btn btn-success btn-lg">
+                <i class="fas fa-plus me-2"></i>Agregar Nueva Recompensa
+            </a>
+        </div>
+    </div>
+
+    <!-- Tabla de recompensas actuales -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list text-primary me-2"></i>
+                        Recompensas Configuradas
+                    </h5>
+                    <span class="badge bg-primary">@Model.RecompensasActuales.Count recompensas</span>
+                </div>
+                <div class="card-body p-0">
+                    @if (Model.RecompensasActuales.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Imagen</th>
+                                        <th>Recompensa</th>
+                                        <th>Producto Asociado</th>
+                                        <th>Categoría</th>
+                                        <th>Precio Original</th>
+                                        <th>Puntos Necesarios</th>
+                                        <th>Ratio Puntos/Precio</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var recompensa in Model.RecompensasActuales)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @if (recompensa.Imagen != null && recompensa.Imagen.Length > 0)
+                                                {
+                                                    <img src="data:image/jpeg;base64,@Convert.ToBase64String(recompensa.Imagen)"
+                                                         alt="@recompensa.Nombre"
+                                                         class="rounded"
+                                                         style="width: 50px; height: 50px; object-fit: cover;" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="placeholder-image rounded d-flex align-items-center justify-content-center"
+                                                         style="width: 50px; height: 50px; background: #f8f9fa;">
+                                                        <i class="fas fa-utensils text-muted"></i>
+                                                    </div>
+                                                }
+                                            </td>
+                                            <td>
+                                                <strong>@recompensa.Nombre</strong>
+                                            </td>
+                                            <td>
+                                                @if (recompensa.Producto != null)
+                                                {
+                                                    <span class="badge bg-info">ID: @recompensa.ProductoId</span>
+                                                    <div class="small text-muted">@recompensa.Producto.Nombre</div>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-warning text-dark">Sin producto</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">@recompensa.Categoria</span>
+                                            </td>
+                                            <td>
+                                                <strong class="text-success">$@recompensa.PrecioOriginal.ToString("F2")</strong>
+                                            </td>
+                                            <td>
+                                                <strong class="text-primary">@recompensa.PuntosNecesarios pts</strong>
+                                            </td>
+                                            <td>
+                                                @{
+                                                    var ratio = recompensa.PrecioOriginal > 0 ? recompensa.PuntosNecesarios / recompensa.PrecioOriginal : 0;
+                                                    
+                                                    // Ratios esperados por categoría
+                                                    var ratiosEsperados = new Dictionary<string, decimal>
+                                                    {
+                                                        {"Sánduches", 160m}, {"Shot", 167m}, {"Cocteles", 167m}, {"Picadas", 170m},
+                                                        {"Pizza", 175m}, {"Cerveza", 175m}, {"Bebidas", 185m}, {"Promo", 200m}
+                                                    };
+                                                    
+                                                    var ratioEsperado = ratiosEsperados.ContainsKey(recompensa.Categoria ?? "") ? 
+                                                                       ratiosEsperados[recompensa.Categoria] : 175m;
+                                                    
+                                                    var diferenciaPorcentaje = ratioEsperado > 0 ? 
+                                                                             Math.Abs((ratio - ratioEsperado) / ratioEsperado) * 100 : 0;
+                                                    
+                                                    // Determinar color basado en proximidad al ratio esperado de la categoría
+                                                    string colorClase;
+                                                    string descripcion;
+                                                    
+                                                    if (diferenciaPorcentaje <= 10) 
+                                                    {
+                                                        colorClase = "bg-success";      // Verde: muy cerca del estándar
+                                                        descripcion = "Excelente";
+                                                    }
+                                                    else if (diferenciaPorcentaje <= 20) 
+                                                    {
+                                                        colorClase = "bg-info";         // Azul: cerca del estándar  
+                                                        descripcion = "Bueno";
+                                                    }
+                                                    else if (diferenciaPorcentaje <= 35) 
+                                                    {
+                                                        colorClase = "bg-warning text-dark"; // Amarillo: moderadamente alejado
+                                                        descripcion = "Aceptable";
+                                                    }
+                                                    else 
+                                                    {
+                                                        colorClase = "bg-danger";       // Rojo: muy alejado
+                                                        descripcion = "Revisar";
+                                                    }
+                                                }
+                                                
+                                                <div class="d-flex flex-column align-items-center">
+                                                    <span class="badge @colorClase">
+                                                        @ratio.ToString("F0") pts/$
+                                                    </span>
+                                                    <small class="text-muted mt-1" style="font-size: 0.7rem;">
+                                                        @descripcion
+                                                    </small>
+                                                    <small class="text-muted" style="font-size: 0.65rem;">
+                                                        (@recompensa.Categoria: @ratioEsperado pts/$)
+                                                    </small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="@Url.Action("EditarRecompensa", new { id = recompensa.Id })"
+                                                       class="btn btn-outline-primary btn-sm">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <button type="button"
+                                                            class="btn btn-outline-danger btn-sm"
+                                                            onclick="eliminarRecompensa(@recompensa.Id, '@recompensa.Nombre')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-gift fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No hay recompensas configuradas</h5>
+                            <p class="text-muted">Agrega tu primera recompensa para comenzar</p>
+                            <a href="@Url.Action("CrearRecompensa")" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Crear Primera Recompensa
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información adicional -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h6><i class="fas fa-info-circle"></i> Información sobre Ratios de Puntos por Categoría</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Ratios por Categoría:</h6>
+                        <ul class="mb-2">
+                            <li><strong>Sánduches:</strong> 160 pts/$ (Generoso)</li>
+                            <li><strong>Shot/Cocteles:</strong> 167 pts/$ (Accesible)</li>
+                            <li><strong>Picadas:</strong> 170 pts/$ (Para compartir)</li>
+                            <li><strong>Pizza/Cerveza:</strong> 175 pts/$ (Estándar)</li>
+                            <li><strong>Bebidas:</strong> 185 pts/$ (Normal)</li>
+                            <li><strong>Promo:</strong> 200 pts/$ (Exclusivo)</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Códigos de Color:</h6>
+                        <ul class="mb-0">
+                            <li><span class="badge bg-success me-2">Verde</span>: Dentro del 10% del estándar de categoría</li>
+                            <li><span class="badge bg-info me-2">Azul</span>: Dentro del 20% del estándar</li>
+                            <li><span class="badge bg-warning text-dark me-2">Amarillo</span>: Hasta 35% de diferencia</li>
+                            <li><span class="badge bg-danger me-2">Rojo</span>: Más de 35% de diferencia - Revisar</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        transition: transform 0.2s ease;
+    }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.9rem;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+    }
+
+    .placeholder-image {
+        border: 2px dashed #dee2e6;
+    }
+
+    @@media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+
+        .btn-group .btn {
+            padding: 0.125rem 0.25rem;
+            font-size: 0.8rem;
+        }
+    }
+</style>
+
+<script>
+    async function eliminarRecompensa(id, nombre) {
+        if (!confirm(`¿Estás seguro de que quieres eliminar la recompensa "${nombre}"?\n\nEsta acción no se puede deshacer.`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch('@Url.Action("EliminarRecompensa")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify({ Id: id })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Mostrar mensaje de éxito y recargar página
+                alert(result.message);
+                location.reload();
+            } else {
+                alert('Error: ' + result.message);
+            }
+        } catch (error) {
+            alert('Error al eliminar la recompensa: ' + error.message);
+        }
+    }
+
+    // Agregar token CSRF para las peticiones AJAX
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!document.querySelector('input[name="__RequestVerificationToken"]')) {
+            const form = document.createElement('form');
+            form.style.display = 'none';
+            form.innerHTML = '@Html.AntiForgeryToken()';
+            document.body.appendChild(form);
+        }
+    });
+</script>
