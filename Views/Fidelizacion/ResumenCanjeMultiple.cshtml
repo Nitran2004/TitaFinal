@@ -1,12 +1,73 @@
 ﻿@model ProyectoIdentity.Models.ResumenCanjesMultiplesViewModel
 @{
     ViewData["Title"] = "Mis Canjes Recientes";
+    string estadoActual = !string.IsNullOrEmpty(Model.CanjesRealizados.FirstOrDefault()?.Estado) ? Model.CanjesRealizados.First().Estado : "Preparándose";
 }
 
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-md-10 col-lg-8">
-            
+
+            <!-- Mensajes de estado -->
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>@TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>@TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <!-- Notificaciones de estado del canje -->
+            @if (estadoActual == "Listo para entregar")
+            {
+                <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-bell fa-2x text-warning me-3"></i>
+                        <div>
+                            <h5 class="alert-heading mb-1">¡Tu canje está listo para entregar! 🎉</h5>
+                            <p class="mb-0">
+                                <strong>Código: @Model.CodigoCanje</strong> -
+                                Puedes recoger tus recompensas en cualquier sucursal
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            else if (estadoActual == "Entregado")
+            {
+                <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle fa-2x text-success me-3"></i>
+                        <div>
+                            <h5 class="alert-heading mb-1">¡Canje entregado exitosamente! ✅</h5>
+                            <p class="mb-0">Esperamos que hayas disfrutado tus recompensas. ¡Gracias por tu preferencia!</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            else if (estadoActual == "Preparándose")
+            {
+                <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-clock fa-2x text-info me-3"></i>
+                        <div>
+                            <h5 class="alert-heading mb-1">Tu canje se está preparando 👨‍🍳</h5>
+                            <p class="mb-0">Estamos preparando tus recompensas. Te notificaremos cuando estén listas.</p>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
             <!-- Header principal -->
             <div class="card shadow-lg border-0 mb-4" style="border-radius: 20px; overflow: hidden;">
                 <div class="card-header text-center py-4" style="background: linear-gradient(135deg, #28a745, #20c997); color: white;">
@@ -20,25 +81,45 @@
                 <div class="card-body p-4">
                     <!-- Resumen general -->
                     <div class="row text-center mb-4">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="stat-card">
                                 <i class="fas fa-gift fa-2x text-success mb-2"></i>
                                 <h3 class="text-success">@Model.CantidadRecompensas</h3>
                                 <small class="text-muted">Recompensas</small>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="stat-card">
                                 <i class="fas fa-star fa-2x text-danger mb-2"></i>
                                 <h3 class="text-danger">-@Model.TotalPuntosUtilizados</h3>
                                 <small class="text-muted">Puntos usados</small>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="stat-card">
                                 <i class="fas fa-dollar-sign fa-2x text-info mb-2"></i>
                                 <h3 class="text-info">$@Model.ValorTotalAhorrado.ToString("F2")</h3>
                                 <small class="text-muted">Valor ahorrado</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                @if (estadoActual == "Preparándose")
+                                {
+                                    <i class="fas fa-clock fa-2x text-info mb-2"></i>
+                                    <h5 class="text-info">Preparándose</h5>
+                                }
+                                else if (estadoActual == "Listo para entregar")
+                                {
+                                    <i class="fas fa-bell fa-2x text-warning mb-2"></i>
+                                    <h5 class="text-warning">Listo</h5>
+                                }
+                                else if (estadoActual == "Entregado")
+                                {
+                                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                    <h5 class="text-success">Entregado</h5>
+                                }
+                                <small class="text-muted">Estado</small>
                             </div>
                         </div>
                     </div>
@@ -64,6 +145,29 @@
                                 <div class="info-item">
                                     <i class="fas fa-wallet text-info"></i>
                                     <span><strong>Puntos restantes:</strong> @Model.PuntosRestantes pts</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mostrar estado actual -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="info-item">
+                                    @if (estadoActual == "Preparándose")
+                                    {
+                                        <i class="fas fa-clock text-info"></i>
+                                        <span><strong>Estado:</strong> <span class="badge bg-info">@estadoActual</span></span>
+                                    }
+                                    else if (estadoActual == "Listo para entregar")
+                                    {
+                                        <i class="fas fa-bell text-warning"></i>
+                                        <span><strong>Estado:</strong> <span class="badge bg-warning">@estadoActual</span></span>
+                                    }
+                                    else if (estadoActual == "Entregado")
+                                    {
+                                        <i class="fas fa-check-circle text-success"></i>
+                                        <span><strong>Estado:</strong> <span class="badge bg-success">@estadoActual</span></span>
+                                    }
                                 </div>
                             </div>
                         </div>
@@ -109,7 +213,9 @@
                         <form id="formTipoServicio" asp-action="ActualizarTipoServicio" asp-controller="Fidelizacion" method="post">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="codigoCanje" value="@Model.CodigoCanje" />
-                            
+                            <!-- ✅ ENVIAR LOS IDS DE LOS CANJES -->
+                            <input type="hidden" name="canjeIds" value="@string.Join(",", Model.CanjesRealizados.Select(c => c.Id))" />
+
                             <div class="mb-3">
                                 <label class="form-label fw-bold">
                                     <i class="fas fa-concierge-bell"></i> Tipo de Servicio *
@@ -178,7 +284,7 @@
                 <h4 class="mb-3">
                     <i class="fas fa-list-alt text-primary"></i> Detalle de Recompensas Canjeadas
                 </h4>
-                
+
                 <div class="row">
                     @foreach (var canje in Model.CanjesRealizados)
                     {
@@ -189,20 +295,20 @@
                                         <div class="recompensa-imagen me-3">
                                             @if (canje.ProductoRecompensa?.Producto?.Imagen != null && canje.ProductoRecompensa.Producto.Imagen.Length > 0)
                                             {
-                                                <img src="data:image/jpeg;base64,@Convert.ToBase64String(canje.ProductoRecompensa.Producto.Imagen)" 
-                                                     alt="@canje.ProductoRecompensa.Nombre" 
-                                                     class="rounded" 
+                                                <img src="data:image/jpeg;base64,@Convert.ToBase64String(canje.ProductoRecompensa.Producto.Imagen)"
+                                                     alt="@canje.ProductoRecompensa.Nombre"
+                                                     class="rounded"
                                                      style="width: 60px; height: 60px; object-fit: cover;" />
                                             }
                                             else
                                             {
-                                                <div class="placeholder-image rounded d-flex align-items-center justify-content-center" 
+                                                <div class="placeholder-image rounded d-flex align-items-center justify-content-center"
                                                      style="width: 60px; height: 60px; background: #f8f9fa;">
                                                     <i class="fas fa-utensils text-muted"></i>
                                                 </div>
                                             }
                                         </div>
-                                        
+
                                         <div class="flex-grow-1">
                                             <h6 class="card-title mb-1">@canje.ProductoRecompensa?.Nombre</h6>
                                             <div class="d-flex justify-content-between align-items-center">
@@ -226,6 +332,86 @@
                 </div>
             </div>
 
+            <!-- Sección de valoración para canjes entregados -->
+            @if (estadoActual == "Entregado")
+            {
+                var primerCanje = Model.CanjesRealizados.FirstOrDefault();
+                bool comentarioEnviado = primerCanje?.ComentarioEnviado ?? false;
+
+                if (!comentarioEnviado)
+                {
+                    <div class="card mt-4 border-warning">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0"><i class="fas fa-star"></i> ¡Cuéntanos tu experiencia!</h5>
+                        </div>
+                        <div class="card-body">
+                            <form asp-controller="Fidelizacion" asp-action="GuardarComentarioCanje" method="post" id="formComentario">
+                                <input type="hidden" name="canjeId" value="@primerCanje.Id" />
+
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Calificación: <span class="text-danger">*</span></strong></label>
+                                    <div class="rating-stars">
+                                        @for (int i = 5; i >= 1; i--)
+                                        {
+                                            <input type="radio" name="calificacion" value="@i" id="star@i" required />
+                                            <label for="star@i" class="star">★</label>
+                                        }
+                                    </div>
+                                    <small class="text-muted">Selecciona de 1 a 5 estrellas</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="comentario" class="form-label"><strong>Comentario: <span class="text-danger">*</span></strong></label>
+                                    <textarea name="comentario" id="comentario" class="form-control" rows="4"
+                                              placeholder="Comparte tu experiencia con nosotros..."
+                                              required minlength="10" maxlength="500"></textarea>
+                                    <div class="form-text">
+                                        <small class="text-muted">Mínimo 10 caracteres, máximo 500. <span id="charCount">0/500</span></small>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-warning btn-lg" id="btnEnviarComentario">
+                                        <i class="fas fa-paper-plane"></i> Enviar Valoración
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="card mt-4 border-success">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-check-circle"></i> ¡Gracias por tu valoración!</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="me-2"><strong>Tu calificación:</strong></span>
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= (primerCanje?.Calificacion ?? 0))
+                                    {
+                                        <span class="text-warning fs-5">★</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted fs-5">★</span>
+                                    }
+                                }
+                            </div>
+                            @if (!string.IsNullOrEmpty(primerCanje?.Comentario))
+                            {
+                                <div>
+                                    <strong>Tu comentario:</strong>
+                                    <p class="mt-2 mb-0">"@primerCanje.Comentario"</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+
             <!-- Instrucciones actualizadas -->
             <div class="alert alert-info border-0 mb-4" style="background: linear-gradient(45deg, #e3f2fd, #f8f9ff); border-radius: 12px;">
                 <div class="d-flex align-items-start">
@@ -243,6 +429,18 @@
                             {
                                 <li><strong>No olvides seleccionar el tipo de servicio arriba</strong></li>
                             }
+                            @if (estadoActual == "Listo para entregar")
+                            {
+                                <li><strong>¡Tu canje está listo para recoger!</strong></li>
+                            }
+                            else if (estadoActual == "Entregado")
+                            {
+                                <li><strong>Tu canje ha sido entregado exitosamente</strong></li>
+                            }
+                            else
+                            {
+                                <li>Estado actual: <strong>@estadoActual</strong></li>
+                            }
                             <li>Válido por <strong>30 días</strong> desde la fecha de canje</li>
                         </ul>
                     </div>
@@ -252,12 +450,17 @@
             <!-- Botones de acción -->
             <div class="action-buttons">
                 <div class="row g-2">
-                    <div class="col-md-3 col-6">
+                    <div class="col-md-2 col-6">
+                        <button onclick="window.location.reload()" class="btn btn-outline-primary w-100 rounded-pill">
+                            <i class="fas fa-sync me-2"></i>Actualizar
+                        </button>
+                    </div>
+                    <div class="col-md-2 col-6">
                         <a href="@Url.Action("Recompensas", "Fidelizacion")" class="btn btn-success w-100 rounded-pill">
                             <i class="fas fa-gift me-2"></i>Más Recompensas
                         </a>
                     </div>
-                    <div class="col-md-3 col-6">
+                    <div class="col-md-2 col-6">
                         <a href="@Url.Action("MisPuntos", "Fidelizacion")" class="btn btn-primary w-100 rounded-pill">
                             <i class="fas fa-star me-2"></i>Mis Puntos
                         </a>
@@ -280,9 +483,17 @@
 
 <style>
     @@keyframes bounce {
-        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-        40% { transform: translateY(-10px); }
-        60% { transform: translateY(-5px); }
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateY(0);
+        }
+
+        40% {
+            transform: translateY(-10px);
+        }
+
+        60% {
+            transform: translateY(-5px);
+        }
     }
 
     .stat-card {
@@ -290,18 +501,18 @@
         transition: transform 0.2s ease;
     }
 
-    .stat-card:hover {
-        transform: translateY(-2px);
-    }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
 
     .border-left-success {
         transition: all 0.2s ease;
     }
 
-    .border-left-success:hover {
-        transform: translateX(3px);
-        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
-    }
+        .border-left-success:hover {
+            transform: translateX(3px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+        }
 
     .info-item {
         display: flex;
@@ -310,9 +521,9 @@
         margin-bottom: 8px;
     }
 
-    .info-item i {
-        width: 20px;
-    }
+        .info-item i {
+            width: 20px;
+        }
 
     code {
         background: #f8f9fa;
@@ -330,10 +541,10 @@
         transition: all 0.2s ease;
     }
 
-    .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
 
     /* ✅ ESTILOS PARA SELECCIÓN DE SERVICIO - Copiados de Recoleccion/Confirmar */
     .service-option {
@@ -343,29 +554,29 @@
         height: 100%;
     }
 
-    .service-option:hover {
-        border-color: #28a745;
-        box-shadow: 0 0.25rem 0.5rem rgba(40, 167, 69, 0.25);
-        transform: translateY(-2px);
-    }
+        .service-option:hover {
+            border-color: #28a745;
+            box-shadow: 0 0.25rem 0.5rem rgba(40, 167, 69, 0.25);
+            transform: translateY(-2px);
+        }
 
-    .service-option.selected {
-        border-color: #28a745;
-        background-color: #f8fff9;
-        box-shadow: 0 0.25rem 0.5rem rgba(40, 167, 69, 0.25);
-    }
+        .service-option.selected {
+            border-color: #28a745;
+            background-color: #f8fff9;
+            box-shadow: 0 0.25rem 0.5rem rgba(40, 167, 69, 0.25);
+        }
 
-    .service-option .form-check-input {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-    }
+        .service-option .form-check-input {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
 
-    .service-option label {
-        cursor: pointer;
-        margin: 0;
-        padding: 1rem 0;
-    }
+        .service-option label {
+            cursor: pointer;
+            margin: 0;
+            padding: 1rem 0;
+        }
 
     .alert-success {
         background-color: #d4edda;
@@ -379,6 +590,56 @@
         color: #0c5460;
     }
 
+    .rating-stars {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        gap: 5px;
+    }
+
+        .rating-stars input[type="radio"] {
+            display: none;
+        }
+
+        .rating-stars label.star {
+            font-size: 2rem;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+            .rating-stars input[type="radio"]:checked ~ label.star,
+            .rating-stars label.star:hover,
+            .rating-stars label.star:hover ~ label.star {
+                color: #ffc107;
+            }
+
+    .alert {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+        .alert.fade.show {
+            animation: slideInDown 0.5s ease-out;
+        }
+
+    @@keyframes slideInDown {
+        from {
+            transform: translateY(-30px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .badge {
+        font-size: 0.9em;
+        padding: 0.5em 0.8em;
+    }
+
     @@media (max-width: 768px) {
         .action-buttons .col-6 {
             margin-bottom: 0.5rem;
@@ -387,51 +648,137 @@
 </style>
 
 <script>
-    // ✅ JAVASCRIPT PARA MANEJAR SELECCIÓN DE SERVICIO - Copiado de Recoleccion/Confirmar
-    document.addEventListener('DOMContentLoaded', function() {
-        // Manejar selección de tipo de servicio
-        document.querySelectorAll('input[name="tipoServicio"]').forEach(function (radio) {
-            radio.addEventListener('change', function () {
-                const tipoSeleccionado = this.value;
-
-                // Actualizar estilos visuales
-                document.querySelectorAll('.service-option').forEach(function (option) {
-                    option.classList.remove('selected');
-                });
-                this.closest('.service-option').classList.add('selected');
-
-                // Mostrar información específica
-                document.getElementById('infoServirAqui').style.display = 'none';
-                document.getElementById('infoParaLlevar').style.display = 'none';
-
-                if (tipoSeleccionado === 'Servir aquí') {
-                    document.getElementById('infoServirAqui').style.display = 'block';
-                } else if (tipoSeleccionado === 'Para llevar') {
-                    document.getElementById('infoParaLlevar').style.display = 'block';
+    // Auto-refresh cada 30 segundos para actualizar el estado si no está entregado
+    @if (estadoActual == "Preparándose" || estadoActual == "Listo para entregar")
+    {
+        <text>
+            setInterval(function () {
+                if (!document.hidden) {
+                    window.location.reload();
                 }
+            }, 30000);
+        </text>
+    }
+
+        // Notificación de escritorio si está listo
+    @if (estadoActual == "Listo para entregar")
+    {
+        <text>
+                if (Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+
+        if (Notification.permission === "granted") {
+            new Notification("¡Tu canje está listo! 🎁", {
+                body: "Código: @Model.CodigoCanje - Puedes recoger tus recompensas en cualquier sucursal",
+                icon: "/images1/logo_bar_verace.png"
             });
-        });
+        }
+        </text>
+    }
 
-        // Efecto visual para las opciones de servicio
-        document.querySelectorAll('.service-option').forEach(function (option) {
-            option.addEventListener('click', function () {
-                const radio = this.querySelector('input[type="radio"]');
-                radio.checked = true;
-                radio.dispatchEvent(new Event('change'));
+        // ✅ JAVASCRIPT PARA MANEJAR SELECCIÓN DE SERVICIO - Copiado de Recoleccion/Confirmar
+        document.addEventListener('DOMContentLoaded', function () {
+            // Manejar selección de tipo de servicio
+            document.querySelectorAll('input[name="tipoServicio"]').forEach(function (radio) {
+                radio.addEventListener('change', function () {
+                    const tipoSeleccionado = this.value;
+
+                    // Actualizar estilos visuales
+                    document.querySelectorAll('.service-option').forEach(function (option) {
+                        option.classList.remove('selected');
+                    });
+                    this.closest('.service-option').classList.add('selected');
+
+                    // Mostrar información específica
+                    document.getElementById('infoServirAqui').style.display = 'none';
+                    document.getElementById('infoParaLlevar').style.display = 'none';
+
+                    if (tipoSeleccionado === 'Servir aquí') {
+                        document.getElementById('infoServirAqui').style.display = 'block';
+                    } else if (tipoSeleccionado === 'Para llevar') {
+                        document.getElementById('infoParaLlevar').style.display = 'block';
+                    }
+                });
             });
-        });
 
-        // Validación del formulario
-        document.getElementById('formTipoServicio').addEventListener('submit', function (e) {
-            const tipoServicio = document.querySelector('input[name="tipoServicio"]:checked');
+            // Efecto visual para las opciones de servicio
+            document.querySelectorAll('.service-option').forEach(function (option) {
+                option.addEventListener('click', function () {
+                    const radio = this.querySelector('input[type="radio"]');
+                    radio.checked = true;
+                    radio.dispatchEvent(new Event('change'));
+                });
+            });
 
-            if (!tipoServicio) {
-                e.preventDefault();
-                alert('Por favor selecciona si deseas servir aquí o para llevar');
-                return false;
+            // Validación del formulario
+            const formTipoServicio = document.getElementById('formTipoServicio');
+            if (formTipoServicio) {
+                formTipoServicio.addEventListener('submit', function (e) {
+                    const tipoServicio = document.querySelector('input[name="tipoServicio"]:checked');
+
+                    if (!tipoServicio) {
+                        e.preventDefault();
+                        alert('Por favor selecciona si deseas servir aquí o para llevar');
+                        return false;
+                    }
+
+                    return confirm("¿Confirmas el tipo de servicio seleccionado?");
+                });
             }
 
-            return confirm("¿Confirmas el tipo de servicio seleccionado?");
+            // Validación del formulario de comentarios
+            const formComentario = document.getElementById('formComentario');
+            const comentarioTextarea = document.getElementById('comentario');
+            const charCount = document.getElementById('charCount');
+            const btnEnviarComentario = document.getElementById('btnEnviarComentario');
+
+            if (comentarioTextarea && charCount) {
+                comentarioTextarea.addEventListener('input', function () {
+                    const length = this.value.length;
+                    charCount.textContent = length + '/500';
+
+                    if (length < 10) {
+                        charCount.classList.add('text-danger');
+                        charCount.classList.remove('text-success');
+                    } else if (length > 450) {
+                        charCount.classList.add('text-warning');
+                        charCount.classList.remove('text-success', 'text-danger');
+                    } else {
+                        charCount.classList.add('text-success');
+                        charCount.classList.remove('text-danger', 'text-warning');
+                    }
+                });
+            }
+
+            if (formComentario) {
+                formComentario.addEventListener('submit', function (e) {
+                    const calificacion = document.querySelector('input[name="calificacion"]:checked');
+                    const comentario = document.getElementById('comentario').value.trim();
+
+                    if (!calificacion) {
+                        e.preventDefault();
+                        alert('Por favor selecciona una calificación de 1 a 5 estrellas');
+                        return;
+                    }
+
+                    if (comentario.length < 10) {
+                        e.preventDefault();
+                        alert('El comentario debe tener al menos 10 caracteres');
+                        return;
+                    }
+
+                    if (comentario.length > 500) {
+                        e.preventDefault();
+                        alert('El comentario no puede exceder 500 caracteres');
+                        return;
+                    }
+
+                    if (btnEnviarComentario) {
+                        btnEnviarComentario.disabled = true;
+                        btnEnviarComentario.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+                    }
+                });
+            }
         });
-    });
 </script>

@@ -121,7 +121,7 @@ namespace ProyectoIdentity.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ActualizarTipoServicio(string codigoCanje, string tipoServicio)
+        public async Task<IActionResult> ActualizarTipoServicio(string codigoCanje, string tipoServicio, string canjeIds)
         {
             try
             {
@@ -131,25 +131,40 @@ namespace ProyectoIdentity.Controllers
                     return RedirectToAction("Recompensas");
                 }
 
-                // ✅ CAST EXPLÍCITO a AppUsuario
                 var usuario = (AppUsuario)usuarioIdentity;
 
-                // ✅ MÉTODO SIMPLIFICADO: Buscar canjes por usuario en las últimas horas
-                // En lugar de parsear el código, buscamos los canjes más recientes
-                var fechaLimite = DateTime.Now.AddHours(-2); // Últimas 2 horas
+                // ✅ USAR IDs ESPECÍFICOS DE LOS CANJES
+                List<int> idsCanjes = new List<int>();
 
-                var canjesRecientes = await _context.HistorialCanjes
-                    .Include(h => h.ProductoRecompensa)
-                        .ThenInclude(pr => pr.Producto)
-                    .Where(c => c.UsuarioId == usuario.Id &&
-                               c.FechaCanje >= fechaLimite &&
-                               (c.TipoServicio == null || c.TipoServicio == "")) // Solo los que no tienen tipo asignado
-                    .OrderByDescending(c => c.FechaCanje)
-                    .ToListAsync();
-
-                if (!canjesRecientes.Any())
+                if (!string.IsNullOrEmpty(canjeIds))
                 {
-                    // ✅ SIN TempData - crear ViewModel directamente con mensaje
+                    // Parsear los IDs que vienen del formulario
+                    var idsStr = canjeIds.Split(',');
+                    foreach (var idStr in idsStr)
+                    {
+                        if (int.TryParse(idStr.Trim(), out int id))
+                        {
+                            idsCanjes.Add(id);
+                        }
+                    }
+                }
+
+                // Si no hay IDs específicos, buscar por código (fallback al método anterior)
+                if (!idsCanjes.Any())
+                {
+                    // Buscar canjes recientes sin tipo de servicio
+                    var fechaLimite = DateTime.Now.AddHours(-2);
+                    var canjesRecientes = await _context.HistorialCanjes
+                        .Where(c => c.UsuarioId == usuario.Id &&
+                                   c.FechaCanje >= fechaLimite &&
+                                   (c.TipoServicio == null || c.TipoServicio == ""))
+                        .ToListAsync();
+
+                    idsCanjes = canjesRecientes.Select(c => c.Id).ToList();
+                }
+
+                if (!idsCanjes.Any())
+                {
                     var viewModelError = new ResumenCanjesMultiplesViewModel
                     {
                         Usuario = usuario,
@@ -162,42 +177,90 @@ namespace ProyectoIdentity.Controllers
                         ValorTotalAhorrado = 0
                     };
 
-                    ViewBag.ErrorMessage = "No hay canjes recientes sin tipo de servicio asignado";
+                    ViewBag.ErrorMessage = "No se encontraron canjes para actualizar";
                     return View("ResumenCanjeMultiple", viewModelError);
                 }
 
-                // Actualizar el tipo de servicio para todos los canjes recientes
-                foreach (var canje in canjesRecientes)
+                // ✅ BUSCAR Y ACTUALIZAR SOLO LOS CANJES ESPECÍFICOS
+                var canjesEspecificos = await _context.HistorialCanjes
+                    .Include(h => h.ProductoRecompensa)
+                        .ThenInclude(pr => pr.Producto)
+                    .Where(c => idsCanjes.Contains(c.Id) && c.UsuarioId == usuario.Id)
+                    .ToListAsync();
+
+                Console.WriteLine($"[DEBUG] IDs a actualizar: {string.Join(", ", idsCanjes)}");
+                Console.WriteLine($"[DEBUG] Canjes encontrados: {canjesEspecificos.Count}");
+
+                foreach (var canje in canjesEspecificos)
                 {
                     canje.TipoServicio = tipoServicio;
+                    Console.WriteLine($"[DEBUG] Actualizando canje ID {canje.Id} con tipo: {tipoServicio}");
                 }
 
                 await _context.SaveChangesAsync();
 
-                // ✅ CREAR EL VIEWMODEL Y REGRESAR A ResumenCanjeMultiple CON MENSAJE DE ÉXITO
                 var viewModel = new ResumenCanjesMultiplesViewModel
                 {
                     Usuario = usuario,
-                    CanjesRealizados = canjesRecientes,
-                    TotalPuntosUtilizados = canjesRecientes.Sum(c => c.PuntosUtilizados),
-                    CantidadRecompensas = canjesRecientes.Count,
+                    CanjesRealizados = canjesEspecificos,
+                    TotalPuntosUtilizados = canjesEspecificos.Sum(c => c.PuntosUtilizados),
+                    CantidadRecompensas = canjesEspecificos.Count,
                     PuntosRestantes = usuario.PuntosFidelidad ?? 0,
-                    FechaCanje = canjesRecientes.First().FechaCanje,
+                    FechaCanje = canjesEspecificos.First().FechaCanje,
                     CodigoCanje = codigoCanje,
-                    ValorTotalAhorrado = canjesRecientes.Sum(c => c.ProductoRecompensa?.PrecioOriginal ?? 0)
+                    ValorTotalAhorrado = canjesEspecificos.Sum(c => c.ProductoRecompensa?.PrecioOriginal ?? 0)
                 };
 
-                // ✅ USAR ViewBag EN LUGAR DE TempData para que no persista
                 ViewBag.SuccessMessage = $"Tipo de servicio actualizado: {tipoServicio}";
-
                 return View("ResumenCanjeMultiple", viewModel);
             }
             catch (Exception ex)
             {
-                // ✅ SIN TempData - redirigir sin mensajes
+                Console.WriteLine($"[ERROR] Error en ActualizarTipoServicio: {ex.Message}");
+                TempData["Error"] = "Error al actualizar el tipo de servicio";
                 return RedirectToAction("Recompensas");
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> VerCanjeActualizado(string codigo)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return RedirectToAction("Acceso", "Cuentas");
+
+            var usuario = await _context.AppUsuario.FindAsync(userId);
+            if (usuario == null) return NotFound();
+
+            // Buscar canjes recientes del usuario
+            var fechaLimite = DateTime.Now.AddHours(-4); // Últimas 4 horas
+            var canjesRecientes = await _context.HistorialCanjes
+                .Include(h => h.ProductoRecompensa)
+                    .ThenInclude(pr => pr.Producto)
+                .Where(c => c.UsuarioId == userId && c.FechaCanje >= fechaLimite)
+                .OrderByDescending(c => c.FechaCanje)
+                .Take(10)
+                .ToListAsync();
+
+            if (!canjesRecientes.Any())
+            {
+                return RedirectToAction("Recompensas");
+            }
+
+            var viewModel = new ResumenCanjesMultiplesViewModel
+            {
+                Usuario = usuario,
+                CanjesRealizados = canjesRecientes,
+                TotalPuntosUtilizados = canjesRecientes.Sum(c => c.PuntosUtilizados),
+                CantidadRecompensas = canjesRecientes.Count,
+                PuntosRestantes = usuario.PuntosFidelidad ?? 0,
+                FechaCanje = canjesRecientes.First().FechaCanje,
+                CodigoCanje = codigo ?? GenerarCodigoCanjeMultiple(canjesRecientes.First().Id),
+                ValorTotalAhorrado = canjesRecientes.Sum(c => c.ProductoRecompensa?.PrecioOriginal ?? 0)
+            };
+
+            return View("ResumenCanjeMultiple", viewModel);
+        }
+
         [HttpGet]
         public async Task<IActionResult> ObtenerPuntos()
         {
@@ -438,7 +501,7 @@ namespace ProyectoIdentity.Controllers
                     TotalPuntosUtilizados = totalPuntosNecesarios,
                     PuntosRestantes = usuario.PuntosFidelidad ?? 0,
                     FechaCanje = DateTime.Now,
-                    CodigoCanje = GenerarCodigoCanjeMultiple(),
+                    CodigoCanje = GenerarCodigoCanjeMultiple(canjesACrear.First().Id),
                     RecompensasCanjeadas = seleccionadas.Select(s => new RecompensaCanjeadaInfo
                     {
                         Recompensa = recompensas.First(r => r.Id == s.RecompensaId),
@@ -504,7 +567,7 @@ namespace ProyectoIdentity.Controllers
                 CantidadRecompensas = resumenData.CantidadRecompensas,
                 PuntosRestantes = usuario?.PuntosFidelidad ?? 0,
                 FechaCanje = DateTime.Now,
-                CodigoCanje = GenerarCodigoCanjeMultiple(),
+                CodigoCanje = GenerarCodigoCanjeMultiple(canjesRecientes.First().Id),
                 CanjesRealizados = canjesRecientes, // ✅ Agregar los canjes
                 ValorTotalAhorrado = valorTotalAhorrado // ✅ Agregar valor ahorrado
             };
@@ -605,11 +668,12 @@ namespace ProyectoIdentity.Controllers
         }
 
         // Método auxiliar para generar código de canje múltiple
-        private string GenerarCodigoCanjeMultiple()
+        // ✅ MÉTODO ACTUALIZADO
+        private string GenerarCodigoCanjeMultiple(int primerCanjeId)
         {
             var fecha = DateTime.Now.ToString("yyyyMMdd");
-            var random = new Random().Next(1000, 9999);
-            return $"CJM-{fecha}-{random}";
+            // Usar el ID del primer canje en lugar de número aleatorio
+            return $"CJM-{fecha}-{primerCanjeId}";
         }
 
         private string GenerarCodigoCanje(int canjeId)
@@ -880,6 +944,107 @@ namespace ProyectoIdentity.Controllers
             }
         }
 
+        // AGREGAR ESTOS MÉTODOS AL FidelizacionController.cs
+
+        [HttpPost]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> ActualizarEstadoCanje(int id, string estado)
+        {
+            try
+            {
+                var canje = await _context.HistorialCanjes.FindAsync(id);
+                if (canje == null)
+                {
+                    TempData["Error"] = "Canje no encontrado";
+                    return RedirectToAction("AdminCanjesIndex");
+                }
+
+                canje.Estado = estado;
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = $"Estado del canje actualizado a: {estado}";
+
+                // Obtener el usuarioId para redirigir de vuelta al detalle
+                return RedirectToAction("AdminCanjesDetalle", new { usuarioId = canje.UsuarioId });
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Error al actualizar el estado del canje";
+                return RedirectToAction("AdminCanjesIndex");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> GuardarComentarioCanje(int canjeId, int calificacion, string comentario)
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                var canje = await _context.HistorialCanjes
+                    .FirstOrDefaultAsync(c => c.Id == canjeId && c.UsuarioId == userId);
+
+                if (canje == null)
+                {
+                    TempData["Error"] = "Canje no encontrado";
+                    return RedirectToAction("MisCanjes");
+                }
+
+                if (canje.Estado != "Entregado")
+                {
+                    TempData["Error"] = "Solo puedes comentar canjes que han sido entregados";
+                    return RedirectToAction("DetalleCanje", new { codigo = GenerarCodigoCanjePorFecha(canje.FechaCanje, canje.Id) });
+                }
+
+                canje.Calificacion = calificacion;
+                canje.Comentario = comentario;
+                canje.ComentarioEnviado = true;
+
+                await _context.SaveChangesAsync();
+
+                TempData["Success"] = "¡Gracias por tu valoración!";
+                return RedirectToAction("DetalleCanje", new { codigo = GenerarCodigoCanjePorFecha(canje.FechaCanje, canje.Id) });
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Error al guardar la valoración";
+                return RedirectToAction("MisCanjes");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CambiarEstadoCanjeAEntregado([FromBody] dynamic request)
+        {
+            try
+            {
+                int canjeId = request.CanjeId;
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                var canje = await _context.HistorialCanjes
+                    .FirstOrDefaultAsync(c => c.Id == canjeId && c.UsuarioId == userId);
+
+                if (canje == null)
+                {
+                    return Json(new { success = false, message = "Canje no encontrado" });
+                }
+
+                if (canje.Estado != "Listo para entregar")
+                {
+                    return Json(new { success = false, message = "El canje no está listo para entregar" });
+                }
+
+                canje.Estado = "Entregado";
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Estado actualizado a Entregado" });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error al cambiar estado: {ex.Message}");
+                return Json(new { success = false, message = "Error interno del servidor" });
+            }
+        }
+
         [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> AdminCanjesDetalle(string usuarioId)
         {
@@ -891,7 +1056,6 @@ namespace ProyectoIdentity.Controllers
 
             try
             {
-                // Obtener usuario
                 var usuario = await _context.AppUsuario.FindAsync(usuarioId);
                 if (usuario == null)
                 {
@@ -899,22 +1063,18 @@ namespace ProyectoIdentity.Controllers
                     return RedirectToAction("AdminCanjesIndex");
                 }
 
-                // Obtener canjes del usuario sin Include problemático
                 var canjesUsuario = await _context.HistorialCanjes
                     .Where(h => h.UsuarioId == usuarioId)
                     .OrderByDescending(h => h.FechaCanje)
                     .ToListAsync();
 
-                // Obtener IDs de productos recompensa
                 var productosRecompensaIds = canjesUsuario.Select(c => c.ProductoRecompensaId).Distinct().ToList();
 
-                // Obtener productos recompensa por separado
                 var productosRecompensa = await _context.ProductosRecompensa
                     .Include(pr => pr.Producto)
                     .Where(pr => productosRecompensaIds.Contains(pr.Id))
                     .ToListAsync();
 
-                // Crear modelo combinando datos en memoria
                 var historialCanjes = canjesUsuario.Select(h =>
                 {
                     var productoRecompensa = productosRecompensa.FirstOrDefault(pr => pr.Id == h.ProductoRecompensaId);
@@ -928,7 +1088,12 @@ namespace ProyectoIdentity.Controllers
                         PuntosUtilizados = h.PuntosUtilizados,
                         FechaCanje = h.FechaCanje,
                         PrecioOriginal = productoRecompensa?.PrecioOriginal ?? 0,
-                        CodigoCanje = GenerarCodigoCanjePorFecha(h.FechaCanje, h.Id)
+                        CodigoCanje = GenerarCodigoCanjePorFecha(h.FechaCanje, h.Id),
+                        Estado = h.Estado ?? "Preparándose",
+                        ComentarioEnviado = h.ComentarioEnviado,
+                        Calificacion = h.Calificacion,
+                        Comentario = h.Comentario,
+                        TipoServicio = h.TipoServicio
                     };
                 }).ToList();
 

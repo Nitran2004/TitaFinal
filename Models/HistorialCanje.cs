@@ -22,6 +22,12 @@ namespace ProyectoIdentity.Models
         [StringLength(50)]
         public string? TipoServicio { get; set; }
 
+        // En Models/HistorialCanje.cs - agregar estas propiedades
+        public string Estado { get; set; } = "Preparándose";
+        public bool ComentarioEnviado { get; set; } = false;
+        public int? Calificacion { get; set; }
+        public string? Comentario { get; set; }
+
         // Navegación
         public virtual ProductoRecompensa? ProductoRecompensa { get; set; }
     }

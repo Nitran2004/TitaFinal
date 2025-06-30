@@ -7,5 +7,6 @@
         public int TotalCanjes { get; set; }
         public int TotalPuntosUtilizados { get; set; }
         public decimal TotalValorAhorrado { get; set; }
+
     }
 }
