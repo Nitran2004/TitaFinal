@@ -549,15 +549,153 @@
 </div>
 
 <script>
+    // ✅ VARIABLES GLOBALES PARA LÍMITES Y CARRITO
+    let limitesActuales = { 
+        productosActuales: 0, 
+        limite: 3, 
+        disponibles: 3, 
+        productosEnCarrito: 0 // ✅ NUEVO
+    };
+
+    // ✅ FUNCIÓN PARA CARGAR LÍMITES ACTUALES (MEJORADA)
+    async function cargarLimitesProductos() {
+        try {
+            const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
+            const data = await response.json();
+            limitesActuales = data;
+
+            console.log('[DEBUG] Límites cargados:', data);
+            console.log(`[DEBUG] Productos activos: ${data.productosActuales}, En carrito: ${data.productosEnCarrito}, Disponibles: ${data.disponibles}`);
+
+            // Actualizar interfaz según límites
+            actualizarInterfazLimites();
+
+            // Si ya está en el límite, mostrar mensaje
+            if (data.disponibles === 0) {
+                mostrarMensajeLimite(data.mensaje || 'No puedes agregar más productos');
+            }
+        } catch (error) {
+            console.error('Error al cargar límites:', error);
+        }
+    }
+
+    // ✅ FUNCIÓN PARA ACTUALIZAR LA INTERFAZ SEGÚN LÍMITES
+    function actualizarInterfazLimites() {
+        const cantidadInput = document.getElementById('cantidad');
+        const maxPermitido = Math.min(10, limitesActuales.disponibles);
+
+        // Actualizar el máximo permitido en el input
+        cantidadInput.max = maxPermitido;
+
+        // Si la cantidad actual excede el límite, ajustarla
+        if (parseInt(cantidadInput.value) > maxPermitido) {
+            cantidadInput.value = maxPermitido > 0 ? maxPermitido : 1;
+        }
+
+        // Deshabilitar botón + si está en el límite
+        const botonMas = document.querySelector('.quantity-btn[onclick="cambiarCantidad(1)"]');
+        if (maxPermitido <= parseInt(cantidadInput.value) || maxPermitido === 0) {
+            botonMas.disabled = true;
+            botonMas.style.opacity = '0.5';
+            botonMas.style.cursor = 'not-allowed';
+        } else {
+            botonMas.disabled = false;
+            botonMas.style.opacity = '1';
+            botonMas.style.cursor = 'pointer';
+        }
+
+        // Mostrar información de límite
+        mostrarInfoLimite();
+    }
+
+    // ✅ FUNCIÓN PARA MOSTRAR INFORMACIÓN DEL LÍMITE (MEJORADA)
+    function mostrarInfoLimite() {
+        let infoElement = document.getElementById('info-limite');
+        if (!infoElement) {
+            infoElement = document.createElement('div');
+            infoElement.id = 'info-limite';
+            infoElement.className = 'alert alert-info mt-3';
+
+            const cantidadContainer = document.querySelector('.quantity-control').parentNode;
+            cantidadContainer.appendChild(infoElement);
+        }
+
+        const { productosActuales, limite, disponibles, productosEnCarrito } = limitesActuales;
+
+        if (disponibles === 0) {
+            infoElement.className = 'alert alert-danger mt-3';
+            infoElement.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Límite alcanzado:</strong><br>
+                • Productos en pedidos activos: ${productosActuales}/${limite}<br>
+                • Productos en carrito actual: ${productosEnCarrito}<br>
+                • <em>No puedes agregar más productos.</em>
+            `;
+        } else if (disponibles <= 1) {
+            infoElement.className = 'alert alert-warning mt-3';
+            infoElement.innerHTML = `
+                <i class="fas fa-info-circle"></i>
+                <strong>Casi en el límite:</strong><br>
+                • Productos en pedidos activos: ${productosActuales}/${limite}<br>
+                • Productos en carrito actual: ${productosEnCarrito}<br>
+                • Solo puedes agregar ${disponibles} producto(s) más.
+            `;
+        } else {
+            infoElement.className = 'alert alert-info mt-3';
+            infoElement.innerHTML = `
+                <i class="fas fa-info-circle"></i>
+                <strong>Estado actual:</strong><br>
+                • Productos en pedidos activos: ${productosActuales}/${limite}<br>
+                • Productos en carrito actual: ${productosEnCarrito}<br>
+                • Puedes agregar hasta ${disponibles} producto(s) más.
+            `;
+        }
+    }
+
+    // ✅ FUNCIÓN PARA MOSTRAR MENSAJE DE LÍMITE
+    function mostrarMensajeLimite(mensaje) {
+        const formContainer = document.querySelector('.personalization-form');
+        const botonAgregar = formContainer.querySelector('.btn-success');
+
+        // Deshabilitar formulario
+        botonAgregar.disabled = true;
+        botonAgregar.innerHTML = '<i class="fas fa-ban"></i> Límite Alcanzado';
+        botonAgregar.className = 'btn btn-secondary btn-lg';
+
+        // Agregar mensaje prominente
+        let mensajeElement = document.getElementById('mensaje-limite');
+        if (!mensajeElement) {
+            mensajeElement = document.createElement('div');
+            mensajeElement.id = 'mensaje-limite';
+            mensajeElement.className = 'alert alert-danger mt-3';
+            formContainer.insertBefore(mensajeElement, botonAgregar.parentNode);
+        }
+
+        mensajeElement.innerHTML = `
+            <h6><i class="fas fa-exclamation-triangle"></i> No puedes agregar más productos</h6>
+            <p>${mensaje}</p>
+            <a href="@Url.Action("VerCarrito")" class="btn btn-outline-primary btn-sm">
+                Ver carrito actual
+            </a>
+        `;
+    }
+
+    // ✅ FUNCIÓN CAMBIAR CANTIDAD (ACTUALIZADA CON LÍMITES)
     function cambiarCantidad(cambio) {
         const input = document.getElementById('cantidad');
         let nuevaCantidad = parseInt(input.value) + cambio;
+
+        // Aplicar límites
         if (nuevaCantidad < 1) nuevaCantidad = 1;
+        if (nuevaCantidad > limitesActuales.disponibles) nuevaCantidad = limitesActuales.disponibles;
         if (nuevaCantidad > 10) nuevaCantidad = 10;
+
         input.value = nuevaCantidad;
         calcularAhorro();
+        actualizarInterfazLimites();
     }
 
+    // ✅ FUNCIÓN CALCULAR AHORRO (ORIGINAL)
     function calcularAhorro() {
         const esAdministrador = document.getElementById('esAdministrador').value === 'true';
 
@@ -580,10 +718,17 @@
         }
     }
 
+    // ✅ FUNCIÓN AGREGAR AL CARRITO (ACTUALIZADA CON LÍMITES Y RECARGA)
     function agregarAlCarrito() {
         const productoId = document.getElementById('productoId').value;
         const cantidad = parseInt(document.getElementById('cantidad').value);
         const notasEspeciales = document.getElementById('notasEspeciales').value;
+
+        // Validación de límite antes de enviar
+        if (cantidad > limitesActuales.disponibles) {
+            alert(`Solo puedes agregar ${limitesActuales.disponibles} producto(s) más.`);
+            return;
+        }
 
         const ingredientesRemovidos = [];
         document.querySelectorAll('.form-check-input:checked').forEach(checkbox => {
@@ -596,6 +741,12 @@
             IngredientesRemovidos: ingredientesRemovidos,
             NotasEspeciales: notasEspeciales
         };
+
+        // Mostrar loading
+        const boton = event.target;
+        const textoOriginal = boton.innerHTML;
+        boton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Agregando...';
+        boton.disabled = true;
 
         fetch('@Url.Action("AgregarAlCarrito")', {
             method: 'POST',
@@ -610,16 +761,24 @@
                     // Mensaje genérico sin mostrar ahorros para usuarios normales
                     alert('¡Producto agregado al carrito exitosamente!');
                     document.getElementById('contadorCarrito').textContent = result.totalItems;
+
+                    // ✅ RECARGAR LÍMITES DESPUÉS DE AGREGAR (IMPORTANTE)
+                    cargarLimitesProductos();
                 } else {
                     alert('Error: ' + result.message);
                 }
             })
             .catch(error => {
+                console.error('Error:', error);
                 alert('Error al agregar al carrito');
+            })
+            .finally(() => {
+                boton.innerHTML = textoOriginal;
+                boton.disabled = false;
             });
     }
 
-    // Acordeón
+    // ✅ ACORDEÓN (ORIGINAL)
     document.querySelectorAll('.accordion-header').forEach(function (header) {
         header.addEventListener('click', function () {
             // Obtener el contenido relacionado
@@ -638,12 +797,20 @@
         });
     });
 
-    // Calcular ahorro al cambiar ingredientes (solo para administradores)
+    // ✅ EVENTOS PARA CALCULAR AHORRO (ORIGINAL)
     document.querySelectorAll('.form-check-input').forEach(checkbox => {
         checkbox.addEventListener('change', calcularAhorro);
     });
 
-    // Cargar contador del carrito al inicializar
+    // ✅ INICIALIZACIÓN (ACTUALIZADA)
+    document.addEventListener('DOMContentLoaded', function () {
+        cargarLimitesProductos();
+
+        // También cargar cuando se hace focus en la página (por si viene de otra pestaña)
+        window.addEventListener('focus', cargarLimitesProductos);
+    });
+
+    // ✅ CARGAR CONTADOR DEL CARRITO AL INICIALIZAR (ORIGINAL)
     window.onload = function () {
         calcularAhorro();
     };

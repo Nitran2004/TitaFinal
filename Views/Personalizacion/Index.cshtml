@@ -1,6 +1,7 @@
 ﻿@model List<ProyectoIdentity.Models.Producto>
 @{
-    ViewData["Title"] = "Menú ";
+    ViewBag.Title = "Personalización de productos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <style>
@@ -77,29 +78,8 @@
         font-size:0.9rem; color:#6c757d; margin-bottom:12px; flex-grow: 1;
     }
     
-    /* Estilos para los botones */
-    .btn-info {
-        background-color: #17a2b8;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 8px 12px;
-        font-size: 0.85rem;
-        transition: all 0.2s;
-        display: inline-block;
-        width: 100%;
-        margin-bottom: 8px;
-        text-decoration: none !important;
-    }
-
-    .btn-info:hover {
-        background-color: #138496;
-        color: white;
-        transform: translateY(-2px);
-        text-decoration: none !important;
-    }
-
-    .btn-warning {
+    /* ✅ Estilos para los botones con validaciones */
+    .btn-seleccionar {
         background-color: #F2A900;
         border-color: #F2A900;
         color: #fff;
@@ -111,9 +91,10 @@
         display: inline-block;
         width: 100%;
         text-decoration: none !important;
+        cursor: pointer;
     }
 
-    .btn-warning:hover {
+    .btn-seleccionar:hover:not(:disabled) {
         background-color: #e09600;
         border-color: #d48e00;
         color: #fff;
@@ -121,27 +102,64 @@
         text-decoration: none !important;
     }
 
-    .btn-warning i, .btn-info i {
+    .btn-seleccionar:disabled {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: #fff;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
+    .btn-seleccionar.btn-warning {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        color: #212529;
+    }
+
+    .btn-seleccionar.btn-warning:hover {
+        background-color: #e0a800;
+        border-color: #d39e00;
+        color: #212529;
+    }
+
+    .btn-seleccionar i {
         margin-right: 5px;
+    }
+
+    /* ✅ Estilos para información de límites */
+    .points-info {
+        background: #f8f9fa;
+        padding: 8px;
+        border-radius: 5px;
+        border-left: 3px solid #28a745;
+        margin-bottom: 12px;
+        font-size: 0.85rem;
     }
 </style>
 
-<h1 class="text-center mt-4">@(string.IsNullOrEmpty(ViewBag.CategoriaActual) || ViewBag.CategoriaActual.ToLower() == "todas" ? "Menú " : $"{ViewBag.CategoriaActual} - Personalizable")</h1>
+<!-- ✅ INFORMACIÓN DE LÍMITES EN TIEMPO REAL -->
+<div id="info-limite-global" class="alert" style="display: none; margin: 20px;">
+    <!-- Contenido dinámico -->
+</div>
+
+<h1 class="text-center mt-4">@(string.IsNullOrEmpty(ViewBag.CategoriaActual) || ViewBag.CategoriaActual.ToLower() == "todas" ? "Personalización de productos" : $"{ViewBag.CategoriaActual} - Personalizable")</h1>
 
 <nav class="category-nav">
     <div class="category-container">
-        <button class="category-btn @(ViewBag.CategoriaActual?.ToLower() == "todas" ? "active" : "")" data-category="todas">
+        <a href="@Url.Action("Index", new { categoria = "todas" })" 
+           class="category-btn @(ViewBag.CategoriaActual?.ToLower() == "todas" ? "active" : "")">
             <i class="fas fa-layer-group"></i>
             <span>Todas</span>
-        </button>
+        </a>
         @if (ViewBag.Categorias != null)
         {
-            @foreach (var cat in ViewBag.Categorias)
+            @foreach (var categoria in ViewBag.Categorias)
             {
-                <button class="category-btn @(ViewBag.CategoriaActual?.ToLower() == cat.ToLower() ? "active" : "")" data-category="@cat.ToLower()">
-                    <i class="@GetCategoryIcon(cat)"></i>
-                    <span>@cat</span>
-                </button>
+                <a href="@Url.Action("Index", new { categoria = categoria })" 
+                   class="category-btn @(ViewBag.CategoriaActual?.ToLower() == categoria.ToLower() ? "active" : "")">
+                    <i class="@GetCategoryIcon(categoria)"></i>
+                    <span>@categoria</span>
+                </a>
             }
         }
     </div>
@@ -149,87 +167,225 @@
 
 <div class="container">
     <div class="product-grid">
-        @foreach (var producto in Model)
+        @if (Model.Any())
         {
-            <div class="product-card" data-categoria="@producto.Categoria.ToLower()">
-                @if (producto.Imagen != null)
-                {
-                    <img src="data:image/jpeg;base64,@Convert.ToBase64String(producto.Imagen)"
-                         alt="@producto.Nombre" />
-                }
-                else
-                {
-                    <img src="https://via.placeholder.com/260x180/f8f9fa/6c757d?text=Sin+Imagen"
-                         alt="@producto.Nombre" />
-                }
-                <div class="card-body">
-                    <div class="product-name">@producto.Nombre</div>
-                    <div class="product-price">$@producto.Precio.ToString("F2")</div>
-                    <p class="product-description">@producto.Descripcion</p>
-                    
-                    <div class="mt-auto">
-                        <a href="@Url.Action("IniciarPersonalizacion", new { id = producto.Id })"
-                           class="btn btn-warning">
-                            <i class="fas fa-shopping-bag"></i> Seleccionar
-                        </a>
+            @foreach (var producto in Model)
+            {
+                <div class="product-card" data-categoria="@producto.Categoria.ToLower()">
+                    @if (producto.Imagen != null)
+                    {
+                        <img src="data:image/jpeg;base64,@Convert.ToBase64String(producto.Imagen)"
+                             alt="@producto.Nombre" />
+                    }
+                    else
+                    {
+                        <img src="https://via.placeholder.com/260x180/f8f9fa/6c757d?text=Sin+Imagen"
+                             alt="@producto.Nombre" />
+                    }
+                    <div class="card-body">
+                        <div class="product-name">@producto.Nombre</div>
+                        <div class="product-price">$@producto.Precio.ToString("F2")</div>
+                        <p class="product-description">@producto.Descripcion</p>
+                        
+                        <div class="points-info">
+                            <small class="text-success">
+                                <i class="fas fa-star"></i> Ganas @((int)(producto.Precio * 30)) puntos
+                            </small>
+                        </div>
+                        
+                        <div class="mt-auto">
+                            <!-- ✅ BOTÓN CON VALIDACIÓN DE LÍMITES -->
+                            <button type="button" 
+                                    class="btn-seleccionar" 
+                                    data-producto-id="@producto.Id"
+                                    onclick="validarYSeleccionar(@producto.Id)">
+                                <i class="fas fa-cog"></i> Personalizar
+                            </button>
+                        </div>
                     </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <h5>No hay productos disponibles</h5>
+                    <p>No se encontraron productos para la categoría seleccionada.</p>
+                    <a href="@Url.Action("Index", new { categoria = "todas" })" class="btn btn-primary">
+                        Ver todos los productos
+                    </a>
                 </div>
             </div>
         }
     </div>
 </div>
 
+<!-- ✅ MODAL PARA MOSTRAR LÍMITE ALCANZADO -->
+<div class="modal fade" id="modalLimiteAlcanzado" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i> Límite de Productos Alcanzado
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="mensaje-limite-content">
+                    <!-- Contenido dinámico -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Entendido</button>
+                <a href="@Url.Action("VerCarrito")" class="btn btn-primary">
+                    Ver carrito actual
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const cards = document.querySelectorAll('.product-card');
-        
-        // Funcionalidad de filtrado por categorías
-        document.querySelectorAll('.category-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                // Remover clase active de todos los botones
-                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-                // Agregar clase active al botón clickeado
-                this.classList.add('active');
-                
-                const cat = this.dataset.category;
-                
-                // Actualizar la URL con el parámetro de categoría
-                const url = new URL(window.location.href);
-                if (cat === 'todas') {
-                    url.searchParams.delete('categoria');
-                } else {
-                    url.searchParams.set('categoria', cat);
-                }
-                history.pushState({}, '', url);
-                
-                // Filtrar productos
-                cards.forEach(c => {
-                    c.style.display = (cat === 'todas' || c.dataset.categoria === cat) ? 'block' : 'none';
-                });
+    // ✅ VARIABLES GLOBALES PARA LÍMITES Y CARRITO
+    let limitesActuales = { 
+        productosActuales: 0, 
+        limite: 3, 
+        disponibles: 3, 
+        productosEnCarrito: 0 
+    };
+
+    // ✅ FUNCIÓN PARA CARGAR LÍMITES
+    async function cargarLimitesProductos() {
+        try {
+            const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
+            const data = await response.json();
+            limitesActuales = data;
+
+            console.log('[DEBUG] Límites cargados en Index:', data);
+            console.log(`[DEBUG] Productos activos: ${data.productosActuales}, En carrito: ${data.productosEnCarrito}, Disponibles: ${data.disponibles}`);
+
+            actualizarInterfazLimites();
+            return data;
+        } catch (error) {
+            console.error('Error al cargar límites:', error);
+            return limitesActuales;
+        }
+    }
+
+    // ✅ FUNCIÓN PARA ACTUALIZAR INTERFAZ SEGÚN LÍMITES
+    function actualizarInterfazLimites() {
+        const { productosActuales, limite, disponibles, productosEnCarrito } = limitesActuales;
+        const botones = document.querySelectorAll('.btn-seleccionar');
+        const infoLimiteGlobal = document.getElementById('info-limite-global');
+
+        // ✅ MOSTRAR INFORMACIÓN DETALLADA
+        if (infoLimiteGlobal) {
+            if (disponibles === 0) {
+                infoLimiteGlobal.className = 'alert alert-danger';
+                infoLimiteGlobal.style.display = 'block';
+                infoLimiteGlobal.innerHTML = `
+                    <h6><i class="fas fa-exclamation-triangle"></i> Límite de productos alcanzado</h6>
+                    <p><strong>Estado actual:</strong></p>
+                    <ul class="mb-2">
+                        <li>Productos en pedidos activos: ${productosActuales}/${limite}</li>
+                        <li>Productos en carrito actual: ${productosEnCarrito}</li>
+                        <li><strong>Total: ${productosActuales + productosEnCarrito}/${limite}</strong></li>
+                    </ul>
+                    <p class="mb-0"><em>No puedes seleccionar más productos hasta que se entreguen tus pedidos pendientes.</em></p>
+                `;
+            } else if (disponibles <= 1) {
+                infoLimiteGlobal.className = 'alert alert-warning';
+                infoLimiteGlobal.style.display = 'block';
+                infoLimiteGlobal.innerHTML = `
+                    <h6><i class="fas fa-info-circle"></i> Casi en el límite de productos</h6>
+                    <p><strong>Estado actual:</strong></p>
+                    <ul class="mb-2">
+                        <li>Productos en pedidos activos: ${productosActuales}/${limite}</li>
+                        <li>Productos en carrito actual: ${productosEnCarrito}</li>
+                        <li><strong>Puedes agregar: ${disponibles} producto(s) más</strong></li>
+                    </ul>
+                `;
+            } else {
+                infoLimiteGlobal.style.display = 'none';
+            }
+        }
+
+        // ✅ DESHABILITAR/HABILITAR BOTONES SEGÚN LÍMITES
+        if (disponibles === 0) {
+            // Deshabilitar todos los botones
+            botones.forEach(boton => {
+                boton.disabled = true;
+                boton.innerHTML = '<i class="fas fa-ban"></i> Límite Alcanzado';
+                boton.className = 'btn-seleccionar';
+                boton.style.backgroundColor = '#6c757d';
+                boton.style.borderColor = '#6c757d';
             });
-        });
+        } else if (disponibles <= 1) {
+            // Mostrar advertencia pero permitir selección
+            botones.forEach(boton => {
+                boton.disabled = false;
+                boton.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Personalizar (Último)';
+                boton.className = 'btn-seleccionar btn-warning';
+                boton.style.backgroundColor = '#ffc107';
+                boton.style.borderColor = '#ffc107';
+                boton.style.color = '#212529';
+            });
+        } else {
+            // Estado normal
+            botones.forEach(boton => {
+                boton.disabled = false;
+                boton.innerHTML = '<i class="fas fa-cog"></i> Personalizar';
+                boton.className = 'btn-seleccionar';
+                boton.style.backgroundColor = '#F2A900';
+                boton.style.borderColor = '#F2A900';
+                boton.style.color = '#fff';
+            });
+        }
+    }
 
-        // Comprobar si hay una categoría seleccionada en localStorage
-        const storedCategory = localStorage.getItem('selectedCategory');
-        if (storedCategory) {
-            const categoryBtn = document.querySelector(`.category-btn[data-category="${storedCategory}"]`);
-            if (categoryBtn) {
-                categoryBtn.click();
-            }
-            // Limpiar después de usar
-            localStorage.removeItem('selectedCategory');
+    // ✅ FUNCIÓN PARA VALIDAR Y SELECCIONAR PRODUCTO
+    async function validarYSeleccionar(productoId) {
+        // Recargar límites antes de validar
+        await cargarLimitesProductos();
+
+        if (limitesActuales.disponibles === 0) {
+            // Mostrar modal de límite alcanzado
+            mostrarModalLimite();
+            return false;
         }
 
-        // Verificar parámetro de URL al cargar la página
-        const urlParams = new URLSearchParams(window.location.search);
-        const currentCategory = urlParams.get('categoria');
-        if (currentCategory) {
-            const categoryBtn = document.querySelector(`.category-btn[data-category="${currentCategory.toLowerCase()}"]`);
-            if (categoryBtn) {
-                categoryBtn.click();
-            }
-        }
+        // Si hay espacio disponible, continuar con la selección
+        window.location.href = '@Url.Action("IniciarPersonalizacion")?id=' + productoId;
+    }
+
+    // ✅ FUNCIÓN PARA MOSTRAR MODAL DE LÍMITE
+    function mostrarModalLimite() {
+        const { productosActuales, limite, productosEnCarrito } = limitesActuales;
+        
+        document.getElementById('mensaje-limite-content').innerHTML = `
+            <div class="alert alert-warning">
+                <h6><i class="fas fa-info-circle"></i> Estado actual:</h6>
+                <ul>
+                    <li>Productos en pedidos activos: <strong>${productosActuales}/${limite}</strong></li>
+                    <li>Productos en carrito actual: <strong>${productosEnCarrito}</strong></li>
+                    <li>Total productos: <strong>${productosActuales + productosEnCarrito}/${limite}</strong></li>
+                </ul>
+                <p>Debes esperar a que se entreguen tus pedidos pendientes o procesar tu carrito actual para poder personalizar más productos.</p>
+            </div>
+        `;
+
+        const modal = new bootstrap.Modal(document.getElementById('modalLimiteAlcanzado'));
+        modal.show();
+    }
+
+    // ✅ INICIALIZAR AL CARGAR LA PÁGINA
+    document.addEventListener('DOMContentLoaded', function() {
+        cargarLimitesProductos();
+        
+        // Recargar cuando se hace focus en la página
+        window.addEventListener('focus', cargarLimitesProductos);
     });
 </script>
 }

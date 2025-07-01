@@ -309,6 +309,200 @@
             this.classList.add('selected');
         });
     });
+
+    // ✅ ACTUALIZAR EL SCRIPT EXISTENTE EN VerCarrito.cshtml
+
+    // ✅ AGREGAR ESTA VARIABLE AL INICIO DEL SCRIPT
+    let limitesProductos = { disponibles: 3, productosActuales: 0 };
+
+    // ✅ FUNCIÓN PARA CARGAR LÍMITES (AGREGAR)
+    async function cargarLimitesCarrito() {
+        try {
+            const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
+            const data = await response.json();
+            limitesProductos = data;
+            console.log('[DEBUG] Límites en carrito:', data);
+            validarLimitesCarrito();
+        } catch (error) {
+            console.error('Error al cargar límites:', error);
+        }
+    }
+
+    // ✅ FUNCIÓN PARA VALIDAR LÍMITES EN CARRITO (AGREGAR)
+    function validarLimitesCarrito() {
+        const totalEnCarrito = carritoLocal.reduce((total, item) => total + item.cantidad, 0);
+        const totalPermitido = limitesProductos.disponibles + totalEnCarrito;
+
+        // Mostrar información de límite
+        mostrarInfoLimiteCarrito(totalEnCarrito, totalPermitido);
+    }
+
+    // ✅ FUNCIÓN PARA MOSTRAR INFO DE LÍMITE EN CARRITO (AGREGAR)
+    function mostrarInfoLimiteCarrito(totalEnCarrito, totalPermitido) {
+        let infoElement = document.getElementById('info-limite-carrito');
+        if (!infoElement) {
+            infoElement = document.createElement('div');
+            infoElement.id = 'info-limite-carrito';
+
+            // Insertar después del header del carrito
+            const cardHeader = document.querySelector('.card-header');
+            cardHeader.parentNode.insertBefore(infoElement, cardHeader.nextSibling);
+        }
+
+        if (totalEnCarrito >= 3) {
+            infoElement.className = 'alert alert-warning mx-3 mt-3 mb-0';
+            infoElement.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Límite alcanzado:</strong> Tienes ${totalEnCarrito}/3 productos en este carrito.
+                <br><small>No puedes agregar más productos a este pedido.</small>
+            `;
+        } else if (totalEnCarrito >= 2) {
+            infoElement.className = 'alert alert-info mx-3 mt-3 mb-0';
+            infoElement.innerHTML = `
+                <i class="fas fa-info-circle"></i>
+                Puedes agregar ${3 - totalEnCarrito} producto(s) más. (${totalEnCarrito}/3 productos en carrito)
+            `;
+        } else {
+            infoElement.className = 'alert alert-success mx-3 mt-3 mb-0';
+            infoElement.innerHTML = `
+                <i class="fas fa-check-circle"></i>
+                Puedes agregar ${3 - totalEnCarrito} producto(s) más. (${totalEnCarrito}/3 productos en carrito)
+            `;
+        }
+    }
+
+    // ✅ ACTUALIZAR LA FUNCIÓN cambiarCantidadCarrito EXISTENTE
+    function cambiarCantidadCarrito(index, cambio) {
+        const fila = document.querySelector(`tr[data-index="${index}"]`);
+        const cantidadDisplay = fila.querySelector('.cantidad-display');
+        let nuevaCantidad = parseInt(cantidadDisplay.getAttribute('data-cantidad')) + cambio;
+
+        if (nuevaCantidad < 1) {
+            eliminarDelCarrito(index);
+            return;
+        }
+
+        // ✅ VALIDAR LÍMITE TOTAL DE PRODUCTOS EN CARRITO
+        const totalActual = carritoLocal.reduce((total, item, i) => {
+            return total + (i === index ? nuevaCantidad : item.cantidad);
+        }, 0);
+
+        if (totalActual > 3) {
+            alert('No puedes tener más de 3 productos en un pedido.');
+            return;
+        }
+
+        if (nuevaCantidad > 10) nuevaCantidad = 10;
+
+        // Actualizar carrito local
+        carritoLocal[index].cantidad = nuevaCantidad;
+        carritoLocal[index].subtotal = carritoLocal[index].precio * nuevaCantidad;
+
+        // Actualizar display
+        cantidadDisplay.textContent = nuevaCantidad;
+        cantidadDisplay.setAttribute('data-cantidad', nuevaCantidad);
+
+        // Actualizar subtotal
+        const subtotalDisplay = fila.querySelector('.subtotal-display');
+        subtotalDisplay.textContent = '$' + carritoLocal[index].subtotal.toFixed(2);
+
+        actualizarResumen();
+        validarLimitesCarrito(); // ✅ VALIDAR LÍMITES DESPUÉS DE CAMBIO
+        guardarCarritoEnSesion();
+    }
+
+    // ✅ ACTUALIZAR LA FUNCIÓN actualizarResumen EXISTENTE
+    function actualizarResumen() {
+        const totalItems = carritoLocal.reduce((total, item) => total + item.cantidad, 0);
+        const totalPagar = carritoLocal.reduce((total, item) => total + item.subtotal, 0);
+        const ahorroTotal = carritoLocal.reduce((total, item) => total + (item.ahorroInterno || 0), 0);
+
+        document.getElementById('totalItems').textContent = totalItems;
+        document.getElementById('totalPagar').textContent = '$' + totalPagar.toFixed(2);
+
+        const ahorroElement = document.getElementById('ahorroTotal');
+        if (ahorroElement) {
+            ahorroElement.textContent = '$' + ahorroTotal.toFixed(2);
+        }
+
+        const btnProcesar = document.getElementById('btnProcesar');
+
+        // ✅ VALIDAR LÍMITE ANTES DE HABILITAR BOTÓN
+        const puedeConfirmar = totalItems > 0 && totalItems <= 3;
+        btnProcesar.disabled = !puedeConfirmar;
+
+        if (totalItems > 3) {
+            btnProcesar.innerHTML = '<i class="fas fa-ban"></i> Límite Excedido (3 max)';
+            btnProcesar.className = 'btn btn-danger w-100';
+        } else if (totalItems === 0) {
+            btnProcesar.innerHTML = '<i class="fas fa-cart-plus"></i> Carrito Vacío';
+            btnProcesar.className = 'btn btn-secondary w-100';
+        } else {
+            btnProcesar.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
+            btnProcesar.className = 'btn btn-warning w-100';
+        }
+    }
+
+    // ✅ ACTUALIZAR LA FUNCIÓN procesarPedido EXISTENTE
+    function procesarPedido() {
+        const totalItems = carritoLocal.reduce((total, item) => total + item.cantidad, 0);
+
+        // ✅ VALIDACIÓN ADICIONAL ANTES DE PROCESAR
+        if (totalItems > 3) {
+            alert('No puedes procesar un pedido con más de 3 productos. Reduce la cantidad.');
+            return;
+        }
+
+        if (totalItems === 0) {
+            alert('Tu carrito está vacío');
+            return;
+        }
+
+        const tipoServicio = document.querySelector('input[name="tipoServicio"]:checked')?.value;
+        if (!tipoServicio) {
+            alert('Por favor selecciona el tipo de servicio');
+            return;
+        }
+
+        const data = {
+            TipoServicio: tipoServicio
+        };
+
+        const btnProcesar = document.getElementById('btnProcesar');
+        btnProcesar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+        btnProcesar.disabled = true;
+
+        fetch('@Url.Action("ProcesarPedido")', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    window.location.href = '@Url.Action("Confirmacion", "Personalizacion")?id=' + result.pedidoId;
+                } else {
+                    alert('Error: ' + result.message);
+                    btnProcesar.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
+                    btnProcesar.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al procesar el pedido');
+                btnProcesar.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
+                btnProcesar.disabled = false;
+            });
+    }
+
+    // ✅ INICIALIZAR AL CARGAR LA PÁGINA (AGREGAR AL FINAL DEL SCRIPT EXISTENTE)
+    document.addEventListener('DOMContentLoaded', function () {
+        cargarLimitesCarrito();
+        validarLimitesCarrito();
+
+        // También validar cuando se hace focus en la página
+        window.addEventListener('focus', cargarLimitesCarrito);
+    });
 </script>
 
 <style>

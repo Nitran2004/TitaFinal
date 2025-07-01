@@ -3,6 +3,11 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+<!-- ✅ AGREGAR SOLO INFORMACIÓN DE LÍMITES -->
+<div id="info-limite-global" class="alert" style="display: none; margin: 20px;">
+    <!-- Contenido dinámico -->
+</div>
+
 <div class="container">
     <div class="row">
         <div class="col-md-12">
@@ -84,7 +89,19 @@
 
 @section scripts {
     <script>
+        // ✅ VARIABLES DE LÍMITES
+        let limitesActuales = {
+            productosActuales: 0,
+            limite: 3,
+            disponibles: 3,
+            productosEnCarrito: 0,
+            totalOcupados: 0
+        };
+
         $(document).ready(function () {
+            // ✅ CARGAR LÍMITES AL INICIALIZAR
+            cargarLimitesProductos();
+
             // Slider del presupuesto
             $("#presupuestoSlider").on("input", function () {
                 $("#presupuestoValor").text($(this).val());
@@ -99,8 +116,14 @@
                 $("#resultados").hide();
             });
 
-            // Obtener recomendaciones
+            // ✅ OBTENER RECOMENDACIONES CON VALIDACIÓN DE LÍMITES
             $("#btnRecomendar").click(function () {
+                // Validar límites antes de procesar
+                if (limitesActuales.disponibles === 0) {
+                    alert('No puedes usar el sistema de recomendaciones porque has alcanzado el límite de productos.');
+                    return;
+                }
+
                 var categoria = $("input[name='categoria']:checked").val() || "";
                 var presupuesto = $("#presupuestoSlider").val();
                 var ingredientes = $("#ingredientes").val() || "";
@@ -120,6 +143,8 @@
                     success: function (response) {
                         if (response && response.success && response.data) {
                             mostrarResultados(response.data);
+                            // ✅ RECARGAR LÍMITES DESPUÉS DE MOSTRAR RESULTADOS
+                            cargarLimitesProductos();
                         } else {
                             alert("No se encontraron recomendaciones");
                         }
@@ -133,39 +158,141 @@
                 });
             });
 
-            // Mostrar resultados
-            function mostrarResultados(data) {
-                var tbody = $("#tbodyResultados");
-                tbody.empty();
-
-                if (!data || data.length === 0) {
-                    tbody.append('<tr><td colspan="4" class="text-center">No se encontraron resultados</td></tr>');
-                    $("#resultados").show();
-                    return;
+            // ✅ ESCUCHAR CAMBIOS DE CARRITO
+            window.addEventListener('storage', function (e) {
+                if (e.key === 'carritoActualizado') {
+                    console.log('[DEBUG] Carrito actualizado en otra pestaña, recargando límites...');
+                    cargarLimitesProductos();
                 }
+            });
 
-                for (var i = 0; i < data.length; i++) {
-                    var item = data[i];
-                    var id = item.id || item.Id || 0;
-                    var nombre = item.nombre || item.Nombre || "Sin nombre";
-                    var precio = item.precio || item.Precio || "0";
-                    var calorias = item.calorias || item.Calorias || "0";
+            // ✅ RECARGAR LÍMITES CUANDO LA VENTANA RECIBE FOCO
+            window.addEventListener('focus', function () {
+                console.log('[DEBUG] Ventana recibió foco, recargando límites...');
+                cargarLimitesProductos();
+            });
 
-                    var row = '<tr>' +
-                        '<td>' + nombre + '</td>' +
-                        '<td>$' + precio + '</td>' +
-                        '<td>' + calorias + '</td>' +
-                        '<td>' +
-                        '<a href="@Url.Action("SeleccionarRecoleccion", "MenuRecomendacion")?productoId=' + id + '" class="btn btn-sm btn-warning">Seleccionar</a>' +
-                        '</td>' +
-                        '</tr>';
-
-                    tbody.append(row);
-                }
-
-                $("#resultados").show();
-            }
+            // ✅ RECARGAR LÍMITES CADA 30 SEGUNDOS
+            setInterval(function () {
+                cargarLimitesProductos();
+            }, 30000);
         });
+
+        // ✅ FUNCIÓN PARA CARGAR LÍMITES
+        async function cargarLimitesProductos() {
+            try {
+                const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
+                const data = await response.json();
+                limitesActuales = data;
+                actualizarInterfazLimites();
+                console.log('[DEBUG] Límites cargados:', data);
+            } catch (error) {
+                console.error('Error al cargar límites:', error);
+            }
+        }
+
+        // ✅ FUNCIÓN PARA ACTUALIZAR INTERFAZ
+        function actualizarInterfazLimites() {
+            const { productosActuales, limite, disponibles, productosEnCarrito, totalOcupados } = limitesActuales;
+            const btnRecomendar = document.getElementById('btnRecomendar');
+            const infoLimiteGlobal = document.getElementById('info-limite-global');
+
+            if (disponibles === 0) {
+                btnRecomendar.disabled = true;
+                btnRecomendar.innerHTML = '<i class="fas fa-ban"></i> Límite Alcanzado';
+                btnRecomendar.className = 'btn btn-danger';
+
+                infoLimiteGlobal.className = 'alert alert-danger';
+                infoLimiteGlobal.style.display = 'block';
+                infoLimiteGlobal.innerHTML = `
+                            <h6><i class="fas fa-exclamation-triangle"></i> Límite de productos alcanzado</h6>
+                            <p><strong>Ocupados:</strong> ${totalOcupados}/${limite} productos</p>
+                            <ul class="mb-2">
+                                <li>En pedidos activos: ${productosActuales} productos</li>
+                                <li>En carrito actual: ${productosEnCarrito} productos</li>
+                            </ul>
+                            <p class="mb-0"><em>No puedes usar el sistema de recomendaciones hasta que se entreguen tus pedidos activos.</em></p>
+                        `;
+            } else if (disponibles <= 1) {
+                btnRecomendar.disabled = false;
+                btnRecomendar.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Recomendar (Último espacio)';
+                btnRecomendar.className = 'btn btn-warning';
+
+                infoLimiteGlobal.className = 'alert alert-warning';
+                infoLimiteGlobal.style.display = 'block';
+                infoLimiteGlobal.innerHTML = `
+                            <h6><i class="fas fa-info-circle"></i> Casi en el límite</h6>
+                            <p><strong>Disponibles:</strong> Solo ${disponibles} producto(s) más</p>
+                            <p><strong>Estado actual:</strong></p>
+                            <ul class="mb-2">
+                                <li>En pedidos activos: ${productosActuales} productos</li>
+                                <li>En carrito: ${productosEnCarrito} productos</li>
+                            </ul>
+                            <p class="mb-0"><small class="text-muted">Límite máximo: ${limite} productos por usuario</small></p>
+                        `;
+            } else {
+                btnRecomendar.disabled = false;
+                btnRecomendar.innerHTML = 'Recomendar';
+                btnRecomendar.className = 'btn btn-warning';
+
+                if (productosActuales > 0 || productosEnCarrito > 0) {
+                    infoLimiteGlobal.className = 'alert alert-info';
+                    infoLimiteGlobal.style.display = 'block';
+                    infoLimiteGlobal.innerHTML = `
+                                <h6><i class="fas fa-info-circle"></i> Estado de productos</h6>
+                                <p><strong>Disponibles:</strong> ${disponibles} producto(s) más</p>
+                                <p><strong>Estado actual:</strong></p>
+                                <ul class="mb-2">
+                                    <li>En pedidos activos: ${productosActuales} productos</li>
+                                    <li>En carrito: ${productosEnCarrito} productos</li>
+                                </ul>
+                                <p class="mb-0"><small class="text-muted">Límite máximo: ${limite} productos por usuario</small></p>
+                            `;
+                } else {
+                    infoLimiteGlobal.style.display = 'none';
+                }
+            }
+        }
+
+        // ✅ FUNCIÓN MOSTRAR RESULTADOS
+        function mostrarResultados(data) {
+            var tbody = $("#tbodyResultados");
+            tbody.empty();
+
+            if (!data || data.length === 0) {
+                tbody.append('<tr><td colspan="4" class="text-center">No se encontraron resultados</td></tr>');
+                $("#resultados").show();
+                return;
+            }
+
+            for (var i = 0; i < data.length; i++) {
+                var item = data[i];
+                var id = item.id || item.Id || 0;
+                var nombre = item.nombre || item.Nombre || "Sin nombre";
+                var precio = item.precio || item.Precio || "0";
+                var calorias = item.calorias || item.Calorias || "0";
+
+                var botonSeleccionar = '';
+                if (limitesActuales.disponibles === 0) {
+                    botonSeleccionar = '<button class="btn btn-sm btn-secondary" disabled title="Límite alcanzado"><i class="fas fa-ban"></i> Sin espacio</button>';
+                } else if (limitesActuales.disponibles <= 1) {
+                    botonSeleccionar = '<a href="@Url.Action("SeleccionarRecoleccion", "MenuRecomendacion")?productoId=' + id + '" class="btn btn-sm btn-warning" title="Último espacio disponible"><i class="fas fa-exclamation-triangle"></i> Último espacio</a>';
+                } else {
+                    botonSeleccionar = '<a href="@Url.Action("SeleccionarRecoleccion", "MenuRecomendacion")?productoId=' + id + '" class="btn btn-sm btn-warning"><i class="fas fa-plus"></i> Seleccionar</a>';
+                }
+
+                var row = '<tr>' +
+                    '<td>' + nombre + '</td>' +
+                    '<td>$' + precio + '</td>' +
+                    '<td>' + calorias + '</td>' +
+                    '<td>' + botonSeleccionar + '</td>' +
+                    '</tr>';
+
+                tbody.append(row);
+            }
+
+            $("#resultados").show();
+        }
     </script>
 }
 
@@ -191,6 +318,11 @@
 
         .card {
             box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        #btnRecomendar:disabled {
+            opacity: 0.7;
+            cursor: not-allowed !important;
         }
     </style>
 }

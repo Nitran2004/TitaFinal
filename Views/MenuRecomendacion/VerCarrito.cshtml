@@ -364,6 +364,10 @@
             .then(result => {
                 if (!result.success) {
                     console.error('[ERROR] Error al guardar carrito:', result.message);
+                } else {
+                    // ✅ NOTIFICAR A LA VISTA DE RECOMENDACIÓN SI ESTÁ ABIERTA
+                    // Esto se puede hacer con localStorage o sessionStorage para comunicación entre pestañas
+                    localStorage.setItem('carritoActualizado', Date.now().toString());
                 }
             })
             .catch(error => {
