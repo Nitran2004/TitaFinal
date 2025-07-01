@@ -63,22 +63,28 @@ namespace ProyectoIdentity.Controllers
         }
 
         // ✅ INICIAR PERSONALIZACIÓN CON VALIDACIÓN
-        public async Task<IActionResult> IniciarPersonalizacion(int id)
+        public async Task<IActionResult> Personalizacion()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!string.IsNullOrEmpty(userId))
             {
-                var (countActivos, pedidosActivos) = await ContarPedidosActivos(userId);
+                var (permitido, productosActivos, productosCarritos, disponibles, mensaje) = await ValidarLimitesGlobales(userId);
 
-                if (countActivos >= 3)
-                {
-                    TempData["Error"] = $"Has alcanzado el límite de {countActivos}/3 pedidos activos. Espera a que se entreguen para hacer más pedidos.";
-                    return RedirectToAction("Index");
-                }
+                // ✅ NO BLOQUEAR AQUÍ - Solo mostrar info
+                ViewBag.ProductosActivos = productosActivos;
+                ViewBag.Disponibles = disponibles;
+                ViewBag.LimiteMaximo = 3;
             }
 
-            TempData["ProductoPersonalizacionId"] = id;
-            return RedirectToAction("Seleccionar", "Recoleccion", new { esPersonalizacion = true });
+            var categorias = await _context.Productos
+                .Where(p => !string.IsNullOrEmpty(p.Categoria))
+                .Select(p => p.Categoria)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToListAsync();
+
+            ViewBag.Categorias = categorias;
+            return View();
         }
 
         // ✅ DETALLE DEL PRODUCTO
@@ -96,6 +102,35 @@ namespace ProyectoIdentity.Controllers
 
             ViewBag.Ingredientes = GetIngredientesProducto(producto);
             return View(producto);
+        }
+
+        public async Task<IActionResult> IniciarPersonalizacion(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // ✅ VALIDAR LÍMITES ANTES DE MOSTRAR LA PERSONALIZACIÓN
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var (permitido, productosActivos, productosCarritos, disponibles, mensaje) = await ValidarLimitesGlobales(userId);
+                if (!permitido)
+                {
+                    var viewModel = new LimiteAlcanzadoViewModel
+                    {
+                        PedidosActivos = productosActivos,
+                        LimiteMaximo = 3,
+                        PedidosPendientes = new List<PedidoPendienteInfo>()
+                    };
+                    return View("../Shared/LimiteAlcanzado", viewModel);
+                }
+            }
+
+            var producto = await _context.Productos.FindAsync(id);
+            if (producto == null)
+                return NotFound();
+
+            // ✅ CAMBIAR A DETALLE DIRECTAMENTE
+            HttpContext.Session.SetInt32("SucursalSeleccionada", 1); // Sucursal por defecto
+            return RedirectToAction("Detalle", new { id = id });
         }
 
         // ============== VALIDACIONES DE LÍMITES ==============
@@ -164,63 +199,82 @@ namespace ProyectoIdentity.Controllers
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                // Validar límite de productos
-                if (!string.IsNullOrEmpty(userId))
+                // ✅ VALIDAR LÍMITES UNIFICADOS
+                var (permitido, disponibles, mensaje) = await ValidarAgregarProductosUnificado(userId, request.Cantidad);
+                if (!permitido)
                 {
-                    var (permitido, productosDisponibles, mensaje) = await ValidarAgregarProductos(userId, request.Cantidad);
-                    if (!permitido)
+                    return Json(new
                     {
-                        return Json(new { success = false, message = mensaje });
-                    }
+                        success = false,
+                        message = mensaje,
+                        redirectUrl = Url.Action("Personalizacion") // ✅ REDIRIGIR A PERSONALIZACION
+                    });
                 }
 
                 var producto = await _context.Productos.FindAsync(request.ProductoId);
                 if (producto == null)
                     return Json(new { success = false, message = "Producto no encontrado" });
 
-                var carrito = GetCarritoPersonalizado();
+                var carrito = GetCarritoPersonalizacion();
 
-                // Verificar límite en el carrito actual
-                int productosEnCarrito = carrito.Sum(c => c.Cantidad);
-                if (productosEnCarrito + request.Cantidad > 3)
+                // ✅ VALIDAR LÍMITE EN CARRITOS COMBINADOS
+                int productosEnCarritos = ContarProductosEnCarritos(userId);
+                if (productosEnCarritos + request.Cantidad > disponibles + productosEnCarritos)
                 {
-                    int disponibles = 3 - productosEnCarrito;
                     return Json(new
                     {
                         success = false,
-                        message = $"Solo puedes agregar {disponibles} producto(s) más al carrito. Límite: 3 productos por pedido."
+                        message = $"Solo puedes agregar {disponibles} producto(s) más considerando ambos carritos."
                     });
                 }
 
-                // Calcular ahorro para administradores
-                decimal ahorroInterno = 0;
-                if (User.IsInRole("Administrador") && request.IngredientesRemovidos?.Any() == true)
+                // Calcular precio con descuentos
+                decimal precioFinal = producto.Precio;
+                decimal ahorroTotal = 0;
+
+                if (request.IngredientesRemovidos?.Any() == true)
                 {
-                    ahorroInterno = request.IngredientesRemovidos.Count * 0.50m * request.Cantidad;
+                    foreach (var ingredienteRemovido in request.IngredientesRemovidos)
+                    {
+                        var descuento = await _context.DescuentosIngredientes
+                            .FirstOrDefaultAsync(d => d.NombreIngrediente == ingredienteRemovido);
+                        if (descuento != null)
+                        {
+                            ahorroTotal += descuento.MontoDescuento;
+                        }
+                    }
+                    precioFinal = Math.Max(0, producto.Precio - ahorroTotal);
                 }
 
                 var itemCarrito = new ItemCarritoPersonalizado
                 {
                     Id = request.ProductoId,
                     Nombre = producto.Nombre,
-                    Precio = producto.Precio,
+                    Precio = precioFinal,
                     Cantidad = request.Cantidad,
                     IngredientesRemovidos = request.IngredientesRemovidos ?? new List<string>(),
-                    NotasEspeciales = request.NotasEspeciales ?? "",
-                    AhorroInterno = ahorroInterno,
-                    Subtotal = producto.Precio * request.Cantidad
+                    NotasEspeciales = request.NotasEspeciales,
+                    AhorroInterno = ahorroTotal,
+                    Subtotal = precioFinal * request.Cantidad
                 };
 
                 carrito.Add(itemCarrito);
-                SetCarritoPersonalizado(carrito);
+                SetCarritoPersonalizacion(carrito);
+
+                // ✅ OBTENER LÍMITES ACTUALIZADOS
+                var (_, productosActivos, productosCarritos, disponiblesActualizados, _) = await ValidarLimitesGlobales(userId);
 
                 return Json(new
                 {
                     success = true,
-                    message = "Producto agregado",
+                    message = "Producto agregado al carrito",
                     totalItems = carrito.Sum(c => c.Cantidad),
                     totalCarrito = carrito.Sum(c => c.Subtotal),
-                    productosRestantes = 3 - carrito.Sum(c => c.Cantidad)
+                    ahorro = ahorroTotal,
+                    // ✅ INFORMACIÓN UNIFICADA
+                    disponibles = disponiblesActualizados,
+                    productosActivos = productosActivos,
+                    productosEnCarritos = productosCarritos
                 });
             }
             catch (Exception ex)
@@ -228,50 +282,104 @@ namespace ProyectoIdentity.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
+        private void SetCarritoPersonalizacion(List<ItemCarritoPersonalizado> carrito)
+        {
+            try
+            {
+                var carritoJson = JsonSerializer.Serialize(carrito);
+                HttpContext.Session.SetString("CarritoPersonalizacion", carritoJson);
+                Console.WriteLine($"[DEBUG] Carrito guardado: {carrito.Count} items");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error al guardar carrito: {ex.Message}");
+            }
+        }
+
 
         // ✅ OBTENER LÍMITES PRODUCTOS (para JavaScript)
+        // ✅ REEMPLAZAR EL MÉTODO ObtenerLimitesProductos EN AMBOS CONTROLADORES
         [HttpGet]
         public async Task<IActionResult> ObtenerLimitesProductos()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
-                return Json(new { productosActuales = 0, limite = 3, disponibles = 3 });
+            {
+                return Json(new
+                {
+                    productosActivos = 0,
+                    limite = 3,
+                    disponibles = 3,
+                    productosEnCarritos = 0,
+                    totalOcupados = 0,
+                    mensaje = ""
+                });
+            }
 
-            var (permitido, productosActuales, mensaje) = await ValidarLimiteProductos(userId);
-            int disponibles = 3 - productosActuales;
+            var (permitido, productosActivos, productosCarritos, disponibles, mensaje) = await ValidarLimitesGlobales(userId);
 
             return Json(new
             {
-                productosActuales = productosActuales,
+                productosActivos = productosActivos,
                 limite = 3,
-                disponibles = Math.Max(0, disponibles),
-                mensaje = mensaje
+                disponibles = disponibles,
+                productosEnCarritos = productosCarritos,
+                totalOcupados = productosActivos + productosCarritos,
+                mensaje = mensaje,
+                permitido = permitido
             });
+        }
+
+        // ✅ MÉTODOS AUXILIARES PARA CARRITOS (AGREGAR SOLO SI NO EXISTEN)
+        private List<ItemCarritoPersonalizado> GetCarritoPersonalizacion()
+        {
+            try
+            {
+                var carritoJson = HttpContext.Session.GetString("CarritoPersonalizacion");
+                Console.WriteLine($"[DEBUG] Carrito JSON: {carritoJson}");
+
+                if (string.IsNullOrEmpty(carritoJson))
+                    return new List<ItemCarritoPersonalizado>();
+
+                var carrito = JsonSerializer.Deserialize<List<ItemCarritoPersonalizado>>(carritoJson);
+                Console.WriteLine($"[DEBUG] Items en carrito: {carrito?.Count ?? 0}");
+                return carrito ?? new List<ItemCarritoPersonalizado>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error al obtener carrito: {ex.Message}");
+                return new List<ItemCarritoPersonalizado>();
+            }
+        }
+
+        private List<ItemCarritoPersonalizado> GetCarritoRecomendacion()
+        {
+            try
+            {
+                var carritoJson = HttpContext.Session.GetString("CarritoRecomendacion");
+                if (string.IsNullOrEmpty(carritoJson))
+                    return new List<ItemCarritoPersonalizado>();
+
+                return JsonSerializer.Deserialize<List<ItemCarritoPersonalizado>>(carritoJson) ?? new List<ItemCarritoPersonalizado>();
+            }
+            catch
+            {
+                return new List<ItemCarritoPersonalizado>();
+            }
         }
 
         // ✅ VER CARRITO
         public IActionResult VerCarrito()
         {
-            try
-            {
-                var carrito = GetCarritoPersonalizado();
+            var carrito = GetCarritoPersonalizacion();
+            Console.WriteLine($"[DEBUG] VerCarrito - Items: {carrito.Count}");
 
-                // Validar que todos los items tengan datos válidos
-                foreach (var item in carrito)
-                {
-                    if (item.Subtotal <= 0 && item.Precio > 0 && item.Cantidad > 0)
-                    {
-                        item.Subtotal = item.Precio * item.Cantidad;
-                    }
-                }
-
-                return View(carrito);
-            }
-            catch (Exception ex)
+            foreach (var item in carrito)
             {
-                Console.WriteLine($"[ERROR] Error en VerCarrito: {ex.Message}");
-                return View(new List<ItemCarritoPersonalizado>());
+                Console.WriteLine($"[DEBUG] Item: {item.Nombre}, Cantidad: {item.Cantidad}, Precio: {item.Precio}");
             }
+
+            return View(carrito);
         }
 
         // ✅ ACTUALIZAR CARRITO
@@ -307,10 +415,13 @@ namespace ProyectoIdentity.Controllers
             try
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                var carritoItems = GetCarritoPersonalizado();
+                var carritoItems = GetCarritoPersonalizacion(); // ✅ CAMBIAR AQUÍ
+
+                Console.WriteLine($"[DEBUG] Carrito obtenido: {carritoItems?.Count ?? 0} items");
 
                 if (carritoItems == null || !carritoItems.Any())
                 {
+                    Console.WriteLine("[DEBUG] Carrito está vacío o es null");
                     return Json(new { success = false, message = "El carrito está vacío" });
                 }
 
@@ -325,22 +436,13 @@ namespace ProyectoIdentity.Controllers
                     });
                 }
 
-                // Validar límite global de productos activos
+                // Validar límite global usando el método unificado
                 if (!string.IsNullOrEmpty(userId))
                 {
-                    var (permitido, productosActuales, mensaje) = await ValidarLimiteProductos(userId);
+                    var (permitido, productosActivos, productosCarritos, disponibles, mensaje) = await ValidarLimitesGlobales(userId);
                     if (!permitido)
                     {
                         return Json(new { success = false, message = mensaje });
-                    }
-
-                    if (productosActuales + totalProductos > 3)
-                    {
-                        return Json(new
-                        {
-                            success = false,
-                            message = $"No puedes procesar este pedido. Tienes {productosActuales} productos activos + {totalProductos} en carrito = {productosActuales + totalProductos} total. Máximo: 3 productos."
-                        });
                     }
                 }
 
@@ -354,6 +456,7 @@ namespace ProyectoIdentity.Controllers
 
                 if (!itemsValidos.Any())
                 {
+                    Console.WriteLine("[DEBUG] No hay items válidos en el carrito");
                     return Json(new { success = false, message = "No hay productos válidos en el carrito" });
                 }
 
@@ -405,8 +508,8 @@ namespace ProyectoIdentity.Controllers
                     await AgregarPuntosAUsuarioPersonalizacion(userId, total);
                 }
 
-                // Limpiar carrito
-                LimpiarCarritoPersonalizado();
+                // Limpiar carrito usando el método correcto
+                LimpiarCarritoPersonalizacion(); // ✅ CAMBIAR AQUÍ TAMBIÉN
 
                 return Json(new
                 {
@@ -423,7 +526,46 @@ namespace ProyectoIdentity.Controllers
                 return Json(new { success = false, message = "Error interno del servidor: " + ex.Message });
             }
         }
+        private void LimpiarCarritoPersonalizacion()
+        {
+            try
+            {
+                HttpContext.Session.Remove("CarritoPersonalizacion");
+                Console.WriteLine("[DEBUG] Carrito de personalización limpiado");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error al limpiar carrito: {ex.Message}");
+            }
+        }
 
+        private async Task<(int totalProductos, List<Pedido> pedidosActivos)> ContarTodosLosProductosActivos2(string usuarioId)
+        {
+            if (string.IsNullOrEmpty(usuarioId))
+                return (0, new List<Pedido>());
+
+            var pedidosActivos = await _context.Pedidos
+                .Where(p => p.UsuarioId == usuarioId &&
+                           p.Estado == "Entregado") // ✅ SOLO PREPARÁNDOSE
+                .OrderByDescending(p => p.Fecha)
+                .ToListAsync();
+
+            int totalProductos = 0;
+            foreach (var pedido in pedidosActivos)
+            {
+                var detalles = await _context.PedidoDetalles
+                    .Where(d => d.PedidoId == pedido.Id)
+                    .ToListAsync();
+                totalProductos += detalles.Sum(d => d.Cantidad);
+
+                var productos = await _context.PedidoProductos
+                    .Where(pp => pp.PedidoId == pedido.Id)
+                    .ToListAsync();
+                totalProductos += productos.Sum(pp => pp.Cantidad ?? 0);
+            }
+
+            return (totalProductos, pedidosActivos);
+        }
         // ============== CONFIRMACIÓN Y SEGUIMIENTO ==============
 
         public async Task<IActionResult> Confirmacion(int id)
@@ -1066,6 +1208,122 @@ namespace ProyectoIdentity.Controllers
             return resultados.OrderByDescending(r => r.AhorroTotal).ToList();
         }
 
+        private async Task<(int totalProductos, List<Pedido> pedidosActivos)> ContarTodosLosProductosActivos(string usuarioId)
+        {
+            if (string.IsNullOrEmpty(usuarioId))
+                return (0, new List<Pedido>());
+
+            var pedidosActivos = await _context.Pedidos
+                .Where(p => p.UsuarioId == usuarioId &&
+                           (p.Estado == "Preparándose" || p.Estado == "Listo para entregar"))
+                .OrderByDescending(p => p.Fecha)
+                .ToListAsync();
+
+            int totalProductos = 0;
+
+            // ✅ CONTAR PRODUCTOS DE AMBOS TIPOS DE PEDIDOS
+            foreach (var pedido in pedidosActivos)
+            {
+                // Productos de personalización (PedidoDetalles)
+                var detalles = await _context.PedidoDetalles
+                    .Where(d => d.PedidoId == pedido.Id)
+                    .ToListAsync();
+                totalProductos += detalles.Sum(d => d.Cantidad);
+
+                // Productos de pedidos normales (PedidoProductos)
+                var productos = await _context.PedidoProductos
+                    .Where(pp => pp.PedidoId == pedido.Id)
+                    .ToListAsync();
+                totalProductos += productos.Sum(pp => pp.Cantidad ?? 0);
+            }
+
+            Console.WriteLine($"[DEBUG] Usuario {usuarioId}: {totalProductos} productos activos en {pedidosActivos.Count} pedidos");
+
+            return (totalProductos, pedidosActivos);
+        }
+
+        // ✅ MÉTODO UNIFICADO PARA CONTAR PRODUCTOS EN CARRITOS
+        private int ContarProductosEnCarritos(string usuarioId)
+        {
+            int productosEnCarritos = 0;
+
+            try
+            {
+                // Productos en carrito de personalización
+                var carritoPersonalizacion = GetCarritoPersonalizacion();
+                productosEnCarritos += carritoPersonalizacion?.Sum(c => c.Cantidad) ?? 0;
+
+                // Productos en carrito de recomendación IA
+                var carritoRecomendacion = GetCarritoRecomendacion();
+                productosEnCarritos += carritoRecomendacion?.Sum(c => c.Cantidad) ?? 0;
+
+                Console.WriteLine($"[DEBUG] Productos en carritos: Personalización={carritoPersonalizacion?.Sum(c => c.Cantidad) ?? 0}, Recomendación={carritoRecomendacion?.Sum(c => c.Cantidad) ?? 0}, Total={productosEnCarritos}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error al contar productos en carritos: {ex.Message}");
+            }
+
+            return productosEnCarritos;
+        }
+
+        // ✅ MÉTODO UNIFICADO PARA VALIDAR LÍMITES GLOBALES
+        private async Task<(bool permitido, int productosActivos, int productosCarritos, int disponibles, string mensaje)> ValidarLimitesGlobales(string usuarioId)
+        {
+            const int LIMITE_MAXIMO = 3;
+
+            if (string.IsNullOrEmpty(usuarioId))
+                return (true, 0, 0, LIMITE_MAXIMO, "");
+
+            // ✅ SOLO CONTAR PRODUCTOS EN PEDIDOS ENTREGADOS/ACTIVOS REALES
+            var pedidosActivos = await _context.Pedidos
+            .Where(p => p.UsuarioId == usuarioId && (p.Estado == "Preparándose" || p.Estado == "Listo para entregar"))
+            .ToListAsync();
+
+            int productosActivos = 0;
+            foreach (var pedido in pedidosActivos)
+            {
+                var detalles = await _context.PedidoDetalles.Where(d => d.PedidoId == pedido.Id).ToListAsync();
+                productosActivos += detalles.Sum(d => d.Cantidad);
+
+                var productos = await _context.PedidoProductos.Where(pp => pp.PedidoId == pedido.Id).ToListAsync();
+                productosActivos += productos.Sum(pp => pp.Cantidad ?? 0);
+            }
+
+            // ✅ CONTAR PRODUCTOS SOLO DEL CARRITO ACTUAL (NO AMBOS)
+            int productosCarritos = 0;
+            // NO contar productos de carritos aquí - solo en el momento de procesar pedido
+
+            int disponibles = Math.Max(0, LIMITE_MAXIMO - productosActivos);
+            bool permitido = disponibles > 0;
+
+            string mensaje = "";
+            if (!permitido)
+            {
+                mensaje = $"Tienes {productosActivos} productos en pedidos activos. Espera a que se entreguen.";
+            }
+
+            return (permitido, productosActivos, productosCarritos, disponibles, mensaje);
+        }
+        // ✅ MÉTODO UNIFICADO PARA VALIDAR AGREGAR PRODUCTOS
+        private async Task<(bool permitido, int disponibles, string mensaje)> ValidarAgregarProductosUnificado(string usuarioId, int cantidadAAgregar)
+        {
+            var (permitidoGlobal, productosActivos, productosCarritos, disponibles, mensajeGlobal) = await ValidarLimitesGlobales(usuarioId);
+
+            if (!permitidoGlobal)
+                return (false, 0, mensajeGlobal);
+
+            if (cantidadAAgregar > disponibles)
+            {
+                string mensaje = $"Solo puedes agregar {disponibles} producto(s) más. " +
+                                $"Límite: 3 productos total. " +
+                                $"Actualmente: {productosActivos} activos + {productosCarritos} en carritos = {productosActivos + productosCarritos}/3";
+                return (false, disponibles, mensaje);
+            }
+
+            return (true, disponibles, "");
+        }
+
     }
 
     // ============== MODELOS DE REQUEST Y CLASES ==============
@@ -1128,9 +1386,15 @@ namespace ProyectoIdentity.Controllers
     {
         public int PedidosActivos { get; set; }
         public int LimiteMaximo { get; set; }
+        public string MensajeUnificado { get; set; } = "";
+        public int ProductosEnPersonalizacion { get; set; }
+        public int ProductosEnRecomendacion { get; set; }
         public List<PedidoPendienteInfo> PedidosPendientes { get; set; } = new();
+
         public string MensajePersonalizado =>
-            $"Tienes {PedidosActivos} de {LimiteMaximo} pedidos activos. Espera a que se entreguen para hacer más pedidos.";
+            $"Límite alcanzado: {PedidosActivos}/{LimiteMaximo} productos. " +
+            $"Carritos: Personalización ({ProductosEnPersonalizacion}) + Recomendación IA ({ProductosEnRecomendacion}). " +
+            "Espera a que se entreguen tus pedidos para continuar.";
     }
 
     public class PedidoPendienteInfo

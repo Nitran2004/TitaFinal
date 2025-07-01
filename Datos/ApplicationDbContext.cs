@@ -18,6 +18,8 @@ namespace ProyectoIdentity.Datos
         public DbSet<PedidoProducto> PedidoProductos { get; set; }
         public DbSet<PedidoDetalle> PedidoDetalles { get; set; }
         public DbSet<Sucursal> Sucursales { get; set; }
+
+        public DbSet<DescuentosIngredientes> DescuentosIngredientes { get; set; }
         public DbSet<Cupon> Cupones { get; set; }
         public DbSet<CuponCanjeado> CuponesCanjeados { get; set; }
 

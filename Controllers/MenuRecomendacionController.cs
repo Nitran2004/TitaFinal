@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Text.Json;
 using System.Globalization;
 using ProyectoIdentity.Models;
+using ProyectoIdentity.Controllers; // Para usar la clase del PersonalizacionController
 using System.Security.Claims;
 
 namespace ProyectoIdentity.Controllers
@@ -108,24 +109,28 @@ namespace ProyectoIdentity.Controllers
         // Vista principal
         public async Task<IActionResult> Recomendacion()
         {
-            // ✅ VALIDACIÓN DE LÍMITE DE PEDIDOS
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (!string.IsNullOrEmpty(userId))
             {
-                var (countActivos, pedidosActivos) = await ContarPedidosActivos(userId);
+                var (permitido, productosActivos, productosCarritos, disponibles, mensaje) = await ValidarLimitesGlobales(userId);
 
-                if (countActivos >= 3)
+                if (!permitido)
                 {
-                    var viewModelLimite = CrearViewModelLimite(countActivos, pedidosActivos);
-                    return View("LimiteAlcanzado", viewModelLimite);
+                    var viewModelLimite = new ProyectoIdentity.Controllers.LimiteAlcanzadoViewModel // ✅ USAR LA CLASE COMPLETA
+                    {
+                        PedidosActivos = productosActivos + productosCarritos,
+                        LimiteMaximo = 3,
+                        PedidosPendientes = new List<ProyectoIdentity.Controllers.PedidoPendienteInfo>()
+                    };
+                    return View("../Shared/LimiteAlcanzado", viewModelLimite);
                 }
 
-                // ✅ MOSTRAR CONTADOR EN LA VISTA
-                ViewBag.PedidosActivos = countActivos;
+                ViewBag.ProductosActivos = productosActivos;
+                ViewBag.ProductosEnCarritos = productosCarritos;
+                ViewBag.Disponibles = disponibles;
                 ViewBag.LimiteMaximo = 3;
             }
 
-            // ✅ RESTO DEL CÓDIGO ORIGINAL
             var categorias = await _context.Productos
                 .Where(p => !string.IsNullOrEmpty(p.Categoria))
                 .Select(p => p.Categoria)
@@ -528,14 +533,11 @@ namespace ProyectoIdentity.Controllers
             {
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                // ✅ VALIDAR LÍMITE DE PRODUCTOS (IGUAL QUE PersonalizacionController)
-                if (!string.IsNullOrEmpty(userId))
+                // ✅ VALIDAR LÍMITES UNIFICADOS
+                var (permitido, disponibles, mensaje) = await ValidarAgregarProductosUnificado(userId, request.Cantidad);
+                if (!permitido)
                 {
-                    var (permitido, productosDisponibles, mensaje) = await ValidarAgregarProductos(userId, request.Cantidad);
-                    if (!permitido)
-                    {
-                        return Json(new { success = false, message = mensaje });
-                    }
+                    return Json(new { success = false, message = mensaje });
                 }
 
                 var producto = await _context.Productos.FindAsync(request.ProductoId);
@@ -544,15 +546,14 @@ namespace ProyectoIdentity.Controllers
 
                 var carrito = GetCarritoRecomendacion();
 
-                // ✅ VERIFICAR LÍMITE EN EL CARRITO ACTUAL
-                int productosEnCarrito = carrito.Sum(c => c.Cantidad);
-                if (productosEnCarrito + request.Cantidad > 3)
+                // ✅ VALIDAR LÍMITE EN CARRITOS COMBINADOS
+                int productosEnCarritos = ContarProductosEnCarritos(userId);
+                if (productosEnCarritos + request.Cantidad > disponibles + productosEnCarritos)
                 {
-                    int disponibles = 3 - productosEnCarrito;
                     return Json(new
                     {
                         success = false,
-                        message = $"Solo puedes agregar {disponibles} producto(s) más al carrito. Límite: 3 productos por pedido."
+                        message = $"Solo puedes agregar {disponibles} producto(s) más considerando ambos carritos."
                     });
                 }
 
@@ -564,20 +565,26 @@ namespace ProyectoIdentity.Controllers
                     Cantidad = request.Cantidad,
                     IngredientesRemovidos = request.IngredientesRemovidos ?? new List<string>(),
                     NotasEspeciales = request.NotasEspeciales ?? "Pedido por recomendación IA",
-                    AhorroInterno = 0, // ✅ No hay ahorros en recomendaciones IA
+                    AhorroInterno = 0, // Sin descuentos en recomendaciones IA
                     Subtotal = producto.Precio * request.Cantidad
                 };
 
                 carrito.Add(itemCarrito);
                 SetCarritoRecomendacion(carrito);
 
+                // ✅ OBTENER LÍMITES ACTUALIZADOS
+                var (_, productosActivos, productosCarritos, disponiblesActualizados, _) = await ValidarLimitesGlobales(userId);
+
                 return Json(new
                 {
                     success = true,
-                    message = "Producto agregado",
+                    message = "Producto agregado al carrito",
                     totalItems = carrito.Sum(c => c.Cantidad),
                     totalCarrito = carrito.Sum(c => c.Subtotal),
-                    productosRestantes = 3 - carrito.Sum(c => c.Cantidad) // ✅ INFORMACIÓN ADICIONAL
+                    // ✅ INFORMACIÓN UNIFICADA
+                    disponibles = disponiblesActualizados,
+                    productosActivos = productosActivos,
+                    productosEnCarritos = productosCarritos
                 });
             }
             catch (Exception ex)
@@ -760,26 +767,6 @@ namespace ProyectoIdentity.Controllers
             await _context.SaveChangesAsync();
         }
 
-        // ✅ MÉTODOS DE CARRITO USANDO MODELS
-        private List<ItemCarritoPersonalizado> GetCarritoRecomendacion()
-        {
-            try
-            {
-                var carritoJson = HttpContext.Session.GetString("CarritoRecomendacion");
-                if (string.IsNullOrEmpty(carritoJson))
-                {
-                    return new List<ItemCarritoPersonalizado>();
-                }
-
-                var carrito = JsonSerializer.Deserialize<List<ItemCarritoPersonalizado>>(carritoJson);
-                return carrito ?? new List<ItemCarritoPersonalizado>();
-            }
-            catch
-            {
-                return new List<ItemCarritoPersonalizado>();
-            }
-        }
-
         private void SetCarritoRecomendacion(List<ItemCarritoPersonalizado> carrito)
         {
             try
@@ -816,7 +803,7 @@ namespace ProyectoIdentity.Controllers
             {
                 PedidosActivos = countActivos,
                 LimiteMaximo = 3,
-                PedidosPendientes = pedidosActivos.Select(p => new PedidoPendienteInfo
+                PedidosPendientes = pedidosActivos.Select(p => new ProyectoIdentity.Controllers.PedidoPendienteInfo
                 {
                     Id = p.Id,
                     Fecha = p.Fecha,
@@ -1031,6 +1018,124 @@ namespace ProyectoIdentity.Controllers
             return (true, productosDisponibles, "");
         }
 
+        // ✅ MÉTODO UNIFICADO PARA CONTAR TODOS LOS PRODUCTOS
+        private async Task<(int totalProductos, List<Pedido> pedidosActivos)> ContarTodosLosProductosActivos(string usuarioId)
+        {
+            if (string.IsNullOrEmpty(usuarioId))
+                return (0, new List<Pedido>());
+
+            var pedidosActivos = await _context.Pedidos
+                .Where(p => p.UsuarioId == usuarioId &&
+                           (p.Estado == "Entregado"))
+                .OrderByDescending(p => p.Fecha)
+                .ToListAsync();
+
+            int totalProductos = 0;
+
+            // ✅ CONTAR PRODUCTOS DE AMBOS TIPOS DE PEDIDOS
+            foreach (var pedido in pedidosActivos)
+            {
+                // Productos de personalización (PedidoDetalles)
+                var detalles = await _context.PedidoDetalles
+                    .Where(d => d.PedidoId == pedido.Id)
+                    .ToListAsync();
+                totalProductos += detalles.Sum(d => d.Cantidad);
+
+                // Productos de pedidos normales (PedidoProductos)
+                var productos = await _context.PedidoProductos
+                    .Where(pp => pp.PedidoId == pedido.Id)
+                    .ToListAsync();
+                totalProductos += productos.Sum(pp => pp.Cantidad ?? 0);
+            }
+
+            Console.WriteLine($"[DEBUG] Usuario {usuarioId}: {totalProductos} productos activos en {pedidosActivos.Count} pedidos");
+
+            return (totalProductos, pedidosActivos);
+        }
+
+        // ✅ MÉTODO UNIFICADO PARA CONTAR PRODUCTOS EN CARRITOS
+        private int ContarProductosEnCarritos(string usuarioId)
+        {
+            int productosEnCarritos = 0;
+
+            try
+            {
+                // Productos en carrito de personalización
+                var carritoPersonalizacion = GetCarritoPersonalizacion();
+                productosEnCarritos += carritoPersonalizacion?.Sum(c => c.Cantidad) ?? 0;
+
+                // Productos en carrito de recomendación IA
+                var carritoRecomendacion = GetCarritoRecomendacion();
+                productosEnCarritos += carritoRecomendacion?.Sum(c => c.Cantidad) ?? 0;
+
+                Console.WriteLine($"[DEBUG] Productos en carritos: Personalización={carritoPersonalizacion?.Sum(c => c.Cantidad) ?? 0}, Recomendación={carritoRecomendacion?.Sum(c => c.Cantidad) ?? 0}, Total={productosEnCarritos}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error al contar productos en carritos: {ex.Message}");
+            }
+
+            return productosEnCarritos;
+        }
+
+        // ✅ MÉTODO UNIFICADO PARA VALIDAR LÍMITES GLOBALES
+        private async Task<(bool permitido, int productosActivos, int productosCarritos, int disponibles, string mensaje)> ValidarLimitesGlobales(string usuarioId)
+        {
+            const int LIMITE_MAXIMO = 3;
+
+            if (string.IsNullOrEmpty(usuarioId))
+                return (true, 0, 0, LIMITE_MAXIMO, "");
+
+            // ✅ SOLO CONTAR PRODUCTOS EN PEDIDOS ENTREGADOS/ACTIVOS REALES
+            var pedidosActivos = await _context.Pedidos
+            .Where(p => p.UsuarioId == usuarioId && (p.Estado == "Preparándose" || p.Estado == "Listo para entregar"))
+            .ToListAsync();
+
+            int productosActivos = 0;
+            foreach (var pedido in pedidosActivos)
+            {
+                var detalles = await _context.PedidoDetalles.Where(d => d.PedidoId == pedido.Id).ToListAsync();
+                productosActivos += detalles.Sum(d => d.Cantidad);
+
+                var productos = await _context.PedidoProductos.Where(pp => pp.PedidoId == pedido.Id).ToListAsync();
+                productosActivos += productos.Sum(pp => pp.Cantidad ?? 0);
+            }
+
+            // ✅ CONTAR PRODUCTOS SOLO DEL CARRITO ACTUAL (NO AMBOS)
+            int productosCarritos = 0;
+            // NO contar productos de carritos aquí - solo en el momento de procesar pedido
+
+            int disponibles = Math.Max(0, LIMITE_MAXIMO - productosActivos);
+            bool permitido = disponibles > 0;
+
+            string mensaje = "";
+            if (!permitido)
+            {
+                mensaje = $"Tienes {productosActivos} productos en pedidos activos. Espera a que se entreguen.";
+            }
+
+            return (permitido, productosActivos, productosCarritos, disponibles, mensaje);
+        }
+        // ✅ MÉTODO UNIFICADO PARA VALIDAR AGREGAR PRODUCTOS
+        private async Task<(bool permitido, int disponibles, string mensaje)> ValidarAgregarProductosUnificado(string usuarioId, int cantidadAAgregar)
+        {
+            var (permitidoGlobal, productosActivos, productosCarritos, disponibles, mensajeGlobal) = await ValidarLimitesGlobales(usuarioId);
+
+            if (!permitidoGlobal)
+                return (false, 0, mensajeGlobal);
+
+            if (cantidadAAgregar > disponibles)
+            {
+                string mensaje = $"Solo puedes agregar {disponibles} producto(s) más. " +
+                                $"Límite: 3 productos total. " +
+                                $"Actualmente: {productosActivos} activos + {productosCarritos} en carritos = {productosActivos + productosCarritos}/3";
+                return (false, disponibles, mensaje);
+            }
+
+            return (true, disponibles, "");
+        }
+
+        // ✅ REEMPLAZAR EL MÉTODO ObtenerLimitesProductos EN AMBOS CONTROLADORES
         [HttpGet]
         public async Task<IActionResult> ObtenerLimitesProductos()
         {
@@ -1039,36 +1144,63 @@ namespace ProyectoIdentity.Controllers
             {
                 return Json(new
                 {
-                    productosActuales = 0,
+                    productosActivos = 0,
                     limite = 3,
                     disponibles = 3,
-                    productosEnCarrito = 0
+                    productosEnCarritos = 0,
+                    totalOcupados = 0,
+                    mensaje = ""
                 });
             }
 
-            // ✅ OBTENER PRODUCTOS EN PEDIDOS ACTIVOS
-            var (permitido, productosActuales, mensaje) = await ValidarLimiteProductos(userId);
-
-            // ✅ OBTENER PRODUCTOS EN EL CARRITO ACTUAL
-            var carritoItems = GetCarritoRecomendacion();
-            int productosEnCarrito = carritoItems?.Sum(c => c.Cantidad) ?? 0;
-
-            // ✅ CALCULAR DISPONIBLES CONSIDERANDO CARRITO
-            int totalOcupados = productosActuales + productosEnCarrito;
-            int disponibles = Math.Max(0, 3 - totalOcupados);
-
-            Console.WriteLine($"[DEBUG] Límites - Activos: {productosActuales}, Carrito: {productosEnCarrito}, Total: {totalOcupados}, Disponibles: {disponibles}");
+            var (permitido, productosActivos, productosCarritos, disponibles, mensaje) = await ValidarLimitesGlobales(userId);
 
             return Json(new
             {
-                productosActuales = productosActuales,
+                productosActivos = productosActivos,
                 limite = 3,
                 disponibles = disponibles,
-                productosEnCarrito = productosEnCarrito,
-                totalOcupados = totalOcupados,
-                mensaje = mensaje
+                productosEnCarritos = productosCarritos,
+                totalOcupados = productosActivos + productosCarritos,
+                mensaje = mensaje,
+                permitido = permitido
             });
         }
+
+        // ✅ MÉTODOS AUXILIARES PARA CARRITOS (AGREGAR SOLO SI NO EXISTEN)
+        private List<ItemCarritoPersonalizado> GetCarritoPersonalizacion()
+        {
+            try
+            {
+                var carritoJson = HttpContext.Session.GetString("CarritoPersonalizacion");
+                if (string.IsNullOrEmpty(carritoJson))
+                    return new List<ItemCarritoPersonalizado>();
+
+                return JsonSerializer.Deserialize<List<ItemCarritoPersonalizado>>(carritoJson) ?? new List<ItemCarritoPersonalizado>();
+            }
+            catch
+            {
+                return new List<ItemCarritoPersonalizado>();
+            }
+        }
+
+        private List<ItemCarritoPersonalizado> GetCarritoRecomendacion()
+        {
+            try
+            {
+                var carritoJson = HttpContext.Session.GetString("CarritoRecomendacion");
+                if (string.IsNullOrEmpty(carritoJson))
+                    return new List<ItemCarritoPersonalizado>();
+
+                return JsonSerializer.Deserialize<List<ItemCarritoPersonalizado>>(carritoJson) ?? new List<ItemCarritoPersonalizado>();
+            }
+            catch
+            {
+                return new List<ItemCarritoPersonalizado>();
+            }
+        }
+
+
         public class PersonalizacionRequest
         {
             public int ProductoId { get; set; }
@@ -1083,14 +1215,17 @@ namespace ProyectoIdentity.Controllers
             public string Observaciones { get; set; }
         }
 
-        public class LimiteAlcanzadoViewModel
-        {
-            public int PedidosActivos { get; set; }
-            public int LimiteMaximo { get; set; }
-            public List<PedidoPendienteInfo> PedidosPendientes { get; set; } = new();
-            public string MensajePersonalizado =>
-                $"Tienes {PedidosActivos} de {LimiteMaximo} productos activos. Espera a que se entreguen para hacer más pedidos.";
-        }
+        //public class LimiteAlcanzadoViewModel
+        //{
+        //    public int PedidosActivos { get; set; }
+        //    public int LimiteMaximo { get; set; }
+        //    public string MensajeUnificado { get; set; } = "";
+        //    public int ProductosEnPersonalizacion { get; set; }
+        //    public int ProductosEnRecomendacion { get; set; }
+        //    public List<PedidoPendienteInfo> PedidosPendientes { get; set; } = new();
+        //    public string MensajePersonalizado =>
+        //        $"Tienes {PedidosActivos} de {LimiteMaximo} productos activos. Espera a que se entreguen para hacer más pedidos.";
+        //}
 
         public class PedidoPendienteInfo
         {

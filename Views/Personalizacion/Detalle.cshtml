@@ -758,19 +758,16 @@
             .then(response => response.json())
             .then(result => {
                 if (result.success) {
-                    // Mensaje genérico sin mostrar ahorros para usuarios normales
-                    alert('¡Producto agregado al carrito exitosamente!');
-                    document.getElementById('contadorCarrito').textContent = result.totalItems;
-
-                    // ✅ RECARGAR LÍMITES DESPUÉS DE AGREGAR (IMPORTANTE)
-                    cargarLimitesProductos();
+                    alert('✅ Producto agregado al carrito');
+                    window.location.href = '@Url.Action("VerCarrito")';
                 } else {
-                    alert('Error: ' + result.message);
+                    if (result.redirectUrl) {
+                        // ✅ REDIRIGIR A PERSONALIZACION QUE MOSTRARÁ EL LÍMITE
+                        window.location.href = result.redirectUrl;
+                    } else {
+                        alert('❌ ' + result.message);
+                    }
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error al agregar al carrito');
             })
             .finally(() => {
                 boton.innerHTML = textoOriginal;

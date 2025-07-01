@@ -277,7 +277,7 @@
         btnProcesar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
         btnProcesar.disabled = true;
 
-        fetch('@Url.Action("ProcesarPedido")', {
+        fetch('@Url.Action("ProcesarPedido", "Personalizacion")', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
