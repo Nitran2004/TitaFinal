@@ -240,6 +240,8 @@ namespace ProyectoIdentity.Controllers
                     return "pizza_pepperoni.glb";
                 case 2:
                     return "pizza2.glb"; // Mantener compatibilidad con el archivo anterior
+                case 3:
+                    return "pizza2.glb"; // Mantener compatibilidad con el archivo anterior
                 case 4:
                     return "pizza_margarita.glb";
                 case 5:
@@ -248,12 +250,14 @@ namespace ProyectoIdentity.Controllers
                     return "pizza_diavola.glb";
                 case 7:
                     return "pizza_meatlover.glb";
+                case 8:
+                    return "pizza2.glb"; // Mantener compatibilidad con el archivo anterior
                 case 9:
                     return "pizza_say_cheese.glb";
                 case 10:
                     return "pizza_verace.glb";
                 default:
-                    return "pizza_pepperoni.glb"; // Por defecto
+                    return "pizza2.glb"; // Por defecto
             }
         }
     }
