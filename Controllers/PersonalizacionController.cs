@@ -383,26 +383,72 @@ namespace ProyectoIdentity.Controllers
         }
 
         // ✅ ACTUALIZAR CARRITO
+        // ✅ ACTUALIZAR CARRITO MEJORADO
         [HttpPost]
         public IActionResult ActualizarCarrito([FromBody] List<ItemCarritoPersonalizado> carrito)
         {
             try
             {
-                // Validar items antes de guardar
-                foreach (var item in carrito)
+                Console.WriteLine($"[DEBUG] ActualizarCarrito recibido: {carrito?.Count ?? 0} items");
+
+                // Si el carrito es null o vacío, limpiar la sesión
+                if (carrito == null || !carrito.Any())
+                {
+                    Console.WriteLine("[DEBUG] Carrito vacío - limpiando sesión");
+                    LimpiarCarritoPersonalizacion();
+                    return Json(new
+                    {
+                        success = true,
+                        totalItems = 0,
+                        message = "Carrito vaciado exitosamente"
+                    });
+                }
+
+                // Validar y limpiar items inválidos
+                var itemsValidos = carrito.Where(item =>
+                    item != null &&
+                    item.Id > 0 &&
+                    item.Cantidad > 0 &&
+                    item.Precio >= 0 &&
+                    !string.IsNullOrEmpty(item.Nombre)
+                ).ToList();
+
+                Console.WriteLine($"[DEBUG] Items válidos: {itemsValidos.Count} de {carrito.Count}");
+
+                // Recalcular subtotales para items válidos
+                foreach (var item in itemsValidos)
                 {
                     if (item.Subtotal <= 0 && item.Precio > 0 && item.Cantidad > 0)
                     {
                         item.Subtotal = item.Precio * item.Cantidad;
+                        Console.WriteLine($"[DEBUG] Recalculado subtotal para {item.Nombre}: {item.Subtotal}");
                     }
                 }
 
-                SetCarritoPersonalizado(carrito);
-                return Json(new { success = true, totalItems = carrito.Sum(c => c.Cantidad) });
+                // Guardar carrito actualizado
+                SetCarritoPersonalizacion(itemsValidos);
+
+                int totalItems = itemsValidos.Sum(c => c.Cantidad);
+                decimal totalCarrito = itemsValidos.Sum(c => c.Subtotal);
+
+                Console.WriteLine($"[DEBUG] Carrito actualizado: {totalItems} items, total: ${totalCarrito}");
+
+                return Json(new
+                {
+                    success = true,
+                    totalItems = totalItems,
+                    totalCarrito = totalCarrito,
+                    message = "Carrito actualizado exitosamente"
+                });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                Console.WriteLine($"[ERROR] Error en ActualizarCarrito: {ex.Message}");
+                return Json(new
+                {
+                    success = false,
+                    message = "Error al actualizar el carrito: " + ex.Message
+                });
             }
         }
 

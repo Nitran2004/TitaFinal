@@ -100,13 +100,6 @@
                                             <span>Total Items:</span>
                                             <span id="totalItems">@Model.Sum(m => m.Cantidad)</span>
                                         </div>
-                                        @if (esAdministrador)
-                                        {
-                                            <div class="d-flex justify-content-between">
-                                                <span>Ahorro Total Interno:</span>
-                                                <span class="text-success" id="ahorroTotal">$@Model.Sum(m => m.AhorroInterno).ToString("F2")</span>
-                                            </div>
-                                        }
                                         <hr>
                                         <div class="d-flex justify-content-between">
                                             <strong>Total a Pagar:</strong>
@@ -203,32 +196,56 @@
 
     function eliminarDelCarrito(index) {
         if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+            console.log(`[DEBUG] Eliminando producto en índice: ${index}`);
+            console.log(`[DEBUG] Carrito antes de eliminar:`, carritoLocal);
+
+            // Eliminar el item del carrito local
             carritoLocal.splice(index, 1);
 
+            console.log(`[DEBUG] Carrito después de eliminar:`, carritoLocal);
+
+            // Si el carrito queda vacío, redirigir inmediatamente
+            if (carritoLocal.length === 0) {
+                console.log('[DEBUG] Carrito vacío - guardando y recargando página');
+                guardarCarritoEnSesion();
+                location.reload();
+                return;
+            }
+
+            // Si quedan productos, actualizar la interfaz
             const fila = document.querySelector(`tr[data-index="${index}"]`);
-            fila.remove();
+            if (fila) {
+                fila.remove();
+            }
 
             // Reindexar las filas restantes
             document.querySelectorAll('tbody tr').forEach((fila, nuevoIndex) => {
                 fila.setAttribute('data-index', nuevoIndex);
+
+                // Actualizar botones de cantidad
                 const botones = fila.querySelectorAll('button[onclick*="cambiarCantidadCarrito"]');
                 botones.forEach(boton => {
                     const onclick = boton.getAttribute('onclick');
-                    boton.setAttribute('onclick', onclick.replace(/\d+/, nuevoIndex));
+                    if (onclick) {
+                        // Reemplazar el índice en la función
+                        const nuevoOnclick = onclick.replace(/cambiarCantidadCarrito\(\d+,/, `cambiarCantidadCarrito(${nuevoIndex},`);
+                        boton.setAttribute('onclick', nuevoOnclick);
+                    }
                 });
 
+                // Actualizar botón eliminar
                 const botonEliminar = fila.querySelector('button[onclick*="eliminarDelCarrito"]');
                 if (botonEliminar) {
                     botonEliminar.setAttribute('onclick', `eliminarDelCarrito(${nuevoIndex})`);
                 }
             });
 
+            // Actualizar resumen y guardar
             actualizarResumen();
+            validarLimitesCarrito();
             guardarCarritoEnSesion();
 
-            if (carritoLocal.length === 0) {
-                location.reload();
-            }
+            console.log(`[DEBUG] Eliminación completada. Items restantes: ${carritoLocal.length}`);
         }
     }
 
@@ -250,11 +267,34 @@
     }
 
     function guardarCarritoEnSesion() {
+        console.log(`[DEBUG] Guardando carrito con ${carritoLocal.length} items`);
+
         fetch('@Url.Action("ActualizarCarrito")', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+            },
             body: JSON.stringify(carritoLocal)
-        }).catch(console.error);
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('[DEBUG] Carrito guardado exitosamente:', data);
+
+                // Si el carrito está vacío en el servidor, recargar la página
+                if (data.totalItems === 0 && carritoLocal.length === 0) {
+                    console.log('[DEBUG] Carrito confirmado como vacío - recargando página');
+                    setTimeout(() => location.reload(), 500);
+                }
+            })
+            .catch(error => {
+                console.error('[ERROR] Error al guardar carrito:', error);
+            });
     }
 
     function procesarPedido() {
