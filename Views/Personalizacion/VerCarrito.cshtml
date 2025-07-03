@@ -199,38 +199,46 @@
             console.log(`[DEBUG] Eliminando producto en índice: ${index}`);
             console.log(`[DEBUG] Carrito antes de eliminar:`, carritoLocal);
 
+            // ✅ VALIDAR QUE EL ÍNDICE EXISTE
+            if (index < 0 || index >= carritoLocal.length) {
+                console.error('[ERROR] Índice inválido:', index);
+                return;
+            }
+
             // Eliminar el item del carrito local
             carritoLocal.splice(index, 1);
 
             console.log(`[DEBUG] Carrito después de eliminar:`, carritoLocal);
 
-            // Si el carrito queda vacío, redirigir inmediatamente
+            // ✅ GUARDAR INMEDIATAMENTE EN SESIÓN
+            guardarCarritoEnSesion();
+
+            // ✅ SI EL CARRITO QUEDA VACÍO, RECARGAR PÁGINA
             if (carritoLocal.length === 0) {
-                console.log('[DEBUG] Carrito vacío - guardando y recargando página');
-                guardarCarritoEnSesion();
-                location.reload();
+                console.log('[DEBUG] Carrito vacío - recargando página');
+                setTimeout(() => location.reload(), 500);
                 return;
             }
 
-            // Si quedan productos, actualizar la interfaz
+            // ✅ SI QUEDAN PRODUCTOS, ACTUALIZAR INTERFAZ
             const fila = document.querySelector(`tr[data-index="${index}"]`);
             if (fila) {
                 fila.remove();
             }
 
-            // Reindexar las filas restantes
+            // ✅ REINDEXAR TODAS LAS FILAS RESTANTES
             document.querySelectorAll('tbody tr').forEach((fila, nuevoIndex) => {
                 fila.setAttribute('data-index', nuevoIndex);
 
                 // Actualizar botones de cantidad
-                const botones = fila.querySelectorAll('button[onclick*="cambiarCantidadCarrito"]');
-                botones.forEach(boton => {
-                    const onclick = boton.getAttribute('onclick');
-                    if (onclick) {
-                        // Reemplazar el índice en la función
-                        const nuevoOnclick = onclick.replace(/cambiarCantidadCarrito\(\d+,/, `cambiarCantidadCarrito(${nuevoIndex},`);
-                        boton.setAttribute('onclick', nuevoOnclick);
-                    }
+                const botonesDecremento = fila.querySelectorAll('button[onclick*="cambiarCantidadCarrito"][onclick*="-1"]');
+                botonesDecremento.forEach(boton => {
+                    boton.setAttribute('onclick', `cambiarCantidadCarrito(${nuevoIndex}, -1)`);
+                });
+
+                const botonesIncremento = fila.querySelectorAll('button[onclick*="cambiarCantidadCarrito"][onclick*="1)"]');
+                botonesIncremento.forEach(boton => {
+                    boton.setAttribute('onclick', `cambiarCantidadCarrito(${nuevoIndex}, 1)`);
                 });
 
                 // Actualizar botón eliminar
@@ -240,30 +248,53 @@
                 }
             });
 
-            // Actualizar resumen y guardar
+            // Actualizar resumen y validar límites
             actualizarResumen();
             validarLimitesCarrito();
-            guardarCarritoEnSesion();
 
             console.log(`[DEBUG] Eliminación completada. Items restantes: ${carritoLocal.length}`);
         }
     }
 
     function actualizarResumen() {
-        const totalItems = carritoLocal.reduce((total, item) => total + item.cantidad, 0);
-        const totalPagar = carritoLocal.reduce((total, item) => total + item.subtotal, 0);
+        // ✅ CALCULAR TOTALES CON VALIDACIONES
+        const totalItems = carritoLocal.reduce((total, item) => total + (item.cantidad || 0), 0);
+        const totalPagar = carritoLocal.reduce((total, item) => total + (item.subtotal || 0), 0);
         const ahorroTotal = carritoLocal.reduce((total, item) => total + (item.ahorroInterno || 0), 0);
 
-        document.getElementById('totalItems').textContent = totalItems;
-        document.getElementById('totalPagar').textContent = '$' + totalPagar.toFixed(2);
+        // ✅ ACTUALIZAR ELEMENTOS CON VALIDACIONES
+        const totalItemsElement = document.getElementById('totalItems');
+        if (totalItemsElement) {
+            totalItemsElement.textContent = totalItems;
+        }
+
+        const totalPagarElement = document.getElementById('totalPagar');
+        if (totalPagarElement) {
+            totalPagarElement.textContent = '$' + totalPagar.toFixed(2);
+        }
 
         const ahorroElement = document.getElementById('ahorroTotal');
         if (ahorroElement) {
             ahorroElement.textContent = '$' + ahorroTotal.toFixed(2);
         }
 
+        // ✅ ACTUALIZAR BOTÓN PROCESAR CON VALIDACIONES MEJORADAS
         const btnProcesar = document.getElementById('btnProcesar');
-        btnProcesar.disabled = carritoLocal.length === 0;
+        if (btnProcesar) {
+            const puedeConfirmar = totalItems > 0 && totalItems <= 3;
+            btnProcesar.disabled = !puedeConfirmar;
+
+            if (totalItems > 3) {
+                btnProcesar.innerHTML = '<i class="fas fa-ban"></i> Límite Excedido (3 max)';
+                btnProcesar.className = 'btn btn-danger w-100';
+            } else if (totalItems === 0) {
+                btnProcesar.innerHTML = '<i class="fas fa-cart-plus"></i> Carrito Vacío';
+                btnProcesar.className = 'btn btn-secondary w-100';
+            } else {
+                btnProcesar.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
+                btnProcesar.className = 'btn btn-warning w-100';
+            }
+        }
     }
 
     function guardarCarritoEnSesion() {
@@ -272,8 +303,7 @@
         fetch('@Url.Action("ActualizarCarrito")', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(carritoLocal)
         })
@@ -286,7 +316,7 @@
             .then(data => {
                 console.log('[DEBUG] Carrito guardado exitosamente:', data);
 
-                // Si el carrito está vacío en el servidor, recargar la página
+                // ✅ SI EL CARRITO ESTÁ VACÍO EN EL SERVIDOR, RECARGAR
                 if (data.totalItems === 0 && carritoLocal.length === 0) {
                     console.log('[DEBUG] Carrito confirmado como vacío - recargando página');
                     setTimeout(() => location.reload(), 500);
@@ -298,14 +328,22 @@
     }
 
     function procesarPedido() {
-        const tipoServicio = document.querySelector('input[name="tipoServicio"]:checked')?.value;
-        if (!tipoServicio) {
-            alert('Por favor selecciona el tipo de servicio');
+        const totalItems = carritoLocal.reduce((total, item) => total + (item.cantidad || 0), 0);
+
+        // ✅ VALIDACIONES ANTES DE PROCESAR
+        if (totalItems > 3) {
+            alert('No puedes procesar un pedido con más de 3 productos. Reduce la cantidad.');
             return;
         }
 
-        if (carritoLocal.length === 0) {
+        if (totalItems === 0) {
             alert('Tu carrito está vacío');
+            return;
+        }
+
+        const tipoServicio = document.querySelector('input[name="tipoServicio"]:checked')?.value;
+        if (!tipoServicio) {
+            alert('Por favor selecciona el tipo de servicio');
             return;
         }
 
@@ -314,10 +352,12 @@
         };
 
         const btnProcesar = document.getElementById('btnProcesar');
+        const textoOriginal = btnProcesar.innerHTML;
+
         btnProcesar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
         btnProcesar.disabled = true;
 
-        fetch('@Url.Action("ProcesarPedido", "Personalizacion")', {
+        fetch('@Url.Action("ProcesarPedido")', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
@@ -328,14 +368,14 @@
                     window.location.href = '@Url.Action("Confirmacion", "Personalizacion")?id=' + result.pedidoId;
                 } else {
                     alert('Error: ' + result.message);
-                    btnProcesar.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
-                    btnProcesar.disabled = false;
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
                 alert('Error al procesar el pedido');
-                btnProcesar.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
+            })
+            .finally(() => {
+                btnProcesar.innerHTML = textoOriginal;
                 btnProcesar.disabled = false;
             });
     }
@@ -344,41 +384,59 @@
     document.querySelectorAll('.service-option').forEach(option => {
         option.addEventListener('click', function () {
             const radio = this.querySelector('input[type="radio"]');
-            radio.checked = true;
-            document.querySelectorAll('.service-option').forEach(o => o.classList.remove('selected'));
-            this.classList.add('selected');
+            if (radio) {
+                radio.checked = true;
+                document.querySelectorAll('.service-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+            }
         });
     });
 
-    // ✅ ACTUALIZAR EL SCRIPT EXISTENTE EN VerCarrito.cshtml
-
     // ✅ AGREGAR ESTA VARIABLE AL INICIO DEL SCRIPT
-    let limitesProductos = { disponibles: 3, productosActuales: 0 };
-
+    let limitesProductos = {
+        disponibles: 3,
+        productosActuales: 0,
+        productosEnCarritos: 0,
+        limite: 3
+    };
     // ✅ FUNCIÓN PARA CARGAR LÍMITES (AGREGAR)
     async function cargarLimitesCarrito() {
         try {
             const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
             const data = await response.json();
-            limitesProductos = data;
-            console.log('[DEBUG] Límites en carrito:', data);
+
+            // ✅ ASEGURAR QUE LOS VALORES NO SEAN UNDEFINED
+            limitesProductos = {
+                disponibles: data.disponibles || 0,
+                productosActuales: data.productosActivos || 0,
+                productosEnCarritos: data.productosEnCarritos || 0,
+                limite: data.limite || 3
+            };
+
+            console.log('[DEBUG] Límites cargados en carrito:', limitesProductos);
             validarLimitesCarrito();
         } catch (error) {
             console.error('Error al cargar límites:', error);
+            // ✅ VALORES POR DEFECTO EN CASO DE ERROR
+            limitesProductos = {
+                disponibles: 3,
+                productosActuales: 0,
+                productosEnCarritos: 0,
+                limite: 3
+            };
         }
     }
 
     // ✅ FUNCIÓN PARA VALIDAR LÍMITES EN CARRITO (AGREGAR)
     function validarLimitesCarrito() {
-        const totalEnCarrito = carritoLocal.reduce((total, item) => total + item.cantidad, 0);
-        const totalPermitido = limitesProductos.disponibles + totalEnCarrito;
+        const totalEnCarrito = carritoLocal.reduce((total, item) => total + (item.cantidad || 0), 0);
 
-        // Mostrar información de límite
-        mostrarInfoLimiteCarrito(totalEnCarrito, totalPermitido);
+        // ✅ MOSTRAR INFORMACIÓN DE LÍMITE CON VALORES SEGUROS
+        mostrarInfoLimiteCarrito(totalEnCarrito);
     }
 
     // ✅ FUNCIÓN PARA MOSTRAR INFO DE LÍMITE EN CARRITO (AGREGAR)
-    function mostrarInfoLimiteCarrito(totalEnCarrito, totalPermitido) {
+    function mostrarInfoLimiteCarrito(totalEnCarrito) {
         let infoElement = document.getElementById('info-limite-carrito');
         if (!infoElement) {
             infoElement = document.createElement('div');
@@ -386,8 +444,14 @@
 
             // Insertar después del header del carrito
             const cardHeader = document.querySelector('.card-header');
-            cardHeader.parentNode.insertBefore(infoElement, cardHeader.nextSibling);
+            if (cardHeader) {
+                cardHeader.parentNode.insertBefore(infoElement, cardHeader.nextSibling);
+            }
         }
+
+        // ✅ USAR VALORES SEGUROS
+        const productosActivos = limitesProductos.productosActuales || 0;
+        const limite = limitesProductos.limite || 3;
 
         if (totalEnCarrito >= 3) {
             infoElement.className = 'alert alert-warning mx-3 mt-3 mb-0';
@@ -401,22 +465,38 @@
             infoElement.innerHTML = `
                 <i class="fas fa-info-circle"></i>
                 Puedes agregar ${3 - totalEnCarrito} producto(s) más. (${totalEnCarrito}/3 productos en carrito)
+                <br><small>Productos en pedidos activos: ${productosActivos}/${limite}</small>
             `;
-        } else {
+        } else if (totalEnCarrito > 0) {
             infoElement.className = 'alert alert-success mx-3 mt-3 mb-0';
             infoElement.innerHTML = `
                 <i class="fas fa-check-circle"></i>
                 Puedes agregar ${3 - totalEnCarrito} producto(s) más. (${totalEnCarrito}/3 productos en carrito)
+                <br><small>Productos en pedidos activos: ${productosActivos}/${limite}</small>
             `;
+        } else {
+            // ✅ OCULTAR CUANDO NO HAY PRODUCTOS
+            infoElement.style.display = 'none';
         }
     }
 
     // ✅ ACTUALIZAR LA FUNCIÓN cambiarCantidadCarrito EXISTENTE
     function cambiarCantidadCarrito(index, cambio) {
         const fila = document.querySelector(`tr[data-index="${index}"]`);
-        const cantidadDisplay = fila.querySelector('.cantidad-display');
-        let nuevaCantidad = parseInt(cantidadDisplay.getAttribute('data-cantidad')) + cambio;
+        if (!fila) {
+            console.error('[ERROR] No se encontró la fila con índice:', index);
+            return;
+        }
 
+        const cantidadDisplay = fila.querySelector('.cantidad-display');
+        if (!cantidadDisplay) {
+            console.error('[ERROR] No se encontró el display de cantidad');
+            return;
+        }
+
+        let nuevaCantidad = parseInt(cantidadDisplay.getAttribute('data-cantidad') || '0') + cambio;
+
+        // ✅ SI LA CANTIDAD ES 0 O MENOR, ELIMINAR
         if (nuevaCantidad < 1) {
             eliminarDelCarrito(index);
             return;
@@ -424,7 +504,7 @@
 
         // ✅ VALIDAR LÍMITE TOTAL DE PRODUCTOS EN CARRITO
         const totalActual = carritoLocal.reduce((total, item, i) => {
-            return total + (i === index ? nuevaCantidad : item.cantidad);
+            return total + (i === index ? nuevaCantidad : (item.cantidad || 0));
         }, 0);
 
         if (totalActual > 3) {
@@ -434,21 +514,25 @@
 
         if (nuevaCantidad > 10) nuevaCantidad = 10;
 
-        // Actualizar carrito local
-        carritoLocal[index].cantidad = nuevaCantidad;
-        carritoLocal[index].subtotal = carritoLocal[index].precio * nuevaCantidad;
+        // ✅ ACTUALIZAR CARRITO LOCAL CON VALIDACIONES
+        if (carritoLocal[index]) {
+            carritoLocal[index].cantidad = nuevaCantidad;
+            carritoLocal[index].subtotal = (carritoLocal[index].precio || 0) * nuevaCantidad;
 
-        // Actualizar display
-        cantidadDisplay.textContent = nuevaCantidad;
-        cantidadDisplay.setAttribute('data-cantidad', nuevaCantidad);
+            // Actualizar display
+            cantidadDisplay.textContent = nuevaCantidad;
+            cantidadDisplay.setAttribute('data-cantidad', nuevaCantidad);
 
-        // Actualizar subtotal
-        const subtotalDisplay = fila.querySelector('.subtotal-display');
-        subtotalDisplay.textContent = '$' + carritoLocal[index].subtotal.toFixed(2);
+            // Actualizar subtotal
+            const subtotalDisplay = fila.querySelector('.subtotal-display');
+            if (subtotalDisplay) {
+                subtotalDisplay.textContent = '$' + (carritoLocal[index].subtotal || 0).toFixed(2);
+            }
 
-        actualizarResumen();
-        validarLimitesCarrito(); // ✅ VALIDAR LÍMITES DESPUÉS DE CAMBIO
-        guardarCarritoEnSesion();
+            actualizarResumen();
+            validarLimitesCarrito();
+            guardarCarritoEnSesion();
+        }
     }
 
     // ✅ ACTUALIZAR LA FUNCIÓN actualizarResumen EXISTENTE
@@ -537,8 +621,19 @@
 
     // ✅ INICIALIZAR AL CARGAR LA PÁGINA (AGREGAR AL FINAL DEL SCRIPT EXISTENTE)
     document.addEventListener('DOMContentLoaded', function () {
+        console.log('[DEBUG] Inicializando VerCarrito...');
+        console.log('[DEBUG] Carrito inicial:', carritoLocal);
+
+        // ✅ VALIDAR CARRITO LOCAL
+        if (!Array.isArray(carritoLocal)) {
+            console.error('[ERROR] carritoLocal no es un array válido');
+            carritoLocal = [];
+        }
+
+        // Cargar límites y validar
         cargarLimitesCarrito();
         validarLimitesCarrito();
+        actualizarResumen();
 
         // También validar cuando se hace focus en la página
         window.addEventListener('focus', cargarLimitesCarrito);

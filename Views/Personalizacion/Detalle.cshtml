@@ -550,11 +550,11 @@
 
 <script>
     // ✅ VARIABLES GLOBALES PARA LÍMITES Y CARRITO
-    let limitesActuales = { 
-        productosActuales: 0, 
-        limite: 3, 
-        disponibles: 3, 
-        productosEnCarrito: 0 // ✅ NUEVO
+    let limitesActuales = {
+        productosActivos: 0,    // ✅ NOMBRE CORREGIDO
+        limite: 3,
+        disponibles: 3,
+        productosEnCarritos: 0  // ✅ NOMBRE CORREGIDO
     };
 
     // ✅ FUNCIÓN PARA CARGAR LÍMITES ACTUALES (MEJORADA)
@@ -562,20 +562,34 @@
         try {
             const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
             const data = await response.json();
-            limitesActuales = data;
 
-            console.log('[DEBUG] Límites cargados:', data);
-            console.log(`[DEBUG] Productos activos: ${data.productosActuales}, En carrito: ${data.productosEnCarrito}, Disponibles: ${data.disponibles}`);
+            // ✅ ASEGURAR QUE LOS VALORES NO SEAN UNDEFINED
+            limitesActuales = {
+                productosActivos: data.productosActivos || 0,
+                limite: data.limite || 3,
+                disponibles: data.disponibles || 0,
+                productosEnCarritos: data.productosEnCarritos || 0
+            };
+
+            console.log('[DEBUG] Límites cargados:', limitesActuales);
+            console.log(`[DEBUG] Productos activos: ${limitesActuales.productosActivos}, En carrito: ${limitesActuales.productosEnCarritos}, Disponibles: ${limitesActuales.disponibles}`);
 
             // Actualizar interfaz según límites
             actualizarInterfazLimites();
 
             // Si ya está en el límite, mostrar mensaje
-            if (data.disponibles === 0) {
+            if (limitesActuales.disponibles === 0) {
                 mostrarMensajeLimite(data.mensaje || 'No puedes agregar más productos');
             }
         } catch (error) {
             console.error('Error al cargar límites:', error);
+            // ✅ VALORES POR DEFECTO EN CASO DE ERROR
+            limitesActuales = {
+                productosActivos: 0,
+                limite: 3,
+                disponibles: 3,
+                productosEnCarritos: 0
+            };
         }
     }
 
@@ -594,14 +608,16 @@
 
         // Deshabilitar botón + si está en el límite
         const botonMas = document.querySelector('.quantity-btn[onclick="cambiarCantidad(1)"]');
-        if (maxPermitido <= parseInt(cantidadInput.value) || maxPermitido === 0) {
-            botonMas.disabled = true;
-            botonMas.style.opacity = '0.5';
-            botonMas.style.cursor = 'not-allowed';
-        } else {
-            botonMas.disabled = false;
-            botonMas.style.opacity = '1';
-            botonMas.style.cursor = 'pointer';
+        if (botonMas) {
+            if (maxPermitido <= parseInt(cantidadInput.value) || maxPermitido === 0) {
+                botonMas.disabled = true;
+                botonMas.style.opacity = '0.5';
+                botonMas.style.cursor = 'not-allowed';
+            } else {
+                botonMas.disabled = false;
+                botonMas.style.opacity = '1';
+                botonMas.style.cursor = 'pointer';
+            }
         }
 
         // Mostrar información de límite
@@ -620,15 +636,15 @@
             cantidadContainer.appendChild(infoElement);
         }
 
-        const { productosActuales, limite, disponibles, productosEnCarrito } = limitesActuales;
+        const { productosActivos, limite, disponibles, productosEnCarritos } = limitesActuales;
 
         if (disponibles === 0) {
             infoElement.className = 'alert alert-danger mt-3';
             infoElement.innerHTML = `
                 <i class="fas fa-exclamation-triangle"></i>
                 <strong>Límite alcanzado:</strong><br>
-                • Productos en pedidos activos: ${productosActuales}/${limite}<br>
-                • Productos en carrito actual: ${productosEnCarrito}<br>
+                • Productos en pedidos activos: ${productosActivos}/${limite}<br>
+                • Productos en carrito actual: ${productosEnCarritos}<br>
                 • <em>No puedes agregar más productos.</em>
             `;
         } else if (disponibles <= 1) {
@@ -636,8 +652,8 @@
             infoElement.innerHTML = `
                 <i class="fas fa-info-circle"></i>
                 <strong>Casi en el límite:</strong><br>
-                • Productos en pedidos activos: ${productosActuales}/${limite}<br>
-                • Productos en carrito actual: ${productosEnCarrito}<br>
+                • Productos en pedidos activos: ${productosActivos}/${limite}<br>
+                • Productos en carrito actual: ${productosEnCarritos}<br>
                 • Solo puedes agregar ${disponibles} producto(s) más.
             `;
         } else {
@@ -645,8 +661,8 @@
             infoElement.innerHTML = `
                 <i class="fas fa-info-circle"></i>
                 <strong>Estado actual:</strong><br>
-                • Productos en pedidos activos: ${productosActuales}/${limite}<br>
-                • Productos en carrito actual: ${productosEnCarrito}<br>
+                • Productos en pedidos activos: ${productosActivos}/${limite}<br>
+                • Productos en carrito actual: ${productosEnCarritos}<br>
                 • Puedes agregar hasta ${disponibles} producto(s) más.
             `;
         }

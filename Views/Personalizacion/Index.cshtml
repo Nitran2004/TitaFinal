@@ -137,12 +137,28 @@
     }
 </style>
 
-<!-- ✅ INFORMACIÓN DE LÍMITES EN TIEMPO REAL -->
-<div id="info-limite-global" class="alert" style="display: none; margin: 20px;">
-    <!-- Contenido dinámico -->
-</div>
-
 <h1 class="text-center mt-4">@(string.IsNullOrEmpty(ViewBag.CategoriaActual) || ViewBag.CategoriaActual.ToLower() == "todas" ? "Personalización de productos" : $"{ViewBag.CategoriaActual} - Personalizable")</h1>
+
+<!-- ✅ ESTADO UNIFICADO DE PRODUCTOS -->
+<div class="container mt-4">
+    <div id="estado-unificado" class="alert alert-info" style="display: none;">
+        <h6><i class="fas fa-info-circle"></i> Estado unificado de productos</h6>
+        <div class="row">
+            <div class="col-md-4">
+                <strong>Disponibles:</strong> <span id="disponibles-count">-</span> producto(s) más
+            </div>
+            <div class="col-md-4">
+                <strong>En pedidos activos:</strong> <span id="activos-count">-</span>
+            </div>
+            <div class="col-md-4">
+                <strong>En ambos carritos:</strong> <span id="carritos-count">-</span> productos
+            </div>
+        </div>
+        <small class="text-muted d-block mt-2">
+            <em>Límite compartido entre personalización y recomendación IA: <span id="limite-info">0/3</span> productos</em>
+        </small>
+    </div>
+</div>
 
 <nav class="category-nav">
     <div class="category-container">
@@ -248,202 +264,101 @@
 
 @section Scripts {
 <script>
-    // ✅ VARIABLES GLOBALES PARA LÍMITES Y CARRITO
-        let limitesActuales = {
-            productosActivos: 0,
-            limite: 3,
-            disponibles: 3,
-            productosEnCarritos: 0, // Total de ambos carritos
-            totalOcupados: 0,
-            permitido: true,
-            mensaje: ""
-        };
+    // ✅ VARIABLES GLOBALES PARA LÍMITES CORREGIDAS
+    let limitesActuales = {
+        productosActivos: 0,        // ✅ NOMBRE CORRECTO
+        limite: 3,
+        disponibles: 3,
+        productosEnCarritos: 0,     // ✅ NOMBRE CORRECTO
+        totalOcupados: 0,
+        permitido: true,
+        mensaje: ""
+    };
 
-    // ✅ FUNCIÓN PARA CARGAR LÍMITES
-    async function cargarLimitesProductos() {
+    // ✅ FUNCIÓN PARA CARGAR LÍMITES CON NOMBRES CORREGIDOS
+    async function cargarEstadoUnificado() {
         try {
             const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
             const data = await response.json();
-            limitesActuales = data;
-
-            console.log('[DEBUG] Límites cargados en Index:', data);
-            console.log(`[DEBUG] Productos activos: ${data.productosActuales}, En carrito: ${data.productosEnCarrito}, Disponibles: ${data.disponibles}`);
-
-            actualizarInterfazLimites();
-            return data;
-        } catch (error) {
-            console.error('Error al cargar límites:', error);
-            return limitesActuales;
-        }
-    }
-
-    // ✅ FUNCIÓN PARA ACTUALIZAR INTERFAZ SEGÚN LÍMITES
-        function actualizarInterfazLimites() {
-            const { productosActivos, limite, disponibles, productosEnCarritos, totalOcupados, permitido, mensaje } = limitesActuales;
-            const btnPrincipal = document.getElementById('btnRecomendar') || document.getElementById('btnPersonalizar');
-            const infoLimiteGlobal = document.getElementById('info-limite-global');
-
-            if (!permitido || disponibles === 0) {
-                // SIN ESPACIOS DISPONIBLES
-                if (btnPrincipal) {
-                    btnPrincipal.disabled = true;
-                    btnPrincipal.innerHTML = '<i class="fas fa-ban"></i> Límite Alcanzado';
-                    btnPrincipal.className = 'btn btn-danger';
-                }
-
-                if (infoLimiteGlobal) {
-                    infoLimiteGlobal.className = 'alert alert-danger';
-                    infoLimiteGlobal.style.display = 'block';
-                    infoLimiteGlobal.innerHTML = `
-                        <h6><i class="fas fa-exclamation-triangle"></i> Límite de productos alcanzado</h6>
-                        <p><strong>Total ocupado:</strong> ${totalOcupados}/${limite} productos</p>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <strong>En pedidos activos:</strong> ${productosActivos} productos
-                            </div>
-                            <div class="col-md-6">
-                                <strong>En ambos carritos:</strong> ${productosEnCarritos} productos
-                            </div>
-                        </div>
-                        <hr>
-                        <p class="mb-0"><em>No puedes agregar más productos hasta que se entreguen tus pedidos activos.</em></p>
-                        <p class="mb-0"><small class="text-muted">Los límites se aplican a personalización y recomendación IA conjuntamente.</small></p>
-                    `;
-                }
-            } else if (disponibles <= 1) {
-                // ÚLTIMO ESPACIO DISPONIBLE
-                if (btnPrincipal) {
-                    btnPrincipal.disabled = false;
-                    btnPrincipal.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Último espacio disponible';
-                    btnPrincipal.className = 'btn btn-warning';
-                }
-
-                if (infoLimiteGlobal) {
-                    infoLimiteGlobal.className = 'alert alert-warning';
-                    infoLimiteGlobal.style.display = 'block';
-                    infoLimiteGlobal.innerHTML = `
-                        <h6><i class="fas fa-info-circle"></i> Casi en el límite</h6>
-                        <p><strong>Disponibles:</strong> Solo ${disponibles} producto(s) más</p>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <strong>En pedidos activos:</strong> ${productosActivos} productos
-                            </div>
-                            <div class="col-md-6">
-                                <strong>En ambos carritos:</strong> ${productosEnCarritos} productos
-                            </div>
-                        </div>
-                        <hr>
-                        <p class="mb-0"><small class="text-muted">Límite aplicado conjuntamente a personalización y recomendación IA (${limite} productos máximo)</small></p>
-                    `;
+            
+            console.log('[DEBUG] Datos recibidos:', data);
+            
+            // ✅ USAR NOMBRES CORRECTOS DE LAS PROPIEDADES
+            const productosActivos = data.productosActivos || 0;        // ✅ CORREGIDO
+            const productosCarritos = data.productosEnCarritos || 0;    // ✅ CORREGIDO
+            const disponibles = data.disponibles || 0;
+            const limite = data.limite || 3;
+            const totalOcupados = productosActivos + productosCarritos;
+            
+            // ✅ ACTUALIZAR VARIABLES GLOBALES
+            limitesActuales = {
+                productosActivos: productosActivos,
+                limite: limite,
+                disponibles: disponibles,
+                productosEnCarritos: productosCarritos,
+                totalOcupados: totalOcupados,
+                permitido: data.permitido || disponibles > 0,
+                mensaje: data.mensaje || ""
+            };
+            
+            // ✅ ACTUALIZAR INTERFAZ
+            document.getElementById('disponibles-count').textContent = disponibles;
+            document.getElementById('activos-count').textContent = productosActivos + '/' + limite;
+            document.getElementById('carritos-count').textContent = productosCarritos;
+            document.getElementById('limite-info').textContent = totalOcupados + '/' + limite;
+            
+            // ✅ MOSTRAR/OCULTAR Y CAMBIAR COLOR SEGÚN ESTADO
+            const estadoElement = document.getElementById('estado-unificado');
+            
+            if (totalOcupados > 0) {
+                estadoElement.style.display = 'block';
+                
+                if (disponibles === 0) {
+                    estadoElement.className = 'alert alert-danger';
+                    // ✅ DESHABILITAR TODOS LOS BOTONES
+                    document.querySelectorAll('.btn-seleccionar').forEach(btn => {
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fas fa-ban"></i> Límite Alcanzado';
+                        btn.className = 'btn-seleccionar btn-secondary';
+                    });
+                } else if (disponibles <= 1) {
+                    estadoElement.className = 'alert alert-warning';
+                    // ✅ MANTENER BOTONES HABILITADOS PERO CON WARNING
+                    document.querySelectorAll('.btn-seleccionar').forEach(btn => {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Último espacio';
+                        btn.className = 'btn-seleccionar btn-warning';
+                    });
+                } else {
+                    estadoElement.className = 'alert alert-info';
+                    // ✅ BOTONES NORMALES
+                    document.querySelectorAll('.btn-seleccionar').forEach(btn => {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-cog"></i> Personalizar';
+                        btn.className = 'btn-seleccionar';
+                    });
                 }
             } else {
-                // ESPACIO SUFICIENTE DISPONIBLE
-                if (btnPrincipal) {
-                    btnPrincipal.disabled = false;
-                    btnPrincipal.innerHTML = btnPrincipal.id === 'btnRecomendar' ? 'Recomendar' : 'Buscar Productos';
-                    btnPrincipal.className = 'btn btn-warning';
-                }
-
-                // ✅ MOSTRAR INFO SOLO SI HAY PRODUCTOS
-                if (productosActivos > 0 || productosEnCarritos > 0) {
-                    if (infoLimiteGlobal) {
-                        infoLimiteGlobal.className = 'alert alert-info';
-                        infoLimiteGlobal.style.display = 'block';
-                        infoLimiteGlobal.innerHTML = `
-                            <h6><i class="fas fa-info-circle"></i> Estado unificado de productos</h6>
-                            <p><strong>Disponibles:</strong> ${disponibles} producto(s) más</p>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <strong>En pedidos activos:</strong> ${productosActivos} productos
-                                </div>
-                                <div class="col-md-6">
-                                    <strong>En ambos carritos:</strong> ${productosEnCarritos} productos
-                                </div>
-                            </div>
-                            <hr>
-                            <p class="mb-0"><small class="text-muted">Límite compartido entre personalización y recomendación IA: ${totalOcupados}/${limite} productos</small></p>
-                        `;
-                    }
-                } else {
-                    if (infoLimiteGlobal) {
-                        infoLimiteGlobal.style.display = 'none';
-                    }
-                }
-            }
-
-            console.log('[DEBUG] Límites actualizados:', limitesActuales);
-        }
-        // ✅ FUNCIÓN PARA MOSTRAR RESULTADOS CON VALIDACIÓN UNIFICADA
-        function mostrarResultados(data) {
-            var tbody = $("#tbodyResultados");
-            tbody.empty();
-
-            if (!data || data.length === 0) {
-                tbody.append('<tr><td colspan="4" class="text-center">No se encontraron resultados</td></tr>');
-                $("#resultados").show();
-                return;
-            }
-
-            for (var i = 0; i < data.length; i++) {
-                var item = data[i];
-                var id = item.id || item.Id || 0;
-                var nombre = item.nombre || item.Nombre || "Sin nombre";
-                var precio = item.precio || item.Precio || "0";
-                var calorias = item.calorias || item.Calorias || "0";
-
-                var botonSeleccionar = '';
-                if (!limitesActuales.permitido || limitesActuales.disponibles === 0) {
-                    botonSeleccionar = '<button class="btn btn-sm btn-secondary" disabled title="Límite global alcanzado"><i class="fas fa-ban"></i> Sin espacio</button>';
-                } else if (limitesActuales.disponibles <= 1) {
-                    botonSeleccionar = `<a href="@Url.Action("SeleccionarRecoleccion", "MenuRecomendacion")?productoId=${id}" class="btn btn-sm btn-warning" title="Último espacio global disponible"><i class="fas fa-exclamation-triangle"></i> Último espacio</a>`;
-                } else {
-                    botonSeleccionar = `<a href="@Url.Action("SeleccionarRecoleccion", "MenuRecomendacion")?productoId=${id}" class="btn btn-sm btn-warning"><i class="fas fa-plus"></i> Seleccionar</a>`;
-                }
-
-                var row = '<tr>' +
-                    '<td>' + nombre + '</td>' +
-                    '<td>$' + precio + '</td>' +
-                    '<td>' + calorias + '</td>' +
-                    '<td>' + botonSeleccionar + '</td>' +
-                    '</tr>';
-
-                tbody.append(row);
-            }
-
-            $("#resultados").show();
-        }
-
-        function guardarCarritoEnSesion() {
-            fetch('@Url.Action("ActualizarCarrito")', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(carritoLocal)
-            })
-                .then(response => response.json())
-                .then(result => {
-                    if (!result.success) {
-                        console.error('[ERROR] Error al guardar carrito:', result.message);
-                    } else {
-                        // ✅ NOTIFICAR CAMBIO GLOBAL DE CARRITOS
-                        localStorage.setItem('carritosActualizados', Date.now().toString());
-                    }
-                })
-                .catch(error => {
-                    console.error('[ERROR] Error de red al guardar carrito:', error);
+                // ✅ OCULTAR CUANDO NO HAY PRODUCTOS
+                estadoElement.style.display = 'none';
+                // ✅ BOTONES NORMALES
+                document.querySelectorAll('.btn-seleccionar').forEach(btn => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-cog"></i> Personalizar';
+                    btn.className = 'btn-seleccionar';
                 });
-        }
-
-        window.addEventListener('storage', function (e) {
-            if (e.key === 'carritosActualizados' || e.key === 'carritoActualizado') {
-                console.log('[DEBUG] Carritos actualizados globalmente, recargando límites...');
-                cargarLimitesProductos();
             }
-        });
+            
+            console.log('[DEBUG] Estado unificado actualizado:', limitesActuales);
+        } catch (error) {
+            console.error('Error al cargar estado unificado:', error);
+        }
+    }
 
     // ✅ FUNCIÓN PARA VALIDAR Y SELECCIONAR PRODUCTO
     async function validarYSeleccionar(productoId) {
         // Recargar límites antes de validar
-        await cargarLimitesProductos();
+        await cargarEstadoUnificado();
 
         if (limitesActuales.disponibles === 0) {
             // Mostrar modal de límite alcanzado
@@ -457,17 +372,18 @@
 
     // ✅ FUNCIÓN PARA MOSTRAR MODAL DE LÍMITE
     function mostrarModalLimite() {
-        const { productosActuales, limite, productosEnCarrito } = limitesActuales;
+        const { productosActivos, limite, productosEnCarritos, totalOcupados } = limitesActuales;
         
         document.getElementById('mensaje-limite-content').innerHTML = `
             <div class="alert alert-warning">
                 <h6><i class="fas fa-info-circle"></i> Estado actual:</h6>
                 <ul>
-                    <li>Productos en pedidos activos: <strong>${productosActuales}/${limite}</strong></li>
-                    <li>Productos en carrito actual: <strong>${productosEnCarrito}</strong></li>
-                    <li>Total productos: <strong>${productosActuales + productosEnCarrito}/${limite}</strong></li>
+                    <li>Productos en pedidos activos: <strong>${productosActivos}/${limite}</strong></li>
+                    <li>Productos en carritos (ambos): <strong>${productosEnCarritos}</strong></li>
+                    <li>Total productos: <strong>${totalOcupados}/${limite}</strong></li>
                 </ul>
                 <p>Debes esperar a que se entreguen tus pedidos pendientes o procesar tu carrito actual para poder personalizar más productos.</p>
+                <p><small class="text-muted">Los límites se aplican conjuntamente a personalización y recomendación IA.</small></p>
             </div>
         `;
 
@@ -475,12 +391,20 @@
         modal.show();
     }
 
+    // ✅ ESCUCHAR CAMBIOS EN CARRITOS
+    window.addEventListener('storage', function (e) {
+        if (e.key === 'carritosActualizados' || e.key === 'carritoActualizado') {
+            console.log('[DEBUG] Carritos actualizados globalmente, recargando límites...');
+            cargarEstadoUnificado();
+        }
+    });
+
     // ✅ INICIALIZAR AL CARGAR LA PÁGINA
     document.addEventListener('DOMContentLoaded', function() {
-        cargarLimitesProductos();
+        cargarEstadoUnificado();
         
         // Recargar cuando se hace focus en la página
-        window.addEventListener('focus', cargarLimitesProductos);
+        window.addEventListener('focus', cargarEstadoUnificado);
     });
 </script>
 }

@@ -297,14 +297,58 @@ namespace ProyectoIdentity.Controllers
         }
 
 
-        // ✅ OBTENER LÍMITES PRODUCTOS (para JavaScript)
-        // ✅ REEMPLAZAR EL MÉTODO ObtenerLimitesProductos EN AMBOS CONTROLADORES
+        // ✅ MÉTODO ObtenerLimitesProductos CORREGIDO (Sin error de Json.Serialize)
+        // ✅ MÉTODO ObtenerLimitesProductos CON NOMBRES CORREGIDOS
         [HttpGet]
         public async Task<IActionResult> ObtenerLimitesProductos()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
+
+            try
             {
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Json(new
+                    {
+                        productosActivos = 0,
+                        limite = 3,
+                        disponibles = 3,
+                        productosEnCarritos = 0,
+                        totalOcupados = 0,
+                        mensaje = "",
+                        permitido = true
+                    });
+                }
+
+                // ✅ USAR EL MÉTODO CORREGIDO
+                var (permitido, productosActivos, productosCarritos, disponibles, mensaje) = await ValidarLimitesGlobales(userId);
+
+                // ✅ ASEGURAR QUE NO HAY VALORES NULL O NEGATIVOS
+                productosActivos = Math.Max(0, productosActivos);
+                productosCarritos = Math.Max(0, productosCarritos);
+                disponibles = Math.Max(0, disponibles);
+
+                var resultado = new
+                {
+                    productosActivos = productosActivos,    // ✅ NOMBRE CORRECTO
+                    limite = 3,
+                    disponibles = disponibles,
+                    productosEnCarritos = productosCarritos, // ✅ NOMBRE CORRECTO
+                    totalOcupados = productosActivos + productosCarritos,
+                    mensaje = mensaje ?? "",
+                    permitido = permitido
+                };
+
+                // ✅ LOG SIMPLE PARA EVITAR ERRORES
+                Console.WriteLine($"[DEBUG] ObtenerLimitesProductos - Activos: {productosActivos}, Carritos: {productosCarritos}, Disponibles: {disponibles}, Permitido: {permitido}");
+
+                return Json(resultado);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error en ObtenerLimitesProductos: {ex.Message}");
+
+                // ✅ DEVOLVER VALORES SEGUROS EN CASO DE ERROR
                 return Json(new
                 {
                     productosActivos = 0,
@@ -312,22 +356,10 @@ namespace ProyectoIdentity.Controllers
                     disponibles = 3,
                     productosEnCarritos = 0,
                     totalOcupados = 0,
-                    mensaje = ""
+                    mensaje = "Error al obtener límites",
+                    permitido = true
                 });
             }
-
-            var (permitido, productosActivos, productosCarritos, disponibles, mensaje) = await ValidarLimitesGlobales(userId);
-
-            return Json(new
-            {
-                productosActivos = productosActivos,
-                limite = 3,
-                disponibles = disponibles,
-                productosEnCarritos = productosCarritos,
-                totalOcupados = productosActivos + productosCarritos,
-                mensaje = mensaje,
-                permitido = permitido
-            });
         }
 
         // ✅ MÉTODOS AUXILIARES PARA CARRITOS (AGREGAR SOLO SI NO EXISTEN)
@@ -1313,43 +1345,108 @@ namespace ProyectoIdentity.Controllers
             return productosEnCarritos;
         }
 
-        // ✅ MÉTODO UNIFICADO PARA VALIDAR LÍMITES GLOBALES
+        // ✅ MÉTODO ValidarLimitesGlobales CORREGIDO PARA INCLUIR CARRITO ACTUAL
         private async Task<(bool permitido, int productosActivos, int productosCarritos, int disponibles, string mensaje)> ValidarLimitesGlobales(string usuarioId)
         {
             const int LIMITE_MAXIMO = 3;
 
-            if (string.IsNullOrEmpty(usuarioId))
-                return (true, 0, 0, LIMITE_MAXIMO, "");
-
-            // ✅ SOLO CONTAR PRODUCTOS EN PEDIDOS ENTREGADOS/ACTIVOS REALES
-            var pedidosActivos = await _context.Pedidos
-            .Where(p => p.UsuarioId == usuarioId && (p.Estado == "Preparándose" || p.Estado == "Listo para entregar"))
-            .ToListAsync();
-
-            int productosActivos = 0;
-            foreach (var pedido in pedidosActivos)
+            try
             {
-                var detalles = await _context.PedidoDetalles.Where(d => d.PedidoId == pedido.Id).ToListAsync();
-                productosActivos += detalles.Sum(d => d.Cantidad);
+                if (string.IsNullOrEmpty(usuarioId))
+                    return (true, 0, 0, LIMITE_MAXIMO, "");
 
-                var productos = await _context.PedidoProductos.Where(pp => pp.PedidoId == pedido.Id).ToListAsync();
-                productosActivos += productos.Sum(pp => pp.Cantidad ?? 0);
+                // ✅ 1. CONTAR PRODUCTOS EN PEDIDOS ACTIVOS
+                var pedidosActivos = await _context.Pedidos
+                    .Where(p => p.UsuarioId == usuarioId &&
+                               (p.Estado == "Preparándose" || p.Estado == "Listo para entregar"))
+                    .ToListAsync();
+
+                int productosActivos = 0;
+
+                foreach (var pedido in pedidosActivos)
+                {
+                    try
+                    {
+                        // Productos de personalización (PedidoDetalles)
+                        var detalles = await _context.PedidoDetalles
+                            .Where(d => d.PedidoId == pedido.Id)
+                            .ToListAsync();
+                        productosActivos += detalles.Sum(d => Math.Max(0, d.Cantidad));
+
+                        // Productos de pedidos normales (PedidoProductos)
+                        var productos = await _context.PedidoProductos
+                            .Where(pp => pp.PedidoId == pedido.Id)
+                            .ToListAsync();
+                        productosActivos += productos.Sum(pp => Math.Max(0, pp.Cantidad ?? 0));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[ERROR] Error contando productos del pedido {pedido.Id}: {ex.Message}");
+                    }
+                }
+
+                // ✅ 2. CONTAR PRODUCTOS EN CARRITOS ACTUALES
+                int productosCarritos = 0;
+                try
+                {
+                    // Carrito de personalización
+                    var carritoPersonalizacion = GetCarritoPersonalizacion();
+                    if (carritoPersonalizacion != null)
+                    {
+                        productosCarritos += carritoPersonalizacion.Sum(c => Math.Max(0, c.Cantidad));
+                    }
+
+                    // Carrito de recomendación IA
+                    var carritoRecomendacion = GetCarritoRecomendacion();
+                    if (carritoRecomendacion != null)
+                    {
+                        productosCarritos += carritoRecomendacion.Sum(c => Math.Max(0, c.Cantidad));
+                    }
+
+                    Console.WriteLine($"[DEBUG] Productos en carrito personalización: {carritoPersonalizacion?.Sum(c => c.Cantidad) ?? 0}");
+                    Console.WriteLine($"[DEBUG] Productos en carrito recomendación: {carritoRecomendacion?.Sum(c => c.Cantidad) ?? 0}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[ERROR] Error contando productos en carritos: {ex.Message}");
+                    productosCarritos = 0;
+                }
+
+                // ✅ 3. CALCULAR DISPONIBLES CONSIDERANDO AMBOS (PEDIDOS + CARRITOS)
+                int totalOcupados = productosActivos + productosCarritos;
+                int disponibles = Math.Max(0, LIMITE_MAXIMO - totalOcupados);
+                bool permitido = disponibles > 0;
+
+                // ✅ 4. MENSAJE UNIFICADO
+                string mensaje = "";
+                if (!permitido)
+                {
+                    if (productosActivos >= LIMITE_MAXIMO)
+                    {
+                        mensaje = $"Tienes {productosActivos} productos en pedidos activos. Espera a que se entreguen.";
+                    }
+                    else if (totalOcupados >= LIMITE_MAXIMO)
+                    {
+                        mensaje = $"Límite alcanzado: {productosActivos} en pedidos activos + {productosCarritos} en carritos = {totalOcupados}/3 productos.";
+                    }
+                }
+
+                // ✅ 5. LOG DETALLADO PARA DEBUG
+                Console.WriteLine($"[DEBUG] ValidarLimitesGlobales - Usuario: {usuarioId}");
+                Console.WriteLine($"[DEBUG] Productos en pedidos activos: {productosActivos}");
+                Console.WriteLine($"[DEBUG] Productos en carritos: {productosCarritos}");
+                Console.WriteLine($"[DEBUG] Total ocupados: {totalOcupados}");
+                Console.WriteLine($"[DEBUG] Disponibles: {disponibles}");
+                Console.WriteLine($"[DEBUG] Permitido: {permitido}");
+
+                return (permitido, productosActivos, productosCarritos, disponibles, mensaje);
             }
-
-            // ✅ CONTAR PRODUCTOS SOLO DEL CARRITO ACTUAL (NO AMBOS)
-            int productosCarritos = 0;
-            // NO contar productos de carritos aquí - solo en el momento de procesar pedido
-
-            int disponibles = Math.Max(0, LIMITE_MAXIMO - productosActivos);
-            bool permitido = disponibles > 0;
-
-            string mensaje = "";
-            if (!permitido)
+            catch (Exception ex)
             {
-                mensaje = $"Tienes {productosActivos} productos en pedidos activos. Espera a que se entreguen.";
+                Console.WriteLine($"[ERROR] Error en ValidarLimitesGlobales: {ex.Message}");
+                // ✅ DEVOLVER VALORES SEGUROS EN CASO DE ERROR
+                return (true, 0, 0, LIMITE_MAXIMO, "Error al validar límites");
             }
-
-            return (permitido, productosActivos, productosCarritos, disponibles, mensaje);
         }
         // ✅ MÉTODO UNIFICADO PARA VALIDAR AGREGAR PRODUCTOS
         private async Task<(bool permitido, int disponibles, string mensaje)> ValidarAgregarProductosUnificado(string usuarioId, int cantidadAAgregar)
