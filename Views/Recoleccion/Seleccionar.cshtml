@@ -82,14 +82,14 @@
                                             Calculando...
                                         </span>
                                     </p>
-                                    <form asp-action="ConfirmarRecoleccion" method="post">
+                                    <form asp-action="Confirmar" asp-controller="Recoleccion" method="post">
                                         <input type="hidden" name="id" value="@punto.Id" />
-                                        <input type="hidden" name="productoId" value="@productoId" />
-                                        <input type="hidden" name="userLat" class="userLat-input" id="userLat-@punto.Id" value="" />
-                                        <input type="hidden" name="userLng" class="userLng-input" id="userLng-@punto.Id" value="" />
-                                        <input type="hidden" name="distancia" class="distancia-input" id="distancia-@punto.Id" value="" />
-                                        <button type="submit" class="btn btn-warning w-100">
-                                            Seleccionar este punto
+                                        <input type="hidden" name="userLat" class="userLat-input" />
+                                        <input type="hidden" name="userLng" class="userLng-input" />
+                                        <input type="hidden" name="distancia" class="distancia-input" />
+                                        <input type="hidden" name="esPersonalizacion" value="true" />
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            Seleccionar sucursal
                                         </button>
                                     </form>
                                 </div>
