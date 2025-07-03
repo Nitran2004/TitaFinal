@@ -108,7 +108,6 @@ namespace ProyectoIdentity.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // ✅ VALIDAR LÍMITES ANTES DE MOSTRAR LA PERSONALIZACIÓN
             if (!string.IsNullOrEmpty(userId))
             {
                 var (permitido, productosActivos, productosCarritos, disponibles, mensaje) = await ValidarLimitesGlobales(userId);
@@ -128,9 +127,12 @@ namespace ProyectoIdentity.Controllers
             if (producto == null)
                 return NotFound();
 
-            // ✅ CAMBIAR A DETALLE DIRECTAMENTE
-            HttpContext.Session.SetInt32("SucursalSeleccionada", 1); // Sucursal por defecto
-            return RedirectToAction("Detalle", new { id = id });
+            // ✅ ELIMINAR ESTA LÍNEA:
+            // HttpContext.Session.SetInt32("SucursalSeleccionada", 1);
+
+            // ✅ CAMBIAR POR ESTO:
+            TempData["ProductoPersonalizacionId"] = id;
+            return RedirectToAction("Seleccionar", "Recoleccion", new { esPersonalizacion = true });
         }
 
         // ============== VALIDACIONES DE LÍMITES ==============

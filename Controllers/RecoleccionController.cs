@@ -229,7 +229,6 @@ namespace Proyecto1_MZ_MJ.Controllers
                     return RedirectToAction("Seleccionar");
                 }
 
-                // ✅ GUARDAR DATOS EN SESIÓN (sin tipoServicio por ahora)
                 HttpContext.Session.SetInt32("SucursalSeleccionada", puntoRecoleccion.SucursalId);
                 HttpContext.Session.SetInt32("PuntoRecoleccionSeleccionado", puntoRecoleccionId);
                 HttpContext.Session.SetString("PuntoRecoleccionNombre", puntoRecoleccion.Name);
