@@ -13,7 +13,7 @@
             <p class="mb-0">Para: <strong>@productoNombre</strong></p>
         </div>
         <div class="card-body">
-            <!-- Mensaje de ubicación requerida -->
+            <!-- ✅ MENSAJE DE UBICACIÓN REQUERIDA -->
             <div id="locationRequired" class="alert alert-info">
                 <i class="fas fa-map-marker-alt"></i>
                 <strong>Solicitando acceso a tu ubicación...</strong>
@@ -26,13 +26,39 @@
                 </div>
             </div>
 
+            <!-- ✅ INSTRUCCIONES PARA iOS -->
+            <div id="iosInstructions" style="display: none;">
+                <div class="alert alert-info">
+                    <h6>📱 Para iPhone/iPad:</h6>
+                    <ol>
+                        <li>Ve a <strong>Configuración > Safari > Privacidad y seguridad</strong></li>
+                        <li>Activa <strong>"Servicios de ubicación"</strong></li>
+                        <li>En Safari, busca este sitio y permite ubicación</li>
+                        <li>Actualiza la página</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- ✅ MENSAJE DE ERROR MÁS CLARO -->
             <div id="locationError" style="display: none;">
                 <div class="alert alert-danger">
                     <h5><i class="fas fa-exclamation-triangle"></i> Ubicación denegada</h5>
-                    <p>Para continuar, necesitas permitir el acceso a tu ubicación.</p>
+                    <p>Para continuar, necesitas permitir el acceso a tu ubicación:</p>
+                    <ol>
+                        <li><strong>Haz clic en el botón "Intentar de nuevo"</strong></li>
+                        <li><strong>Acepta el permiso</strong> cuando aparezca la ventana del navegador</li>
+                        <li>Si no aparece la ventana, haz clic en el <strong>ícono de ubicación</strong> en la barra de direcciones</li>
+                    </ol>
                     <button id="retryLocation" class="btn btn-warning btn-lg">
                         <i class="fas fa-location-arrow"></i> Intentar de nuevo
                     </button>
+                    <!-- ✅ BOTÓN PARA USAR UBICACIÓN DE QUITO -->
+                    <button id="useQuitoLocation" class="btn btn-success btn-lg mt-2">
+                        <i class="fas fa-map"></i> Usar ubicación de Quito
+                    </button>
+                    <small class="d-block mt-3 text-muted">
+                        <strong>💡 Tip:</strong> Busca el ícono <i class="fas fa-map-marker-alt"></i> o <i class="fas fa-lock"></i> en la barra de direcciones y haz clic para permitir la ubicación.
+                    </small>
                 </div>
             </div>
 
@@ -85,14 +111,55 @@
 @section scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Elementos del DOM
             const locationRequired = document.getElementById('locationRequired');
             const loadingLocation = document.getElementById('loadingLocation');
             const locationError = document.getElementById('locationError');
+            const iosInstructions = document.getElementById('iosInstructions');
             const retryLocationBtn = document.getElementById('retryLocation');
+            const useQuitoLocationBtn = document.getElementById('useQuitoLocation');
             const puntosContainer = document.getElementById('puntosContainer');
             const distanceElements = document.querySelectorAll('.distance-value');
             const userLatInputs = document.querySelectorAll('.userLat-input');
             const userLngInputs = document.querySelectorAll('.userLng-input');
+            const distanciaInputs = document.querySelectorAll('.distancia-input');
+
+            // ✅ DETECTAR DISPOSITIVOS
+            function esSafariIOS() {
+                return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            }
+
+            function esMobile() {
+                return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            }
+
+            // ✅ FUNCIÓN PARA MOSTRAR ERRORES ESPECÍFICOS
+            function mostrarErrorUbicacion(mensaje) {
+                loadingLocation.style.display = 'none';
+                locationError.style.display = 'block';
+                puntosContainer.style.display = 'none';
+
+                const errorMsg = locationError.querySelector('.alert-danger p');
+                if (errorMsg) {
+                    errorMsg.innerHTML = mensaje;
+                }
+            }
+
+            // ✅ FUNCIÓN PARA OBTENER MENSAJE DE ERROR
+            function obtenerMensajeError(error) {
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        return esSafariIOS()
+                            ? "Has denegado el acceso a tu ubicación. Ve a Configuración > Safari > Privacidad y seguridad > Servicios de ubicación y permite la ubicación para este sitio."
+                            : "Has denegado el acceso a tu ubicación. Para continuar, debes permitir el acceso desde la configuración de tu navegador.";
+                    case error.POSITION_UNAVAILABLE:
+                        return "No se pudo determinar tu ubicación. Verifica que tengas GPS activado y conexión a internet.";
+                    case error.TIMEOUT:
+                        return "El tiempo de espera se agotó. Verifica tu conexión e inténtalo de nuevo.";
+                    default:
+                        return "Error desconocido al obtener ubicación. Inténtalo de nuevo.";
+                }
+            }
 
             // Función para calcular la distancia usando exactamente la misma fórmula que en el servidor
             function calcularDistancia(lat1, lon1, lat2, lon2) {
@@ -132,6 +199,8 @@
             }
 
             function actualizarDistancias(userLat, userLng) {
+                console.log(`Actualizando distancias con coordenadas: ${userLat}, ${userLng}`);
+
                 userLatInputs.forEach(input => {
                     input.value = String(userLat).replace(',', '.');
                 });
@@ -167,49 +236,137 @@
                     }
                 });
 
+                // ✅ MOSTRAR LOS PUNTOS SOLO CUANDO SE OBTENGA LA UBICACIÓN
                 locationRequired.style.display = 'none';
                 loadingLocation.style.display = 'none';
                 locationError.style.display = 'none';
+                iosInstructions.style.display = 'none';
                 puntosContainer.style.display = 'block';
             }
 
+            // ✅ FUNCIÓN PRINCIPAL PARA OBTENER UBICACIÓN
             function obtenerUbicacion() {
+                // ✅ VERIFICAR HTTPS PARA SAFARI
+                if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                    mostrarErrorUbicacion('Este sitio requiere HTTPS para acceder a la ubicación en dispositivos móviles.');
+                    return;
+                }
+
+                // Ocultar mensaje inicial y mostrar loading
                 locationRequired.style.display = 'none';
                 loadingLocation.style.display = 'block';
                 locationError.style.display = 'none';
+                iosInstructions.style.display = 'none';
                 puntosContainer.style.display = 'none';
 
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        function (position) {
-                            const userLat = position.coords.latitude;
-                            const userLng = position.coords.longitude;
-                            actualizarDistancias(userLat, userLng);
-                        },
-                        function (error) {
-                            loadingLocation.style.display = 'none';
-                            locationError.style.display = 'block';
-                            puntosContainer.style.display = 'none';
-                        },
-                        {
-                            enableHighAccuracy: true,
-                            timeout: 15000,
-                            maximumAge: 0
-                        }
-                    );
+                if (!navigator.geolocation) {
+                    mostrarErrorUbicacion('Tu navegador no soporta geolocalización. Usa un navegador más moderno como Chrome, Firefox o Safari.');
+                    return;
+                }
+
+                // ✅ CONFIGURACIÓN ESPECÍFICA POR DISPOSITIVO
+                let options;
+                if (esSafariIOS()) {
+                    options = {
+                        enableHighAccuracy: false, // Cambiar a false en iOS para evitar problemas
+                        timeout: 30000, // Más tiempo en iOS
+                        maximumAge: 300000 // 5 minutos de cache
+                    };
                 } else {
-                    loadingLocation.style.display = 'none';
-                    locationError.style.display = 'block';
-                    puntosContainer.style.display = 'none';
+                    options = {
+                        enableHighAccuracy: true,
+                        timeout: 15000,
+                        maximumAge: 0
+                    };
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                    function (position) {
+                        const userLat = position.coords.latitude;
+                        const userLng = position.coords.longitude;
+
+                        console.log(`Ubicación obtenida: ${userLat}, ${userLng}`);
+                        console.log(`Precisión: ${position.coords.accuracy} metros`);
+
+                        // ✅ VALIDAR COORDENADAS
+                        if (isNaN(userLat) || isNaN(userLng) ||
+                            Math.abs(userLat) > 90 || Math.abs(userLng) > 180) {
+                            mostrarErrorUbicacion('Las coordenadas obtenidas no son válidas');
+                            return;
+                        }
+
+                        actualizarDistancias(userLat, userLng);
+                    },
+                    function (error) {
+                        console.error(`Error al obtener ubicación: ${error.message}`);
+                        mostrarErrorUbicacion(obtenerMensajeError(error));
+
+                        // ✅ MOSTRAR INSTRUCCIONES ESPECÍFICAS PARA iOS
+                        if (esSafariIOS() && error.code === error.PERMISSION_DENIED) {
+                            iosInstructions.style.display = 'block';
+                        }
+                    },
+                    options
+                );
+
+                // ✅ FALLBACK AUTOMÁTICO DESPUÉS DE 8 SEGUNDOS
+                setTimeout(function () {
+                    if (loadingLocation.style.display === 'block') {
+                        console.log('[FALLBACK] Usando coordenadas de Quito por defecto');
+
+                        loadingLocation.innerHTML = `
+                                    <div class="alert alert-success">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <strong>Usando ubicación de Quito</strong>
+                                        <p class="mb-0">Distancias calculadas desde el centro de la ciudad.</p>
+                                    </div>
+                                `;
+
+                        setTimeout(function () {
+                            actualizarDistancias(-0.1857, -78.4678); // Coordenadas de Quito
+                        }, 1500);
+                    }
+                }, 8000);
+            }
+
+            // ✅ CONFIGURACIÓN INICIAL SEGÚN DISPOSITIVO
+            if (esMobile()) {
+                const locationRequired = document.getElementById('locationRequired');
+                if (locationRequired) {
+                    if (esSafariIOS()) {
+                        locationRequired.innerHTML = `
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <strong>📱 Solicitando acceso a tu ubicación...</strong>
+                                    <p class="mb-0">En iPhone/iPad, acepta el permiso que aparece arriba de la pantalla.</p>
+                                    <small class="text-muted">💡 Si no aparece, toca el ícono de ubicación en la barra de direcciones</small>
+                                `;
+                    } else {
+                        locationRequired.innerHTML = `
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <strong>📱 Solicitando acceso a tu ubicación...</strong>
+                                    <p class="mb-0">En móviles, acepta el permiso que aparece arriba de la pantalla.</p>
+                                    <small class="text-muted">💡 Si no aparece, toca el ícono de ubicación en la barra de direcciones</small>
+                                `;
+                    }
                 }
             }
 
+            // ✅ EVENT LISTENERS
             if (retryLocationBtn) {
                 retryLocationBtn.addEventListener('click', function () {
                     obtenerUbicacion();
                 });
             }
 
+            // ✅ BOTÓN PARA USAR UBICACIÓN DE QUITO
+            if (useQuitoLocationBtn) {
+                useQuitoLocationBtn.addEventListener('click', function () {
+                    console.log('Usuario decidió usar ubicación de Quito');
+                    actualizarDistancias(-0.1857, -78.4678);
+                });
+            }
+
+            // ✅ OBTENER UBICACIÓN AUTOMÁTICAMENTE AL CARGAR
             obtenerUbicacion();
         });
     </script>
