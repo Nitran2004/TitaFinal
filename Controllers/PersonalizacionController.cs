@@ -194,33 +194,50 @@ namespace ProyectoIdentity.Controllers
         // ============== GESTIÓN DE CARRITO ==============
 
         // ✅ AGREGAR AL CARRITO CON VALIDACIONES
+        // ✅ OPCIÓN 1: ACTUALIZAR EL MÉTODO AgregarAlCarrito PARA MANEJAR LA TABLA FALTANTE
+
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> AgregarAlCarrito([FromBody] PersonalizacionRequest request)
         {
             try
             {
+                Console.WriteLine($"[DEBUG] AgregarAlCarrito iniciado - ProductoId: {request.ProductoId}, Cantidad: {request.Cantidad}");
+
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Json(new { success = false, message = "Usuario no autenticado" });
+                }
 
                 // ✅ VALIDAR LÍMITES UNIFICADOS
                 var (permitido, disponibles, mensaje) = await ValidarAgregarProductosUnificado(userId, request.Cantidad);
+                Console.WriteLine($"[DEBUG] Validación límites - Permitido: {permitido}, Disponibles: {disponibles}");
+
                 if (!permitido)
                 {
                     return Json(new
                     {
                         success = false,
                         message = mensaje,
-                        redirectUrl = Url.Action("Personalizacion") // ✅ REDIRIGIR A PERSONALIZACION
+                        redirectUrl = Url.Action("Index") // ✅ CAMBIÉ A INDEX EN LUGAR DE PERSONALIZACION
                     });
                 }
 
                 var producto = await _context.Productos.FindAsync(request.ProductoId);
                 if (producto == null)
+                {
+                    Console.WriteLine($"[ERROR] Producto no encontrado: {request.ProductoId}");
                     return Json(new { success = false, message = "Producto no encontrado" });
+                }
 
                 var carrito = GetCarritoPersonalizacion();
+                Console.WriteLine($"[DEBUG] Carrito actual tiene {carrito.Count} items");
 
                 // ✅ VALIDAR LÍMITE EN CARRITOS COMBINADOS
                 int productosEnCarritos = ContarProductosEnCarritos(userId);
+                Console.WriteLine($"[DEBUG] Productos en carritos: {productosEnCarritos}");
+
                 if (productosEnCarritos + request.Cantidad > disponibles + productosEnCarritos)
                 {
                     return Json(new
@@ -230,24 +247,53 @@ namespace ProyectoIdentity.Controllers
                     });
                 }
 
-                // Calcular precio con descuentos
+                // ✅ CALCULAR PRECIO CON DESCUENTOS
                 decimal precioFinal = producto.Precio;
                 decimal ahorroTotal = 0;
 
+                Console.WriteLine($"[DEBUG] Precio original: ${producto.Precio}");
+                Console.WriteLine($"[DEBUG] Ingredientes a remover: {string.Join(", ", request.IngredientesRemovidos ?? new List<string>())}");
+
                 if (request.IngredientesRemovidos?.Any() == true)
                 {
-                    foreach (var ingredienteRemovido in request.IngredientesRemovidos)
+                    try
                     {
-                        var descuento = await _context.DescuentosIngredientes
-                            .FirstOrDefaultAsync(d => d.NombreIngrediente == ingredienteRemovido);
-                        if (descuento != null)
+                        // Obtener ingredientes del producto
+                        var ingredientes = GetIngredientesProducto(producto);
+                        Console.WriteLine($"[DEBUG] Producto tiene {ingredientes.Count} ingredientes");
+
+                        foreach (var ingredienteRemovido in request.IngredientesRemovidos)
                         {
-                            ahorroTotal += descuento.MontoDescuento;
+                            // Buscar el ingrediente en el JSON del producto
+                            var ingrediente = ingredientes.FirstOrDefault(i =>
+                                i.Nombre.Equals(ingredienteRemovido, StringComparison.OrdinalIgnoreCase) &&
+                                i.Removible);
+
+                            if (ingrediente != null)
+                            {
+                                ahorroTotal += ingrediente.Costo;
+                                Console.WriteLine($"[DEBUG] Ahorro por {ingredienteRemovido}: ${ingrediente.Costo}");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"[DEBUG] Ingrediente {ingredienteRemovido} no encontrado o no removible");
+                            }
                         }
+
+                        // Aplicar descuento al precio
+                        precioFinal = Math.Max(0, producto.Precio - ahorroTotal);
+                        Console.WriteLine($"[DEBUG] Precio final después de descuentos: ${precioFinal}");
                     }
-                    precioFinal = Math.Max(0, producto.Precio - ahorroTotal);
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[ERROR] Error calculando descuentos: {ex.Message}");
+                        // Si hay error, usar precio original sin descuentos
+                        precioFinal = producto.Precio;
+                        ahorroTotal = 0;
+                    }
                 }
 
+                // ✅ CREAR ITEM DEL CARRITO
                 var itemCarrito = new ItemCarritoPersonalizado
                 {
                     Id = request.ProductoId,
@@ -255,10 +301,12 @@ namespace ProyectoIdentity.Controllers
                     Precio = precioFinal,
                     Cantidad = request.Cantidad,
                     IngredientesRemovidos = request.IngredientesRemovidos ?? new List<string>(),
-                    NotasEspeciales = request.NotasEspeciales,
+                    NotasEspeciales = request.NotasEspeciales ?? "",
                     AhorroInterno = ahorroTotal,
                     Subtotal = precioFinal * request.Cantidad
                 };
+
+                Console.WriteLine($"[DEBUG] Item creado - Nombre: {itemCarrito.Nombre}, Precio: ${itemCarrito.Precio}, Subtotal: ${itemCarrito.Subtotal}");
 
                 carrito.Add(itemCarrito);
                 SetCarritoPersonalizacion(carrito);
@@ -266,14 +314,16 @@ namespace ProyectoIdentity.Controllers
                 // ✅ OBTENER LÍMITES ACTUALIZADOS
                 var (_, productosActivos, productosCarritos, disponiblesActualizados, _) = await ValidarLimitesGlobales(userId);
 
+                Console.WriteLine($"[DEBUG] Límites actualizados - Activos: {productosActivos}, Carritos: {productosCarritos}, Disponibles: {disponiblesActualizados}");
+
                 return Json(new
                 {
                     success = true,
-                    message = "Producto agregado al carrito",
+                    message = "Producto agregado al carrito exitosamente",
                     totalItems = carrito.Sum(c => c.Cantidad),
                     totalCarrito = carrito.Sum(c => c.Subtotal),
                     ahorro = ahorroTotal,
-                    // ✅ INFORMACIÓN UNIFICADA
+                    // ✅ INFORMACIÓN UNIFICADA CON NOMBRES CORRECTOS
                     disponibles = disponiblesActualizados,
                     productosActivos = productosActivos,
                     productosEnCarritos = productosCarritos
@@ -281,20 +331,41 @@ namespace ProyectoIdentity.Controllers
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                Console.WriteLine($"[ERROR] Error en AgregarAlCarrito: {ex.Message}");
+                Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+                return Json(new
+                {
+                    success = false,
+                    message = "Error interno del servidor. Revisa los logs para más detalles."
+                });
             }
         }
         private void SetCarritoPersonalizacion(List<ItemCarritoPersonalizado> carrito)
         {
             try
             {
-                var carritoJson = JsonSerializer.Serialize(carrito);
+                if (carrito == null)
+                {
+                    Console.WriteLine("[DEBUG] Carrito es null, creando lista vacía");
+                    carrito = new List<ItemCarritoPersonalizado>();
+                }
+
+                var carritoJson = JsonSerializer.Serialize(carrito, new JsonSerializerOptions
+                {
+                    WriteIndented = false,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+
                 HttpContext.Session.SetString("CarritoPersonalizacion", carritoJson);
-                Console.WriteLine($"[DEBUG] Carrito guardado: {carrito.Count} items");
+                Console.WriteLine($"[DEBUG] Carrito guardado exitosamente: {carrito.Count} items");
+
+                // ✅ NOTIFICAR CAMBIO GLOBAL (para sincronizar con otras pestañas)
+                HttpContext.Session.SetString("CarritoActualizado", DateTime.Now.Ticks.ToString());
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[ERROR] Error al guardar carrito: {ex.Message}");
+                Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
             }
         }
 
@@ -370,13 +441,20 @@ namespace ProyectoIdentity.Controllers
             try
             {
                 var carritoJson = HttpContext.Session.GetString("CarritoPersonalizacion");
-                Console.WriteLine($"[DEBUG] Carrito JSON: {carritoJson}");
+                Console.WriteLine($"[DEBUG] Carrito JSON obtenido: {carritoJson?.Substring(0, Math.Min(carritoJson.Length, 100)) ?? "NULL"}...");
 
                 if (string.IsNullOrEmpty(carritoJson))
+                {
+                    Console.WriteLine("[DEBUG] Carrito vacío, retornando lista nueva");
                     return new List<ItemCarritoPersonalizado>();
+                }
 
-                var carrito = JsonSerializer.Deserialize<List<ItemCarritoPersonalizado>>(carritoJson);
-                Console.WriteLine($"[DEBUG] Items en carrito: {carrito?.Count ?? 0}");
+                var carrito = JsonSerializer.Deserialize<List<ItemCarritoPersonalizado>>(carritoJson, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                Console.WriteLine($"[DEBUG] Items en carrito deserializados: {carrito?.Count ?? 0}");
                 return carrito ?? new List<ItemCarritoPersonalizado>();
             }
             catch (Exception ex)
@@ -1223,12 +1301,36 @@ namespace ProyectoIdentity.Controllers
 
         private List<Ingrediente> GetIngredientesProducto(Producto producto)
         {
-            if (string.IsNullOrEmpty(producto.Ingredientes)) return new();
+            if (string.IsNullOrEmpty(producto.Ingredientes))
+            {
+                Console.WriteLine($"[DEBUG] Producto {producto.Nombre} no tiene ingredientes definidos");
+                return new List<Ingrediente>();
+            }
+
             try
             {
-                return JsonSerializer.Deserialize<List<Ingrediente>>(producto.Ingredientes) ?? new();
+                var ingredientes = JsonSerializer.Deserialize<List<Ingrediente>>(producto.Ingredientes, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                Console.WriteLine($"[DEBUG] Ingredientes deserializados para {producto.Nombre}: {ingredientes?.Count ?? 0}");
+
+                if (ingredientes != null)
+                {
+                    foreach (var ing in ingredientes)
+                    {
+                        Console.WriteLine($"[DEBUG] - {ing.Nombre}: ${ing.Costo} (Removible: {ing.Removible})");
+                    }
+                }
+
+                return ingredientes ?? new List<Ingrediente>();
             }
-            catch { return new(); }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error deserializando ingredientes para {producto.Nombre}: {ex.Message}");
+                return new List<Ingrediente>();
+            }
         }
 
         private decimal CalcularAhorro(Producto producto, List<string> ingredientesRemovidos)
