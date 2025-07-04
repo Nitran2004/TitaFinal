@@ -1,13 +1,9 @@
-﻿@{
-    ViewData["Title"] = "Vista AR";
-    Layout = null;
-}
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vista AR - @ViewBag.ProductoNombre</title>
+    <title>Vista 3D con AR - @ViewBag.ProductoNombre</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
@@ -20,37 +16,13 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             overflow: hidden;
-            background: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            user-select: none;
         }
 
-        /* Header Desktop */
-        .header {
-            background: #222;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            z-index: 10;
-        }
-
-        /* Header Mobile */
-        .mobile-header {
-            display: none;
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            background: rgba(0,0,0,0.8);
-            padding: 15px;
-            border-radius: 10px;
-            z-index: 20;
-        }
-
-        /* Canvas Container */
         .canvas-container {
             position: fixed;
             top: 0;
@@ -64,271 +36,532 @@
             width: 100%;
             height: 100%;
             display: block;
+            cursor: grab;
         }
 
-        /* Overlay Elements */
-        .overlay {
-            position: absolute;
-            background: rgba(0,0,0,0.8);
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 12px;
-            z-index: 15;
-        }
-
-        .loading {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            z-index: 25;
-        }
-
-        .error {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(200,0,0,0.9);
-            display: none;
-            max-width: 80%;
-            text-align: center;
-            z-index: 25;
-        }
-
-        .stats {
-            top: 10px;
-            left: 10px;
-            max-width: 300px;
-        }
-
-        .ai-panel {
-            top: 200px;
-            left: 10px;
-            max-width: 300px;
-            background: rgba(0,100,0,0.9);
-            border: 2px solid #00ff00;
-        }
-
-        .controls {
-            bottom: 10px;
-            left: 10px;
-            max-width: 300px;
-        }
-
-        /* AR Elements */
-        .ar-button {
-            position: fixed;
-            bottom: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #4CAF50;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 25px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            z-index: 25;
-            display: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        .ar-status {
-            position: absolute;
-            bottom: 120px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 15px;
-            text-align: center;
-            display: none;
-            z-index: 20;
-        }
-
-        /* Buttons */
-        .btn {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            margin: 2px;
-            font-size: 12px;
-        }
-
-        .btn-test {
-            background: #2196F3;
-        }
-
-        .btn-warning {
-            background: #ff9800;
-        }
-
-        /* Controls */
-        .control-group {
-            margin: 8px 0;
-        }
-
-            .control-group label {
-                display: block;
-                margin-bottom: 5px;
+            canvas:active {
+                cursor: grabbing;
             }
 
-        .control-slider {
-            width: 150px;
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(30px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* AI Styles */
+            .header.hidden {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+
+        .header-content {
+            text-align: center;
+        }
+
+            .header-content h1 {
+                font-size: 1.8rem;
+                font-weight: 700;
+                margin-bottom: 8px;
+                background: linear-gradient(135deg, #fff 0%, #a855f7 50%, #3b82f6 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                letter-spacing: -0.02em;
+            }
+
+            .header-content .subtitle {
+                opacity: 0.8;
+                font-size: 0.9rem;
+                color: rgba(255, 255, 255, 0.9);
+            }
+
+        .header-actions {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+            .btn:hover {
+                background: rgba(255, 255, 255, 0.25);
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            }
+
+            .btn:active {
+                transform: translateY(0);
+            }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4f46e5, #7c3aed);
+            border: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #059669, #0d9488);
+            border: none;
+        }
+
+        .panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 15;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 25px 25px 0 0;
+            padding: 24px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(100%);
+        }
+
+            .panel.visible {
+                transform: translateY(0);
+            }
+
+            .panel.hidden {
+                transform: translateY(100%);
+                opacity: 1;
+                pointer-events: none;
+            }
+
+        .ai-panel {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.25);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #fff 0%, #e0e7ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .panel-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .panel-close:hover {
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+                transform: scale(1.1);
+            }
+
+        .control-group {
+            margin-bottom: 16px;
+        }
+
+            .control-group:last-child {
+                margin-bottom: 0;
+            }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s ease;
+        }
+
+            .stat-item:last-child {
+                border-bottom: none;
+            }
+
+            .stat-item:hover {
+                background: rgba(255, 255, 255, 0.03);
+                border-radius: 8px;
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+
+        .stat-label {
+            opacity: 0.85;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #60a5fa;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+        }
+
+        .ai-decision, .ai-reasoning {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border-left: 3px solid #10b981;
+        }
+
         .ai-decision {
-            color: #00ff00;
-            font-weight: bold;
+            color: #10b981;
+            font-weight: 600;
+            background: rgba(16, 185, 129, 0.1);
         }
 
         .ai-reasoning {
-            color: #ccffcc;
+            color: #6ee7b7;
             font-style: italic;
+            opacity: 0.9;
+            background: rgba(110, 231, 183, 0.05);
+            font-size: 0.9rem;
         }
 
-        /* Responsive */
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .control-value {
+            color: #60a5fa;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .control-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            appearance: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+            .control-slider::-webkit-slider-thumb {
+                appearance: none;
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+                background: linear-gradient(45deg, #60a5fa, #3b82f6);
+                cursor: pointer;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                transition: all 0.2s ease;
+            }
+
+                .control-slider::-webkit-slider-thumb:hover {
+                    transform: scale(1.1);
+                    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.4);
+                }
+
+        .control-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
+        .loading, .error {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            padding: 30px 40px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 30;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.4);
+            display: none;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #60a5fa;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 16px;
+        }
+
+        @@keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .panel-toggle, .ar-toggle {
+            position: fixed;
+            bottom: 30px;
+            border: none;
+            border-radius: 50%;
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            cursor: pointer;
+            z-index: 25;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .panel-toggle {
+            right: 30px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            box-shadow: 0 12px 30px rgba(79, 70, 229, 0.4);
+        }
+
+        .ar-toggle {
+            left: 30px;
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            box-shadow: 0 12px 30px rgba(249, 115, 22, 0.4);
+        }
+
+            .panel-toggle:hover, .ar-toggle:hover {
+                transform: scale(1.1);
+            }
+
+            .panel-toggle:active, .ar-toggle:active {
+                transform: scale(0.95);
+            }
+
+            .ar-toggle.active {
+                background: linear-gradient(135deg, #10b981, #059669);
+                box-shadow: 0 12px 30px rgba(16, 185, 129, 0.4);
+            }
+
         @@media (max-width: 768px) {
-            .header {
+            .header-actions {
                 display: none;
             }
 
-            .mobile-header {
-                display: block;
+            .header-content h1 {
+                font-size: 1.3rem;
             }
 
-            .overlay:not(.loading):not(.error) {
-                display: none !important;
+            .header-content .subtitle {
+                font-size: 0.8rem;
             }
 
-            .canvas-container {
-                top: 0;
+            .panel {
+                padding: 20px 16px;
+            }
+
+            .panel-toggle, .ar-toggle {
+                width: 56px;
+                height: 56px;
+                bottom: 20px;
+                font-size: 24px;
+            }
+
+            .panel-toggle {
+                right: 20px;
+            }
+
+            .ar-toggle {
+                left: 20px;
+            }
+
+            .header {
+                padding: 16px 20px;
+            }
+        }
+
+        @@media (max-width: 480px) {
+            .panel {
+                padding: 16px 14px;
+            }
+
+            .header {
+                padding: 12px 16px;
+            }
+
+            .header-content h1 {
+                font-size: 1.2rem;
+            }
+
+            .header-content .subtitle {
+                font-size: 0.75rem;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @@keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
     </style>
 </head>
 <body>
-    <!-- Header Desktop -->
-    <div class="header">
-        <div>
-            <h2>🤖 @ViewBag.ProductoNombre</h2>
-            <small>ID: @ViewBag.ProductoId | @ViewBag.ModeloArchivo</small>
+    <div class="header" id="header">
+        <div class="header-content">
+            <h1>@ViewBag.ProductoNombre</h1>
+            <div class="subtitle">Modelo 3D • ID: @ViewBag.ProductoId</div>
         </div>
-        <div>
-            <button class="btn" onclick="history.back()">Volver</button>
-            <a href="/RealidadAumentada/VistaAR?id=1" class="btn btn-test">ID 1</a>
-            <a href="/RealidadAumentada/VistaAR?id=2" class="btn btn-test">ID 2</a>
-            <a href="/RealidadAumentada/VistaAR?id=9" class="btn btn-warning">ID 9</a>
-            <a href="/RealidadAumentada/VistaAR?id=10" class="btn btn-warning">ID 10</a>
-            <button class="btn" onclick="app.resetCamera()">Reset</button>
-            <button class="btn" onclick="app.toggleWireframe()">Wireframe</button>
+        <div class="header-actions">
+            <button class="btn" onclick="history.back()">← Volver</button>
+            <button class="btn btn-success" onclick="app.resetCamera()">🔄 Reset</button>
+            <button class="btn" onclick="app.toggleWireframe()">⚡ Wireframe</button>
         </div>
     </div>
 
-    <!-- Header Mobile -->
-    <div class="mobile-header">
-        <div><strong>@ViewBag.ProductoNombre</strong> - $@ViewBag.ProductoPrecio</div>
-        <div id="device-status">Cargando...</div>
-        <div style="margin-top: 10px;">
-            <button class="btn" id="toggle-3d-btn" onclick="app.toggleMobile3D()" style="display: none;">Ver Modelo 3D</button>
-        </div>
-    </div>
-
-    <!-- Canvas -->
     <div class="canvas-container">
         <canvas id="canvas3d"></canvas>
     </div>
 
-    <!-- Loading -->
-    <div class="overlay loading" id="loading">Cargando modelo 3D...</div>
-
-    <!-- Error -->
-    <div class="overlay error" id="error">
-        <h3>Error al cargar el modelo</h3>
-        <p id="error-message"></p>
-        <button class="btn" onclick="app.reload()">Reintentar</button>
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+        <div>Cargando modelo 3D...</div>
     </div>
 
-    <!-- Stats Panel -->
-    <div class="overlay stats" id="stats">
-        <strong>📊 Estadísticas:</strong><br>
-        <span id="stats-content">Analizando...</span>
+    <div class="error" id="error">
+        <h3>⚠️ Error al cargar</h3>
+        <p id="error-message">Ha ocurrido un error</p>
+        <button class="btn btn-primary" onclick="app.reload()" style="margin-top: 16px;">🔄 Reintentar</button>
     </div>
 
-    <!-- AI Panel -->
-    <div class="overlay ai-panel" id="ai-panel">
-        <strong>🤖 IA:</strong><br>
-        <span id="ai-content">Analizando...</span>
+    <div class="panel stats-panel fade-in" id="stats-panel">
+        <div class="panel-header">
+            <div class="panel-title">📊 Estadísticas</div>
+            <button class="panel-close" onclick="togglePanel('stats-panel')">&times;</button>
+        </div>
+        <div id="stats-content">
+            <div class="stat-item"><span class="stat-label">Analizando...</span><span class="stat-value">⏳</span></div>
+        </div>
     </div>
 
-    <!-- Controls Panel -->
-    <div class="overlay controls" id="controls">
-        <strong>🎮 Controles:</strong><br>
+    <div class="panel ai-panel fade-in" id="ai-panel">
+        <div class="panel-header">
+            <div class="panel-title">🤖 Sistema IA</div>
+            <button class="panel-close" onclick="togglePanel('ai-panel')">&times;</button>
+        </div>
+        <div id="ai-content">
+            <div class="ai-decision">Analizando modelo...</div>
+        </div>
+    </div>
+
+    <div class="panel controls-panel fade-in" id="controls-panel">
+        <div class="panel-header">
+            <div class="panel-title">🎮 Controles</div>
+            <button class="panel-close" onclick="togglePanel('controls-panel')">&times;</button>
+        </div>
+
         <div class="control-group">
-            <label>Escala: <span id="scale-value">1.0</span></label>
+            <div class="control-label"><span>Escala</span><span class="control-value" id="scale-value">1.0</span></div>
             <input type="range" id="scale-slider" class="control-slider" min="0.1" max="10" step="0.1" value="1.0">
         </div>
+
         <div class="control-group">
-            <label>Posición Y: <span id="posY-value">0.0</span></label>
+            <div class="control-label"><span>Posición Y</span><span class="control-value" id="posY-value">0.0</span></div>
             <input type="range" id="posY-slider" class="control-slider" min="-5" max="5" step="0.1" value="0.0">
         </div>
+
         <div class="control-group">
-            <label>Rotación Y: <span id="rotY-value">0°</span></label>
+            <div class="control-label"><span>Rotación Y</span><span class="control-value" id="rotY-value">0°</span></div>
             <input type="range" id="rotY-slider" class="control-slider" min="0" max="360" step="5" value="0">
         </div>
-        <button class="btn" onclick="app.autoFit()">Auto Ajustar</button>
-        <button class="btn" onclick="app.center()">Centrar</button>
+
+        <div class="control-buttons">
+            <button class="btn btn-success" onclick="app.autoFit()">✨ Auto Ajustar</button>
+            <button class="btn" onclick="app.center()">🎯 Centrar</button>
+        </div>
     </div>
 
-    <!-- AR Elements -->
-    <div class="ar-status" id="ar-status">Mueve el dispositivo para detectar superficies</div>
-    <button class="ar-button" id="ar-button">📷 Activar AR</button>
+    <button class="panel-toggle" id="panel-toggle" onclick="togglePanels()">🎮</button>
+    <button class="ar-toggle" id="ar-toggle" onclick="toggleAR()">📷</button>
 
     <script>
-        // App Class - Simplified Architecture
-        class ARViewer {
+        class DesktopViewer {
             constructor() {
-                // Core variables
-                this.scene = null;
-                this.camera = null;
-                this.renderer = null;
-                this.controls = null;
-                this.model = null;
-                this.reticle = null;
+                this.scene = null; this.camera = null; this.renderer = null; this.controls = null; this.model = null;
+                this.reticle = null; this.arSession = null; this.hitTestSource = null;
+                this.isARActive = false; this.isARSupported = false; this.modelStateBeforeAR = null;
+                this.aiAnalysis = null; this.aiDecision = null;
+                this.panelsVisible = false; this.headerVisible = true; this.currentPanel = null;
 
-                // Config
                 this.config = {
                     modelPath: '@ViewBag.ModeloPath',
                     modelFile: '@ViewBag.ModeloArchivo',
-                    modelId: '@ViewBag.ProductoId',
-                    isMobile: /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+                    modelId: '@ViewBag.ProductoId'
                 };
 
-                // AR state
-                this.arSession = null;
-                this.hitTestSource = null;
-                this.isARActive = false;
-
-                // AI system
-                this.aiAnalysis = null;
-                this.aiDecision = null;
-
-                // DOM references
                 this.dom = {
                     loading: document.getElementById('loading'),
                     error: document.getElementById('error'),
                     errorMessage: document.getElementById('error-message'),
-                    deviceStatus: document.getElementById('device-status'),
-                    arStatus: document.getElementById('ar-status'),
-                    arButton: document.getElementById('ar-button'),
                     statsContent: document.getElementById('stats-content'),
                     aiContent: document.getElementById('ai-content'),
                     scaleSlider: document.getElementById('scale-slider'),
@@ -336,25 +569,22 @@
                     rotYSlider: document.getElementById('rotY-slider'),
                     scaleValue: document.getElementById('scale-value'),
                     posYValue: document.getElementById('posY-value'),
-                    rotYValue: document.getElementById('rotY-value')
+                    rotYValue: document.getElementById('rotY-value'),
+                    header: document.getElementById('header'),
+                    statsPanel: document.getElementById('stats-panel'),
+                    aiPanel: document.getElementById('ai-panel'),
+                    controlsPanel: document.getElementById('controls-panel')
                 };
 
                 this.init();
             }
 
-            // Initialize Three.js
             init() {
-                console.log('🚀 Inicializando ARViewer:', this.config.modelFile);
-
+                console.log('🚀 Inicializando Enhanced Desktop Viewer:', this.config.modelFile);
                 try {
-                    this.setupScene();
-                    this.setupCamera();
-                    this.setupRenderer();
-                    this.setupLights();
-                    this.setupControls();
-                    this.setupEventListeners();
-                    this.loadModel();
-                    this.animate();
+                    this.setupScene(); this.setupCamera(); this.setupRenderer(); this.setupLights();
+                    this.setupControls(); this.setupEventListeners(); this.setupUI();
+                    this.loadModel(); this.animate();
                 } catch (error) {
                     this.showError('Error de inicialización: ' + error.message);
                 }
@@ -362,7 +592,11 @@
 
             setupScene() {
                 this.scene = new THREE.Scene();
-                this.scene.background = this.config.isMobile ? null : new THREE.Color(0x333333);
+                const colors = ['%23667eea', '%23667eea', '%23764ba2', '%23764ba2', '%23667eea', '%23667eea'];
+                this.backgroundTexture = new THREE.CubeTextureLoader().load(
+                    colors.map(c => `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="${c}"/></svg>`)
+                );
+                this.scene.background = this.backgroundTexture;
             }
 
             setupCamera() {
@@ -372,68 +606,91 @@
 
             setupRenderer() {
                 const canvas = document.getElementById('canvas3d');
-                this.renderer = new THREE.WebGLRenderer({
-                    canvas: canvas,
-                    antialias: true,
-                    alpha: this.config.isMobile
-                });
+                this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
                 this.renderer.setSize(window.innerWidth, window.innerHeight);
-                this.renderer.setPixelRatio(window.devicePixelRatio);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 this.renderer.shadowMap.enabled = true;
-
-                if (this.config.isMobile && /Android/i.test(navigator.userAgent)) {
-                    this.renderer.xr.enabled = true;
-                }
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                this.renderer.toneMappingExposure = 1.2;
+                this.renderer.xr.enabled = true;
+                this.checkARSupport();
             }
 
             setupLights() {
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-                this.scene.add(ambientLight);
+                const lights = [
+                    new THREE.AmbientLight(0xffffff, 0.4),
+                    new THREE.DirectionalLight(0xffffff, 1.0),
+                    new THREE.DirectionalLight(0x64b5f6, 0.5),
+                    new THREE.DirectionalLight(0xffffff, 0.3)
+                ];
 
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-                directionalLight.position.set(5, 5, 5);
-                directionalLight.castShadow = true;
-                this.scene.add(directionalLight);
+                lights[1].position.set(5, 10, 5);
+                lights[1].castShadow = true;
+                lights[1].shadow.mapSize.setScalar(2048);
+                lights[1].shadow.camera.near = 0.5;
+                lights[1].shadow.camera.far = 50;
+                lights[2].position.set(-3, 2, -3);
+                lights[3].position.set(0, -5, 10);
 
-                const frontLight = new THREE.DirectionalLight(0xffffff, 0.4);
-                frontLight.position.set(0, 0, 10);
-                this.scene.add(frontLight);
+                lights.forEach(light => this.scene.add(light));
             }
 
             setupControls() {
-                if (!this.config.isMobile && typeof THREE.OrbitControls !== 'undefined') {
-                    this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-                    this.controls.enableDamping = true;
-                    this.controls.dampingFactor = 0.05;
-                } else if (this.config.isMobile) {
-                    // Setup initial touch controls for mobile (but model will be hidden)
-                    this.setupTouchControls();
-                    this.setupAR();
-                }
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                Object.assign(this.controls, {
+                    enableDamping: true, dampingFactor: 0.05, screenSpacePanning: false,
+                    minDistance: 1, maxDistance: 20, maxPolarAngle: Math.PI / 1.8
+                });
             }
 
             setupEventListeners() {
                 window.addEventListener('resize', () => this.onResize());
 
-                // Control sliders
-                if (this.dom.scaleSlider) {
-                    this.dom.scaleSlider.addEventListener('input', (e) => this.updateScale(e.target.value));
-                    this.dom.posYSlider.addEventListener('input', (e) => this.updatePositionY(e.target.value));
-                    this.dom.rotYSlider.addEventListener('input', (e) => this.updateRotationY(e.target.value));
-                }
+                ['scale', 'posY', 'rotY'].forEach(type => {
+                    const slider = this.dom[`${type}Slider`];
+                    if (slider) {
+                        slider.addEventListener('input', (e) => {
+                            this[`update${type === 'posY' ? 'PositionY' : type === 'rotY' ? 'RotationY' : 'Scale'}`](e.target.value);
+                            this.addControlFeedback(e.target);
+                        });
+                    }
+                });
+
+                let headerTimeout;
+                document.addEventListener('mousemove', () => {
+                    if (this.config.isMobile) return;
+                    this.showHeader();
+                    clearTimeout(headerTimeout);
+                    headerTimeout = setTimeout(() => this.hideHeader(), 3000);
+                });
             }
 
-            // Model Loading
+            setupUI() {
+                [this.dom.statsPanel, this.dom.aiPanel, this.dom.controlsPanel].forEach(panel => {
+                    panel.classList.add('hidden');
+                });
+                this.currentPanel = null;
+                setTimeout(() => {
+                    [this.dom.statsPanel, this.dom.aiPanel, this.dom.controlsPanel].forEach(panel => {
+                        panel.classList.add('fade-in');
+                    });
+                }, 500);
+            }
+
+            addControlFeedback(element) {
+                element.style.boxShadow = '0 0 20px rgba(96, 165, 250, 0.6)';
+                setTimeout(() => element.style.boxShadow = '', 200);
+            }
+
+            showHeader() { if (this.dom.header) { this.dom.header.classList.remove('hidden'); this.headerVisible = true; } }
+            hideHeader() { if (this.dom.header && !this.config.isMobile) { this.dom.header.classList.add('hidden'); this.headerVisible = false; } }
+
             loadModel() {
                 console.log('🔄 Cargando modelo:', this.config.modelPath);
-
-                if (!this.config.modelPath) {
-                    this.showError('Ruta del modelo no definida');
-                    return;
-                }
+                if (!this.config.modelPath) { this.showError('Ruta del modelo no definida'); return; }
 
                 const loader = new THREE.GLTFLoader();
-
                 loader.load(
                     this.config.modelPath,
                     (gltf) => this.onModelLoaded(gltf),
@@ -444,50 +701,44 @@
 
             onModelLoaded(gltf) {
                 console.log('✅ Modelo cargado:', this.config.modelFile);
-
                 this.hideLoading();
                 this.model = gltf.scene;
 
-                // Configure shadows
                 this.model.traverse((node) => {
                     if (node.isMesh) {
-                        node.castShadow = true;
-                        node.receiveShadow = true;
+                        node.castShadow = true; node.receiveShadow = true;
+                        if (node.material) node.material.envMapIntensity = 0.8;
                     }
                 });
 
                 this.scene.add(this.model);
+                this.model.visible = true;
+                this.runAI(); this.analyzeModel();
 
-                if (this.config.isMobile) {
-                    // MOBILE: Apply AI first to fix pizza3/4, then hide
-                    console.log('📱 Aplicando IA para móvil antes de ocultar');
-                    this.runAI(); // Apply AI corrections for pizza3/4
+                this.model.scale.set(0, 0, 0);
+                const targetScale = this.aiDecision ? this.aiDecision.scale : 1;
+                this.animateScale(targetScale, () => {
+                    setTimeout(() => { this.autoFit(); console.log('✨ Modelo autoajustado automáticamente'); }, 300);
+                });
+            }
 
-                    // NOW hide the model
-                    this.model.visible = false;
-                    console.log('📱 Modelo oculto después de aplicar IA');
-
-                    if (this.dom.deviceStatus) {
-                        this.dom.deviceStatus.textContent = '📱 Modelo listo - Activa AR para verlo';
-                    }
-
-                    // Show toggle button for 3D view
-                    const toggle3DBtn = document.getElementById('toggle-3d-btn');
-                    if (toggle3DBtn) {
-                        toggle3DBtn.style.display = 'block';
-                    }
-                } else {
-                    // PC: Show model immediately and apply AI
-                    this.model.visible = true;
-                    this.runAI();
-                    this.analyzeModel();
-                }
+            animateScale(targetScale, callback) {
+                const animate = (startTime = Date.now()) => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / 1000, 1);
+                    const easeOut = 1 - Math.pow(1 - progress, 3);
+                    const currentScale = targetScale * easeOut;
+                    this.model.scale.setScalar(currentScale);
+                    if (progress < 1) requestAnimationFrame(() => animate(startTime));
+                    else if (callback) callback();
+                };
+                animate();
             }
 
             onLoadProgress(xhr) {
                 if (xhr.lengthComputable && this.dom.loading) {
                     const percent = Math.floor((xhr.loaded / xhr.total) * 100);
-                    this.dom.loading.textContent = `Cargando: ${percent}%`;
+                    this.dom.loading.querySelector('div:last-child').textContent = `Cargando modelo... ${percent}%`;
                 }
             }
 
@@ -496,844 +747,232 @@
                 this.showError(`Error de carga: ${error.message || 'Error desconocido'}`);
             }
 
-            // AI System - Simplified
             runAI() {
                 try {
                     this.aiAnalysis = this.analyzeModelAI();
                     this.aiDecision = this.makeAIDecision();
-                    this.updateAIPanel();
-                    this.applyAIDecisions();
+                    this.updateAIPanel(); this.applyAIDecisions();
                     console.log('🤖 IA aplicada exitosamente');
-                } catch (error) {
-                    console.error('🔴 Error en IA:', error);
-                }
+                } catch (error) { console.error('🔴 Error en IA:', error); }
             }
 
             analyzeModelAI() {
                 if (!this.model) return null;
-
                 const box = new THREE.Box3().setFromObject(this.model);
                 const center = box.getCenter(new THREE.Vector3());
                 const size = box.getSize(new THREE.Vector3());
                 const maxDim = Math.max(size.x, size.y, size.z);
-
                 return {
-                    center,
-                    size,
-                    maxDim,
+                    center, size, maxDim,
                     problemType: this.classifyProblem(),
                     sizeType: maxDim < 0.5 ? 'small' : maxDim > 10 ? 'large' : 'normal'
                 };
             }
 
             classifyProblem() {
-                if (this.config.modelFile.includes('pizza3') || this.config.modelFile.includes('pizza4')) {
-                    return 'displaced_center_small';
-                }
-                return 'normal';
+                return (this.config.modelFile.includes('pizza3') || this.config.modelFile.includes('pizza4'))
+                    ? 'displaced_center_small' : 'normal';
             }
 
             makeAIDecision() {
                 if (!this.aiAnalysis) return null;
-
-                let decision = {
-                    scale: 1.0,
-                    rotationY: 0,
-                    centerCorrection: false,
-                    strategy: 'standard'
-                };
+                let decision = { scale: 1.0, rotationY: 0, centerCorrection: false, strategy: 'standard' };
 
                 if (this.aiAnalysis.problemType === 'displaced_center_small') {
-                    decision.strategy = 'fix_displacement';
-                    decision.centerCorrection = true;
-                    decision.scale = this.aiAnalysis.maxDim < 0.5 ? 20.0 : 8.0;
-
-                    if (this.config.modelFile.includes('pizza3')) {
-                        decision.rotationY = 50;
-                    } else if (this.config.modelFile.includes('pizza4')) {
-                        decision.rotationY = 45;
-                    }
+                    Object.assign(decision, {
+                        strategy: 'fix_displacement', centerCorrection: true,
+                        scale: this.aiAnalysis.maxDim < 0.5 ? 20.0 : 8.0,
+                        rotationY: this.config.modelFile.includes('pizza3') ? 50 :
+                            this.config.modelFile.includes('pizza4') ? 45 : 0
+                    });
                 } else if (this.aiAnalysis.sizeType === 'small') {
                     decision.scale = 4.0 / Math.max(this.aiAnalysis.maxDim, 0.1);
                 }
-
                 return decision;
             }
 
             applyAIDecisions() {
                 if (!this.model || !this.aiDecision) return;
-
-                console.log('🤖 Aplicando IA - Móvil:', this.config.isMobile, 'AR Activo:', this.isARActive);
-
-                // MOBILE SPECIAL HANDLING - Apply AI for pizza3/4 visibility
-                if (this.config.isMobile) {
-                    if (this.aiAnalysis.problemType === 'displaced_center_small') {
-                        console.log('🍕 Aplicando corrección IA para pizza3/4 en móvil');
-
-                        // Correct displaced center
-                        const center = this.aiAnalysis.center;
-                        this.model.position.copy(center).negate();
-
-                        // Apply mobile-optimized scale and rotation
-                        this.model.scale.set(2.0, 2.0, 2.0); // Bigger scale for mobile visibility
-                        this.model.rotation.y = this.aiDecision.rotationY * Math.PI / 180;
-
-                        // Position slightly in front for better visibility
-                        this.model.position.z = -1.5;
-                        this.model.position.y = 0;
-
-                        console.log('📱 Pizza3/4 configurada para móvil:', this.model.position, this.model.scale);
-
-                        // Force all meshes to be visible
-                        this.model.traverse((child) => {
-                            if (child.isMesh) {
-                                child.visible = true;
-                                if (child.material) {
-                                    child.material.transparent = false;
-                                    child.material.opacity = 1.0;
-                                    child.material.side = THREE.DoubleSide;
-                                }
-                            }
-                        });
-                    } else {
-                        // Normal models in mobile
-                        this.model.position.set(0, 0, -2);
-                        this.model.scale.set(1.5, 1.5, 1.5);
-                    }
-
-                    // Don't update UI controls or fit camera in mobile
-                    return;
-                }
-
-                // PC: Standard AI application
-                if (this.aiDecision.centerCorrection) {
-                    this.model.position.copy(this.aiAnalysis.center).negate();
-                }
-
-                this.model.scale.set(this.aiDecision.scale, this.aiDecision.scale, this.aiDecision.scale);
+                console.log('🤖 Aplicando decisiones IA');
+                if (this.aiDecision.centerCorrection) this.model.position.copy(this.aiAnalysis.center).negate();
                 this.model.rotation.y = this.aiDecision.rotationY * Math.PI / 180;
-
-                // Update UI controls
                 this.updateControlValues();
-
-                if (!this.config.isMobile) {
-                    this.fitCameraToModel();
-                }
             }
 
             updateAIPanel() {
                 if (!this.aiDecision || !this.dom.aiContent) return;
-
                 this.dom.aiContent.innerHTML = `
-                    <div class="ai-decision">Estrategia: ${this.aiDecision.strategy}</div>
-                    <div class="ai-decision">Escala: ${this.aiDecision.scale}x</div>
-                    <div class="ai-decision">Rotación: ${this.aiDecision.rotationY}°</div>
-                    <div class="ai-reasoning">Centro: ${this.aiDecision.centerCorrection ? 'Corregido' : 'Original'}</div>
-                `;
+                            <div class="ai-decision">✨ Estrategia: ${this.aiDecision.strategy}</div>
+                            <div class="ai-decision">📏 Escala: ${this.aiDecision.scale.toFixed(1)}x</div>
+                            <div class="ai-decision">🔄 Rotación: ${this.aiDecision.rotationY}°</div>
+                            <div class="ai-reasoning">🎯 Centro: ${this.aiDecision.centerCorrection ? 'Corregido automáticamente' : 'Posición original'}</div>
+                            <div class="ai-reasoning">🧠 Optimización aplicada para mejor visualización</div>
+                        `;
             }
 
-            // AR Functions
-            setupAR() {
-                if (this.config.isMobile && /Android/i.test(navigator.userAgent)) {
-                    this.createReticle();
-                    if (this.dom.arButton) {
-                        this.dom.arButton.style.display = 'block';
-                        this.dom.arButton.addEventListener('click', () => this.startAR());
-                    }
-                } else if (this.config.isMobile && this.dom.deviceStatus) {
-                    this.dom.deviceStatus.textContent = 'AR no disponible en Safari/iPhone';
-                }
-            }
-
-            createReticle() {
-                this.reticle = new THREE.Group();
-
-                // Main ring
-                const ring = new THREE.Mesh(
-                    new THREE.RingGeometry(0.05, 0.07, 24),
-                    new THREE.MeshBasicMaterial({
-                        color: 0x0099ff,
-                        side: THREE.DoubleSide,
-                        transparent: true,
-                        opacity: 0.8
-                    })
-                );
-                this.reticle.add(ring);
-
-                // Outer ring with animation
-                const outerRing = new THREE.Mesh(
-                    new THREE.RingGeometry(0.08, 0.09, 24),
-                    new THREE.MeshBasicMaterial({
-                        color: 0xffffff,
-                        side: THREE.DoubleSide,
-                        transparent: true,
-                        opacity: 0.5
-                    })
-                );
-                this.reticle.add(outerRing);
-
-                // HORIZONTAL Grid pattern for surface detection
-                const gridGeometry = new THREE.PlaneGeometry(0.5, 0.5, 10, 10);
-                const gridMaterial = new THREE.MeshBasicMaterial({
-                    color: 0x00ff00,
-                    transparent: true,
-                    opacity: 0.3,
-                    wireframe: true,
-                    side: THREE.DoubleSide
-                });
-                const grid = new THREE.Mesh(gridGeometry, gridMaterial);
-
-                // Make grid horizontal (lying flat on surface)
-                // No additional rotation needed - the reticle group rotation handles this
-                this.reticle.add(grid);
-
-                // IMPORTANT: This rotation makes the entire reticle (including grid) horizontal
-                this.reticle.rotation.x = -Math.PI / 2;  // Rotate 90 degrees to make it horizontal
-                this.reticle.visible = false;
-                this.scene.add(this.reticle);
-
-                // Animate the reticle
-                const animateReticle = () => {
-                    if (this.reticle && this.reticle.visible) {
-                        const time = Date.now() * 0.005;
-                        outerRing.scale.set(
-                            1 + Math.sin(time) * 0.2,
-                            1 + Math.sin(time) * 0.2,
-                            1
-                        );
-                        grid.material.opacity = 0.2 + Math.sin(time * 2) * 0.1;
-                    }
-                    requestAnimationFrame(animateReticle);
-                };
-                animateReticle();
-
-                console.log('✅ Reticle horizontal creado con rejilla');
-            }
-
-            async startAR() {
-                try {
-                    console.log('🚀 Iniciando AR para Android');
-
-                    if (this.dom.deviceStatus) {
-                        this.dom.deviceStatus.textContent = 'Solicitando permisos de cámara...';
-                    }
-
-                    if (this.dom.arButton) {
-                        this.dom.arButton.style.display = 'none';
-                    }
-
-                    // Step 1: Request camera permissions
-                    console.log('📷 Solicitando acceso a cámara...');
-                    const stream = await navigator.mediaDevices.getUserMedia({
-                        video: {
-                            facingMode: 'environment',
-                            width: { ideal: 1280 },
-                            height: { ideal: 720 }
-                        }
-                    });
-
-                    console.log('✅ Cámara obtenida');
-                    stream.getTracks().forEach(track => track.stop()); // Stop test stream
-
-                    if (this.dom.deviceStatus) {
-                        this.dom.deviceStatus.textContent = 'Verificando soporte AR...';
-                    }
-
-                    // Step 2: Check WebXR support
-                    if (!navigator.xr) {
-                        throw new Error('WebXR no disponible en este navegador');
-                    }
-
-                    console.log('🔍 Verificando soporte AR...');
-                    const supported = await navigator.xr.isSessionSupported('immersive-ar');
-                    if (!supported) {
-                        throw new Error('AR immersive no soportado en este dispositivo');
-                    }
-
-                    console.log('✅ AR soportado');
-                    if (this.dom.deviceStatus) {
-                        this.dom.deviceStatus.textContent = 'Iniciando sesión AR...';
-                    }
-
-                    // Step 3: Request AR session
-                    const sessionInit = {
-                        requiredFeatures: ['hit-test'],
-                        optionalFeatures: ['dom-overlay']
-                    };
-
-                    console.log('🎮 Solicitando sesión AR...');
-                    this.arSession = await navigator.xr.requestSession('immersive-ar', sessionInit);
-                    console.log('✅ Sesión AR creada');
-
-                    // Step 4: Configure renderer for AR
-                    this.renderer.xr.setReferenceSpaceType('local');
-                    await this.renderer.xr.setSession(this.arSession);
-                    console.log('✅ Renderer configurado para AR');
-
-                    // Step 5: Setup AR event handlers
-                    this.arSession.addEventListener('select', () => this.onARSelect());
-                    this.arSession.addEventListener('end', () => this.onAREnd());
-
-                    // Step 6: Hide 3D model and show AR interface
-                    if (this.model) {
-                        this.model.visible = false;
-                    }
-
-                    this.isARActive = true;
-
-                    if (this.dom.arStatus) {
-                        this.dom.arStatus.style.display = 'block';
-                        this.dom.arStatus.textContent = 'Mueve el dispositivo para detectar superficies';
-                    }
-
-                    if (this.dom.deviceStatus) {
-                        this.dom.deviceStatus.textContent = '📷 AR activo - Detectando superficies...';
-                    }
-
-                    console.log('🎯 AR iniciado correctamente');
-
-                    // Step 7: Start AR render loop
-                    this.renderer.setAnimationLoop((timestamp, frame) => this.renderAR(timestamp, frame));
-
-                } catch (error) {
-                    console.error('❌ Error iniciando AR:', error);
-
-                    let errorMsg = error.message;
-                    if (error.name === 'NotAllowedError') {
-                        errorMsg = 'Permisos de cámara denegados. Permite el acceso a la cámara.';
-                    } else if (error.name === 'NotFoundError') {
-                        errorMsg = 'No se encontró cámara trasera en el dispositivo.';
-                    } else if (error.name === 'NotSupportedError') {
-                        errorMsg = 'AR no soportado en este navegador. Usa Chrome Android.';
-                    }
-
-                    if (this.dom.deviceStatus) {
-                        this.dom.deviceStatus.textContent = 'Error AR: ' + errorMsg;
-                    }
-
-                    if (this.dom.arButton) {
-                        this.dom.arButton.style.display = 'block';
-                    }
-
-                    // Show 3D model as fallback
-                    if (this.model) {
-                        this.model.visible = true;
-                        this.runAI();
-                    }
-                }
-            }
-
-            onARSelect() {
-                console.log('🎯 Superficie tocada para colocar modelo');
-
-                if (!this.reticle.visible || this.model.visible) {
-                    console.log('⚠️ No se puede colocar: reticle no visible o modelo ya colocado');
-                    return;
-                }
-
-                const position = new THREE.Vector3();
-                const quaternion = new THREE.Quaternion();
-                const scale = new THREE.Vector3();
-
-                this.reticle.matrix.decompose(position, quaternion, scale);
-                console.log('📍 Posición de colocación:', position);
-
-                // Run AI analysis if not done yet for AR placement
-                if (!this.aiAnalysis) {
-                    this.aiAnalysis = this.analyzeModelAI();
-                    this.aiDecision = this.makeAIDecision();
-                }
-
-                // Apply AI-based positioning for different models
-                if (this.config.modelFile.includes('pizza3') || this.config.modelFile.includes('pizza4')) {
-                    console.log('🍕 Aplicando corrección IA para pizza3/4 en AR');
-
-                    // Apply AI corrections for displaced center models
-                    const center = this.aiAnalysis.center;
-                    this.model.position.copy(position);
-                    this.model.position.add(center.clone().negate()); // Correct displaced center
-                    this.model.position.y += 0.02; // Slightly above surface
-
-                    // AI scale for AR - bigger for pizza3/4
-                    this.model.scale.set(0.4, 0.4, 0.4);
-
-                    // AI rotation
-                    this.model.rotation.y = this.aiDecision.rotationY * Math.PI / 180;
-                } else {
-                    // Standard placement for normal models
-                    this.model.position.copy(position);
-                    this.model.position.y += 0.02;
-
-                    // Standard scale for AR
-                    this.model.scale.set(0.3, 0.3, 0.3);
-                }
-
-                // Force visibility and material properties
-                this.model.visible = true;
-                this.model.traverse((child) => {
-                    if (child.isMesh) {
-                        child.visible = true;
-                        if (child.material) {
-                            child.material.transparent = false;
-                            child.material.opacity = 1.0;
-                            child.material.side = THREE.DoubleSide;
-                        }
-                    }
-                });
-
-                // Hide reticle and update interface
-                this.reticle.visible = false;
-
-                if (this.dom.arStatus) {
-                    this.dom.arStatus.textContent = 'Modelo colocado - Usa gestos para interactuar';
-                    this.dom.arStatus.style.backgroundColor = 'rgba(76, 175, 80, 0.8)';
-                }
-
-                if (this.dom.deviceStatus) {
-                    this.dom.deviceStatus.textContent = '✅ Modelo colocado - Rota: 1 dedo | Escala: 2 dedos';
-                }
-
-                console.log('✅ Modelo colocado exitosamente');
-                console.log('📊 Posición final:', this.model.position);
-                console.log('📊 Escala final:', this.model.scale);
-                console.log('📊 Rotación final:', this.model.rotation);
-
-                // Enable AR touch controls immediately
-                this.setupARTouchControls();
-            }
-
-            renderAR(timestamp, frame) {
-                if (!frame || !this.isARActive) return;
-
-                const session = this.renderer.xr.getSession();
-                const referenceSpace = this.renderer.xr.getReferenceSpace();
-
-                // Initialize hit test source
-                if (!this.hitTestSource) {
-                    session.requestReferenceSpace('viewer').then(viewerSpace => {
-                        session.requestHitTestSource({ space: viewerSpace })
-                            .then(source => {
-                                this.hitTestSource = source;
-                                console.log('✅ Hit test source inicializado');
-                            })
-                            .catch(err => {
-                                console.error('❌ Error inicializando hit test:', err);
-                            });
-                    });
-                    return; // Exit early if hit test source not ready
-                }
-
-                // Perform hit testing only if model is not placed
-                if (!this.model.visible) {
-                    const hitTestResults = frame.getHitTestResults(this.hitTestSource);
-
-                    if (hitTestResults.length > 0) {
-                        const hit = hitTestResults[0];
-                        const pose = hit.getPose(referenceSpace);
-
-                        if (pose) {
-                            // Show reticle on detected surface
-                            this.reticle.visible = true;
-                            this.reticle.matrix.fromArray(pose.transform.matrix);
-                            this.reticle.matrix.decompose(
-                                this.reticle.position,
-                                this.reticle.quaternion,
-                                this.reticle.scale
-                            );
-
-                            // Update status
-                            if (this.dom.arStatus) {
-                                this.dom.arStatus.style.display = 'block';
-                                this.dom.arStatus.textContent = 'Superficie detectada - Toca para colocar modelo';
-                                this.dom.arStatus.style.backgroundColor = 'rgba(76, 175, 80, 0.8)';
-                            }
-                        }
-                    } else {
-                        // No surface detected
-                        this.reticle.visible = false;
-                        if (this.dom.arStatus) {
-                            this.dom.arStatus.textContent = 'Busca una superficie horizontal...';
-                            this.dom.arStatus.style.backgroundColor = 'rgba(255, 152, 0, 0.8)';
-                        }
-                    }
-                } else {
-                    // Model is placed, hide reticle
-                    this.reticle.visible = false;
-                }
-
-                // Render the scene
-                this.renderer.render(this.scene, this.camera);
-            }
-
-            onAREnd() {
-                console.log('🔚 Sesión AR finalizada');
-
-                this.isARActive = false;
-                this.hitTestSource = null;
-
-                if (this.reticle) {
-                    this.reticle.visible = false;
-                }
-
-                // IMPORTANT: Keep model HIDDEN when returning from AR
-                if (this.model) {
-                    this.model.visible = false;
-                    console.log('📱 Modelo oculto al salir de AR');
-                }
-
-                if (this.dom.deviceStatus) {
-                    this.dom.deviceStatus.textContent = '📱 AR finalizado - Activa AR para ver modelo';
-                }
-
-                if (this.dom.arButton) {
-                    this.dom.arButton.style.display = 'block';
-                }
-
-                if (this.dom.arStatus) {
-                    this.dom.arStatus.style.display = 'none';
-                }
-
-                // Return to normal animation loop
-                this.renderer.setAnimationLoop(null);
-                this.animate();
-            }
-
-            // Mobile 3D View Mode (before AR activation)
-            showMobile3DView() {
-                if (!this.config.isMobile || !this.model) return;
-
-                console.log('📱 Mostrando vista 3D móvil para:', this.config.modelFile);
-
-                // Apply AI corrections and show model
-                if (!this.aiAnalysis) {
-                    this.runAI();
-                }
-
-                this.model.visible = true;
-
-                if (this.dom.deviceStatus) {
-                    this.dom.deviceStatus.textContent = '📱 Vista 3D - Usa gestos | Toca AR para cámara';
-                }
-
-                console.log('✅ Modelo visible en móvil:', this.model.visible, this.model.position, this.model.scale);
-            }
-
-            // Hide mobile 3D view
-            hideMobile3DView() {
-                if (!this.config.isMobile || !this.model) return;
-
-                console.log('📱 Ocultando vista 3D móvil');
-                this.model.visible = false;
-
-                if (this.dom.deviceStatus) {
-                    this.dom.deviceStatus.textContent = '📱 Modelo listo - Activa AR para verlo';
-                }
-            }
-
-            // Touch Controls for Normal 3D View
-            setupTouchControls() {
-                if (!this.config.isMobile) return;
-
-                const canvas = this.renderer.domElement;
-                let touchStart = null;
-                let isTwoFinger = false;
-                let initialDistance = 0;
-                let initialScale = 1;
-
-                // Remove existing listeners to avoid duplicates
-                canvas.removeEventListener('touchstart', this.touchStartHandler);
-                canvas.removeEventListener('touchmove', this.touchMoveHandler);
-                canvas.removeEventListener('touchend', this.touchEndHandler);
-
-                this.touchStartHandler = (e) => {
-                    e.preventDefault();
-                    if (!this.model || !this.model.visible) return;
-
-                    if (e.touches.length === 2) {
-                        isTwoFinger = true;
-                        const [t1, t2] = e.touches;
-                        initialDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-                        initialScale = this.model.scale.x;
-                    } else {
-                        isTwoFinger = false;
-                        touchStart = e.touches[0];
-                    }
-                };
-
-                this.touchMoveHandler = (e) => {
-                    e.preventDefault();
-                    if (!this.model || !this.model.visible) return;
-
-                    if (isTwoFinger && e.touches.length === 2) {
-                        const [t1, t2] = e.touches;
-                        const distance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-                        const scale = Math.max(0.1, Math.min(5.0, initialScale * (distance / initialDistance)));
-                        this.model.scale.set(scale, scale, scale);
-                    } else if (!isTwoFinger && touchStart) {
-                        const touch = e.touches[0];
-                        const dx = touch.clientX - touchStart.clientX;
-                        const dy = touch.clientY - touchStart.clientY;
-                        this.model.rotation.y += dx * 0.01;
-                        this.model.rotation.x += dy * 0.01;
-                        touchStart = touch;
-                    }
-                };
-
-                this.touchEndHandler = (e) => {
-                    if (e.touches.length === 0) {
-                        isTwoFinger = false;
-                        touchStart = null;
-                    } else if (e.touches.length === 1) {
-                        isTwoFinger = false;
-                        touchStart = e.touches[0];
-                    }
-                };
-
-                canvas.addEventListener('touchstart', this.touchStartHandler);
-                canvas.addEventListener('touchmove', this.touchMoveHandler);
-                canvas.addEventListener('touchend', this.touchEndHandler);
-            }
-
-            // AR Touch Controls - Enhanced for better interaction
-            setupARTouchControls() {
-                if (!this.config.isMobile || !this.isARActive) return;
-
-                console.log('🎮 Configurando controles AR táctiles');
-
-                const canvas = this.renderer.domElement;
-                let touchStart = null;
-                let isTwoFinger = false;
-                let initialDistance = 0;
-                let initialScale = 1;
-                let lastTouchTime = 0;
-
-                // Remove any existing AR touch listeners
-                canvas.removeEventListener('touchstart', this.arTouchStartHandler);
-                canvas.removeEventListener('touchmove', this.arTouchMoveHandler);
-                canvas.removeEventListener('touchend', this.arTouchEndHandler);
-
-                this.arTouchStartHandler = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    if (!this.model || !this.model.visible) return;
-
-                    const currentTime = Date.now();
-                    lastTouchTime = currentTime;
-
-                    if (e.touches.length === 2) {
-                        isTwoFinger = true;
-                        const [t1, t2] = e.touches;
-                        initialDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-                        initialScale = this.model.scale.x;
-                        console.log('🤏 Inicio escala AR:', initialScale);
-                    } else if (e.touches.length === 1) {
-                        isTwoFinger = false;
-                        touchStart = e.touches[0];
-                        console.log('👆 Inicio rotación AR');
-                    }
-                };
-
-                this.arTouchMoveHandler = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    if (!this.model || !this.model.visible) return;
-
-                    if (isTwoFinger && e.touches.length === 2) {
-                        // Pinch to scale in AR
-                        const [t1, t2] = e.touches;
-                        const distance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-                        const scaleFactor = distance / initialDistance;
-                        const newScale = Math.max(0.1, Math.min(2.0, initialScale * scaleFactor));
-
-                        this.model.scale.set(newScale, newScale, newScale);
-
-                        // Update status
-                        if (this.dom.arStatus) {
-                            this.dom.arStatus.textContent = `Escala: ${newScale.toFixed(2)}x`;
-                            this.dom.arStatus.style.display = 'block';
-                        }
-
-                    } else if (!isTwoFinger && touchStart && e.touches.length === 1) {
-                        // Single finger rotation in AR
-                        const touch = e.touches[0];
-                        const dx = touch.clientX - touchStart.clientX;
-                        const dy = touch.clientY - touchStart.clientY;
-
-                        // More sensitive rotation for AR
-                        this.model.rotation.y += dx * 0.005;
-                        this.model.rotation.x += dy * 0.005;
-
-                        // Update status
-                        if (this.dom.arStatus) {
-                            const rotY = (this.model.rotation.y * 180 / Math.PI).toFixed(0);
-                            this.dom.arStatus.textContent = `Rotación: ${rotY}°`;
-                            this.dom.arStatus.style.display = 'block';
-                        }
-
-                        touchStart = touch;
-                    }
-                };
-
-                this.arTouchEndHandler = (e) => {
-                    if (e.touches.length === 0) {
-                        isTwoFinger = false;
-                        touchStart = null;
-
-                        // Hide status after interaction
-                        setTimeout(() => {
-                            if (this.dom.arStatus) {
-                                this.dom.arStatus.style.display = 'none';
-                            }
-                        }, 2000);
-
-                    } else if (e.touches.length === 1) {
-                        isTwoFinger = false;
-                        touchStart = e.touches[0];
-                    }
-                };
-
-                canvas.addEventListener('touchstart', this.arTouchStartHandler, { passive: false });
-                canvas.addEventListener('touchmove', this.arTouchMoveHandler, { passive: false });
-                canvas.addEventListener('touchend', this.arTouchEndHandler, { passive: false });
-
-                console.log('✅ Controles AR táctiles configurados');
-            }
-
-            // Control Functions
             updateScale(value) {
                 if (this.model) {
-                    const scale = parseFloat(value);
-                    this.model.scale.set(scale, scale, scale);
-                    if (this.dom.scaleValue) this.dom.scaleValue.textContent = scale.toFixed(1);
+                    this.model.scale.setScalar(parseFloat(value));
+                    if (this.dom.scaleValue) this.dom.scaleValue.textContent = parseFloat(value).toFixed(1) + 'x';
                 }
             }
-
             updatePositionY(value) {
                 if (this.model) {
-                    const posY = parseFloat(value);
-                    this.model.position.y = posY;
-                    if (this.dom.posYValue) this.dom.posYValue.textContent = posY.toFixed(1);
+                    this.model.position.y = parseFloat(value);
+                    if (this.dom.posYValue) this.dom.posYValue.textContent = parseFloat(value).toFixed(1);
                 }
             }
-
             updateRotationY(value) {
                 if (this.model) {
-                    const rotY = parseFloat(value) * Math.PI / 180;
-                    this.model.rotation.y = rotY;
+                    this.model.rotation.y = parseFloat(value) * Math.PI / 180;
                     if (this.dom.rotYValue) this.dom.rotYValue.textContent = value + '°';
                 }
             }
 
             updateControlValues() {
                 if (!this.model || !this.aiDecision) return;
-
-                if (this.dom.scaleSlider) this.dom.scaleSlider.value = this.aiDecision.scale;
-                if (this.dom.scaleValue) this.dom.scaleValue.textContent = this.aiDecision.scale.toFixed(1);
-                if (this.dom.posYSlider) this.dom.posYSlider.value = this.model.position.y;
-                if (this.dom.posYValue) this.dom.posYValue.textContent = this.model.position.y.toFixed(1);
-                if (this.dom.rotYSlider) this.dom.rotYSlider.value = this.aiDecision.rotationY;
-                if (this.dom.rotYValue) this.dom.rotYValue.textContent = this.aiDecision.rotationY + '°';
+                const updates = [
+                    ['scale', this.aiDecision.scale, this.aiDecision.scale.toFixed(1) + 'x'],
+                    ['posY', this.model.position.y, this.model.position.y.toFixed(1)],
+                    ['rotY', this.aiDecision.rotationY, this.aiDecision.rotationY + '°']
+                ];
+                updates.forEach(([type, sliderVal, displayVal]) => {
+                    if (this.dom[`${type}Slider`]) this.dom[`${type}Slider`].value = sliderVal;
+                    if (this.dom[`${type}Value`]) this.dom[`${type}Value`].textContent = displayVal;
+                });
             }
 
-            // Utility Functions
             analyzeModel() {
                 if (!this.model || !this.dom.statsContent) return;
-
                 const box = new THREE.Box3().setFromObject(this.model);
-                const center = box.getCenter(new THREE.Vector3());
                 const size = box.getSize(new THREE.Vector3());
 
-                let meshCount = 0;
-                let vertexCount = 0;
+                let meshCount = 0, vertexCount = 0;
+                const materials = new Set();
+
                 this.model.traverse((node) => {
                     if (node.isMesh) {
                         meshCount++;
-                        if (node.geometry?.attributes.position) {
-                            vertexCount += node.geometry.attributes.position.count;
+                        if (node.geometry?.attributes.position) vertexCount += node.geometry.attributes.position.count;
+                        if (node.material) {
+                            (Array.isArray(node.material) ? node.material : [node.material])
+                                .forEach(mat => materials.add(mat));
                         }
                     }
                 });
 
-                this.dom.statsContent.innerHTML = `
-                    Archivo: ${this.config.modelFile}<br>
-                    Dimensiones: ${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)}<br>
-                    Meshes: ${meshCount}<br>
-                    Vértices: ${vertexCount}
-                `;
+                this.dom.statsContent.innerHTML = [
+                    ['📄 Archivo', this.config.modelFile],
+                    ['📐 Dimensiones', `${size.x.toFixed(1)} × ${size.y.toFixed(1)} × ${size.z.toFixed(1)}`],
+                    ['🔷 Meshes', meshCount],
+                    ['📊 Vértices', vertexCount.toLocaleString()],
+                    ['🎨 Materiales', materials.size]
+                ].map(([label, value]) =>
+                    `<div class="stat-item"><span class="stat-label">${label}</span><span class="stat-value">${value}</span></div>`
+                ).join('');
             }
 
             autoFit() {
                 if (!this.model) return;
-
                 const box = new THREE.Box3().setFromObject(this.model);
                 const center = box.getCenter(new THREE.Vector3());
                 const size = box.getSize(new THREE.Vector3());
                 const maxDim = Math.max(size.x, size.y, size.z);
-
                 const targetScale = maxDim > 0 ? 3 / maxDim : 1;
-                this.model.scale.set(targetScale, targetScale, targetScale);
-                this.model.position.copy(center).negate();
-
-                this.updateControlValues();
-                if (!this.config.isMobile) this.fitCameraToModel();
+                this.animateToValues({ scale: targetScale, position: center.clone().negate(), camera: true });
             }
 
             center() {
                 if (!this.model) return;
-
                 const box = new THREE.Box3().setFromObject(this.model);
                 const center = box.getCenter(new THREE.Vector3());
-                this.model.position.copy(center).negate();
-                this.updateControlValues();
+                this.animateToValues({ position: center.clone().negate() });
+            }
+
+            animateToValues(targets) {
+                if (!this.model) return;
+                const startScale = this.model.scale.x;
+                const startPos = this.model.position.clone();
+
+                const animate = (startTime = Date.now()) => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / 800, 1);
+                    const easeInOut = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+                    if (targets.scale !== undefined) {
+                        const currentScale = startScale + (targets.scale - startScale) * easeInOut;
+                        this.model.scale.setScalar(currentScale);
+                        if (this.dom.scaleSlider) this.dom.scaleSlider.value = currentScale;
+                        if (this.dom.scaleValue) this.dom.scaleValue.textContent = currentScale.toFixed(1) + 'x';
+                    }
+
+                    if (targets.position) {
+                        this.model.position.lerpVectors(startPos, targets.position, easeInOut);
+                        if (this.dom.posYSlider) this.dom.posYSlider.value = this.model.position.y;
+                        if (this.dom.posYValue) this.dom.posYValue.textContent = this.model.position.y.toFixed(1);
+                    }
+
+                    if (progress < 1) requestAnimationFrame(() => animate(startTime));
+                    else if (targets.camera) this.fitCameraToModel();
+                };
+                animate();
             }
 
             resetCamera() {
-                this.camera.position.set(0, 2, 5);
-                this.camera.lookAt(0, 0, 0);
-                if (this.controls) {
-                    this.controls.target.set(0, 0, 0);
-                    this.controls.update();
-                }
+                const startPos = this.camera.position.clone();
+                const targetPos = new THREE.Vector3(0, 2, 5);
+
+                const animate = (startTime = Date.now()) => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / 1000, 1);
+                    const easeOut = 1 - Math.pow(1 - progress, 3);
+
+                    this.camera.position.lerpVectors(startPos, targetPos, easeOut);
+                    this.camera.lookAt(0, 0, 0);
+                    if (this.controls) { this.controls.target.set(0, 0, 0); this.controls.update(); }
+
+                    if (progress < 1) requestAnimationFrame(() => animate(startTime));
+                };
+                animate();
             }
 
             toggleWireframe() {
                 if (!this.model) return;
-
-                // Simple wireframe toggle
                 this.model.traverse((node) => {
                     if (node.isMesh && node.material) {
-                        node.material.wireframe = !node.material.wireframe;
+                        (Array.isArray(node.material) ? node.material : [node.material])
+                            .forEach(mat => mat.wireframe = !mat.wireframe);
                     }
                 });
             }
 
             fitCameraToModel() {
-                if (!this.model || !this.camera || this.config.isMobile) return;
-
+                if (!this.model || !this.camera) return;
                 const box = new THREE.Box3().setFromObject(this.model);
                 const center = box.getCenter(new THREE.Vector3());
                 const size = box.getSize(new THREE.Vector3());
                 const maxDim = Math.max(size.x, size.y, size.z);
-
                 const fov = this.camera.fov * (Math.PI / 180);
-                const cameraZ = Math.abs(maxDim / (2 * Math.tan(fov / 2))) * 2;
+                const cameraZ = Math.abs(maxDim / (2 * Math.tan(fov / 2))) * 1.5;
+                const targetPos = new THREE.Vector3(center.x, center.y + size.y / 4, center.z + cameraZ);
+                const startPos = this.camera.position.clone();
 
-                this.camera.position.set(center.x, center.y + size.y / 4, center.z + cameraZ);
+                const animate = (startTime = Date.now()) => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / 1000, 1);
+                    const easeOut = 1 - Math.pow(1 - progress, 3);
 
-                if (this.controls) {
-                    this.controls.target.copy(center);
-                    this.controls.update();
-                } else {
-                    this.camera.lookAt(center);
-                }
+                    this.camera.position.lerpVectors(startPos, targetPos, easeOut);
+                    if (this.controls) { this.controls.target.lerp(center, easeOut); this.controls.update(); }
+                    else this.camera.lookAt(center);
+
+                    if (progress < 1) requestAnimationFrame(() => animate(startTime));
+                };
+                animate();
             }
 
-            // Event Handlers
             onResize() {
                 if (!this.camera || !this.renderer) return;
-
                 this.camera.aspect = window.innerWidth / window.innerHeight;
                 this.camera.updateProjectionMatrix();
                 this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -1346,89 +985,248 @@
                 if (this.dom.error) this.dom.error.style.display = 'block';
             }
 
-            hideLoading() {
-                if (this.dom.loading) this.dom.loading.style.display = 'none';
-            }
+            hideLoading() { if (this.dom.loading) this.dom.loading.style.display = 'none'; }
+            reload() { location.reload(); }
 
-            reload() {
-                location.reload();
-            }
-
-            // Debug function to test pizza visibility
-            debugPizzaVisibility() {
-                console.log('🔍 DEBUG PIZZA VISIBILITY');
-                console.log('- Archivo:', this.config.modelFile);
-                console.log('- Modelo existe:', !!this.model);
-                console.log('- Modelo visible:', this.model ? this.model.visible : 'N/A');
-                console.log('- Es móvil:', this.config.isMobile);
-                console.log('- Posición:', this.model ? this.model.position : 'N/A');
-                console.log('- Escala:', this.model ? this.model.scale : 'N/A');
-                console.log('- Rotación:', this.model ? this.model.rotation : 'N/A');
-
-                if (this.model) {
-                    console.log('- Hijos del modelo:', this.model.children.length);
-                    this.model.traverse((child) => {
-                        if (child.isMesh) {
-                            console.log('  - Mesh:', child.name, 'Visible:', child.visible, 'Geometry:', !!child.geometry, 'Material:', !!child.material);
-                        }
-                    });
-                }
-
-                if (this.aiAnalysis) {
-                    console.log('- IA Análisis:', this.aiAnalysis);
-                }
-                if (this.aiDecision) {
-                    console.log('- IA Decisión:', this.aiDecision);
-                }
-            }
-
-            // Toggle mobile 3D view
-            toggleMobile3D() {
-                if (!this.config.isMobile || !this.model) return;
-
-                const toggle3DBtn = document.getElementById('toggle-3d-btn');
-
-                if (this.model.visible) {
-                    // Hide model
-                    this.hideMobile3DView();
-                    if (toggle3DBtn) toggle3DBtn.textContent = 'Ver Modelo 3D';
-                } else {
-                    // Show model
-                    this.showMobile3DView();
-                    if (toggle3DBtn) toggle3DBtn.textContent = 'Ocultar Modelo 3D';
-                }
-            }
-
-            // Animation Loop
             animate() {
                 requestAnimationFrame(() => this.animate());
-
-                if (this.controls) {
-                    this.controls.update();
-                }
-
-                // Auto rotation for non-normal models
+                if (this.controls) this.controls.update();
                 if (this.model && this.aiDecision && this.aiDecision.strategy !== 'standard' &&
                     this.dom.rotYSlider && this.dom.rotYSlider.value == 0) {
-                    this.model.rotation.y += 0.003;
+                    this.model.rotation.y += 0.002;
                 }
+                if (this.renderer && this.scene && this.camera) this.renderer.render(this.scene, this.camera);
+            }
 
-                if (this.renderer && this.scene && this.camera) {
-                    this.renderer.render(this.scene, this.camera);
+            // AR Functionality (simplified)
+            async checkARSupport() {
+                try {
+                    if (navigator.xr) {
+                        this.isARSupported = await navigator.xr.isSessionSupported('immersive-ar');
+                        console.log('AR Support:', this.isARSupported);
+                        if (this.isARSupported) this.createReticle();
+                    }
+                } catch (error) {
+                    console.log('AR no disponible:', error);
+                    this.isARSupported = false;
                 }
             }
+
+            createReticle() {
+                this.reticle = new THREE.Group();
+                const ring = new THREE.Mesh(
+                    new THREE.RingGeometry(0.05, 0.07, 24),
+                    new THREE.MeshBasicMaterial({ color: 0x0099ff, side: THREE.DoubleSide, transparent: true, opacity: 0.8 })
+                );
+                const outerRing = new THREE.Mesh(
+                    new THREE.RingGeometry(0.08, 0.09, 24),
+                    new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.5 })
+                );
+                const grid = new THREE.Mesh(
+                    new THREE.PlaneGeometry(0.5, 0.5, 10, 10),
+                    new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3, wireframe: true, side: THREE.DoubleSide })
+                );
+
+                [ring, outerRing, grid].forEach(mesh => this.reticle.add(mesh));
+                this.reticle.rotation.x = -Math.PI / 2;
+                this.reticle.visible = false;
+                this.scene.add(this.reticle);
+
+                const animateReticle = () => {
+                    if (this.reticle && this.reticle.visible) {
+                        const time = Date.now() * 0.005;
+                        outerRing.scale.setScalar(1 + Math.sin(time) * 0.2);
+                        grid.material.opacity = 0.2 + Math.sin(time * 2) * 0.1;
+                    }
+                    requestAnimationFrame(animateReticle);
+                };
+                animateReticle();
+                console.log('✅ Reticle horizontal creado');
+            }
+
+            async startAR() {
+                if (!this.isARSupported) { alert('AR no está disponible en este dispositivo/navegador'); return; }
+
+                try {
+                    console.log('🚀 Iniciando AR');
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+                    });
+                    stream.getTracks().forEach(track => track.stop());
+
+                    this.arSession = await navigator.xr.requestSession('immersive-ar', {
+                        requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay']
+                    });
+                    console.log('✅ Sesión AR creada');
+
+                    this.renderer.xr.setReferenceSpaceType('local');
+                    await this.renderer.xr.setSession(this.arSession);
+
+                    this.arSession.addEventListener('select', () => this.onARSelect());
+                    this.arSession.addEventListener('end', () => this.onAREnd());
+
+                    if (this.model) {
+                        this.modelStateBeforeAR = {
+                            position: this.model.position.clone(), rotation: this.model.rotation.clone(),
+                            scale: this.model.scale.clone(), visible: this.model.visible
+                        };
+                        this.model.visible = false;
+                    }
+
+                    this.scene.background = null;
+                    this.isARActive = true;
+
+                    const arButton = document.getElementById('ar-toggle');
+                    if (arButton) { arButton.classList.add('active'); arButton.textContent = '🔴'; }
+
+                    console.log('🎯 AR iniciado correctamente');
+                    this.renderer.setAnimationLoop((timestamp, frame) => this.renderAR(timestamp, frame));
+
+                } catch (error) {
+                    console.error('❌ Error iniciando AR:', error);
+                    let errorMsg = error.message;
+                    if (error.name === 'NotAllowedError') errorMsg = 'Permisos de cámara denegados.';
+                    else if (error.name === 'NotFoundError') errorMsg = 'No se encontró cámara trasera.';
+                    else if (error.name === 'NotSupportedError') errorMsg = 'AR no soportado en este navegador.';
+                    alert('Error AR: ' + errorMsg);
+                }
+            }
+
+            renderAR(timestamp, frame) {
+                if (!frame || !this.isARActive) return;
+                const session = this.renderer.xr.getSession();
+                const referenceSpace = this.renderer.xr.getReferenceSpace();
+
+                if (!this.hitTestSource) {
+                    session.requestReferenceSpace('viewer').then(viewerSpace => {
+                        session.requestHitTestSource({ space: viewerSpace })
+                            .then(source => { this.hitTestSource = source; console.log('✅ Hit test source inicializado'); })
+                            .catch(err => console.error('❌ Error inicializando hit test:', err));
+                    });
+                    return;
+                }
+
+                if (!this.model.visible) {
+                    const hitTestResults = frame.getHitTestResults(this.hitTestSource);
+                    if (hitTestResults.length > 0) {
+                        const hit = hitTestResults[0];
+                        const pose = hit.getPose(referenceSpace);
+                        if (pose) {
+                            this.reticle.visible = true;
+                            this.reticle.matrix.fromArray(pose.transform.matrix);
+                            this.reticle.matrix.decompose(this.reticle.position, this.reticle.quaternion, this.reticle.scale);
+                        }
+                    } else this.reticle.visible = false;
+                } else this.reticle.visible = false;
+
+                this.renderer.render(this.scene, this.camera);
+            }
+
+            onARSelect() {
+                console.log('🎯 Superficie tocada para colocar modelo');
+                if (!this.reticle.visible || this.model.visible) { console.log('⚠️ No se puede colocar'); return; }
+
+                const position = new THREE.Vector3();
+                const quaternion = new THREE.Quaternion();
+                const scale = new THREE.Vector3();
+                this.reticle.matrix.decompose(position, quaternion, scale);
+                console.log('📍 Posición de superficie:', position);
+
+                if (this.modelStateBeforeAR) this.model.rotation.copy(this.modelStateBeforeAR.rotation);
+
+                this.model.position.set(position.x, position.y + 0.02, position.z);
+
+                if (this.aiAnalysis && this.aiAnalysis.problemType === 'displaced_center_small') {
+                    console.log('🍕 Aplicando configuración especial AR para pizza3/4');
+                    this.model.scale.setScalar(0.8);
+                    const center = this.aiAnalysis.center.clone();
+                    center.y = 0;
+                    this.model.position.add(center.negate());
+                } else {
+                    const originalScale = this.modelStateBeforeAR ? this.modelStateBeforeAR.scale.x : 1.0;
+                    const arScale = Math.min(0.5, originalScale * 0.3);
+                    this.model.scale.setScalar(arScale);
+                }
+
+                this.model.visible = true;
+                this.model.traverse((child) => {
+                    if (child.isMesh) {
+                        child.visible = true;
+                        if (child.material) {
+                            Object.assign(child.material, { transparent: false, opacity: 1.0, side: THREE.DoubleSide });
+                            child.material.needsUpdate = true;
+                        }
+                    }
+                });
+
+                this.reticle.visible = false;
+                console.log('🎯 Modelo colocado en AR');
+            }
+
+            onAREnd() {
+                console.log('🔚 Sesión AR finalizada');
+                this.isARActive = false;
+                this.hitTestSource = null;
+                if (this.reticle) this.reticle.visible = false;
+
+                if (this.model && this.modelStateBeforeAR) {
+                    ['position', 'rotation', 'scale', 'visible'].forEach(prop => {
+                        this.model[prop] = typeof this.modelStateBeforeAR[prop].copy === 'function'
+                            ? this.model[prop].copy(this.modelStateBeforeAR[prop])
+                            : this.modelStateBeforeAR[prop];
+                    });
+                    console.log('✅ Estado del modelo restaurado completamente');
+                }
+
+                this.scene.background = this.backgroundTexture;
+                const arButton = document.getElementById('ar-toggle');
+                if (arButton) { arButton.classList.remove('active'); arButton.textContent = '📷'; }
+                this.modelStateBeforeAR = null;
+                this.renderer.setAnimationLoop(null);
+                this.animate();
+                console.log('🎯 Regreso a vista 3D tradicional sin cambios');
+            }
+
+            stopAR() { if (this.arSession) this.arSession.end(); }
         }
 
-        // Global app instance
         let app;
 
-        // Initialize when DOM is ready
+        function togglePanel(panelId) {
+            const panel = document.getElementById(panelId);
+            if (panel) panel.classList.toggle('hidden');
+        }
+
+        function togglePanels() {
+            if (!app) return;
+            const panels = ['controls-panel', 'stats-panel', 'ai-panel'];
+            const currentIndex = panels.indexOf(app.currentPanel);
+            const nextIndex = (currentIndex + 1) % panels.length;
+
+            if (app.currentPanel) {
+                const currentPanel = document.getElementById(app.currentPanel);
+                if (currentPanel) { currentPanel.classList.remove('visible'); currentPanel.classList.add('hidden'); }
+            }
+
+            app.currentPanel = panels[nextIndex];
+            const nextPanel = document.getElementById(app.currentPanel);
+            if (nextPanel) { nextPanel.classList.remove('hidden'); nextPanel.classList.add('visible'); }
+
+            const toggleBtn = document.getElementById('panel-toggle');
+            const icons = ['🎮', '📊', '🤖'];
+            if (toggleBtn) toggleBtn.textContent = icons[nextIndex];
+        }
+
+        function toggleAR() {
+            if (!app) return;
+            app.isARActive ? app.stopAR() : app.startAR();
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Iniciando ARViewer refactorizado');
-            app = new ARViewer();
+            console.log('🚀 Iniciando Enhanced Desktop Viewer');
+            app = new DesktopViewer();
         });
 
-        // Global error handler
         window.addEventListener('error', (e) => {
             console.error('🔴 Error global:', e.error);
             if (app) app.showError('Error global: ' + e.message);
