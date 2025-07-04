@@ -1,5 +1,10 @@
 ﻿@model IEnumerable<ProyectoIdentity.Models.CollectionPoint>
 @{
+    bool esPersonalizacion = ViewBag.EsPersonalizacion ?? false;
+    if (Context.Request.Query.ContainsKey("esPersonalizacion"))
+    {
+        bool.TryParse(Context.Request.Query["esPersonalizacion"], out esPersonalizacion);
+    }
     ViewBag.Title = "Seleccionar Punto";
     Layout = "~/Views/Shared/_Layout.cshtml";
     int productoId = ViewBag.ProductoId ?? 0;
@@ -82,15 +87,13 @@
                                             Calculando...
                                         </span>
                                     </p>
-                                    <form asp-action="Confirmar" asp-controller="Recoleccion" method="post">
+                                    <form asp-action="Confirmar" asp-controller="Recoleccion" method="post" class="distance-form">
                                         <input type="hidden" name="id" value="@punto.Id" />
-                                        <input type="hidden" name="userLat" class="userLat-input" />
-                                        <input type="hidden" name="userLng" class="userLng-input" />
-                                        <input type="hidden" name="distancia" class="distancia-input" />
-                                        <input type="hidden" name="esPersonalizacion" value="true" />
-                                        <button type="submit" class="btn btn-primary w-100">
-                                            Seleccionar sucursal
-                                        </button>
+                                        <input type="hidden" name="userLat" class="userLat-input" id="userLat-@punto.Id" value="" />
+                                        <input type="hidden" name="userLng" class="userLng-input" id="userLng-@punto.Id" value="" />
+                                        <input type="hidden" name="distancia" class="distancia-input" id="distancia-@punto.Id" value="" />
+                                        <input type="hidden" name="esPersonalizacion" value="@esPersonalizacion.ToString().ToLower()" />
+                                        <button type="submit" class="btn btn-primary w-100">Seleccionar</button>
                                     </form>
                                 </div>
                             </div>
