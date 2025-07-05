@@ -36,7 +36,7 @@ namespace ProyectoIdentity.Controllers
                 }
 
                 ViewBag.PedidosActivos = countActivos;
-                ViewBag.LimiteMaximo = 3;
+                ViewBag.LimiteMaximo = 4;
             }
 
             // Obtener productos
@@ -73,7 +73,7 @@ namespace ProyectoIdentity.Controllers
                 // ✅ NO BLOQUEAR AQUÍ - Solo mostrar info
                 ViewBag.ProductosActivos = productosActivos;
                 ViewBag.Disponibles = disponibles;
-                ViewBag.LimiteMaximo = 3;
+                ViewBag.LimiteMaximo = 4;
             }
 
             var categorias = await _context.Productos
@@ -116,7 +116,7 @@ namespace ProyectoIdentity.Controllers
                     var viewModel = new LimiteAlcanzadoViewModel
                     {
                         PedidosActivos = productosActivos,
-                        LimiteMaximo = 3,
+                        LimiteMaximo = 4,
                         PedidosPendientes = new List<PedidoPendienteInfo>()
                     };
                     return View("../Shared/LimiteAlcanzado", viewModel);
@@ -166,7 +166,7 @@ namespace ProyectoIdentity.Controllers
                 totalProductos += productos.Sum(pp => pp.Cantidad ?? 0); // ✅ CON ?? porque es int?
             }
 
-            if (totalProductos >= 3)
+            if (totalProductos >= 4)
             {
                 return (false, totalProductos, $"Ya tienes {totalProductos}/3 productos en pedidos activos. Espera a que se entreguen para pedir más.");
             }
@@ -384,8 +384,8 @@ namespace ProyectoIdentity.Controllers
                     return Json(new
                     {
                         productosActivos = 0,
-                        limite = 3,
-                        disponibles = 3,
+                        limite = 4,
+                        disponibles = 4,
                         productosEnCarritos = 0,
                         totalOcupados = 0,
                         mensaje = "",
@@ -404,7 +404,7 @@ namespace ProyectoIdentity.Controllers
                 var resultado = new
                 {
                     productosActivos = productosActivos,    // ✅ NOMBRE CORRECTO
-                    limite = 3,
+                    limite = 4,
                     disponibles = disponibles,
                     productosEnCarritos = productosCarritos, // ✅ NOMBRE CORRECTO
                     totalOcupados = productosActivos + productosCarritos,
@@ -425,8 +425,8 @@ namespace ProyectoIdentity.Controllers
                 return Json(new
                 {
                     productosActivos = 0,
-                    limite = 3,
-                    disponibles = 3,
+                    limite = 4,
+                    disponibles = 4,
                     productosEnCarritos = 0,
                     totalOcupados = 0,
                     mensaje = "Error al obtener límites",
@@ -1237,7 +1237,7 @@ namespace ProyectoIdentity.Controllers
             return new LimiteAlcanzadoViewModel
             {
                 PedidosActivos = countActivos,
-                LimiteMaximo = 3,
+                LimiteMaximo = 4,
                 PedidosPendientes = pedidosActivos.Select(p => new PedidoPendienteInfo
                 {
                     Id = p.Id,
@@ -1452,7 +1452,7 @@ namespace ProyectoIdentity.Controllers
         // ✅ MÉTODO ValidarLimitesGlobales CORREGIDO PARA INCLUIR CARRITO ACTUAL
         private async Task<(bool permitido, int productosActivos, int productosCarritos, int disponibles, string mensaje)> ValidarLimitesGlobales(string usuarioId)
         {
-            const int LIMITE_MAXIMO = 3;
+            const int LIMITE_MAXIMO = 4;
 
             try
             {
