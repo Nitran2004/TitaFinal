@@ -41,15 +41,44 @@
         public string Nombre { get; set; } = "";
         public decimal Precio { get; set; }
         public int Cantidad { get; set; }
+
         public List<string> IngredientesRemovidos { get; set; } = new();
         public string? NotasEspeciales { get; set; }
         public decimal AhorroInterno { get; set; }
+        public decimal CostoRealInterno { get; set; } = 0;      // Costo real después de quitar ingredientes
+        public decimal MargenInterno => AhorroInterno;
         public decimal Subtotal { get; set; }
+
+        public decimal CostoRealTotalInterno => CostoRealInterno * Cantidad;
+        public decimal AhorroTotalInterno => AhorroInterno * Cantidad;
+
+        // ✅ MÉTODO PARA CALCULAR SUBTOTAL (SIEMPRE PRECIO ORIGINAL)
+        public void CalcularSubtotal()
+        {
+            Subtotal = Precio * Cantidad;  // Usuario siempre paga precio original
+        }
+
+        // ✅ MÉTODO PARA VALIDAR EL ITEM
+        public bool EsValido()
+        {
+            return Id > 0 &&
+                   !string.IsNullOrEmpty(Nombre) &&
+                   Precio > 0 &&
+                   Cantidad > 0 &&
+                   Cantidad <= 10;
+        }
+
+        // ✅ PROPIEDADES SOLO PARA MOSTRAR AL ADMIN
+        public string DescripcionAdmin =>
+            AhorroInterno > 0
+                ? $"{Nombre} - Precio usuario: ${Precio:F2}, Costo real: ${CostoRealInterno:F2}, Margen: ${AhorroInterno:F2}"
+                : $"{Nombre} - Sin personalización";
+
     }
+}
 
     public class PedidoPersonalizadoRequest
     {
         public string TipoServicio { get; set; } = "";
         public string? Observaciones { get; set; }
     }
-}

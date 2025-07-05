@@ -37,6 +37,10 @@
                                         <th>Cantidad</th>
                                         <th>Personalización</th>
                                         <th>Subtotal</th>
+                                        @if (esAdministrador)
+                                        {
+                                            <th>Análisis Interno</th>
+                                        }
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
@@ -53,7 +57,16 @@
                                                     <small class="text-muted"><i class="fas fa-sticky-note"></i> @item.NotasEspeciales</small>
                                                 }
                                             </td>
-                                            <td>$@item.Precio.ToString("F2")</td>
+                                            <td>
+                                                <!-- ✅ USUARIO VE SIEMPRE PRECIO ORIGINAL -->
+                                                <strong>$@item.Precio.ToString("F2")</strong>
+                                                @if (esAdministrador && item.AhorroInterno > 0)
+                                                {
+                                                    <br>
+
+                                                    <small class="text-muted">Precio original</small>
+                                                }
+                                            </td>
                                             <td>
                                                 <div class="quantity-control-small">
                                                     <button type="button" class="btn-quantity-small" onclick="cambiarCantidadCarrito(@i, -1)">-</button>
@@ -64,14 +77,8 @@
                                             <td>
                                                 @if (item.IngredientesRemovidos.Any())
                                                 {
-                                                    <small class="text-danger">
+                                                    <small class="text-info">
                                                         <i class="fas fa-minus-circle"></i> Sin: @string.Join(", ", item.IngredientesRemovidos)
-                                                        @if (esAdministrador)
-                                                        {
-                                                            <br>
-
-                                                            <span class="text-success">Ahorro interno: $@item.AhorroInterno.ToString("F2")</span>
-                                                        }
                                                     </small>
                                                 }
                                                 else
@@ -79,7 +86,34 @@
                                                     <small class="text-muted">Sin cambios</small>
                                                 }
                                             </td>
-                                            <td><strong class="subtotal-display">$@item.Subtotal.ToString("F2")</strong></td>
+                                            <td>
+                                                <!-- ✅ USUARIO VE SUBTOTAL BASADO EN PRECIO ORIGINAL -->
+                                                <strong class="subtotal-display">$@item.Subtotal.ToString("F2")</strong>
+                                            </td>
+
+                                            @if (esAdministrador)
+                                            {
+                                                <td>
+                                                    @if (item.AhorroInterno > 0)
+                                                    {
+                                                        <div class="alert alert-success p-2 mb-0">
+                                                            <small>
+                                                                <strong>Costo real:</strong> $@((item.Precio - item.AhorroInterno) * item.Cantidad).ToString("F2")<br>
+                                                                <strong>Margen:</strong> $@(item.AhorroInterno * item.Cantidad).ToString("F2")<br>
+                                                                <span class="text-success">
+                                                                    <i class="fas fa-chart-line"></i>
+                                                                    @(((item.AhorroInterno / item.Precio) * 100).ToString("F1"))% margen
+                                                                </span>
+                                                            </small>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <small class="text-muted">Sin personalización</small>
+                                                    }
+                                                </td>
+                                            }
+
                                             <td>
                                                 <button type="button" class="btn btn-sm btn-danger" onclick="eliminarDelCarrito(@i)">
                                                     <i class="fas fa-trash"></i>
@@ -105,6 +139,33 @@
                                             <strong>Total a Pagar:</strong>
                                             <strong class="text-success" id="totalPagar">$@Model.Sum(m => m.Subtotal).ToString("F2")</strong>
                                         </div>
+
+                                        @if (esAdministrador)
+                                        {
+                                            <hr>
+                                            <div class="alert alert-info p-2 mt-2">
+                                                <h6><i class="fas fa-chart-pie"></i> Análisis Interno</h6>
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Costo real total:</span>
+                                                    <span>$@Model.Where(m => m.AhorroInterno > 0).Sum(m => (m.Precio - m.AhorroInterno) * m.Cantidad).ToString("F2")</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Margen por personalización:</span>
+                                                    <span class="text-success">$@Model.Sum(m => m.AhorroInterno * m.Cantidad).ToString("F2")</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Margen %:</span>
+                                                    <span class="text-success">
+                                                        @{
+                                                            var totalPago = Model.Sum(m => m.Subtotal);
+                                                            var totalMargen = Model.Sum(m => m.AhorroInterno * m.Cantidad);
+                                                            var porcentajeMargen = totalPago > 0 ? (totalMargen / totalPago) * 100 : 0;
+                                                        }
+                                                        @porcentajeMargen.ToString("F1")%
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -163,6 +224,7 @@
     </div>
 </div>
 
+<!-- ✅ MANTÉN TODO TU JAVASCRIPT EXISTENTE TAL COMO ESTÁ -->
 <script>
     let carritoLocal = @Html.Raw(Json.Serialize(Model));
 
@@ -456,167 +518,28 @@
         if (totalEnCarrito >= 3) {
             infoElement.className = 'alert alert-warning mx-3 mt-3 mb-0';
             infoElement.innerHTML = `
-                <i class="fas fa-exclamation-triangle"></i>
-                <strong>Límite alcanzado:</strong> Tienes ${totalEnCarrito}/3 productos en este carrito.
-                <br><small>No puedes agregar más productos a este pedido.</small>
-            `;
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Límite alcanzado:</strong> Tienes ${totalEnCarrito}/3 productos en este carrito.
+                    <br><small>No puedes agregar más productos a este pedido.</small>
+                `;
         } else if (totalEnCarrito >= 2) {
             infoElement.className = 'alert alert-info mx-3 mt-3 mb-0';
             infoElement.innerHTML = `
-                <i class="fas fa-info-circle"></i>
-                Puedes agregar ${3 - totalEnCarrito} producto(s) más. (${totalEnCarrito}/3 productos en carrito)
-                <br><small>Productos en pedidos activos: ${productosActivos}/${limite}</small>
-            `;
+                    <i class="fas fa-info-circle"></i>
+                    Puedes agregar ${3 - totalEnCarrito} producto(s) más. (${totalEnCarrito}/3 productos en carrito)
+                    <br><small>Productos en pedidos activos: ${productosActivos}/${limite}</small>
+                `;
         } else if (totalEnCarrito > 0) {
             infoElement.className = 'alert alert-success mx-3 mt-3 mb-0';
             infoElement.innerHTML = `
-                <i class="fas fa-check-circle"></i>
-                Puedes agregar ${3 - totalEnCarrito} producto(s) más. (${totalEnCarrito}/3 productos en carrito)
-                <br><small>Productos en pedidos activos: ${productosActivos}/${limite}</small>
-            `;
+                    <i class="fas fa-check-circle"></i>
+                    Puedes agregar ${3 - totalEnCarrito} producto(s) más. (${totalEnCarrito}/3 productos en carrito)
+                    <br><small>Productos en pedidos activos: ${productosActivos}/${limite}</small>
+                `;
         } else {
             // ✅ OCULTAR CUANDO NO HAY PRODUCTOS
             infoElement.style.display = 'none';
         }
-    }
-
-    // ✅ ACTUALIZAR LA FUNCIÓN cambiarCantidadCarrito EXISTENTE
-    function cambiarCantidadCarrito(index, cambio) {
-        const fila = document.querySelector(`tr[data-index="${index}"]`);
-        if (!fila) {
-            console.error('[ERROR] No se encontró la fila con índice:', index);
-            return;
-        }
-
-        const cantidadDisplay = fila.querySelector('.cantidad-display');
-        if (!cantidadDisplay) {
-            console.error('[ERROR] No se encontró el display de cantidad');
-            return;
-        }
-
-        let nuevaCantidad = parseInt(cantidadDisplay.getAttribute('data-cantidad') || '0') + cambio;
-
-        // ✅ SI LA CANTIDAD ES 0 O MENOR, ELIMINAR
-        if (nuevaCantidad < 1) {
-            eliminarDelCarrito(index);
-            return;
-        }
-
-        // ✅ VALIDAR LÍMITE TOTAL DE PRODUCTOS EN CARRITO
-        const totalActual = carritoLocal.reduce((total, item, i) => {
-            return total + (i === index ? nuevaCantidad : (item.cantidad || 0));
-        }, 0);
-
-        if (totalActual > 3) {
-            alert('No puedes tener más de 3 productos en un pedido.');
-            return;
-        }
-
-        if (nuevaCantidad > 10) nuevaCantidad = 10;
-
-        // ✅ ACTUALIZAR CARRITO LOCAL CON VALIDACIONES
-        if (carritoLocal[index]) {
-            carritoLocal[index].cantidad = nuevaCantidad;
-            carritoLocal[index].subtotal = (carritoLocal[index].precio || 0) * nuevaCantidad;
-
-            // Actualizar display
-            cantidadDisplay.textContent = nuevaCantidad;
-            cantidadDisplay.setAttribute('data-cantidad', nuevaCantidad);
-
-            // Actualizar subtotal
-            const subtotalDisplay = fila.querySelector('.subtotal-display');
-            if (subtotalDisplay) {
-                subtotalDisplay.textContent = '$' + (carritoLocal[index].subtotal || 0).toFixed(2);
-            }
-
-            actualizarResumen();
-            validarLimitesCarrito();
-            guardarCarritoEnSesion();
-        }
-    }
-
-    // ✅ ACTUALIZAR LA FUNCIÓN actualizarResumen EXISTENTE
-    function actualizarResumen() {
-        const totalItems = carritoLocal.reduce((total, item) => total + item.cantidad, 0);
-        const totalPagar = carritoLocal.reduce((total, item) => total + item.subtotal, 0);
-        const ahorroTotal = carritoLocal.reduce((total, item) => total + (item.ahorroInterno || 0), 0);
-
-        document.getElementById('totalItems').textContent = totalItems;
-        document.getElementById('totalPagar').textContent = '$' + totalPagar.toFixed(2);
-
-        const ahorroElement = document.getElementById('ahorroTotal');
-        if (ahorroElement) {
-            ahorroElement.textContent = '$' + ahorroTotal.toFixed(2);
-        }
-
-        const btnProcesar = document.getElementById('btnProcesar');
-
-        // ✅ VALIDAR LÍMITE ANTES DE HABILITAR BOTÓN
-        const puedeConfirmar = totalItems > 0 && totalItems <= 3;
-        btnProcesar.disabled = !puedeConfirmar;
-
-        if (totalItems > 3) {
-            btnProcesar.innerHTML = '<i class="fas fa-ban"></i> Límite Excedido (3 max)';
-            btnProcesar.className = 'btn btn-danger w-100';
-        } else if (totalItems === 0) {
-            btnProcesar.innerHTML = '<i class="fas fa-cart-plus"></i> Carrito Vacío';
-            btnProcesar.className = 'btn btn-secondary w-100';
-        } else {
-            btnProcesar.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
-            btnProcesar.className = 'btn btn-warning w-100';
-        }
-    }
-
-    // ✅ ACTUALIZAR LA FUNCIÓN procesarPedido EXISTENTE
-    function procesarPedido() {
-        const totalItems = carritoLocal.reduce((total, item) => total + item.cantidad, 0);
-
-        // ✅ VALIDACIÓN ADICIONAL ANTES DE PROCESAR
-        if (totalItems > 3) {
-            alert('No puedes procesar un pedido con más de 3 productos. Reduce la cantidad.');
-            return;
-        }
-
-        if (totalItems === 0) {
-            alert('Tu carrito está vacío');
-            return;
-        }
-
-        const tipoServicio = document.querySelector('input[name="tipoServicio"]:checked')?.value;
-        if (!tipoServicio) {
-            alert('Por favor selecciona el tipo de servicio');
-            return;
-        }
-
-        const data = {
-            TipoServicio: tipoServicio
-        };
-
-        const btnProcesar = document.getElementById('btnProcesar');
-        btnProcesar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
-        btnProcesar.disabled = true;
-
-        fetch('@Url.Action("ProcesarPedido")', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) {
-                    window.location.href = '@Url.Action("Confirmacion", "Personalizacion")?id=' + result.pedidoId;
-                } else {
-                    alert('Error: ' + result.message);
-                    btnProcesar.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
-                    btnProcesar.disabled = false;
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error al procesar el pedido');
-                btnProcesar.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
-                btnProcesar.disabled = false;
-            });
     }
 
     // ✅ INICIALIZAR AL CARGAR LA PÁGINA (AGREGAR AL FINAL DEL SCRIPT EXISTENTE)

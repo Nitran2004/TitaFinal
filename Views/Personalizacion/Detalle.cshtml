@@ -769,23 +769,70 @@
     function calcularAhorro() {
         const esAdministrador = document.getElementById('esAdministrador').value === 'true';
 
-        if (!esAdministrador) return; // No calcular ahorros para usuarios normales
+        // ✅ USUARIO NORMAL - NO VE CAMBIOS EN EL PRECIO
+        if (!esAdministrador) {
+            // El usuario SIEMPRE ve el precio original, sin importar los ingredientes removidos
+            // No hay cálculos ni cambios visibles
+            console.log('[DEBUG] Usuario normal - precio se mantiene original');
+            return;
+        }
+
+        // ✅ SOLO ADMINISTRADOR VE LOS CÁLCULOS INTERNOS
+        console.log('[DEBUG] Administrador - calculando ahorros internos');
 
         const checkboxes = document.querySelectorAll('.form-check-input:checked');
-        let ahorro = 0;
+        let ahorroInterno = 0;
+        let detallesAhorro = [];
 
         checkboxes.forEach(checkbox => {
             const costo = parseFloat(checkbox.getAttribute('data-costo')) || 0;
-            ahorro += costo;
+            const ingrediente = checkbox.value;
+            ahorroInterno += costo;
+            detallesAhorro.push(`${ingrediente}: $${costo.toFixed(2)}`);
+            console.log(`[DEBUG] Ahorro por quitar ${ingrediente}: $${costo}`);
         });
 
-        const cantidad = parseInt(document.getElementById('cantidad').value);
-        const ahorroTotal = ahorro * cantidad;
+        const cantidad = parseInt(document.getElementById('cantidad').value) || 1;
+        const ahorroTotal = ahorroInterno * cantidad;
 
-        const ahorroElement = document.getElementById('ahorroInterno');
-        if (ahorroElement) {
-            ahorroElement.textContent = '$' + ahorroTotal.toFixed(2);
+        // ✅ MOSTRAR INFORMACIÓN SOLO AL ADMIN
+        let ahorroElement = document.getElementById('ahorroInterno');
+        if (!ahorroElement) {
+            // Crear elemento para mostrar ahorro interno al admin
+            ahorroElement = document.createElement('div');
+            ahorroElement.id = 'ahorroInterno';
+            ahorroElement.className = 'alert alert-success mt-3';
+
+            const priceContainer = document.querySelector('.price-summary');
+            if (priceContainer) {
+                priceContainer.appendChild(ahorroElement);
+            }
         }
+
+        if (ahorroTotal > 0) {
+            ahorroElement.style.display = 'block';
+            ahorroElement.innerHTML = `
+                <h6><i class="fas fa-chart-line"></i> Análisis Interno (Solo Admin)</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Precio usuario:</strong> $@Model.Precio.ToString("F2")<br>
+                        <strong>Ahorro interno:</strong> $${ahorroTotal.toFixed(2)}<br>
+                        <strong>Costo real:</strong> $${(@Model.Precio * cantidad - ahorroTotal).toFixed(2)}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Detalles:</strong><br>
+                        ${detallesAhorro.join('<br>')}
+                    </div>
+                </div>
+                <small class="text-muted">
+                    <i class="fas fa-info-circle"></i> El usuario paga el precio completo, el ahorro es margen interno.
+                </small>
+            `;
+        } else {
+            ahorroElement.style.display = 'none';
+        }
+
+        console.log(`[DEBUG] Ahorro total interno: $${ahorroTotal}`);
     }
 
     // ✅ FUNCIÓN AGREGAR AL CARRITO (ACTUALIZADA CON LÍMITES Y RECARGA)

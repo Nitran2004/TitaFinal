@@ -1,0 +1,197 @@
+﻿@model ProyectoIdentity.Models.MargenPorProductoViewModel
+@{
+    ViewData["Title"] = "Márgenes por Producto";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h3><i class="fas fa-calculator"></i> Análisis de Márgenes por Producto</h3>
+            <p class="mb-0">Desglose detallado de ganancias por personalización</p>
+        </div>
+        <div class="card-body">
+
+            <!-- ✅ RESUMEN TOTAL -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="alert alert-success text-center">
+                        <h4>$@Model.MargenTotalGeneral.ToString("F2")</h4>
+                        <p class="mb-0">Margen Total Ganado</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="alert alert-info text-center">
+                        <h4>@Model.ProductosPersonalizados</h4>
+                        <p class="mb-0">Productos Personalizados</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="alert alert-warning text-center">
+                        <h4>@Model.PeriodoDias días</h4>
+                        <p class="mb-0">Período Analizado</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ✅ FILTRO -->
+            <div class="mb-3">
+                <select id="filtro-periodo" class="form-select w-25" onchange="cambiarPeriodo()">
+                    <option value="7">Últimos 7 días</option>
+                    <option value="30" selected>Últimos 30 días</option>
+                    <option value="90">Últimos 3 meses</option>
+                </select>
+            </div>
+
+            <!-- ✅ PRODUCTOS INDIVIDUALES -->
+            @foreach (var producto in Model.ProductosConMargen)
+            {
+                <div class="card mb-3 border-left-success">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-pizza-slice text-warning"></i> @producto.NombreProducto
+                            <span class="badge bg-success float-end">@producto.VecesPersonalizado pedidos</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- ✅ INFORMACIÓN BÁSICA -->
+                            <div class="col-md-6">
+                                <div class="desglose-box">
+                                    <div class="linea-precio">
+                                        <span class="concepto">Precio original:</span>
+                                        <span class="valor">$@producto.PrecioOriginal.ToString("F2")</span>
+                                    </div>
+
+                                    @foreach (var ingrediente in producto.IngredientesQuitados)
+                                    {
+                                        <div class="linea-descuento">
+                                            <span class="concepto">Sin @ingrediente.Nombre:</span>
+                                            <span class="valor">-$@ingrediente.CostoTotal.ToString("F2")</span>
+                                            <small class="text-muted">(@ingrediente.VecesQuitado veces)</small>
+                                        </div>
+                                    }
+
+                                    <hr class="my-2">
+                                    <div class="linea-total-cliente">
+                                        <span class="concepto"><strong>Total que paga cliente:</strong></span>
+                                        <span class="valor"><strong>$@producto.PrecioOriginal.ToString("F2")</strong></span>
+                                    </div>
+                                    <div class="linea-costo-real">
+                                        <span class="concepto">Costo real de producción:</span>
+                                        <span class="valor text-danger">$@producto.CostoRealProduccion.ToString("F2")</span>
+                                    </div>
+                                    <hr class="my-2">
+                                    <div class="linea-margen">
+                                        <span class="concepto"><strong>Margen extra ganado:</strong></span>
+                                        <span class="valor text-success"><strong>$@producto.MargenExtra.ToString("F2")</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ✅ ESTADÍSTICAS -->
+                            <div class="col-md-6">
+                                <div class="stats-box">
+                                    <h6><i class="fas fa-chart-bar"></i> Estadísticas</h6>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Veces personalizado:</strong> @producto.VecesPersonalizado</li>
+                                        <li><strong>Margen por pedido:</strong> $@producto.MargenPromedioPorPedido.ToString("F2")</li>
+                                        <li><strong>% de ganancia extra:</strong> @producto.PorcentajeMargenExtra.ToString("F1")%</li>
+                                        <li><strong>Ingrediente más quitado:</strong> @(producto.IngredientesQuitados.FirstOrDefault()?.Nombre ?? "Ninguno")</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (!Model.ProductosConMargen.Any())
+            {
+                <div class="alert alert-info text-center">
+                    <h5><i class="fas fa-info-circle"></i> Sin datos</h5>
+                    <p>No hay productos personalizados en el período seleccionado.</p>
+                </div>
+            }
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function cambiarPeriodo() {
+        const periodo = document.getElementById('filtro-periodo').value;
+        const url = new URL(window.location);
+        url.searchParams.set('dias', periodo);
+        window.location.href = url.toString();
+    }
+</script>
+
+<style>
+    .border-left-success {
+        border-left: 4px solid #28a745 !important;
+    }
+
+    .desglose-box {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        border: 1px solid #e9ecef;
+    }
+
+    .stats-box {
+        background: #e7f3ff;
+        padding: 15px;
+        border-radius: 5px;
+        border: 1px solid #bee5eb;
+    }
+
+    .linea-precio, .linea-descuento, .linea-total-cliente, .linea-costo-real, .linea-margen {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        padding: 5px 0;
+    }
+
+    .linea-descuento {
+        color: #dc3545;
+        font-style: italic;
+    }
+
+    .linea-total-cliente {
+        background: #d4edda;
+        padding: 8px;
+        border-radius: 3px;
+        border: 1px solid #c3e6cb;
+    }
+
+    .linea-costo-real {
+        background: #f8d7da;
+        padding: 8px;
+        border-radius: 3px;
+        border: 1px solid #f5c6cb;
+    }
+
+    .linea-margen {
+        background: #d1ecf1;
+        padding: 8px;
+        border-radius: 3px;
+        border: 1px solid #bee5eb;
+        font-size: 1.1em;
+    }
+
+    .concepto {
+        flex: 1;
+    }
+
+    .valor {
+        font-weight: bold;
+        min-width: 80px;
+        text-align: right;
+    }
+
+    .float-end {
+        float: right !important;
+    }
+</style>

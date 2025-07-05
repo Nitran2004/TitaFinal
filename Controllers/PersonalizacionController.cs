@@ -5,6 +5,7 @@ using ProyectoIdentity.Models;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using System.Text;
 
 namespace ProyectoIdentity.Controllers
 {
@@ -196,6 +197,8 @@ namespace ProyectoIdentity.Controllers
         // ✅ AGREGAR AL CARRITO CON VALIDACIONES
         // ✅ OPCIÓN 1: ACTUALIZAR EL MÉTODO AgregarAlCarrito PARA MANEJAR LA TABLA FALTANTE
 
+        // ✅ CAMBIOS EN PersonalizacionController.AgregarAlCarrito()
+
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> AgregarAlCarrito([FromBody] PersonalizacionRequest request)
@@ -210,7 +213,7 @@ namespace ProyectoIdentity.Controllers
                     return Json(new { success = false, message = "Usuario no autenticado" });
                 }
 
-                // ✅ VALIDAR LÍMITES UNIFICADOS
+                // ✅ VALIDAR LÍMITES
                 var (permitido, disponibles, mensaje) = await ValidarAgregarProductosUnificado(userId, request.Cantidad);
                 Console.WriteLine($"[DEBUG] Validación límites - Permitido: {permitido}, Disponibles: {disponibles}");
 
@@ -220,7 +223,7 @@ namespace ProyectoIdentity.Controllers
                     {
                         success = false,
                         message = mensaje,
-                        redirectUrl = Url.Action("Index") // ✅ CAMBIÉ A INDEX EN LUGAR DE PERSONALIZACION
+                        redirectUrl = Url.Action("Index")
                     });
                 }
 
@@ -234,45 +237,32 @@ namespace ProyectoIdentity.Controllers
                 var carrito = GetCarritoPersonalizacion();
                 Console.WriteLine($"[DEBUG] Carrito actual tiene {carrito.Count} items");
 
-                // ✅ VALIDAR LÍMITE EN CARRITOS COMBINADOS
-                int productosEnCarritos = ContarProductosEnCarritos(userId);
-                Console.WriteLine($"[DEBUG] Productos en carritos: {productosEnCarritos}");
+                // ✅ NUEVO SISTEMA DE PRECIOS - OCULTAR AHORRO AL USUARIO
+                decimal precioOriginal = producto.Precio;           // $8.00 - Lo que ve y paga el usuario
+                decimal costoRealInterno = producto.Precio;         // $8.00 - Inicialmente igual
+                decimal ahorroInterno = 0;                          // $0.00 - Ahorro que NO ve el usuario
 
-                if (productosEnCarritos + request.Cantidad > disponibles + productosEnCarritos)
-                {
-                    return Json(new
-                    {
-                        success = false,
-                        message = $"Solo puedes agregar {disponibles} producto(s) más considerando ambos carritos."
-                    });
-                }
-
-                // ✅ CALCULAR PRECIO CON DESCUENTOS
-                decimal precioFinal = producto.Precio;
-                decimal ahorroTotal = 0;
-
-                Console.WriteLine($"[DEBUG] Precio original: ${producto.Precio}");
+                Console.WriteLine($"[DEBUG] Precio original: ${precioOriginal}");
                 Console.WriteLine($"[DEBUG] Ingredientes a remover: {string.Join(", ", request.IngredientesRemovidos ?? new List<string>())}");
 
+                // ✅ CALCULAR AHORRO INTERNO (SOLO PARA ANÁLISIS DEL ADMIN)
                 if (request.IngredientesRemovidos?.Any() == true)
                 {
                     try
                     {
-                        // Obtener ingredientes del producto
                         var ingredientes = GetIngredientesProducto(producto);
                         Console.WriteLine($"[DEBUG] Producto tiene {ingredientes.Count} ingredientes");
 
                         foreach (var ingredienteRemovido in request.IngredientesRemovidos)
                         {
-                            // Buscar el ingrediente en el JSON del producto
                             var ingrediente = ingredientes.FirstOrDefault(i =>
                                 i.Nombre.Equals(ingredienteRemovido, StringComparison.OrdinalIgnoreCase) &&
                                 i.Removible);
 
                             if (ingrediente != null)
                             {
-                                ahorroTotal += ingrediente.Costo;
-                                Console.WriteLine($"[DEBUG] Ahorro por {ingredienteRemovido}: ${ingrediente.Costo}");
+                                ahorroInterno += ingrediente.Costo;
+                                Console.WriteLine($"[DEBUG] Ahorro interno por {ingredienteRemovido}: ${ingrediente.Costo}");
                             }
                             else
                             {
@@ -280,33 +270,44 @@ namespace ProyectoIdentity.Controllers
                             }
                         }
 
-                        // Aplicar descuento al precio
-                        precioFinal = Math.Max(0, producto.Precio - ahorroTotal);
-                        Console.WriteLine($"[DEBUG] Precio final después de descuentos: ${precioFinal}");
+                        // ✅ CALCULAR COSTO REAL INTERNO (PARA ANÁLISIS DEL ADMIN)
+                        costoRealInterno = Math.Max(0, producto.Precio - ahorroInterno);
+
+                        Console.WriteLine($"[DEBUG] Ahorro interno total: ${ahorroInterno}");
+                        Console.WriteLine($"[DEBUG] Costo real interno: ${costoRealInterno}");
+                        Console.WriteLine($"[DEBUG] Usuario pagará: ${precioOriginal} (sin saber del ahorro)");
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"[ERROR] Error calculando descuentos: {ex.Message}");
-                        // Si hay error, usar precio original sin descuentos
-                        precioFinal = producto.Precio;
-                        ahorroTotal = 0;
+                        Console.WriteLine($"[ERROR] Error calculando ahorros internos: {ex.Message}");
+                        // Si hay error, usar valores originales sin descuentos
+                        costoRealInterno = producto.Precio;
+                        ahorroInterno = 0;
                     }
                 }
 
-                // ✅ CREAR ITEM DEL CARRITO
+                // ✅ CREAR ITEM DEL CARRITO - USUARIO VE PRECIO ORIGINAL
                 var itemCarrito = new ItemCarritoPersonalizado
                 {
                     Id = request.ProductoId,
                     Nombre = producto.Nombre,
-                    Precio = precioFinal,
+                    Precio = precioOriginal,                    // ✅ USUARIO VE PRECIO ORIGINAL
                     Cantidad = request.Cantidad,
                     IngredientesRemovidos = request.IngredientesRemovidos ?? new List<string>(),
                     NotasEspeciales = request.NotasEspeciales ?? "",
-                    AhorroInterno = ahorroTotal,
-                    Subtotal = precioFinal * request.Cantidad
+
+                    // ✅ DATOS INTERNOS PARA EL ADMIN
+                    AhorroInterno = ahorroInterno,              // Solo visible para admin
+                    CostoRealInterno = costoRealInterno,        // Solo para análisis interno
+
+                    Subtotal = precioOriginal * request.Cantidad  // ✅ USUARIO PAGA PRECIO ORIGINAL
                 };
 
-                Console.WriteLine($"[DEBUG] Item creado - Nombre: {itemCarrito.Nombre}, Precio: ${itemCarrito.Precio}, Subtotal: ${itemCarrito.Subtotal}");
+                Console.WriteLine($"[DEBUG] Item creado - Nombre: {itemCarrito.Nombre}");
+                Console.WriteLine($"[DEBUG] - Precio que ve usuario: ${itemCarrito.Precio}");
+                Console.WriteLine($"[DEBUG] - Subtotal que paga usuario: ${itemCarrito.Subtotal}");
+                Console.WriteLine($"[DEBUG] - Ahorro interno (oculto): ${itemCarrito.AhorroInterno}");
+                Console.WriteLine($"[DEBUG] - Costo real interno: ${itemCarrito.CostoRealInterno}");
 
                 carrito.Add(itemCarrito);
                 SetCarritoPersonalizacion(carrito);
@@ -321,9 +322,16 @@ namespace ProyectoIdentity.Controllers
                     success = true,
                     message = "Producto agregado al carrito exitosamente",
                     totalItems = carrito.Sum(c => c.Cantidad),
-                    totalCarrito = carrito.Sum(c => c.Subtotal),
-                    ahorro = ahorroTotal,
-                    // ✅ INFORMACIÓN UNIFICADA CON NOMBRES CORRECTOS
+                    totalCarrito = carrito.Sum(c => c.Subtotal),        // ✅ TOTAL QUE VE EL USUARIO
+
+                    // ✅ DATOS PARA ADMIN (SI ES ADMIN)
+                    datosAdmin = User.IsInRole("Administrador") ? new
+                    {
+                        ahorroTotalInterno = carrito.Sum(c => c.AhorroInterno),
+                        costoRealTotal = carrito.Sum(c => c.CostoRealInterno * c.Cantidad),
+                        margenTotal = carrito.Sum(c => c.AhorroInterno)
+                    } : null,
+
                     disponibles = disponiblesActualizados,
                     productosActivos = productosActivos,
                     productosEnCarritos = productosCarritos
@@ -1571,6 +1579,144 @@ namespace ProyectoIdentity.Controllers
             return (true, disponibles, "");
         }
 
+
+
+        // ✅ MÉTODO PARA EL CONTROLADOR
+
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> MargenPorProducto(int dias = 30)
+        {
+            try
+            {
+                var fechaDesde = DateTime.Now.AddDays(-dias);
+
+                // Obtener pedidos con personalización
+                var pedidos = await _context.Pedidos
+                    .Include(p => p.Detalles)
+                    .ThenInclude(d => d.Producto)
+                    .Where(p => p.Fecha >= fechaDesde &&
+                               p.Detalles.Any(d => !string.IsNullOrEmpty(d.IngredientesRemovidos) && d.IngredientesRemovidos != "[]"))
+                    .ToListAsync();
+
+                var productosData = new Dictionary<string, ProductoConMargenDto>();
+                decimal margenTotalGeneral = 0;
+                int productosPersonalizados = 0;
+
+                foreach (var pedido in pedidos)
+                {
+                    foreach (var detalle in pedido.Detalles.Where(d => !string.IsNullOrEmpty(d.IngredientesRemovidos) && d.IngredientesRemovidos != "[]"))
+                    {
+                        try
+                        {
+                            var ingredientesRemovidos = JsonSerializer.Deserialize<List<string>>(detalle.IngredientesRemovidos) ?? new();
+                            if (!ingredientesRemovidos.Any()) continue;
+
+                            productosPersonalizados += detalle.Cantidad;
+
+                            // ✅ OBTENER O CREAR DATOS DEL PRODUCTO
+                            if (!productosData.ContainsKey(detalle.Producto.Nombre))
+                            {
+                                productosData[detalle.Producto.Nombre] = new ProductoConMargenDto
+                                {
+                                    NombreProducto = detalle.Producto.Nombre,
+                                    PrecioOriginal = detalle.Producto.Precio,
+                                    CostoRealProduccion = detalle.Producto.Precio, // Se irá reduciendo
+                                    MargenExtra = 0,
+                                    VecesPersonalizado = 0,
+                                    IngredientesQuitados = new List<IngredienteQuitadoDetalle>()
+                                };
+                            }
+
+                            var productoData = productosData[detalle.Producto.Nombre];
+                            productoData.VecesPersonalizado += detalle.Cantidad;
+
+                            // ✅ PROCESAR INGREDIENTES REMOVIDOS
+                            var ingredientesProducto = GetIngredientesProducto(detalle.Producto);
+                            decimal ahorroEsteDetalle = 0;
+
+                            foreach (var ingredienteRemovido in ingredientesRemovidos)
+                            {
+                                var ingrediente = ingredientesProducto.FirstOrDefault(i =>
+                                    i.Nombre.Equals(ingredienteRemovido, StringComparison.OrdinalIgnoreCase) && i.Removible);
+
+                                if (ingrediente != null)
+                                {
+                                    decimal costoIngrediente = ingrediente.Costo * detalle.Cantidad;
+                                    ahorroEsteDetalle += costoIngrediente;
+
+                                    // ✅ AGREGAR O ACTUALIZAR INGREDIENTE EN LA LISTA
+                                    var ingredienteExistente = productoData.IngredientesQuitados
+                                        .FirstOrDefault(i => i.Nombre == ingredienteRemovido);
+
+                                    if (ingredienteExistente != null)
+                                    {
+                                        ingredienteExistente.VecesQuitado += detalle.Cantidad;
+                                        ingredienteExistente.CostoTotal += costoIngrediente;
+                                    }
+                                    else
+                                    {
+                                        productoData.IngredientesQuitados.Add(new IngredienteQuitadoDetalle
+                                        {
+                                            Nombre = ingredienteRemovido,
+                                            CostoUnitario = ingrediente.Costo,
+                                            VecesQuitado = detalle.Cantidad,
+                                            CostoTotal = costoIngrediente
+                                        });
+                                    }
+                                }
+                            }
+
+                            productoData.MargenExtra += ahorroEsteDetalle;
+                            margenTotalGeneral += ahorroEsteDetalle;
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[ERROR] Error procesando detalle: {ex.Message}");
+                        }
+                    }
+                }
+
+                // ✅ CALCULAR MÉTRICAS FINALES PARA CADA PRODUCTO
+                foreach (var producto in productosData.Values)
+                {
+                    // Ordenar ingredientes por cantidad quitada
+                    producto.IngredientesQuitados = producto.IngredientesQuitados
+                        .OrderByDescending(i => i.VecesQuitado)
+                        .ToList();
+
+                    // Calcular costo real de producción
+                    producto.CostoRealProduccion = producto.PrecioOriginal - (producto.MargenExtra / Math.Max(1, producto.VecesPersonalizado));
+
+                    // Calcular margen promedio por pedido
+                    producto.MargenPromedioPorPedido = producto.VecesPersonalizado > 0
+                        ? producto.MargenExtra / producto.VecesPersonalizado
+                        : 0;
+
+                    // Calcular porcentaje de margen extra
+                    producto.PorcentajeMargenExtra = producto.PrecioOriginal > 0
+                        ? (producto.MargenPromedioPorPedido / producto.PrecioOriginal) * 100
+                        : 0;
+                }
+
+                var viewModel = new MargenPorProductoViewModel
+                {
+                    MargenTotalGeneral = margenTotalGeneral,
+                    ProductosPersonalizados = productosPersonalizados,
+                    PeriodoDias = dias,
+                    ProductosConMargen = productosData.Values
+                        .OrderByDescending(p => p.MargenExtra)
+                        .ToList()
+                };
+
+                return View(viewModel);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Error en MargenPorProducto: {ex.Message}");
+                TempData["Error"] = "Error al cargar el análisis por producto";
+                return RedirectToAction("AdminProductos");
+            }
+        }
     }
 
     // ============== MODELOS DE REQUEST Y CLASES ==============
