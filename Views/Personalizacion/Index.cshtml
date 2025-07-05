@@ -267,8 +267,8 @@
     // ✅ VARIABLES GLOBALES PARA LÍMITES CORREGIDAS
     let limitesActuales = {
         productosActivos: 0,        // ✅ NOMBRE CORRECTO
-        limite: 3,
-        disponibles: 3,
+        limite: 4,
+        disponibles: 4,
         productosEnCarritos: 0,     // ✅ NOMBRE CORRECTO
         totalOcupados: 0,
         permitido: true,
@@ -276,61 +276,79 @@
     };
 
     // ✅ FUNCIÓN PARA CARGAR LÍMITES CON NOMBRES CORREGIDOS
-    async function cargarEstadoUnificado() {
-        try {
-            const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
-            const data = await response.json();
-            
-            console.log('[DEBUG] Datos recibidos:', data);
-            
-            // ✅ USAR NOMBRES CORRECTOS DE LAS PROPIEDADES
-            const productosActivos = data.productosActivos || 0;        // ✅ CORREGIDO
-            const productosCarritos = data.productosEnCarritos || 0;    // ✅ CORREGIDO
-            const disponibles = data.disponibles || 0;
-            const limite = data.limite || 3;
-            const totalOcupados = productosActivos + productosCarritos;
-            
-            // ✅ ACTUALIZAR VARIABLES GLOBALES
-            limitesActuales = {
-                productosActivos: productosActivos,
-                limite: limite,
-                disponibles: disponibles,
-                productosEnCarritos: productosCarritos,
-                totalOcupados: totalOcupados,
-                permitido: data.permitido || disponibles > 0,
-                mensaje: data.mensaje || ""
-            };
-            
-            // ✅ ACTUALIZAR INTERFAZ
-            document.getElementById('disponibles-count').textContent = disponibles;
-            document.getElementById('activos-count').textContent = productosActivos + '/' + limite;
-            document.getElementById('carritos-count').textContent = productosCarritos;
-            document.getElementById('limite-info').textContent = totalOcupados + '/' + limite;
-            
-            // ✅ MOSTRAR/OCULTAR Y CAMBIAR COLOR SEGÚN ESTADO
-            const estadoElement = document.getElementById('estado-unificado');
-            
-            if (totalOcupados > 0) {
-                estadoElement.style.display = 'block';
-                
-                if (disponibles === 0) {
-                    estadoElement.className = 'alert alert-danger';
-                    // ✅ DESHABILITAR TODOS LOS BOTONES
-                    document.querySelectorAll('.btn-seleccionar').forEach(btn => {
-                        btn.disabled = true;
-                        btn.innerHTML = '<i class="fas fa-ban"></i> Límite Alcanzado';
-                        btn.className = 'btn-seleccionar btn-secondary';
-                    });
-                } else if (disponibles <= 1) {
-                    estadoElement.className = 'alert alert-warning';
-                    // ✅ MANTENER BOTONES HABILITADOS PERO CON WARNING
-                    document.querySelectorAll('.btn-seleccionar').forEach(btn => {
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Último espacio';
-                        btn.className = 'btn-seleccionar btn-warning';
-                    });
+        async function cargarEstadoUnificado() {
+            try {
+                const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
+                const data = await response.json();
+
+                console.log('[DEBUG] Datos recibidos:', data);
+
+                // ✅ TOMAR DATOS DEL BACKEND (límite 4 real)
+                const productosActivos = data.productosActivos || 0;
+                const productosCarritos = data.productosEnCarritos || 0;
+                const disponibles = data.disponibles || 0;
+                const limite = data.limite || 4;  // ✅ BACKEND MANEJA 4
+                const totalOcupados = productosActivos + productosCarritos;
+
+                // ✅ ACTUALIZAR VARIABLES GLOBALES CON DATOS REALES
+                limitesActuales = {
+                    productosActivos: productosActivos,
+                    limite: limite,  // Mantener el 4 del backend
+                    disponibles: disponibles,
+                    productosEnCarritos: productosCarritos,
+                    totalOcupados: totalOcupados,
+                    permitido: data.permitido || disponibles > 0,
+                    mensaje: data.mensaje || ""
+                };
+
+                // ✅ MOSTRAR VISUALMENTE LÍMITE 3 (ENGAÑO PARA EL USUARIO)
+                const limiteVisual = 3;
+                const disponiblesVisuales = Math.min(3, disponibles);  // No mostrar más de 3
+                const activosVisuales = Math.min(3, productosActivos);  // No mostrar más de 3
+                const carritosVisuales = Math.min(3, productosCarritos); // No mostrar más de 3
+                const totalVisuales = activosVisuales + carritosVisuales;
+
+                // ✅ ACTUALIZAR INTERFAZ CON VALORES VISUALES (LÍMITE 3)
+                document.getElementById('disponibles-count').textContent = disponiblesVisuales;
+                document.getElementById('activos-count').textContent = activosVisuales + '/' + limiteVisual;
+                document.getElementById('carritos-count').textContent = carritosVisuales;
+                document.getElementById('limite-info').textContent = Math.min(3, totalOcupados) + '/' + limiteVisual;
+
+                // ✅ MOSTRAR/OCULTAR Y CAMBIAR COLOR SEGÚN ESTADO
+                const estadoElement = document.getElementById('estado-unificado');
+
+                if (totalOcupados > 0) {
+                    estadoElement.style.display = 'block';
+
+                    // ✅ USAR DISPONIBLES REALES PARA LA LÓGICA, PERO MOSTRAR LÍMITE 3
+                    if (disponibles === 0) {
+                        estadoElement.className = 'alert alert-danger';
+                        // ✅ DESHABILITAR TODOS LOS BOTONES
+                        document.querySelectorAll('.btn-seleccionar').forEach(btn => {
+                            btn.disabled = true;
+                            btn.innerHTML = '<i class="fas fa-ban"></i> Límite Alcanzado';
+                            btn.className = 'btn-seleccionar btn-secondary';
+                        });
+                    } else if (disponibles <= 1) {
+                        estadoElement.className = 'alert alert-warning';
+                        // ✅ MANTENER BOTONES HABILITADOS PERO CON WARNING
+                        document.querySelectorAll('.btn-seleccionar').forEach(btn => {
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Último espacio';
+                            btn.className = 'btn-seleccionar btn-warning';
+                        });
+                    } else {
+                        estadoElement.className = 'alert alert-info';
+                        // ✅ BOTONES NORMALES
+                        document.querySelectorAll('.btn-seleccionar').forEach(btn => {
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-cog"></i> Personalizar';
+                            btn.className = 'btn-seleccionar';
+                        });
+                    }
                 } else {
-                    estadoElement.className = 'alert alert-info';
+                    // ✅ OCULTAR CUANDO NO HAY PRODUCTOS
+                    estadoElement.style.display = 'none';
                     // ✅ BOTONES NORMALES
                     document.querySelectorAll('.btn-seleccionar').forEach(btn => {
                         btn.disabled = false;
@@ -338,58 +356,50 @@
                         btn.className = 'btn-seleccionar';
                     });
                 }
-            } else {
-                // ✅ OCULTAR CUANDO NO HAY PRODUCTOS
-                estadoElement.style.display = 'none';
-                // ✅ BOTONES NORMALES
-                document.querySelectorAll('.btn-seleccionar').forEach(btn => {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-cog"></i> Personalizar';
-                    btn.className = 'btn-seleccionar';
-                });
+
+                console.log('[DEBUG] Estado unificado actualizado:', limitesActuales);
+                console.log(`[DEBUG] Visual: ${disponiblesVisuales} disponibles, ${totalVisuales}/3 ocupados`);
+            } catch (error) {
+                console.error('Error al cargar estado unificado:', error);
+                // ✅ VALORES POR DEFECTO SEGUROS
+                limitesActuales = {
+                    productosActivos: 0,
+                    limite: 4,
+                    disponibles: 4,
+                    productosEnCarritos: 0,
+                    totalOcupados: 0,
+                    permitido: true,
+                    mensaje: ""
+                };
             }
-            
-            console.log('[DEBUG] Estado unificado actualizado:', limitesActuales);
-        } catch (error) {
-            console.error('Error al cargar estado unificado:', error);
         }
-    }
 
     // ✅ FUNCIÓN PARA VALIDAR Y SELECCIONAR PRODUCTO
-    async function validarYSeleccionar(productoId) {
-        // Recargar límites antes de validar
-        await cargarEstadoUnificado();
+        async function validarYSeleccionar(productoId) {
+            console.log(`[DEBUG] Validando selección para producto ${productoId}`);
 
-        if (limitesActuales.disponibles === 0) {
-            // Mostrar modal de límite alcanzado
-            mostrarModalLimite();
-            return false;
+            // Recargar límites antes de validar
+            await cargarEstadoUnificado();
+
+            // ✅ USAR DISPONIBLES REALES DEL BACKEND (no los visuales)
+            if (limitesActuales.disponibles === 0) {
+                console.log('[DEBUG] Sin productos disponibles - mostrando modal');
+                mostrarModalLimite();
+                return false;
+            }
+
+            // ✅ PERMITIR HASTA 3 PRODUCTOS EFECTIVOS (aunque backend maneje 4)
+            const totalEfectivo = Math.min(3, limitesActuales.totalOcupados);
+            if (totalEfectivo >= 3) {
+                console.log('[DEBUG] Límite visual de 3 alcanzado - mostrando modal');
+                mostrarModalLimite();
+                return false;
+            }
+
+            console.log('[DEBUG] Validación pasada - redirigiendo');
+            // Si hay espacio disponible, continuar con la selección
+            window.location.href = '@Url.Action("IniciarPersonalizacion")?id=' + productoId;
         }
-
-        // Si hay espacio disponible, continuar con la selección
-        window.location.href = '@Url.Action("IniciarPersonalizacion")?id=' + productoId;
-    }
-
-    // ✅ FUNCIÓN PARA MOSTRAR MODAL DE LÍMITE
-    function mostrarModalLimite() {
-        const { productosActivos, limite, productosEnCarritos, totalOcupados } = limitesActuales;
-        
-        document.getElementById('mensaje-limite-content').innerHTML = `
-            <div class="alert alert-warning">
-                <h6><i class="fas fa-info-circle"></i> Estado actual:</h6>
-                <ul>
-                    <li>Productos en pedidos activos: <strong>${productosActivos}/${limite}</strong></li>
-                    <li>Productos en carritos (ambos): <strong>${productosEnCarritos}</strong></li>
-                    <li>Total productos: <strong>${totalOcupados}/${limite}</strong></li>
-                </ul>
-                <p>Debes esperar a que se entreguen tus pedidos pendientes o procesar tu carrito actual para poder personalizar más productos.</p>
-                <p><small class="text-muted">Los límites se aplican conjuntamente a personalización y recomendación IA.</small></p>
-            </div>
-        `;
-
-        const modal = new bootstrap.Modal(document.getElementById('modalLimiteAlcanzado'));
-        modal.show();
-    }
 
     // ✅ ESCUCHAR CAMBIOS EN CARRITOS
     window.addEventListener('storage', function (e) {
@@ -398,14 +408,45 @@
             cargarEstadoUnificado();
         }
     });
+        function notificarCambioCarritos() {
+            try {
+                localStorage.setItem('carritoActualizado', Date.now().toString());
+                console.log('[DEBUG] Notificación de carrito enviada');
+            } catch (error) {
+                console.log('[DEBUG] Error enviando notificación:', error);
+            }
+        }
 
     // ✅ INICIALIZAR AL CARGAR LA PÁGINA
-    document.addEventListener('DOMContentLoaded', function() {
-        cargarEstadoUnificado();
-        
-        // Recargar cuando se hace focus en la página
-        window.addEventListener('focus', cargarEstadoUnificado);
-    });
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('[DEBUG] Inicializando vista Index de Personalización...');
+            cargarEstadoUnificado();
+
+            // Recargar cuando se hace focus en la página
+            window.addEventListener('focus', function () {
+                console.log('[DEBUG] Página enfocada - recargando límites...');
+                cargarEstadoUnificado();
+            });
+
+            // ✅ RECARGAR PERIÓDICAMENTE CADA 30 SEGUNDOS
+            setInterval(cargarEstadoUnificado, 30000);
+        });
+
+        // ✅ FUNCIONES ADICIONALES PARA DEBUGGING
+        window.debugLimites = function () {
+            console.log('=== DEBUG LÍMITES ===');
+            console.log('Límites actuales:', limitesActuales);
+            console.log('Disponibles reales:', limitesActuales.disponibles);
+            console.log('Disponibles visuales:', Math.min(3, limitesActuales.disponibles));
+            console.log('Total ocupados:', limitesActuales.totalOcupados);
+            console.log('===================');
+        };
+
+        // ✅ FUNCIÓN PARA TESTING
+        window.testValidacion = function (productoId = 1) {
+            console.log('[TEST] Probando validación...');
+            validarYSeleccionar(productoId);
+        };
 </script>
 }
 
