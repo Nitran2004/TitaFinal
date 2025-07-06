@@ -14,6 +14,7 @@
                         <i class="fas fa-plus"></i> Agregar Más Productos
                     </a>
                 </div>
+
                 <div class="card-body">
                     @if (!Model.Any())
                     {
@@ -98,8 +99,8 @@
                                                     {
                                                         <div class="alert alert-success p-2 mb-0">
                                                             <small>
-                                                                <strong>Costo real:</strong> $@((item.Precio - item.AhorroInterno) * item.Cantidad).ToString("F2")<br>
-                                                                <strong>Margen:</strong> $@(item.AhorroInterno * item.Cantidad).ToString("F2")<br>
+                                                                <strong>Costo real:</strong> $@((item.Precio - item.AhorroInterno) * item.Cantidad)<br>
+                                                                <strong>Margen:</strong> $@(item.AhorroInterno * item.Cantidad)<br>
                                                                 <span class="text-success">
                                                                     <i class="fas fa-chart-line"></i>
                                                                     @(((item.AhorroInterno / item.Precio) * 100).ToString("F1"))% margen
@@ -238,7 +239,7 @@
             return;
         }
 
-        if (nuevaCantidad > 10) nuevaCantidad = 10;
+        if (nuevaCantidad > 3) nuevaCantidad = 3;
 
         // Actualizar carrito local
         carritoLocal[index].cantidad = nuevaCantidad;
@@ -525,17 +526,17 @@
         } else if (totalEnCarrito >= 2) {
             infoElement.className = 'alert alert-info mx-3 mt-3 mb-0';
             infoElement.innerHTML = `
-                    <i class="fas fa-info-circle"></i>
-                    Puedes agregar ${3 - totalEnCarrito} producto(s) más. (${totalEnCarrito}/3 productos en carrito)
-                    <br><small>Productos en pedidos activos: ${productosActivos}/${limite}</small>
-                `;
+        <i class="fas fa-info-circle"></i>
+        Puedes agregar ${3 - totalEnCarrito} producto(s) más. (${totalEnCarrito}/3 productos en carrito)
+        <br><small>Productos en pedidos activos: ${productosActivos}/3</small>  // ✅ Cambiar a /3
+    `;
         } else if (totalEnCarrito > 0) {
             infoElement.className = 'alert alert-success mx-3 mt-3 mb-0';
             infoElement.innerHTML = `
-                    <i class="fas fa-check-circle"></i>
-                    Puedes agregar ${3 - totalEnCarrito} producto(s) más. (${totalEnCarrito}/3 productos en carrito)
-                    <br><small>Productos en pedidos activos: ${productosActivos}/${limite}</small>
-                `;
+        <i class="fas fa-check-circle"></i>
+        Puedes agregar ${3 - totalEnCarrito} producto(s) más. (${totalEnCarrito}/3 productos en carrito)
+        <br><small>Productos en pedidos activos: ${productosActivos}/3</small>  // ✅ Cambiar a /3
+    `;
         } else {
             // ✅ OCULTAR CUANDO NO HAY PRODUCTOS
             infoElement.style.display = 'none';

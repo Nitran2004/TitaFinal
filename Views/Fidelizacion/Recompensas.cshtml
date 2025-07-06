@@ -4,7 +4,252 @@
 }
 
 <style>
-    /* --------- Estilos para el Header con puntos --------- */
+    /* ===== SMART IMAGE POSITIONING SYSTEM AVANZADO ===== */
+    .smart-image-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+        background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+        width: 100%;
+        height: 150px;
+    }
+
+    .smart-image {
+        width: 100%;
+        height: 100%;
+        transition: all 0.3s ease;
+        object-fit: contain;
+        object-position: center center;
+        background: white;
+    }
+
+    /* Loading state */
+    .smart-image-loading {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading-shimmer 1.5s infinite;
+    }
+    
+    @@keyframes loading-shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+
+    /* Efectos hover inteligentes */
+    .smart-image-container:hover .smart-image {
+        transform: scale(1.05);
+    }
+
+    /* Fallback para cuando no hay imagen */
+    .smart-fallback {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: white;
+        font-size: 3rem;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+    }
+
+    /* ===== IMÁGENES VERTICALES QUE DEBEN SER HORIZONTALES (CROP) ===== */
+    .smart-image[alt*="Cheddar"],
+    .smart-image[alt*="Verace"],
+    .smart-image[alt*="Jarro"],
+    .smart-image[alt*="Litro"],
+    .smart-image[alt*="Growler"],
+    .smart-image[alt*="Corona"],
+    .smart-image[alt*="Clásico"],
+    .smart-image[alt*="3 jarros cerveza artesanal"],
+    .smart-image[alt*="Botella de vino tinto"],
+    .smart-image[alt*="Manaba mule"],
+    .smart-image[alt*="Botella de caña manabita"],
+    .smart-image[alt*="Botella de Antioqueño"],
+    .smart-image[alt*="Botella de tequila"],
+    .smart-image[alt*="Mojito maracuyá"],
+    .smart-image[alt*="Mojito frutos rojos"],
+    .smart-image[alt*="Botella de Ron Abuelo"],
+    .smart-image[alt*="Gin Tonic Maracuyá"],
+    .smart-image[alt*="Gin Tonic Frutos rojos"],
+    .smart-image[alt*="Jager Sour"],
+    .smart-image[alt*="Jagerito"] {
+        object-fit: cover !important;
+        object-position: center center !important;
+        background: transparent !important;
+    }
+
+    /* ===== IMÁGENES CON FONDO BLANCO QUE DEBEN RELLENAR EL FONDO ===== */
+    .smart-image[alt*="Agua sin gas"],
+    .smart-image[alt*="Agua mineral"],
+    .smart-image[alt*="Limonada"],
+    .smart-image[alt*="Limonada Rosa"],
+    .smart-image[alt*="Té caliente"],
+    .smart-image[alt*="Coca-Cola"],
+    .smart-image[alt*="Fanta"],
+    .smart-image[alt*="Fioravanti"],
+    .smart-image[alt*="Sprite"],
+    .smart-image[alt*="Café americano"],
+    .smart-image[alt*="Capuccino"],
+    .smart-image[alt*="Iced Coffee"],
+    .smart-image[alt*="Shot de aguardiente"] {
+        object-fit: contain !important;
+        object-position: center center !important;
+        background: #FFFFFF !important;
+    }
+
+    /* ===== CONTENEDORES PARA IMÁGENES CON FONDO BLANCO ===== */
+    .smart-image-container:has(.smart-image[alt*="Agua sin gas"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Agua mineral"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Limonada"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Limonada Rosa"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Té caliente"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Coca-Cola"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Fanta"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Fioravanti"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Sprite"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Café americano"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Capuccino"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Iced Coffee"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Shot de aguardiente"]) {
+        background: #FFFFFF !important;
+    }
+
+    /* ===== IMÁGENES CON FONDO NEGRO ===== */
+    .smart-image[alt*="Cuba libre"],
+    .smart-image[alt*="Whisky Sour"],
+    .smart-image[alt*="Whisky on the rocks"] {
+        object-fit: contain !important;
+        object-position: center center !important;
+        background: #000000 !important;
+    }
+
+    /* ===== CONTENEDORES PARA IMÁGENES CON FONDO NEGRO ===== */
+    .smart-image-container:has(.smart-image[alt*="Cuba libre"]) {
+        background: #000000 !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Whisky Sour"]) {
+        background: #000000 !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Whisky on the rocks"]) {
+        background: #000000 !important;
+    }
+
+    /* ===== FALLBACK PARA NAVEGADORES QUE NO SOPORTAN :has() ===== */
+    .smart-image-container[data-producto="agua-sin-gas"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="agua-mineral"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="limonada"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="limonada-rosa"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="te-caliente"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="coca-cola"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="fanta"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="fioravanti"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="sprite"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="cafe-americano"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="capuccino"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="iced-coffee"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="shot-aguardiente"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="cuba-libre"] {
+        background: #000000 !important;
+    }
+
+    .smart-image-container[data-producto="whisky-sour"] {
+        background: #000000 !important;
+    }
+
+    .smart-image-container[data-producto="whisky-on-the-rocks"] {
+        background: #000000 !important;
+    }
+
+    /* ===== AJUSTE ESPECIAL PARA MÓVIL ===== */
+    @@media (max-width: 768px) {
+        .smart-image[alt*="Cheddar"],
+        .smart-image[alt*="Verace"],
+        .smart-image[alt*="Jarro"],
+        .smart-image[alt*="Litro"],
+        .smart-image[alt*="Growler"],
+        .smart-image[alt*="Corona"],
+        .smart-image[alt*="Clásico"] {
+            object-position: center 30% !important;
+        }
+    }
+
+    /* ===== ESTILOS ORIGINALES DE RECOMPENSAS ===== */
     .puntos-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -168,18 +413,6 @@
     .recompensa-card.no-disponible {
         opacity: 0.6;
         filter: grayscale(0.5);
-    }
-
-    .recompensa-imagen {
-        width: 100%;
-        height: 150px;
-        object-fit: cover;
-        background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 3rem;
-        color: #888;
     }
 
     .recompensa-contenido {
@@ -485,16 +718,13 @@
             @{
                 int maxPuntosRegla = 2000;
                 double porcentajeProgreso = Math.Min(100, (double)Model.PuntosUsuario / maxPuntosRegla * 100);
-                // ✅ CORREGIR: La barra debe coincidir exactamente con el porcentaje
                 double anchoBarraAjustado = porcentajeProgreso;
                 int siguienteNivel = ((Model.PuntosUsuario / 200) + 1) * 200;
                 if (siguienteNivel > 2000) siguienteNivel = 2000;
                 int puntosFaltantesProximoNivel = Math.Max(0, siguienteNivel - Model.PuntosUsuario);
-                // ✅ CORREGIR: El indicador también debe estar en la posición exacta
                 double posicionIndicador = porcentajeProgreso;
             }
 
-            <!-- ✅ USAR EL PORCENTAJE REAL SIN AJUSTES -->
             <div class="progress-bar-ruler" style="width: @anchoBarraAjustado%"></div>
 
             <!-- Marcas de la regla -->
@@ -511,12 +741,12 @@
                 }
             </div>
 
-            <!-- ✅ INDICADOR EN LA POSICIÓN CORRECTA -->
             <div class="current-position" style="left: @porcentajeProgreso%">
                 <div class="position-marker"></div>
                 <div class="position-label">@Model.PuntosUsuario pts</div>
             </div>
         </div>
+    </div>
 
     <!-- Mensajes de estado -->
     @if (TempData["Exito"] != null)
@@ -552,14 +782,21 @@
                      data-puntos="@recompensa.PuntosNecesarios"
                      data-nombre="@recompensa.Nombre">
 
-                    <div class="recompensa-imagen">
+                    <!-- ✅ IMAGEN INTELIGENTE MEJORADA -->
+                    <div class="smart-image-container" data-category="@recompensa.Categoria.ToLower()">
                         @if (recompensa.Producto?.Imagen != null && recompensa.Producto.Imagen.Length > 0)
                         {
-                            <img src="data:image/jpeg;base64,@Convert.ToBase64String(recompensa.Producto.Imagen)" alt="@recompensa.Nombre" class="recompensa-imagen" />
+                            <img src="data:image/jpeg;base64,@Convert.ToBase64String(recompensa.Producto.Imagen)" 
+                                 alt="@recompensa.Nombre" 
+                                 class="smart-image smart-image-loading"
+                                 onload="handleSmartImageLoad(this)"
+                                 onerror="handleSmartImageError(this)" />
                         }
                         else
                         {
-                            <i class="fas fa-utensils"></i>
+                            <div class="smart-fallback">
+                                <i class="fas fa-utensils"></i>
+                            </div>
                         }
                     </div>
 
@@ -669,116 +906,226 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const PUNTOS_USUARIO = @Model.PuntosUsuario;
-    const checkboxes = document.querySelectorAll('.form-check-input');
-    const quantityInputs = document.querySelectorAll('.quantity-input');
-    const decreaseBtns = document.querySelectorAll('.decrease-btn');
-    const increaseBtns = document.querySelectorAll('.increase-btn');
-    const cartContainer = document.getElementById('cart-container');
-    const cartTotal = document.getElementById('cart-total');
-    const cartCount = document.getElementById('cart-count');
-    const cartStatus = document.getElementById('cart-status');
-    const btnCanjear = document.getElementById('btn-canjear');
-    const puntosRestantes = document.getElementById('puntos-restantes');
+    // ===== SMART IMAGE ANALYZER MEJORADO PARA RECOMPENSAS =====
+    class SmartImageAnalyzer {
+        constructor() {
+            this.fondoBlancoProductos = [
+                'agua sin gas', 'agua mineral', 'limonada', 'limonada rosa',
+                'té caliente', 'coca-cola', 'fanta', 'fioravanti', 'sprite',
+                'café americano', 'capuccino', 'iced coffee', 'shot de aguardiente'
+            ];
 
-    function actualizarCarrito() {
-        let totalPuntos = 0;
-        let totalItems = 0;
-        let recompensasSeleccionadas = [];
+            this.fondoNegroProductos = [
+                'cuba libre', 'whisky sour', 'whisky on the rocks'
+            ];
 
-        checkboxes.forEach(checkbox => {
-            if (checkbox.checked && !checkbox.disabled) {
-                const id = checkbox.dataset.id;
-                const card = checkbox.closest('.recompensa-card');
-                const puntosPorItem = parseInt(card.dataset.puntos);
-                const cantidad = parseInt(document.querySelector(`input[data-id="${id}"].quantity-input`).value);
-                
-                totalPuntos += puntosPorItem * cantidad;
-                totalItems += cantidad;
-                
-                recompensasSeleccionadas.push({
-                    id: id,
-                    nombre: card.dataset.nombre,
-                    puntos: puntosPorItem,
-                    cantidad: cantidad
-                });
-                
-                card.classList.add('selected');
-            } else {
-                const card = checkbox.closest('.recompensa-card');
-                card.classList.remove('selected');
+            this.verticalProductos = [
+                'cheddar', 'verace', 'jarro', 'litro', 'growler', 'corona', 'clásico',
+                '3 jarros cerveza artesanal', 'botella de vino tinto', 'manaba mule',
+                'botella de caña manabita', 'botella de antioqueño', 'botella de tequila',
+                'mojito maracuyá', 'mojito frutos rojos', 'botella de ron abuelo',
+                'gin tonic maracuyá', 'gin tonic frutos rojos', 'jager sour', 'jagerito'
+            ];
+        }
+
+        analyzeAspectRatio(img) {
+            const ratio = img.naturalWidth / img.naturalHeight;
+            if (ratio >= 2.5) return 'ultra-wide';
+            if (ratio >= 1.5) return 'wide';
+            if (ratio >= 0.8 && ratio <= 1.2) return 'square';
+            if (ratio >= 0.4) return 'tall';
+            return 'ultra-tall';
+        }
+
+        analyzeQuality(img) {
+            const pixels = img.naturalWidth * img.naturalHeight;
+            const minDimension = Math.min(img.naturalWidth, img.naturalHeight);
+            if (pixels < 10000 || minDimension < 100) return 'tiny';
+            if (pixels < 50000 || minDimension < 200) return 'low';
+            if (pixels > 500000 && minDimension > 800) return 'high';
+            return 'medium';
+        }
+
+        analyzeContent(img) {
+            const alt = (img.alt || '').toLowerCase();
+
+            if (this.fondoBlancoProductos.some(producto => alt.includes(producto))) {
+                return 'fondo-blanco';
             }
-        });
 
-        // Actualizar UI del carrito
-        cartTotal.textContent = totalPuntos + ' pts';
-        cartCount.textContent = totalItems;
-        puntosRestantes.textContent = PUNTOS_USUARIO - totalPuntos;
+            if (this.fondoNegroProductos.some(producto => alt.includes(producto))) {
+                return 'fondo-negro';
+            }
 
-        // Validar si tiene suficientes puntos
-        const tieneSuficientesPuntos = totalPuntos <= PUNTOS_USUARIO;
-        
-        if (totalItems === 0) {
-            cartContainer.classList.add('hidden');
-        } else {
-            cartContainer.classList.remove('hidden');
-            
-            if (tieneSuficientesPuntos) {
-                cartStatus.className = 'cart-status valid';
-                cartStatus.innerHTML = '<i class="fas fa-check-circle"></i> Tienes suficientes puntos';
-                btnCanjear.className = 'btn-canjear-multiple enabled';
-                btnCanjear.disabled = false;
-            } else {
-                cartStatus.className = 'cart-status invalid';
-                cartStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Puntos insuficientes';
-                btnCanjear.className = 'btn-canjear-multiple disabled';
-                btnCanjear.disabled = true;
+            if (this.verticalProductos.some(producto => alt.includes(producto))) {
+                return 'vertical-crop';
+            }
+
+            return 'generic';
+        }
+
+        applyOptimizations(img, container, content) {
+            const productName = img.alt.toLowerCase();
+            const dataName = productName.replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+
+            switch (content) {
+                case 'fondo-blanco':
+                    container.setAttribute('data-producto', dataName);
+                    img.style.objectFit = 'contain';
+                    img.style.objectPosition = 'center center';
+                    img.style.background = '#FFFFFF';
+                    container.style.background = '#FFFFFF';
+                    break;
+
+                case 'fondo-negro':
+                    container.setAttribute('data-producto', dataName);
+                    img.style.objectFit = 'contain';
+                    img.style.objectPosition = 'center center';
+                    img.style.background = '#000000';
+                    container.style.background = '#000000';
+                    break;
+
+                case 'vertical-crop':
+                    img.style.objectFit = 'cover';
+                    img.style.objectPosition = 'center center';
+                    img.style.background = 'transparent';
+                    break;
+
+                default:
+                    img.style.objectFit = 'contain';
+                    img.style.objectPosition = 'center center';
+                    img.style.background = 'white';
             }
         }
     }
 
-    // Event listeners para checkboxes
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', actualizarCarrito);
-    });
+    const smartAnalyzer = new SmartImageAnalyzer();
 
-    // Event listeners para cantidad
-    quantityInputs.forEach(input => {
-        input.addEventListener('change', function() {
-            let value = parseInt(this.value) || 1;
-            this.value = Math.min(Math.max(value, 1), 10);
-            actualizarCarrito();
+    function handleSmartImageLoad(img) {
+        img.classList.remove('smart-image-loading');
+        const container = img.closest('.smart-image-container');
+        const content = smartAnalyzer.analyzeContent(img);
+        
+        smartAnalyzer.applyOptimizations(img, container, content);
+        console.log(`Recompensa imagen analizada: ${img.alt} | ${content}`);
+    }
+
+    function handleSmartImageError(img) {
+        const container = img.closest('.smart-image-container');
+        container.innerHTML = '<div class="smart-fallback"><i class="fas fa-utensils"></i></div>';
+    }
+
+    // ===== JAVASCRIPT ORIGINAL DE RECOMPENSAS CONSERVADO =====
+    document.addEventListener('DOMContentLoaded', function() {
+        const PUNTOS_USUARIO = @Model.PuntosUsuario;
+        const checkboxes = document.querySelectorAll('.form-check-input');
+        const quantityInputs = document.querySelectorAll('.quantity-input');
+        const decreaseBtns = document.querySelectorAll('.decrease-btn');
+        const increaseBtns = document.querySelectorAll('.increase-btn');
+        const cartContainer = document.getElementById('cart-container');
+        const cartTotal = document.getElementById('cart-total');
+        const cartCount = document.getElementById('cart-count');
+        const cartStatus = document.getElementById('cart-status');
+        const btnCanjear = document.getElementById('btn-canjear');
+        const puntosRestantes = document.getElementById('puntos-restantes');
+
+        function actualizarCarrito() {
+            let totalPuntos = 0;
+            let totalItems = 0;
+            let recompensasSeleccionadas = [];
+
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked && !checkbox.disabled) {
+                    const id = checkbox.dataset.id;
+                    const card = checkbox.closest('.recompensa-card');
+                    const puntosPorItem = parseInt(card.dataset.puntos);
+                    const cantidad = parseInt(document.querySelector(`input[data-id="${id}"].quantity-input`).value);
+                    
+                    totalPuntos += puntosPorItem * cantidad;
+                    totalItems += cantidad;
+                    
+                    recompensasSeleccionadas.push({
+                        id: id,
+                        nombre: card.dataset.nombre,
+                        puntos: puntosPorItem,
+                        cantidad: cantidad
+                    });
+                    
+                    card.classList.add('selected');
+                } else {
+                    const card = checkbox.closest('.recompensa-card');
+                    card.classList.remove('selected');
+                }
+            });
+
+            // Actualizar UI del carrito
+            cartTotal.textContent = totalPuntos + ' pts';
+            cartCount.textContent = totalItems;
+            puntosRestantes.textContent = PUNTOS_USUARIO - totalPuntos;
+
+            // Validar si tiene suficientes puntos
+            const tieneSuficientesPuntos = totalPuntos <= PUNTOS_USUARIO;
+            
+            if (totalItems === 0) {
+                cartContainer.classList.add('hidden');
+            } else {
+                cartContainer.classList.remove('hidden');
+                
+                if (tieneSuficientesPuntos) {
+                    cartStatus.className = 'cart-status valid';
+                    cartStatus.innerHTML = '<i class="fas fa-check-circle"></i> Tienes suficientes puntos';
+                    btnCanjear.className = 'btn-canjear-multiple enabled';
+                    btnCanjear.disabled = false;
+                } else {
+                    cartStatus.className = 'cart-status invalid';
+                    cartStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Puntos insuficientes';
+                    btnCanjear.className = 'btn-canjear-multiple disabled';
+                    btnCanjear.disabled = true;
+                }
+            }
+        }
+
+        // Event listeners para checkboxes
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', actualizarCarrito);
         });
-    });
 
-    // Botones de incremento/decremento
-    decreaseBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (this.disabled) return;
-            const input = document.querySelector(`input[data-id="${this.dataset.id}"].quantity-input`);
-            input.value = Math.max(1, parseInt(input.value) - 1);
-            actualizarCarrito();
+        // Event listeners para cantidad
+        quantityInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                let value = parseInt(this.value) || 1;
+                this.value = Math.min(Math.max(value, 1), 10);
+                actualizarCarrito();
+            });
         });
-    });
 
-    increaseBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (this.disabled) return;
-            const input = document.querySelector(`input[data-id="${this.dataset.id}"].quantity-input`);
-            input.value = Math.min(10, parseInt(input.value) + 1);
-            actualizarCarrito();
+        // Botones de incremento/decremento
+        decreaseBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (this.disabled) return;
+                const input = document.querySelector(`input[data-id="${this.dataset.id}"].quantity-input`);
+                input.value = Math.max(1, parseInt(input.value) - 1);
+                actualizarCarrito();
+            });
         });
+
+        increaseBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (this.disabled) return;
+                const input = document.querySelector(`input[data-id="${this.dataset.id}"].quantity-input`);
+                input.value = Math.min(10, parseInt(input.value) + 1);
+                actualizarCarrito();
+            });
+        });
+
+        // Inicializar
+        actualizarCarrito();
     });
 
-    // Inicializar
-    actualizarCarrito();
-});
-
-function confirmarCanje() {
-    const totalItems = parseInt(document.getElementById('cart-count').textContent);
-    const totalPuntos = document.getElementById('cart-total').textContent;
-    
-    return confirm(`¿Estás seguro de canjear ${totalItems} recompensa(s) por ${totalPuntos}?`);
-}
+    function confirmarCanje() {
+        const totalItems = parseInt(document.getElementById('cart-count').textContent);
+        const totalPuntos = document.getElementById('cart-total').textContent;
+        
+        return confirm(`¿Estás seguro de canjear ${totalItems} recompensa(s) por ${totalPuntos}?`);
+    }
 </script>

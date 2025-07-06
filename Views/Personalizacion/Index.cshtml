@@ -5,6 +5,251 @@
 }
 
 <style>
+    /* ===== SMART IMAGE POSITIONING SYSTEM BASE ===== */
+    .smart-image-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+        background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+        width: 100%;
+        height: 180px;
+    }
+
+    .smart-image {
+        width: 100%;
+        height: 100%;
+        transition: all 0.3s ease;
+        object-fit: contain;
+        object-position: center center;
+        background: white;
+    }
+
+    /* Loading state */
+    .smart-image-loading {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading-shimmer 1.5s infinite;
+    }
+    
+    @@keyframes loading-shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+
+    /* Efectos hover inteligentes */
+    .smart-image-container:hover .smart-image {
+        transform: scale(1.05);
+    }
+
+    /* Fallback para cuando no hay imagen */
+    .smart-fallback {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: white;
+        font-size: 3rem;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+    }
+
+    /* ===== IMÁGENES VERTICALES QUE DEBEN SER HORIZONTALES (CROP) ===== */
+    .smart-image[alt*="Cheddar"],
+    .smart-image[alt*="Verace"],
+    .smart-image[alt*="Jarro"],
+    .smart-image[alt*="Litro"],
+    .smart-image[alt*="Growler"],
+    .smart-image[alt*="Corona"],
+    .smart-image[alt*="Clásico"],
+    .smart-image[alt*="3 jarros cerveza artesanal"],
+    .smart-image[alt*="Botella de vino tinto"],
+    .smart-image[alt*="Manaba mule"],
+    .smart-image[alt*="Botella de caña manabita"],
+    .smart-image[alt*="Botella de Antioqueño"],
+    .smart-image[alt*="Botella de tequila"],
+    .smart-image[alt*="Mojito maracuyá"],
+    .smart-image[alt*="Mojito frutos rojos"],
+    .smart-image[alt*="Botella de Ron Abuelo"],
+    .smart-image[alt*="Gin Tonic Maracuyá"],
+    .smart-image[alt*="Gin Tonic Frutos rojos"],
+    .smart-image[alt*="Jager Sour"],
+    .smart-image[alt*="Jagerito"] {
+        object-fit: cover !important;
+        object-position: center center !important;
+        background: transparent !important;
+    }
+
+    /* ===== IMÁGENES CON FONDO BLANCO QUE DEBEN RELLENAR EL FONDO ===== */
+    .smart-image[alt*="Agua sin gas"],
+    .smart-image[alt*="Agua mineral"],
+    .smart-image[alt*="Limonada"],
+    .smart-image[alt*="Limonada Rosa"],
+    .smart-image[alt*="Té caliente"],
+    .smart-image[alt*="Coca-Cola"],
+    .smart-image[alt*="Fanta"],
+    .smart-image[alt*="Fioravanti"],
+    .smart-image[alt*="Sprite"],
+    .smart-image[alt*="Café americano"],
+    .smart-image[alt*="Capuccino"],
+    .smart-image[alt*="Iced Coffee"],
+    .smart-image[alt*="Shot de aguardiente"] {
+        object-fit: contain !important;
+        object-position: center center !important;
+        background: #FFFFFF !important;
+    }
+
+    /* ===== CONTENEDORES PARA IMÁGENES CON FONDO BLANCO ===== */
+    .smart-image-container:has(.smart-image[alt*="Agua sin gas"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Agua mineral"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Limonada"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Limonada Rosa"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Té caliente"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Coca-Cola"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Fanta"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Fioravanti"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Sprite"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Café americano"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Capuccino"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Iced Coffee"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Shot de aguardiente"]) {
+        background: #FFFFFF !important;
+    }
+
+    /* ===== IMÁGENES CON FONDO NEGRO ===== */
+    .smart-image[alt*="Cuba libre"],
+    .smart-image[alt*="Whisky Sour"],
+    .smart-image[alt*="Whisky on the rocks"] {
+        object-fit: contain !important;
+        object-position: center center !important;
+        background: #000000 !important;
+    }
+
+    /* ===== CONTENEDORES PARA IMÁGENES CON FONDO NEGRO ===== */
+    .smart-image-container:has(.smart-image[alt*="Cuba libre"]) {
+        background: #000000 !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Whisky Sour"]) {
+        background: #000000 !important;
+    }
+
+    .smart-image-container:has(.smart-image[alt*="Whisky on the rocks"]) {
+        background: #000000 !important;
+    }
+
+    /* ===== FALLBACK PARA NAVEGADORES QUE NO SOPORTAN :has() ===== */
+    .smart-image-container[data-producto="agua-sin-gas"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="agua-mineral"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="limonada"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="limonada-rosa"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="te-caliente"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="coca-cola"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="fanta"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="fioravanti"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="sprite"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="cafe-americano"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="capuccino"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="iced-coffee"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="shot-aguardiente"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-image-container[data-producto="cuba-libre"] {
+        background: #000000 !important;
+    }
+
+    .smart-image-container[data-producto="whisky-sour"] {
+        background: #000000 !important;
+    }
+
+    .smart-image-container[data-producto="whisky-on-the-rocks"] {
+        background: #000000 !important;
+    }
+
+    /* ===== AJUSTE ESPECIAL PARA MÓVIL ===== */
+    @@media (max-width: 768px) {
+        .smart-image[alt*="Cheddar"],
+        .smart-image[alt*="Verace"],
+        .smart-image[alt*="Jarro"],
+        .smart-image[alt*="Litro"],
+        .smart-image[alt*="Growler"],
+        .smart-image[alt*="Corona"],
+        .smart-image[alt*="Clásico"] {
+            object-position: center 30% !important;
+        }
+    }
+
     /* --------- Menú de Categorías --------- */
     .category-nav {
         position: sticky;
@@ -62,9 +307,7 @@
         height: 100%;
     }
     .product-card:hover { transform:translateY(-5px); box-shadow:0 8px 24px rgba(0,0,0,0.1); }
-    .product-card img {
-        width:100%; height:180px; object-fit:cover;
-    }
+    
     .card-body {
         padding:16px; text-align:center; display: flex; flex-direction: column; height: calc(100% - 180px);
     }
@@ -188,16 +431,23 @@
             @foreach (var producto in Model)
             {
                 <div class="product-card" data-categoria="@producto.Categoria.ToLower()">
-                    @if (producto.Imagen != null)
-                    {
-                        <img src="data:image/jpeg;base64,@Convert.ToBase64String(producto.Imagen)"
-                             alt="@producto.Nombre" />
-                    }
-                    else
-                    {
-                        <img src="https://via.placeholder.com/260x180/f8f9fa/6c757d?text=Sin+Imagen"
-                             alt="@producto.Nombre" />
-                    }
+                    <div class="smart-image-container" data-category="@producto.Categoria.ToLower()">
+                        @if (producto.Imagen != null)
+                        {
+                            <img src="data:image/jpeg;base64,@Convert.ToBase64String(producto.Imagen)"
+                                 alt="@producto.Nombre" 
+                                 class="smart-image smart-image-loading"
+                                 onload="handleSmartImageLoad(this)"
+                                 onerror="handleSmartImageError(this)" />
+                        }
+                        else
+                        {
+                            <div class="smart-fallback">
+                                <i class="fas fa-utensils"></i>
+                            </div>
+                        }
+                    </div>
+
                     <div class="card-body">
                         <div class="product-name">@producto.Nombre</div>
                         <div class="product-price">$@producto.Precio.ToString("F2")</div>
@@ -215,7 +465,7 @@
                                     class="btn-seleccionar" 
                                     data-producto-id="@producto.Id"
                                     onclick="validarYSeleccionar(@producto.Id)">
-                                <i class="fas fa-cog"></i> Personalizar
+                                <i class="fas fa-cog"></i> Seleccionar
                             </button>
                         </div>
                     </div>
@@ -264,6 +514,97 @@
 
 @section Scripts {
 <script>
+    // ===== SMART IMAGE ANALYZER MEJORADO =====
+    class SmartImageAnalyzer {
+        constructor() {
+            this.fondoBlancoProductos = [
+                'agua sin gas', 'agua mineral', 'limonada', 'limonada rosa',
+                'té caliente', 'coca-cola', 'fanta', 'fioravanti', 'sprite',
+                'café americano', 'capuccino', 'iced coffee', 'shot de aguardiente'
+            ];
+
+            this.fondoNegroProductos = [
+                'cuba libre', 'whisky sour', 'whisky on the rocks'
+            ];
+
+            this.verticalProductos = [
+                'cheddar', 'verace', 'jarro', 'litro', 'growler', 'corona', 'clásico',
+                '3 jarros cerveza artesanal', 'botella de vino tinto', 'manaba mule',
+                'botella de caña manabita', 'botella de antioqueño', 'botella de tequila',
+                'mojito maracuyá', 'mojito frutos rojos', 'botella de ron abuelo',
+                'gin tonic maracuyá', 'gin tonic frutos rojos', 'jager sour', 'jagerito'
+            ];
+        }
+
+        analyzeContent(img) {
+            const alt = (img.alt || '').toLowerCase();
+
+            if (this.fondoBlancoProductos.some(producto => alt.includes(producto))) {
+                return 'fondo-blanco';
+            }
+
+            if (this.fondoNegroProductos.some(producto => alt.includes(producto))) {
+                return 'fondo-negro';
+            }
+
+            if (this.verticalProductos.some(producto => alt.includes(producto))) {
+                return 'vertical-crop';
+            }
+
+            return 'generic';
+        }
+
+        applyOptimizations(img, container, content) {
+            const productName = img.alt.toLowerCase();
+            const dataName = productName.replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+
+            switch (content) {
+                case 'fondo-blanco':
+                    container.setAttribute('data-producto', dataName);
+                    img.style.objectFit = 'contain';
+                    img.style.objectPosition = 'center center';
+                    img.style.background = '#FFFFFF';
+                    container.style.background = '#FFFFFF';
+                    break;
+
+                case 'fondo-negro':
+                    container.setAttribute('data-producto', dataName);
+                    img.style.objectFit = 'contain';
+                    img.style.objectPosition = 'center center';
+                    img.style.background = '#000000';
+                    container.style.background = '#000000';
+                    break;
+
+                case 'vertical-crop':
+                    img.style.objectFit = 'cover';
+                    img.style.objectPosition = 'center center';
+                    img.style.background = 'transparent';
+                    break;
+
+                default:
+                    img.style.objectFit = 'contain';
+                    img.style.objectPosition = 'center center';
+                    img.style.background = 'white';
+            }
+        }
+    }
+
+    const smartAnalyzer = new SmartImageAnalyzer();
+
+    function handleSmartImageLoad(img) {
+        img.classList.remove('smart-image-loading');
+        const container = img.closest('.smart-image-container');
+        const content = smartAnalyzer.analyzeContent(img);
+        
+        smartAnalyzer.applyOptimizations(img, container, content);
+        console.log(`Imagen analizada: ${img.alt} | ${content}`);
+    }
+
+    function handleSmartImageError(img) {
+        const container = img.closest('.smart-image-container');
+        container.innerHTML = '<div class="smart-fallback"><i class="fas fa-utensils"></i></div>';
+    }
+
     // ✅ VARIABLES GLOBALES PARA LÍMITES CORREGIDAS
     let limitesActuales = {
         productosActivos: 0,        // ✅ NOMBRE CORRECTO
@@ -276,79 +617,69 @@
     };
 
     // ✅ FUNCIÓN PARA CARGAR LÍMITES CON NOMBRES CORREGIDOS
-        async function cargarEstadoUnificado() {
-            try {
-                const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
-                const data = await response.json();
+    async function cargarEstadoUnificado() {
+        try {
+            const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
+            const data = await response.json();
 
-                console.log('[DEBUG] Datos recibidos:', data);
+            console.log('[DEBUG] Datos recibidos:', data);
 
-                // ✅ TOMAR DATOS DEL BACKEND (límite 4 real)
-                const productosActivos = data.productosActivos || 0;
-                const productosCarritos = data.productosEnCarritos || 0;
-                const disponibles = data.disponibles || 0;
-                const limite = data.limite || 4;  // ✅ BACKEND MANEJA 4
-                const totalOcupados = productosActivos + productosCarritos;
+            // ✅ TOMAR DATOS DEL BACKEND (límite 4 real)
+            const productosActivos = data.productosActivos || 0;
+            const productosCarritos = data.productosEnCarritos || 0;
+            const disponibles = data.disponibles || 0;
+            const limite = data.limite || 4;  // ✅ BACKEND MANEJA 4
+            const totalOcupados = productosActivos + productosCarritos;
 
-                // ✅ ACTUALIZAR VARIABLES GLOBALES CON DATOS REALES
-                limitesActuales = {
-                    productosActivos: productosActivos,
-                    limite: limite,  // Mantener el 4 del backend
-                    disponibles: disponibles,
-                    productosEnCarritos: productosCarritos,
-                    totalOcupados: totalOcupados,
-                    permitido: data.permitido || disponibles > 0,
-                    mensaje: data.mensaje || ""
-                };
+            // ✅ ACTUALIZAR VARIABLES GLOBALES CON DATOS REALES
+            limitesActuales = {
+                productosActivos: productosActivos,
+                limite: limite,  // Mantener el 4 del backend
+                disponibles: disponibles,
+                productosEnCarritos: productosCarritos,
+                totalOcupados: totalOcupados,
+                permitido: data.permitido || disponibles > 0,
+                mensaje: data.mensaje || ""
+            };
 
-                // ✅ MOSTRAR VISUALMENTE LÍMITE 3 (ENGAÑO PARA EL USUARIO)
-                const limiteVisual = 3;
-                const disponiblesVisuales = Math.min(3, disponibles);  // No mostrar más de 3
-                const activosVisuales = Math.min(3, productosActivos);  // No mostrar más de 3
-                const carritosVisuales = Math.min(3, productosCarritos); // No mostrar más de 3
-                const totalVisuales = activosVisuales + carritosVisuales;
+            // ✅ MOSTRAR VISUALMENTE LÍMITE 3 (ENGAÑO PARA EL USUARIO)
+            const limiteVisual = 3;
+            const disponiblesVisuales = Math.min(3, disponibles);  // No mostrar más de 3
+            const activosVisuales = Math.min(3, productosActivos);  // No mostrar más de 3
+            const carritosVisuales = Math.min(3, productosCarritos); // No mostrar más de 3
+            const totalVisuales = activosVisuales + carritosVisuales;
 
-                // ✅ ACTUALIZAR INTERFAZ CON VALORES VISUALES (LÍMITE 3)
-                document.getElementById('disponibles-count').textContent = disponiblesVisuales;
-                document.getElementById('activos-count').textContent = activosVisuales + '/' + limiteVisual;
-                document.getElementById('carritos-count').textContent = carritosVisuales;
-                document.getElementById('limite-info').textContent = Math.min(3, totalOcupados) + '/' + limiteVisual;
+            // ✅ ACTUALIZAR INTERFAZ CON VALORES VISUALES (LÍMITE 3)
+            document.getElementById('disponibles-count').textContent = disponiblesVisuales;
+            document.getElementById('activos-count').textContent = activosVisuales + '/' + limiteVisual;
+            document.getElementById('carritos-count').textContent = carritosVisuales;
+            document.getElementById('limite-info').textContent = Math.min(3, totalOcupados) + '/' + limiteVisual;
 
-                // ✅ MOSTRAR/OCULTAR Y CAMBIAR COLOR SEGÚN ESTADO
-                const estadoElement = document.getElementById('estado-unificado');
+            // ✅ MOSTRAR/OCULTAR Y CAMBIAR COLOR SEGÚN ESTADO
+            const estadoElement = document.getElementById('estado-unificado');
 
-                if (totalOcupados > 0) {
-                    estadoElement.style.display = 'block';
+            if (totalOcupados > 0) {
+                estadoElement.style.display = 'block';
 
-                    // ✅ USAR DISPONIBLES REALES PARA LA LÓGICA, PERO MOSTRAR LÍMITE 3
-                    if (disponibles === 0) {
-                        estadoElement.className = 'alert alert-danger';
-                        // ✅ DESHABILITAR TODOS LOS BOTONES
-                        document.querySelectorAll('.btn-seleccionar').forEach(btn => {
-                            btn.disabled = true;
-                            btn.innerHTML = '<i class="fas fa-ban"></i> Límite Alcanzado';
-                            btn.className = 'btn-seleccionar btn-secondary';
-                        });
-                    } else if (disponibles <= 1) {
-                        estadoElement.className = 'alert alert-warning';
-                        // ✅ MANTENER BOTONES HABILITADOS PERO CON WARNING
-                        document.querySelectorAll('.btn-seleccionar').forEach(btn => {
-                            btn.disabled = false;
-                            btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Último espacio';
-                            btn.className = 'btn-seleccionar btn-warning';
-                        });
-                    } else {
-                        estadoElement.className = 'alert alert-info';
-                        // ✅ BOTONES NORMALES
-                        document.querySelectorAll('.btn-seleccionar').forEach(btn => {
-                            btn.disabled = false;
-                            btn.innerHTML = '<i class="fas fa-cog"></i> Personalizar';
-                            btn.className = 'btn-seleccionar';
-                        });
-                    }
+                // ✅ USAR DISPONIBLES REALES PARA LA LÓGICA, PERO MOSTRAR LÍMITE 3
+                if (disponibles === 0) {
+                    estadoElement.className = 'alert alert-danger';
+                    // ✅ DESHABILITAR TODOS LOS BOTONES
+                    document.querySelectorAll('.btn-seleccionar').forEach(btn => {
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fas fa-ban"></i> Límite Alcanzado';
+                        btn.className = 'btn-seleccionar btn-secondary';
+                    });
+                } else if (disponibles <= 1) {
+                    estadoElement.className = 'alert alert-warning';
+                    // ✅ MANTENER BOTONES HABILITADOS PERO CON WARNING
+                    document.querySelectorAll('.btn-seleccionar').forEach(btn => {
+                        btn.disabled = false;
+                        btn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Último espacio';
+                        btn.className = 'btn-seleccionar btn-warning';
+                    });
                 } else {
-                    // ✅ OCULTAR CUANDO NO HAY PRODUCTOS
-                    estadoElement.style.display = 'none';
+                    estadoElement.className = 'alert alert-info';
                     // ✅ BOTONES NORMALES
                     document.querySelectorAll('.btn-seleccionar').forEach(btn => {
                         btn.disabled = false;
@@ -356,50 +687,60 @@
                         btn.className = 'btn-seleccionar';
                     });
                 }
+            } else {
+                // ✅ OCULTAR CUANDO NO HAY PRODUCTOS
+                estadoElement.style.display = 'none';
+                // ✅ BOTONES NORMALES
+                document.querySelectorAll('.btn-seleccionar').forEach(btn => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-cog"></i> Personalizar';
+                    btn.className = 'btn-seleccionar';
+                });
+            }
 
                 console.log('[DEBUG] Estado unificado actualizado:', limitesActuales);
-                console.log(`[DEBUG] Visual: ${disponiblesVisuales} disponibles, ${totalVisuales}/3 ocupados`);
-            } catch (error) {
-                console.error('Error al cargar estado unificado:', error);
-                // ✅ VALORES POR DEFECTO SEGUROS
-                limitesActuales = {
-                    productosActivos: 0,
-                    limite: 4,
-                    disponibles: 4,
-                    productosEnCarritos: 0,
-                    totalOcupados: 0,
-                    permitido: true,
-                    mensaje: ""
-                };
-            }
+            console.log(`[DEBUG] Visual: ${disponiblesVisuales} disponibles, ${totalVisuales}/3 ocupados`);
+        } catch (error) {
+            console.error('Error al cargar estado unificado:', error);
+            // ✅ VALORES POR DEFECTO SEGUROS
+            limitesActuales = {
+                productosActivos: 0,
+                limite: 4,
+                disponibles: 4,
+                productosEnCarritos: 0,
+                totalOcupados: 0,
+                permitido: true,
+                mensaje: ""
+            };
         }
+    }
 
     // ✅ FUNCIÓN PARA VALIDAR Y SELECCIONAR PRODUCTO
-        async function validarYSeleccionar(productoId) {
-            console.log(`[DEBUG] Validando selección para producto ${productoId}`);
+    async function validarYSeleccionar(productoId) {
+        console.log(`[DEBUG] Validando selección para producto ${productoId}`);
 
-            // Recargar límites antes de validar
-            await cargarEstadoUnificado();
+        // Recargar límites antes de validar
+        await cargarEstadoUnificado();
 
-            // ✅ USAR DISPONIBLES REALES DEL BACKEND (no los visuales)
-            if (limitesActuales.disponibles === 0) {
-                console.log('[DEBUG] Sin productos disponibles - mostrando modal');
-                mostrarModalLimite();
-                return false;
-            }
-
-            // ✅ PERMITIR HASTA 3 PRODUCTOS EFECTIVOS (aunque backend maneje 4)
-            const totalEfectivo = Math.min(3, limitesActuales.totalOcupados);
-            if (totalEfectivo >= 3) {
-                console.log('[DEBUG] Límite visual de 3 alcanzado - mostrando modal');
-                mostrarModalLimite();
-                return false;
-            }
-
-            console.log('[DEBUG] Validación pasada - redirigiendo');
-            // Si hay espacio disponible, continuar con la selección
-            window.location.href = '@Url.Action("IniciarPersonalizacion")?id=' + productoId;
+        // ✅ USAR DISPONIBLES REALES DEL BACKEND (no los visuales)
+        if (limitesActuales.disponibles === 0) {
+            console.log('[DEBUG] Sin productos disponibles - mostrando modal');
+            mostrarModalLimite();
+            return false;
         }
+
+        // ✅ PERMITIR HASTA 3 PRODUCTOS EFECTIVOS (aunque backend maneje 4)
+        const totalEfectivo = Math.min(3, limitesActuales.totalOcupados);
+        if (totalEfectivo >= 3) {
+            console.log('[DEBUG] Límite visual de 3 alcanzado - mostrando modal');
+            mostrarModalLimite();
+            return false;
+        }
+
+        console.log('[DEBUG] Validación pasada - redirigiendo');
+        // Si hay espacio disponible, continuar con la selección
+        window.location.href = '@Url.Action("IniciarPersonalizacion")?id=' + productoId;
+    }
 
     // ✅ ESCUCHAR CAMBIOS EN CARRITOS
     window.addEventListener('storage', function (e) {
@@ -408,45 +749,46 @@
             cargarEstadoUnificado();
         }
     });
-        function notificarCambioCarritos() {
-            try {
-                localStorage.setItem('carritoActualizado', Date.now().toString());
-                console.log('[DEBUG] Notificación de carrito enviada');
-            } catch (error) {
-                console.log('[DEBUG] Error enviando notificación:', error);
-            }
+
+    function notificarCambioCarritos() {
+        try {
+            localStorage.setItem('carritoActualizado', Date.now().toString());
+            console.log('[DEBUG] Notificación de carrito enviada');
+        } catch (error) {
+            console.log('[DEBUG] Error enviando notificación:', error);
         }
+    }
 
     // ✅ INICIALIZAR AL CARGAR LA PÁGINA
-        document.addEventListener('DOMContentLoaded', function () {
-            console.log('[DEBUG] Inicializando vista Index de Personalización...');
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('[DEBUG] Inicializando vista Index de Personalización...');
+        cargarEstadoUnificado();
+
+        // Recargar cuando se hace focus en la página
+        window.addEventListener('focus', function () {
+            console.log('[DEBUG] Página enfocada - recargando límites...');
             cargarEstadoUnificado();
-
-            // Recargar cuando se hace focus en la página
-            window.addEventListener('focus', function () {
-                console.log('[DEBUG] Página enfocada - recargando límites...');
-                cargarEstadoUnificado();
-            });
-
-            // ✅ RECARGAR PERIÓDICAMENTE CADA 30 SEGUNDOS
-            setInterval(cargarEstadoUnificado, 30000);
         });
 
-        // ✅ FUNCIONES ADICIONALES PARA DEBUGGING
-        window.debugLimites = function () {
-            console.log('=== DEBUG LÍMITES ===');
-            console.log('Límites actuales:', limitesActuales);
-            console.log('Disponibles reales:', limitesActuales.disponibles);
-            console.log('Disponibles visuales:', Math.min(3, limitesActuales.disponibles));
-            console.log('Total ocupados:', limitesActuales.totalOcupados);
-            console.log('===================');
-        };
+        // ✅ RECARGAR PERIÓDICAMENTE CADA 30 SEGUNDOS
+        setInterval(cargarEstadoUnificado, 30000);
+    });
 
-        // ✅ FUNCIÓN PARA TESTING
-        window.testValidacion = function (productoId = 1) {
-            console.log('[TEST] Probando validación...');
-            validarYSeleccionar(productoId);
-        };
+    // ✅ FUNCIONES ADICIONALES PARA DEBUGGING
+    window.debugLimites = function () {
+        console.log('=== DEBUG LÍMITES ===');
+        console.log('Límites actuales:', limitesActuales);
+        console.log('Disponibles reales:', limitesActuales.disponibles);
+        console.log('Disponibles visuales:', Math.min(3, limitesActuales.disponibles));
+        console.log('Total ocupados:', limitesActuales.totalOcupados);
+        console.log('===================');
+    };
+
+    // ✅ FUNCIÓN PARA TESTING
+    window.testValidacion = function (productoId = 1) {
+        console.log('[TEST] Probando validación...');
+        validarYSeleccionar(productoId);
+    };
 </script>
 }
 

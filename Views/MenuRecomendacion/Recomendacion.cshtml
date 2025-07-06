@@ -60,7 +60,7 @@
                     <!-- Botones -->
                     <div class="d-flex mb-4">
                         <button type="button" class="btn btn-outline-secondary me-2" id="btnLimpiar">Limpiar</button>
-                        <button type="button" class="btn btn-warning" id="btnRecomendar">Recomendar</button>
+                        <button type="button" class="btn btn-warning" id="btnRecomendar" onclick="procesarRecomendacion()">Recomendar</button>
                     </div>
 
                     <!-- Resultados -->
@@ -119,46 +119,50 @@
             });
 
             // ✅ OBTENER RECOMENDACIONES CON VALIDACIÓN DE LÍMITES
-            $("#btnRecomendar").click(function () {
-                // Validar límites antes de procesar
+            // ✅ FUNCIÓN SIMPLE PARA RECOMENDAR
+            function procesarRecomendacion() {
+                // Validar límites
                 if (limitesActuales.disponibles === 0) {
                     alert('No puedes usar el sistema de recomendaciones porque has alcanzado el límite de productos.');
                     return;
                 }
 
-                var categoria = $("input[name='categoria']:checked").val() || "";
-                var presupuesto = $("#presupuestoSlider").val();
-                var ingredientes = $("#ingredientes").val() || "";
+                const categoria = document.querySelector("input[name='categoria']:checked")?.value || "";
+                const presupuesto = document.getElementById("presupuestoSlider").value;
+                const ingredientes = document.getElementById("ingredientes").value || "";
 
-                const btnOriginal = $(this);
-                const textoOriginal = btnOriginal.html();
-                btnOriginal.html('<i class="fas fa-spinner fa-spin"></i> Analizando...').prop('disabled', true);
+                const btn = document.getElementById('btnRecomendar');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analizando...';
+                btn.disabled = true;
 
-                $.ajax({
-                    url: '@Url.Action("ObtenerRecomendaciones", "MenuRecomendacion")',
-                    type: 'POST',
-                    data: {
-                        categoria: categoria,
-                        presupuesto: presupuesto,
-                        ingredientes: ingredientes
-                    },
-                    success: function (response) {
-                        if (response && response.success && response.data) {
-                            mostrarResultados(response.data);
-                            // ✅ RECARGAR LÍMITES DESPUÉS DE MOSTRAR RESULTADOS
+                const formData = new FormData();
+                formData.append('categoria', categoria);
+                formData.append('presupuesto', presupuesto);
+                formData.append('ingredientes', ingredientes);
+
+                fetch('@Url.Action("ObtenerRecomendaciones", "MenuRecomendacion")', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.success && data.data) {
+                            mostrarResultados(data.data);
                             cargarLimitesProductos();
+
+                            // Restaurar botón aquí cuando todo esté listo
+                            btn.innerHTML = 'Recomendar';
+                            btn.disabled = false;
                         } else {
                             alert("No se encontraron recomendaciones");
+                            btn.innerHTML = 'Recomendar';
+                            btn.disabled = false;
                         }
-                    },
-                    error: function () {
-                        alert("Error al procesar la solicitud");
-                    },
-                    complete: function () {
-                        btnOriginal.html(textoOriginal).prop('disabled', false);
-                    }
-                });
-            });
+                    })
+            }
+
+            // Asignar función al botón
+            document.getElementById('btnRecomendar').addEventListener('click', procesarRecomendacion);
 
             // ✅ ESCUCHAR CAMBIOS DE CARRITO
             window.addEventListener('storage', function (e) {

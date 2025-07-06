@@ -28,6 +28,12 @@
                     }
                     else
                     {
+                        <!-- ✅ MOSTRAR ESTADO DE LÍMITES -->
+                        <div id="info-limite-carrito" class="alert alert-info mb-3">
+                            <i class="fas fa-info-circle"></i>
+                            <span id="mensaje-limite">Cargando información de límites...</span>
+                        </div>
+
                         <div class="table-responsive">
                             <table class="table">
                                 <thead>
@@ -58,12 +64,12 @@
                                                     <small class="text-info"><i class="fas fa-sticky-note"></i> @item.NotasEspeciales</small>
                                                 }
                                             </td>
-                                            <td>$@item.Precio.ToString("F2")</td>
+                                            <td data-precio="@item.Precio">$@item.Precio.ToString("F2")</td>
                                             <td>
                                                 <div class="quantity-control-small">
-                                                    <button type="button" class="btn-quantity-small" onclick="cambiarCantidadCarrito(@i, -1)">-</button>
+                                                    <button type="button" class="btn-quantity-small" onclick="cambiarCantidad(@i, -1)">-</button>
                                                     <span class="cantidad-display" data-cantidad="@item.Cantidad">@item.Cantidad</span>
-                                                    <button type="button" class="btn-quantity-small" onclick="cambiarCantidadCarrito(@i, 1)">+</button>
+                                                    <button type="button" class="btn-quantity-small" onclick="cambiarCantidad(@i, 1)">+</button>
                                                 </div>
                                             </td>
                                             <td>
@@ -73,7 +79,7 @@
                                             </td>
                                             <td><strong class="subtotal-display">$@item.Subtotal.ToString("F2")</strong></td>
                                             <td>
-                                                <button type="button" class="btn btn-sm btn-danger" onclick="eliminarDelCarrito(@i)">
+                                                <button type="button" class="btn btn-sm btn-danger" onclick="eliminarItem(@i)">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </td>
@@ -92,7 +98,7 @@
                                             <span>Total Items:</span>
                                             <span id="totalItems">@Model.Sum(m => m.Cantidad)</span>
                                         </div>
-                                                                              <hr>
+                                        <hr>
                                         <div class="d-flex justify-content-between">
                                             <strong>Total a Pagar:</strong>
                                             <strong class="text-success" id="totalPagar">$@Model.Sum(m => m.Subtotal).ToString("F2")</strong>
@@ -165,196 +171,171 @@
 <script>
     let carritoLocal = @Html.Raw(Json.Serialize(Model));
 
-    // ✅ FUNCIÓN PARA VALIDAR Y LIMPIAR NÚMEROS
-    function validarNumero(valor, valorPorDefecto = 0) {
-        if (isNaN(valor) || valor === null || valor === undefined) {
-            return valorPorDefecto;
+    // ✅ FUNCIÓN PARA CARGAR LÍMITES EN EL CARRITO
+    // ✅ FUNCIÓN PARA CARGAR LÍMITES EN EL CARRITO
+    async function cargarLimitesCarrito() {
+        try {
+            const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
+            const data = await response.json();
+
+            // ✅ ACTUALIZAR LÍMITES GLOBALES
+            limitesActuales = {
+                productosActuales: data.productosActuales || 0,
+                limite: data.limite || 3,
+                disponibles: data.disponibles || 3
+            };
+
+            const productosActuales = data.productosActuales || 0;
+            const limite = data.limite || 3;
+            const disponibles = data.disponibles || 3;
+
+            const infoElement = document.getElementById('info-limite-carrito');
+            const mensajeElement = document.getElementById('mensaje-limite');
+
+            if (!infoElement || !mensajeElement) return;
+
+            if (disponibles === 0) {
+                infoElement.className = 'alert alert-danger mb-3';
+                mensajeElement.innerHTML = `
+                    <strong>Límite alcanzado:</strong> Tienes ${productosActuales}/${limite} productos en pedidos activos.
+                    No puedes agregar más productos hasta que se entreguen los pendientes.
+                `;
+            } else if (disponibles <= 1) {
+                infoElement.className = 'alert alert-warning mb-3';
+                mensajeElement.innerHTML = `
+                    <strong>Casi en el límite:</strong> Solo puedes agregar ${disponibles} producto(s) más.
+                    Tienes ${productosActuales}/${limite} productos en pedidos activos.
+                `;
+            } else {
+                infoElement.className = 'alert alert-info mb-3';
+                mensajeElement.innerHTML = `
+                    Puedes agregar hasta ${disponibles} producto(s) más. (${productosActuales}/${limite} productos activos)
+                `;
+            }
+
+        } catch (error) {
+            console.error('Error al cargar límites:', error);
+            // Valores por defecto en caso de error
+            limitesActuales = { productosActuales: 0, limite: 3, disponibles: 3 };
         }
-        return parseFloat(valor) || valorPorDefecto;
     }
-
-    // ✅ FUNCIÓN MEJORADA PARA CALCULAR PUNTOS
-    function calcularPuntosItem(precio, cantidad) {
-        const precioValido = validarNumero(precio, 0);
-        const cantidadValida = validarNumero(cantidad, 1);
-        const subtotal = precioValido * cantidadValida;
-        const puntos = Math.floor(subtotal * 30);
-
-        console.log(`[DEBUG] Cálculo puntos: precio=${precioValido}, cantidad=${cantidadValida}, subtotal=${subtotal}, puntos=${puntos}`);
-
-        return puntos;
-    }
-
-    function cambiarCantidadCarrito(index, cambio) {
+    // ✅ FUNCIÓN CON VALIDACIÓN CORRECTA DE LÍMITES GLOBALES
+    function cambiarCantidad(index, cambio) {
         const fila = document.querySelector(`tr[data-index="${index}"]`);
-        if (!fila) {
-            console.error(`[ERROR] No se encontró la fila con índice ${index}`);
-            return;
-        }
+        if (!fila) return;
 
         const cantidadDisplay = fila.querySelector('.cantidad-display');
-        if (!cantidadDisplay) {
-            console.error('[ERROR] No se encontró elemento cantidad-display');
+        const precioCell = fila.querySelector('td[data-precio]');
+        const subtotalDisplay = fila.querySelector('.subtotal-display');
+        const puntosDisplay = fila.querySelector('.puntos-item');
+
+        if (!cantidadDisplay || !precioCell || !subtotalDisplay) return;
+
+        let nuevaCantidad = parseInt(cantidadDisplay.textContent) + cambio;
+
+        // Si la cantidad es 0 o menos, eliminar item
+        if (nuevaCantidad <= 0) {
+            eliminarItem(index);
             return;
         }
 
-        let nuevaCantidad = parseInt(cantidadDisplay.getAttribute('data-cantidad')) + cambio;
-
-        if (nuevaCantidad < 1) {
-            eliminarDelCarrito(index);
+        // ✅ APLICAR LÍMITES IGUAL QUE EN DETALLE
+        if (nuevaCantidad < 1) nuevaCantidad = 1;
+        if (nuevaCantidad > limitesActuales.disponibles) {
+            alert(`Solo puedes agregar ${limitesActuales.disponibles} producto(s) más.`);
             return;
         }
-
         if (nuevaCantidad > 10) nuevaCantidad = 10;
 
-        // ✅ VALIDAR QUE EL ITEM EXISTE EN EL CARRITO
-        if (!carritoLocal[index]) {
-            console.error(`[ERROR] Item no existe en carritoLocal[${index}]`);
-            return;
-        }
-
-        // ✅ VALIDAR PRECIO ANTES DE CALCULAR
-        const precio = validarNumero(carritoLocal[index].Precio, 0);
-        if (precio <= 0) {
-            console.error(`[ERROR] Precio inválido para item ${index}: ${carritoLocal[index].Precio}`);
-            return;
-        }
-
-        // Actualizar carrito local con validaciones
-        carritoLocal[index].Cantidad = nuevaCantidad;
-        carritoLocal[index].Subtotal = precio * nuevaCantidad;
+        const precio = parseFloat(precioCell.getAttribute('data-precio'));
+        const nuevoSubtotal = precio * nuevaCantidad;
+        const nuevosPuntos = Math.floor(nuevoSubtotal * 30);
 
         // Actualizar display
         cantidadDisplay.textContent = nuevaCantidad;
         cantidadDisplay.setAttribute('data-cantidad', nuevaCantidad);
+        subtotalDisplay.textContent = '$' + nuevoSubtotal.toFixed(2);
+        puntosDisplay.innerHTML = `<i class="fas fa-star"></i> ${nuevosPuntos} pts`;
 
-        // Actualizar subtotal
-        const subtotalDisplay = fila.querySelector('.subtotal-display');
-        if (subtotalDisplay) {
-            subtotalDisplay.textContent = '$' + carritoLocal[index].Subtotal.toFixed(2);
+        // Actualizar carrito local
+        if (carritoLocal[index]) {
+            carritoLocal[index].Cantidad = nuevaCantidad;
+            carritoLocal[index].Subtotal = nuevoSubtotal;
         }
 
-        // ✅ ACTUALIZAR PUNTOS CON VALIDACIÓN
-        const puntosItem = calcularPuntosItem(precio, nuevaCantidad);
-        const puntosDisplay = fila.querySelector('.puntos-item');
-        if (puntosDisplay) {
-            puntosDisplay.innerHTML = `<i class="fas fa-star"></i> ${puntosItem} pts`;
-        }
+        actualizarTotales();
+        guardarCarrito();
 
-        actualizarResumen();
-        guardarCarritoEnSesion();
+        // ✅ RECARGAR LÍMITES DESPUÉS DE CAMBIO
+        cargarLimitesCarrito();
     }
 
-    function eliminarDelCarrito(index) {
-        if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-            carritoLocal.splice(index, 1);
+    // ✅ FUNCIÓN SIMPLE PARA ELIMINAR ITEM
+    function eliminarItem(index) {
+        const fila = document.querySelector(`tr[data-index="${index}"]`);
+        if (!fila) return;
 
-            const fila = document.querySelector(`tr[data-index="${index}"]`);
-            if (fila) {
-                fila.remove();
-            }
+        // Eliminar inmediatamente del DOM
+        fila.remove();
 
-            // Reindexar las filas restantes
-            document.querySelectorAll('tbody tr').forEach((fila, nuevoIndex) => {
-                fila.setAttribute('data-index', nuevoIndex);
-                const botones = fila.querySelectorAll('button[onclick*="cambiarCantidadCarrito"]');
-                botones.forEach(boton => {
-                    const onclick = boton.getAttribute('onclick');
-                    boton.setAttribute('onclick', onclick.replace(/\d+/, nuevoIndex));
-                });
+        // Eliminar del carrito local
+        carritoLocal.splice(index, 1);
 
-                const botonEliminar = fila.querySelector('button[onclick*="eliminarDelCarrito"]');
-                if (botonEliminar) {
-                    botonEliminar.setAttribute('onclick', `eliminarDelCarrito(${nuevoIndex})`);
-                }
-            });
+        // Reindexar filas restantes
+        const filasRestantes = document.querySelectorAll('tbody tr[data-index]');
+        filasRestantes.forEach((fila, nuevoIndex) => {
+            fila.setAttribute('data-index', nuevoIndex);
 
-            actualizarResumen();
-            guardarCarritoEnSesion();
+            // Actualizar botones de cantidad
+            const botonesQuantity = fila.querySelectorAll('.btn-quantity-small');
+            if (botonesQuantity[0]) botonesQuantity[0].setAttribute('onclick', `cambiarCantidad(${nuevoIndex}, -1)`);
+            if (botonesQuantity[1]) botonesQuantity[1].setAttribute('onclick', `cambiarCantidad(${nuevoIndex}, 1)`);
 
-            if (carritoLocal.length === 0) {
-                location.reload();
-            }
+            // Actualizar botón eliminar
+            const botonEliminar = fila.querySelector('.btn-danger');
+            if (botonEliminar) botonEliminar.setAttribute('onclick', `eliminarItem(${nuevoIndex})`);
+        });
+
+        actualizarTotales();
+        guardarCarrito();
+
+        // Si no quedan items, recargar página
+        if (carritoLocal.length === 0) {
+            setTimeout(() => location.reload(), 500);
         }
     }
 
-    // ✅ FUNCIÓN MEJORADA PARA ACTUALIZAR RESUMEN
-    function actualizarResumen() {
-        console.log('[DEBUG] Actualizando resumen...');
-        console.log('[DEBUG] CarritoLocal:', carritoLocal);
-
-        // ✅ VALIDAR QUE CARRITOLOCAL NO ESTÉ VACÍO
-        if (!carritoLocal || carritoLocal.length === 0) {
-            console.log('[DEBUG] Carrito vacío, deshabilitando botón');
-
-            // Actualizar todos los elementos a 0
-            const elementos = [
-                'totalItems', 'totalPagar', 'puntosTotal',
-                'puntosGrandes', 'puntosResumen', 'puntosCard'
-            ];
-
-            elementos.forEach(id => {
-                const elemento = document.getElementById(id);
-                if (elemento) {
-                    if (id.includes('puntos')) {
-                        elemento.textContent = '0 puntos';
-                    } else if (id === 'totalPagar') {
-                        elemento.textContent = '$0.00';
-                    } else {
-                        elemento.textContent = '0';
-                    }
-                }
-            });
-
-            const btnProcesar = document.getElementById('btnProcesar');
-            if (btnProcesar) {
-                btnProcesar.disabled = carritoLocal.length === 0 || totalPagar <= 0;
-            }
-            return;
-        }
-
-        // ✅ CALCULAR TOTALES CON VALIDACIÓN
+    // ✅ FUNCIÓN SIMPLE PARA ACTUALIZAR TOTALES
+    function actualizarTotales() {
         let totalItems = 0;
         let totalPagar = 0;
 
-        carritoLocal.forEach((item, index) => {
-            const cantidad = validarNumero(item.Cantidad, 0);
-            const subtotal = validarNumero(item.Subtotal, 0);
-
-            console.log(`[DEBUG] Item ${index}: cantidad=${cantidad}, subtotal=${subtotal}`);
+        // Calcular desde el DOM actual
+        document.querySelectorAll('tbody tr[data-index]').forEach(fila => {
+            const cantidad = parseInt(fila.querySelector('.cantidad-display').textContent) || 0;
+            const subtotalText = fila.querySelector('.subtotal-display').textContent.replace('$', '');
+            const subtotal = parseFloat(subtotalText) || 0;
 
             totalItems += cantidad;
             totalPagar += subtotal;
         });
 
-        const puntosTotal = Math.floor(totalPagar * 30);
+        // Actualizar displays
+        const totalItemsEl = document.getElementById('totalItems');
+        const totalPagarEl = document.getElementById('totalPagar');
 
-        console.log(`[DEBUG] Totales calculados: items=${totalItems}, pagar=${totalPagar}, puntos=${puntosTotal}`);
+        if (totalItemsEl) totalItemsEl.textContent = totalItems;
+        if (totalPagarEl) totalPagarEl.textContent = '$' + totalPagar.toFixed(2);
 
-        // ✅ ACTUALIZAR ELEMENTOS CON VALIDACIÓN
-        const actualizarElemento = (id, valor) => {
-            const elemento = document.getElementById(id);
-            if (elemento) {
-                elemento.textContent = valor;
-            } else {
-                console.warn(`[WARN] Elemento ${id} no encontrado`);
-            }
-        };
-
-        actualizarElemento('totalItems', totalItems);
-        actualizarElemento('totalPagar', '$' + totalPagar.toFixed(2));
-        actualizarElemento('puntosTotal', puntosTotal + ' puntos');
-        actualizarElemento('puntosGrandes', puntosTotal);
-        actualizarElemento('puntosResumen', puntosTotal + ' puntos');
-        actualizarElemento('puntosCard', puntosTotal + ' puntos');
-
+        // Habilitar/deshabilitar botón
         const btnProcesar = document.getElementById('btnProcesar');
         if (btnProcesar) {
-            btnProcesar.disabled = false;
+            btnProcesar.disabled = totalItems === 0;
         }
     }
 
-    function guardarCarritoEnSesion() {
+    // ✅ FUNCIÓN PARA GUARDAR CARRITO
+    function guardarCarrito() {
         fetch('@Url.Action("ActualizarCarrito")', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -363,19 +344,15 @@
             .then(response => response.json())
             .then(result => {
                 if (!result.success) {
-                    console.error('[ERROR] Error al guardar carrito:', result.message);
-                } else {
-                    // ✅ NOTIFICAR A LA VISTA DE RECOMENDACIÓN SI ESTÁ ABIERTA
-                    // Esto se puede hacer con localStorage o sessionStorage para comunicación entre pestañas
-                    localStorage.setItem('carritoActualizado', Date.now().toString());
+                    console.error('Error al guardar carrito:', result.message);
                 }
             })
             .catch(error => {
-                console.error('[ERROR] Error de red al guardar carrito:', error);
+                console.error('Error de red:', error);
             });
     }
 
-    // ✅ FUNCIÓN SIMPLIFICADA PARA PROCESAR PEDIDO
+    // ✅ FUNCIÓN PARA PROCESAR PEDIDO
     function procesarPedido() {
         const tipoServicio = document.querySelector('input[name="tipoServicio"]:checked')?.value;
         if (!tipoServicio) {
@@ -383,7 +360,6 @@
             return;
         }
 
-        // Confirmación simple
         if (!confirm('¿Confirmas tu pedido?')) return;
 
         const data = {
@@ -430,8 +406,8 @@
 
     // ✅ INICIALIZAR AL CARGAR LA PÁGINA
     document.addEventListener('DOMContentLoaded', function () {
-        console.log('[DEBUG] Página cargada, inicializando...');
-        actualizarResumen();
+        actualizarTotales();
+        cargarLimitesCarrito(); // Cargar límites del carrito
     });
 </script>
 
@@ -506,20 +482,6 @@
             margin: 0;
             padding: 1rem 0;
         }
-
-    /* ✅ ESTILOS PARA PUNTOS */
-    .points-display {
-        background: linear-gradient(45deg, #fff3cd, #ffeaa7);
-        padding: 15px;
-        border-radius: 10px;
-        border: 2px solid #ffc107;
-    }
-
-    .alert-success {
-        background: linear-gradient(45deg, #d1edff, #e8f5e8);
-        border: 1px solid #28a745;
-        border-radius: 10px;
-    }
 
     .badge.bg-success {
         background: linear-gradient(45deg, #28a745, #20c997) !important;

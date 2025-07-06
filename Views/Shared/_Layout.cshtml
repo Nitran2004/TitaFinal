@@ -337,6 +337,27 @@
                             </li>
                         }
 
+                        @if (User.IsInRole("Administrador") || User.IsInRole("Registrado"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarCarritos" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-shopping-cart"></i> Mis Carritos
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Personalizacion" asp-action="VerCarrito">
+                                            <i class="fas fa-utensils"></i> Carrito Personalización
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="MenuRecomendacion" asp-action="VerCarrito">
+                                            <i class="fas fa-robot"></i> Carrito Recomendaciones IA
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+
                         <!-- PARA REGISTRADO - Menú normal como antes -->
                         @if (User.IsInRole("Registrado"))
                         {

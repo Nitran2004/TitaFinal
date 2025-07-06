@@ -7,6 +7,253 @@
 }
 
 <style>
+    /* ===== SMART IMAGE POSITIONING SYSTEM PARA DETALLE ===== */
+    .smart-product-image-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+        background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+        width: 100%;
+        height: 400px; /* Altura fija para escritorio */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .smart-product-image {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        object-position: center center;
+        background: white;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    /* Loading state */
+    .smart-product-image-loading {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading-shimmer 1.5s infinite;
+        width: 100%;
+        height: 100%;
+    }
+    
+    @@keyframes loading-shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+
+    /* Efecto hover */
+    .smart-product-image-container:hover .smart-product-image {
+        transform: scale(1.03);
+    }
+
+    /* ===== IMÁGENES VERTICALES QUE DEBEN SER HORIZONTALES (CROP) ===== */
+    .smart-product-image[alt*="Cheddar"],
+    .smart-product-image[alt*="Verace"],
+    .smart-product-image[alt*="Jarro"],
+    .smart-product-image[alt*="Litro"],
+    .smart-product-image[alt*="Growler"],
+    .smart-product-image[alt*="Corona"],
+    .smart-product-image[alt*="Clásico"],
+    .smart-product-image[alt*="3 jarros cerveza artesanal"],
+    .smart-product-image[alt*="Botella de vino tinto"],
+    .smart-product-image[alt*="Manaba mule"],
+    .smart-product-image[alt*="Botella de caña manabita"],
+    .smart-product-image[alt*="Botella de Antioqueño"],
+    .smart-product-image[alt*="Botella de tequila"],
+    .smart-product-image[alt*="Mojito maracuyá"],
+    .smart-product-image[alt*="Mojito frutos rojos"],
+    .smart-product-image[alt*="Botella de Ron Abuelo"],
+    .smart-product-image[alt*="Gin Tonic Maracuyá"],
+    .smart-product-image[alt*="Gin Tonic Frutos rojos"],
+    .smart-product-image[alt*="Jager Sour"],
+    .smart-product-image[alt*="Jagerito"] {
+        object-fit: cover !important;
+        object-position: center center !important;
+        background: transparent !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    /* ===== IMÁGENES CON FONDO BLANCO QUE DEBEN RELLENAR EL FONDO ===== */
+    .smart-product-image[alt*="Agua sin gas"],
+    .smart-product-image[alt*="Agua mineral"],
+    .smart-product-image[alt*="Limonada"],
+    .smart-product-image[alt*="Limonada Rosa"],
+    .smart-product-image[alt*="Té caliente"],
+    .smart-product-image[alt*="Coca-Cola"],
+    .smart-product-image[alt*="Fanta"],
+    .smart-product-image[alt*="Fioravanti"],
+    .smart-product-image[alt*="Sprite"],
+    .smart-product-image[alt*="Café americano"],
+    .smart-product-image[alt*="Capuccino"],
+    .smart-product-image[alt*="Iced Coffee"],
+    .smart-product-image[alt*="Shot de aguardiente"] {
+        object-fit: contain !important;
+        object-position: center center !important;
+        background: #FFFFFF !important;
+    }
+
+    /* ===== CONTENEDORES PARA IMÁGENES CON FONDO BLANCO ===== */
+    .smart-product-image-container:has(.smart-product-image[alt*="Agua sin gas"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container:has(.smart-product-image[alt*="Agua mineral"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container:has(.smart-product-image[alt*="Limonada"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container:has(.smart-product-image[alt*="Limonada Rosa"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container:has(.smart-product-image[alt*="Té caliente"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container:has(.smart-product-image[alt*="Coca-Cola"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container:has(.smart-product-image[alt*="Fanta"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container:has(.smart-product-image[alt*="Fioravanti"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container:has(.smart-product-image[alt*="Sprite"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container:has(.smart-product-image[alt*="Café americano"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container:has(.smart-product-image[alt*="Capuccino"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container:has(.smart-product-image[alt*="Iced Coffee"]) {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container:has(.smart-product-image[alt*="Shot de aguardiente"]) {
+        background: #FFFFFF !important;
+    }
+
+    /* ===== IMÁGENES CON FONDO NEGRO ===== */
+    .smart-product-image[alt*="Cuba libre"],
+    .smart-product-image[alt*="Whisky Sour"],
+    .smart-product-image[alt*="Whisky on the rocks"] {
+        object-fit: contain !important;
+        object-position: center center !important;
+        background: #000000 !important;
+    }
+
+    /* ===== CONTENEDORES PARA IMÁGENES CON FONDO NEGRO ===== */
+    .smart-product-image-container:has(.smart-product-image[alt*="Cuba libre"]) {
+        background: #000000 !important;
+    }
+
+    .smart-product-image-container:has(.smart-product-image[alt*="Whisky Sour"]) {
+        background: #000000 !important;
+    }
+
+    .smart-product-image-container:has(.smart-product-image[alt*="Whisky on the rocks"]) {
+        background: #000000 !important;
+    }
+
+    /* ===== FALLBACK PARA NAVEGADORES QUE NO SOPORTAN :has() ===== */
+    .smart-product-image-container[data-producto="agua-sin-gas"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container[data-producto="agua-mineral"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container[data-producto="limonada"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container[data-producto="limonada-rosa"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container[data-producto="te-caliente"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container[data-producto="coca-cola"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container[data-producto="fanta"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container[data-producto="fioravanti"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container[data-producto="sprite"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container[data-producto="cafe-americano"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container[data-producto="capuccino"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container[data-producto="iced-coffee"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container[data-producto="shot-aguardiente"] {
+        background: #FFFFFF !important;
+    }
+
+    .smart-product-image-container[data-producto="cuba-libre"] {
+        background: #000000 !important;
+    }
+
+    .smart-product-image-container[data-producto="whisky-sour"] {
+        background: #000000 !important;
+    }
+
+    .smart-product-image-container[data-producto="whisky-on-the-rocks"] {
+        background: #000000 !important;
+    }
+
+    /* ===== AJUSTE ESPECIAL PARA MÓVIL ===== */
+    @@media (max-width: 768px) {
+        .smart-product-image-container {
+            height: 300px; /* Altura más pequeña en móvil */
+        }
+        
+        .smart-product-image[alt*="Cheddar"],
+        .smart-product-image[alt*="Verace"],
+        .smart-product-image[alt*="Jarro"],
+        .smart-product-image[alt*="Litro"],
+        .smart-product-image[alt*="Growler"],
+        .smart-product-image[alt*="Corona"],
+        .smart-product-image[alt*="Clásico"] {
+            object-position: center 30% !important;
+        }
+    }
+
+    /* ===== ESTILOS ORIGINALES CONSERVADOS ===== */
     .product-container {
         max-width: 1200px;
         margin: 0 auto;
@@ -24,14 +271,6 @@
         flex: 1;
         min-width: 300px;
         position: relative;
-    }
-
-    .product-image {
-        width: 100%;
-        height: auto;
-        border-radius: 8px;
-        object-fit: cover;
-        max-height: 400px;
     }
 
     .product-info {
@@ -75,9 +314,17 @@
     }
 
     @@keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.02); }
-        100% { transform: scale(1); }
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.02);
+        }
+
+        100% {
+            transform: scale(1);
+        }
     }
 
     .points-breakdown {
@@ -101,11 +348,12 @@
         position: absolute;
         top: 15px;
         right: 15px;
+        z-index: 10;
     }
 
-    .category-header-touch:hover {
-        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-    }
+        .category-header-touch:hover {
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
 
     .category-icon {
         width: 28px;
@@ -139,11 +387,11 @@
         transition: all 0.3s;
     }
 
-    .btn-ar:hover {
-        background-color: #e91e63;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3);
-    }
+        .btn-ar:hover {
+            background-color: #e91e63;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3);
+        }
 
     /* Estilos para el formulario de personalización */
     .personalization-form {
@@ -174,10 +422,10 @@
         transition: all 0.2s;
     }
 
-    .quantity-btn:hover {
-        background: #28a745;
-        color: white;
-    }
+        .quantity-btn:hover {
+            background: #28a745;
+            color: white;
+        }
 
     .quantity-input {
         width: 60px;
@@ -203,9 +451,9 @@
         transition: background 0.2s;
     }
 
-    .ingredient-item:hover {
-        background: #f0f0f0;
-    }
+        .ingredient-item:hover {
+            background: #f0f0f0;
+        }
 
     .price-summary {
         background: #e8f5e8;
@@ -224,10 +472,10 @@
         transition: all 0.3s;
     }
 
-    .btn-success:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-    }
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
 
     .btn-warning {
         background-color: #F2A900;
@@ -237,21 +485,21 @@
         transition: all 0.3s;
     }
 
-    .btn-warning:hover {
-        background-color: #e09600;
-        border-color: #d48e00;
-        color: #fff;
-        transform: translateY(-2px);
-    }
+        .btn-warning:hover {
+            background-color: #e09600;
+            border-color: #d48e00;
+            color: #fff;
+            transform: translateY(-2px);
+        }
 
     .btn-outline-secondary {
         border-radius: 8px;
         transition: all 0.3s;
     }
 
-    .btn-outline-secondary:hover {
-        transform: translateY(-2px);
-    }
+        .btn-outline-secondary:hover {
+            transform: translateY(-2px);
+        }
 
     /* Acordeón moderno */
     .accordion-section {
@@ -266,9 +514,9 @@
         transition: all 0.3s;
     }
 
-    .accordion-item:hover {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
+        .accordion-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
 
     .accordion-header {
         padding: 15px;
@@ -280,9 +528,9 @@
         transition: background 0.2s;
     }
 
-    .accordion-header:hover {
-        background-color: #e9ecef;
-    }
+        .accordion-header:hover {
+            background-color: #e9ecef;
+        }
 
     .accordion-title {
         font-size: 18px;
@@ -307,22 +555,22 @@
         border-collapse: collapse;
     }
 
-    .nutrition-table tr {
-        border-bottom: 1px solid #eee;
-    }
+        .nutrition-table tr {
+            border-bottom: 1px solid #eee;
+        }
 
-    .nutrition-table tr:last-child {
-        border-bottom: none;
-    }
+            .nutrition-table tr:last-child {
+                border-bottom: none;
+            }
 
-    .nutrition-table td {
-        padding: 8px 0;
-    }
+        .nutrition-table td {
+            padding: 8px 0;
+        }
 
-    .nutrition-table td:first-child {
-        font-weight: bold;
-        width: 40%;
-    }
+            .nutrition-table td:first-child {
+                font-weight: bold;
+                width: 40%;
+            }
 
     .allergen-list {
         margin: 0;
@@ -330,21 +578,21 @@
         list-style-type: none;
     }
 
-    .allergen-list li {
-        padding: 8px 0;
-        border-bottom: 1px solid #eee;
-    }
+        .allergen-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
 
-    .allergen-list li:last-child {
-        border-bottom: none;
-    }
+            .allergen-list li:last-child {
+                border-bottom: none;
+            }
 
     /* Responsive */
     @@media (max-width: 768px) {
         .product-header {
             flex-direction: column;
         }
-        
+
         .product-container {
             padding: 15px;
         }
@@ -353,26 +601,42 @@
 
 <div class="product-container">
     <div class="product-header">
-        <!-- Imagen del producto -->
+        <!-- Imagen del producto MEJORADA -->
         <div class="product-image-container">
-            @if (Model.Imagen != null)
-            {
-                <img src="data:image/jpeg;base64,@Convert.ToBase64String(Model.Imagen)"
-                     alt="@Model.Nombre" class="product-image" />
-            }
-            <div class="category-header-touch">
-                <img src="~/images1/ra.png" alt="Realidad Aumentada" class="category-icon" />
-                <a href="#" class="touchable-text">
-                    <span class="tight-line">Realidad</span><br />
-                    <span class="tight-line">Aumentada</span>
-                </a>
+            <div class="smart-product-image-container" data-category="@Model.Categoria.ToLower()">
+                @if (Model.Imagen != null)
+                {
+                    <img src="data:image/jpeg;base64,@Convert.ToBase64String(Model.Imagen)"
+                         alt="@Model.Nombre" 
+                         class="smart-product-image smart-product-image-loading"
+                         onload="handleSmartProductImageLoad(this)"
+                         onerror="handleSmartProductImageError(this)" />
+                }
+                else
+                {
+                    <div class="smart-fallback">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                }
             </div>
-            
-            <!-- Botón de Realidad Aumentada debajo de la imagen -->
-            <button type="button" class="btn btn-ar" id="view-ar-btn" onclick="location.href='@Url.Action("VistaAR", "RealidadAumentada", new { id = Model.Id })'">
-                Ver en Realidad Aumentada
-                <i class="fas fa-cube ml-2"></i>
-            </button>
+
+            @* ✅ MOSTRAR RA SOLO PARA PIZZA Y SÁNDUCHES *@
+            @if (Model.Categoria.ToLower() == "pizza" || Model.Categoria.ToLower() == "sánduches" || Model.Categoria.ToLower() == "sanduches")
+            {
+                <div class="category-header-touch">
+                    <img src="~/images1/ra.png" alt="Realidad Aumentada" class="category-icon" />
+                    <a href="#" class="touchable-text">
+                        <span class="tight-line">Realidad</span><br />
+                        <span class="tight-line">Aumentada</span>
+                    </a>
+                </div>
+
+                <!-- Botón de Realidad Aumentada debajo de la imagen -->
+                <button type="button" class="btn btn-ar" id="view-ar-btn" onclick="location.href='@Url.Action("VistaAR", "RealidadAumentada", new { id = Model.Id })'">
+                    Ver en Realidad Aumentada
+                    <i class="fas fa-cube ml-2"></i>
+                </button>
+            }
         </div>
 
         <!-- Información del producto -->
@@ -385,7 +649,7 @@
             <div class="product-points">
                 <i class="fas fa-star"></i> ¡Ganas @puntosAGanar puntos con este producto!
             </div>
-            
+
             <div class="points-breakdown">
                 <small class="text-muted">
                     <i class="fas fa-info-circle"></i> <strong>Desglose de puntos:</strong><br>
@@ -414,7 +678,8 @@
                     @if (ingredientes.Any(i => i.Removible))
                     {
                         <div class="mb-4">
-                            <h6>Quitar ingredientes: <small class="text-muted">(opcional)</small></h6>                            <div class="ingredients-container">
+                            <h6>Quitar ingredientes: <small class="text-muted">(opcional)</small></h6>
+                            <div class="ingredients-container">
                                 @foreach (var ingrediente in ingredientes.Where(i => i.Removible))
                                 {
                                     <div class="form-check ingredient-item">
@@ -549,7 +814,98 @@
 </div>
 
 <script>
-    // ✅ VARIABLES GLOBALES PARA LÍMITES Y CARRITO
+    // ===== SMART IMAGE ANALYZER PARA DETALLE DE PRODUCTO =====
+    class SmartProductImageAnalyzer {
+        constructor() {
+            this.fondoBlancoProductos = [
+                'agua sin gas', 'agua mineral', 'limonada', 'limonada rosa',
+                'té caliente', 'coca-cola', 'fanta', 'fioravanti', 'sprite',
+                'café americano', 'capuccino', 'iced coffee', 'shot de aguardiente'
+            ];
+
+            this.fondoNegroProductos = [
+                'cuba libre', 'whisky sour', 'whisky on the rocks'
+            ];
+
+            this.verticalProductos = [
+                'cheddar', 'verace', 'jarro', 'litro', 'growler', 'corona', 'clásico',
+                '3 jarros cerveza artesanal', 'botella de vino tinto', 'manaba mule',
+                'botella de caña manabita', 'botella de antioqueño', 'botella de tequila',
+                'mojito maracuyá', 'mojito frutos rojos', 'botella de ron abuelo',
+                'gin tonic maracuyá', 'gin tonic frutos rojos', 'jager sour', 'jagerito'
+            ];
+        }
+
+        analyzeContent(img) {
+            const alt = (img.alt || '').toLowerCase();
+
+            if (this.fondoBlancoProductos.some(producto => alt.includes(producto))) {
+                return 'fondo-blanco';
+            }
+
+            if (this.fondoNegroProductos.some(producto => alt.includes(producto))) {
+                return 'fondo-negro';
+            }
+
+            if (this.verticalProductos.some(producto => alt.includes(producto))) {
+                return 'vertical-crop';
+            }
+
+            return 'generic';
+        }
+
+        applyOptimizations(img, container, content) {
+            const productName = img.alt.toLowerCase();
+            const dataName = productName.replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+
+            switch (content) {
+                case 'fondo-blanco':
+                    container.setAttribute('data-producto', dataName);
+                    img.style.objectFit = 'contain';
+                    img.style.objectPosition = 'center center';
+                    img.style.background = '#FFFFFF';
+                    container.style.background = '#FFFFFF';
+                    break;
+
+                case 'fondo-negro':
+                    container.setAttribute('data-producto', dataName);
+                    img.style.objectFit = 'contain';
+                    img.style.objectPosition = 'center center';
+                    img.style.background = '#000000';
+                    container.style.background = '#000000';
+                    break;
+
+                case 'vertical-crop':
+                    img.style.objectFit = 'cover';
+                    img.style.objectPosition = 'center center';
+                    img.style.background = 'transparent';
+                    break;
+
+                default:
+                    img.style.objectFit = 'contain';
+                    img.style.objectPosition = 'center center';
+                    img.style.background = 'white';
+            }
+        }
+    }
+
+    const smartProductAnalyzer = new SmartProductImageAnalyzer();
+
+    function handleSmartProductImageLoad(img) {
+        img.classList.remove('smart-product-image-loading');
+        const container = img.closest('.smart-product-image-container');
+        const content = smartProductAnalyzer.analyzeContent(img);
+        
+        smartProductAnalyzer.applyOptimizations(img, container, content);
+        console.log(`Detalle imagen analizada: ${img.alt} | ${content}`);
+    }
+
+    function handleSmartProductImageError(img) {
+        const container = img.closest('.smart-product-image-container');
+        container.innerHTML = '<div class="smart-fallback"><i class="fas fa-utensils"></i></div>';
+    }
+
+    // ✅ VARIABLES GLOBALES PARA LÍMITES Y CARRITO (CONSERVADAS)
     let limitesActuales = {
         productosActivos: 0,    // ✅ NOMBRE CORREGIDO
         limite: 4,
@@ -655,39 +1011,39 @@
         if (disponiblesVisuales <= 0) {
             infoElement.className = 'alert alert-danger mt-3';
             infoElement.innerHTML = `
-                <i class="fas fa-exclamation-triangle"></i>
-                <strong>Límite alcanzado:</strong><br>
-                • Productos en pedidos activos: ${productosActivos}/${limiteVisual}<br>
-                • Productos en carrito actual: ${productosEnCarritos}<br>
-                • <em>No puedes agregar más productos hasta que se entreguen los pedidos activos.</em>
-            `;
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Límite alcanzado:</strong><br>
+                    • Productos en pedidos activos: ${productosActivos}/${limiteVisual}<br>
+                    • Productos en carrito actual: ${productosEnCarritos}<br>
+                    • <em>No puedes agregar más productos hasta que se entreguen los pedidos activos.</em>
+                `;
         } else if (disponiblesVisuales === 1) {
             infoElement.className = 'alert alert-warning mt-3';
             infoElement.innerHTML = `
-                <i class="fas fa-exclamation-triangle"></i>
-                <strong>¡Último producto disponible!</strong><br>
-                • Productos en pedidos activos: ${productosActivos}/${limiteVisual}<br>
-                • Productos en carrito actual: ${productosEnCarritos}<br>
-                • Solo puedes agregar 1 producto más.
-            `;
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>¡Último producto disponible!</strong><br>
+                    • Productos en pedidos activos: ${productosActivos}/${limiteVisual}<br>
+                    • Productos en carrito actual: ${productosEnCarritos}<br>
+                    • Solo puedes agregar 1 producto más.
+                `;
         } else if (disponiblesVisuales <= 2) {
             infoElement.className = 'alert alert-warning mt-3';
             infoElement.innerHTML = `
-                <i class="fas fa-info-circle"></i>
-                <strong>Casi en el límite:</strong><br>
-                • Productos en pedidos activos: ${productosActivos}/${limiteVisual}<br>
-                • Productos en carrito actual: ${productosEnCarritos}<br>
-                • Puedes agregar hasta ${disponiblesVisuales} producto(s) más.
-            `;
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Casi en el límite:</strong><br>
+                    • Productos en pedidos activos: ${productosActivos}/${limiteVisual}<br>
+                    • Productos en carrito actual: ${productosEnCarritos}<br>
+                    • Puedes agregar hasta ${disponiblesVisuales} producto(s) más.
+                `;
         } else {
             infoElement.className = 'alert alert-info mt-3';
             infoElement.innerHTML = `
-                <i class="fas fa-info-circle"></i>
-                <strong>Estado actual:</strong><br>
-                • Productos en pedidos activos: ${productosActivos}/${limiteVisual}<br>
-                • Productos en carrito actual: ${productosEnCarritos}<br>
-                • Puedes agregar hasta ${Math.min(3, disponiblesVisuales)} producto(s) más.
-            `;
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Estado actual:</strong><br>
+                    • Productos en pedidos activos: ${productosActivos}/${limiteVisual}<br>
+                    • Productos en carrito actual: ${productosEnCarritos}<br>
+                    • Puedes agregar hasta ${Math.min(3, disponiblesVisuales)} producto(s) más.
+                `;
         }
     }
 
@@ -712,13 +1068,13 @@
             }
 
             mensajeElement.innerHTML = `
-                <h6><i class="fas fa-exclamation-triangle"></i> No puedes agregar más productos</h6>
-                <p>${mensaje}</p>
-                <p><small>El límite máximo es 3 productos activos en total.</small></p>
-                <a href="@Url.Action("VerCarrito")" class="btn btn-outline-primary btn-sm">
-                    Ver carrito actual
-                </a>
-            `;
+                    <h6><i class="fas fa-exclamation-triangle"></i> No puedes agregar más productos</h6>
+                    <p>${mensaje}</p>
+                    <p><small>El límite máximo es 3 productos activos en total.</small></p>
+                    <a href="@Url.Action("VerCarrito")" class="btn btn-outline-primary btn-sm">
+                        Ver carrito actual
+                    </a>
+                `;
         }
     }
 
@@ -788,8 +1144,8 @@
             const costo = parseFloat(checkbox.getAttribute('data-costo')) || 0;
             const ingrediente = checkbox.value;
             ahorroInterno += costo;
-            detallesAhorro.push(`${ingrediente}: $${costo.toFixed(2)}`);
-            console.log(`[DEBUG] Ahorro por quitar ${ingrediente}: $${costo}`);
+            detallesAhorro.push(`${ingrediente}: ${costo.toFixed(2)}`);
+            console.log(`[DEBUG] Ahorro por quitar ${ingrediente}: ${costo}`);
         });
 
         const cantidad = parseInt(document.getElementById('cantidad').value) || 1;
@@ -812,27 +1168,27 @@
         if (ahorroTotal > 0) {
             ahorroElement.style.display = 'block';
             ahorroElement.innerHTML = `
-                <h6><i class="fas fa-chart-line"></i> Análisis Interno (Solo Admin)</h6>
-                <div class="row">
-                    <div class="col-md-6">
-                        <strong>Precio usuario:</strong> $@Model.Precio.ToString("F2")<br>
-                        <strong>Ahorro interno:</strong> $${ahorroTotal.toFixed(2)}<br>
-                        <strong>Costo real:</strong> $${(@Model.Precio * cantidad - ahorroTotal).toFixed(2)}
+                    <h6><i class="fas fa-chart-line"></i> Análisis Interno (Solo Admin)</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Precio usuario:</strong> $@Model.Precio.ToString("F2")<br>
+                            <strong>Ahorro interno:</strong> ${ahorroTotal.toFixed(2)}<br>
+                            <strong>Costo real:</strong> ${(@Model.Precio * cantidad - ahorroTotal).toFixed(2)}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Detalles:</strong><br>
+                            ${detallesAhorro.join('<br>')}
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <strong>Detalles:</strong><br>
-                        ${detallesAhorro.join('<br>')}
-                    </div>
-                </div>
-                <small class="text-muted">
-                    <i class="fas fa-info-circle"></i> El usuario paga el precio completo, el ahorro es margen interno.
-                </small>
-            `;
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> El usuario paga el precio completo, el ahorro es margen interno.
+                    </small>
+                `;
         } else {
             ahorroElement.style.display = 'none';
         }
 
-        console.log(`[DEBUG] Ahorro total interno: $${ahorroTotal}`);
+        console.log(`[DEBUG] Ahorro total interno: ${ahorroTotal}`);
     }
 
     // ✅ FUNCIÓN AGREGAR AL CARRITO (ACTUALIZADA CON LÍMITES Y RECARGA)
