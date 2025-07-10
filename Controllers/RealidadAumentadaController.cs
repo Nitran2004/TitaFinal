@@ -69,7 +69,7 @@ namespace ProyectoIdentity.Controllers
             var archivosPermitidos = new[] {
                 "pizza1.glb", "pizza2.glb", "pizza3.glb", "pizza4.glb", // Mantener compatibilidad con archivos anteriores
                 "pizza_pepperoni.glb", "pizza_margarita.glb", "pizza_cheddar.glb",
-                "pizza_diavola.glb", "pizza_meatlover.glb", "pizza_say_cheese.glb", "pizza_verace.glb"
+                "pizza_diavola.glb", "pizza_meatlover.glb", "pizza_say_cheese.glb", "pizza_verace.glb", "pizza_mi_champ", "pizza_hawaiana", "pizza_veggie_lovers"
             };
 
             if (!archivosPermitidos.Contains(archivo))
@@ -211,8 +211,12 @@ namespace ProyectoIdentity.Controllers
             {
                 case "pepperoni":
                     return "/RealidadAumentada/GetGLBFile?archivo=pizza_pepperoni.glb";
+                case "hawaiana":
+                    return "/RealidadAumentada/GetGLBFile?archivo=pizza_hawaiana.glb";
+                case "veggie lovers":
+                    return "/RealidadAumentada/GetGLBFile?archivo=pizza_veggie_lovers.glb";
                 case "mi champ":
-                    return "/RealidadAumentada/GetGLBFile?archivo=pizza2.glb";
+                    return "/RealidadAumentada/GetGLBFile?archivo=pizza_mi_champ.glb";
                 case "say cheese":
                     return "/RealidadAumentada/GetGLBFile?archivo=pizza_say_cheese.glb";
                 case "verace":
@@ -239,9 +243,9 @@ namespace ProyectoIdentity.Controllers
                 case 1:
                     return "pizza_pepperoni.glb";
                 case 2:
-                    return "pizza2.glb"; // Mantener compatibilidad con el archivo anterior
+                    return "pizza_mi_champ.glb"; // Mantener compatibilidad con el archivo anterior
                 case 3:
-                    return "pizza2.glb"; // Mantener compatibilidad con el archivo anterior
+                    return "pizza_hawaiana.glb"; // Mantener compatibilidad con el archivo anterior
                 case 4:
                     return "pizza_margarita.glb";
                 case 5:
@@ -251,7 +255,7 @@ namespace ProyectoIdentity.Controllers
                 case 7:
                     return "pizza_meatlover.glb";
                 case 8:
-                    return "pizza2.glb"; // Mantener compatibilidad con el archivo anterior
+                    return "pizza_veggie_lovers.glb"; // Mantener compatibilidad con el archivo anterior
                 case 9:
                     return "pizza_say_cheese.glb";
                 case 10:
