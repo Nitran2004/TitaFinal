@@ -41,8 +41,8 @@ namespace ProyectoIdentity.Controllers
                 // Si no se proporciona ID, usar por defecto
                 ViewBag.ProductoId = 1;
                 ViewBag.ProductoNombre = "Pizza Por Defecto";
-                ViewBag.ModeloArchivo = "pizza_pepperoni.glb";
-                ViewBag.ModeloPath = "/RealidadAumentada/GetGLBFile?archivo=pizza_pepperoni.glb";
+                ViewBag.ModeloArchivo = "pizza2.glb";
+                ViewBag.ModeloPath = "/RealidadAumentada/GetGLBFile?archivo=pizza2.glb";
             }
             else
             {
@@ -61,20 +61,24 @@ namespace ProyectoIdentity.Controllers
             return View();
         }
 
-        // Método modificado para servir archivos específicos
         [HttpGet("GetGLBFile")]
-        public IActionResult GetGLBFile(string archivo = "pizza_pepperoni.glb")
+        public IActionResult GetGLBFile(string archivo = "pizza2.glb")
         {
-            // Validar que el archivo solicitado sea válido
+            // Validar que el archivo solicitado sea válido (solo archivos que se ven correctamente)
             var archivosPermitidos = new[] {
-                "pizza1.glb", "pizza2.glb", "pizza3.glb", "pizza4.glb", // Mantener compatibilidad con archivos anteriores
-                "pizza_pepperoni.glb", "pizza_margarita.glb", "pizza_cheddar.glb",
-                "pizza_diavola.glb", "pizza_meatlover.glb", "pizza_say_cheese.glb", "pizza_verace.glb", "pizza_mi_champ", "pizza_hawaiana", "pizza_veggie_lovers"
+                "pizza2.glb", // Por defecto
+                "pizza_pepperoni.glb", // ID 1
+                "pizza_margarita.glb", // ID 4
+                "pizza_cheddar.glb", // ID 5
+                "pizza_diavola.glb", // ID 6
+                "pizza_say_cheese.glb", // ID 9
+                "pizza_verace.glb", // ID 10
+                "pizza_meat_lovers.glb", // ID 7
             };
 
             if (!archivosPermitidos.Contains(archivo))
             {
-                archivo = "pizza_pepperoni.glb"; // Archivo por defecto actualizado
+                archivo = "pizza2.glb"; // Archivo por defecto
             }
 
             var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "models3d", archivo);
@@ -182,8 +186,8 @@ namespace ProyectoIdentity.Controllers
             {
                 ViewBag.ProductoId = 1;
                 ViewBag.ProductoNombre = "Debug - Pizza Por Defecto";
-                ViewBag.ModeloArchivo = "pizza_pepperoni.glb";
-                ViewBag.ModeloPath = "/RealidadAumentada/GetGLBFile?archivo=pizza_pepperoni.glb";
+                ViewBag.ModeloArchivo = "pizza2.glb";
+                ViewBag.ModeloPath = "/RealidadAumentada/GetGLBFile?archivo=pizza2.glb";
             }
             else
             {
@@ -211,25 +215,18 @@ namespace ProyectoIdentity.Controllers
             {
                 case "pepperoni":
                     return "/RealidadAumentada/GetGLBFile?archivo=pizza_pepperoni.glb";
-                case "hawaiana":
-                    return "/RealidadAumentada/GetGLBFile?archivo=pizza_hawaiana.glb";
-                case "veggie lovers":
-                    return "/RealidadAumentada/GetGLBFile?archivo=pizza_veggie_lovers.glb";
-                case "mi champ":
-                    return "/RealidadAumentada/GetGLBFile?archivo=pizza_mi_champ.glb";
-                case "say cheese":
-                    return "/RealidadAumentada/GetGLBFile?archivo=pizza_say_cheese.glb";
-                case "verace":
-                    return "/RealidadAumentada/GetGLBFile?archivo=pizza_verace.glb";
                 case "margarita":
                     return "/RealidadAumentada/GetGLBFile?archivo=pizza_margarita.glb";
                 case "cheddar":
                     return "/RealidadAumentada/GetGLBFile?archivo=pizza_cheddar.glb";
                 case "diavola":
                     return "/RealidadAumentada/GetGLBFile?archivo=pizza_diavola.glb";
-                case "meat lover":
-                case "meatlover":
-                    return "/RealidadAumentada/GetGLBFile?archivo=pizza_meatlover.glb";
+                case "say cheese":
+                    return "/RealidadAumentada/GetGLBFile?archivo=pizza_say_cheese.glb";
+                case "verace":
+                    return "/RealidadAumentada/GetGLBFile?archivo=pizza_verace.glb";
+                case "meat lovers":
+                    return "/RealidadAumentada/GetGLBFile?archivo=pizza_meat_lovers.glb";
                 default:
                     return "";
             }
@@ -237,15 +234,11 @@ namespace ProyectoIdentity.Controllers
 
         private string DeterminarModeloPorId(int id)
         {
-            // Mapeo específico de IDs a archivos de modelo
+            // Mapeo específico de IDs a archivos de modelo (solo los que funcionan)
             switch (id)
             {
                 case 1:
                     return "pizza_pepperoni.glb";
-                case 2:
-                    return "pizza_mi_champ.glb"; // Mantener compatibilidad con el archivo anterior
-                case 3:
-                    return "pizza_hawaiana.glb"; // Mantener compatibilidad con el archivo anterior
                 case 4:
                     return "pizza_margarita.glb";
                 case 5:
@@ -253,15 +246,13 @@ namespace ProyectoIdentity.Controllers
                 case 6:
                     return "pizza_diavola.glb";
                 case 7:
-                    return "pizza_meatlover.glb";
-                case 8:
-                    return "pizza_veggie_lovers.glb"; // Mantener compatibilidad con el archivo anterior
+                    return "pizza_meat_lovers.glb";
                 case 9:
                     return "pizza_say_cheese.glb";
                 case 10:
                     return "pizza_verace.glb";
                 default:
-                    return "pizza2.glb"; // Por defecto
+                    return "pizza2.glb"; // Por defecto para cualquier ID no mapeado
             }
         }
     }
