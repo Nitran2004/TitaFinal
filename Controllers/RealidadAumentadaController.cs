@@ -74,6 +74,7 @@ namespace ProyectoIdentity.Controllers
                 "pizza_say_cheese.glb", // ID 9
                 "pizza_verace.glb", // ID 10
                 "pizza_meat_lovers.glb", // ID 7
+                "pizza_michamp.glb" // ID 2
             };
 
             if (!archivosPermitidos.Contains(archivo))
@@ -227,6 +228,8 @@ namespace ProyectoIdentity.Controllers
                     return "/RealidadAumentada/GetGLBFile?archivo=pizza_verace.glb";
                 case "meat lovers":
                     return "/RealidadAumentada/GetGLBFile?archivo=pizza_meat_lovers.glb";
+                case "mi champ":
+                    return "/RealidadAumentada/GetGLBFile?archivo=pizza_michamp.glb";
                 default:
                     return "";
             }
@@ -239,6 +242,8 @@ namespace ProyectoIdentity.Controllers
             {
                 case 1:
                     return "pizza_pepperoni.glb";
+                case 2:
+                    return "pizza_michamp.glb";
                 case 4:
                     return "pizza_margarita.glb";
                 case 5:
