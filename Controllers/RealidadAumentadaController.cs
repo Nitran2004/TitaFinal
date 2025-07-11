@@ -182,6 +182,7 @@ namespace ProyectoIdentity.Controllers
             return Content(string.Join("<br>", resultado), "text/html");
         }
 
+
         [HttpGet("Debug")]
         public async Task<IActionResult> Debug(int? id)
         {
