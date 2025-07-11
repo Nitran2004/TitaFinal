@@ -1216,34 +1216,29 @@
 
             createReticle() {
                 this.reticle = new THREE.Group();
-                const ring = new THREE.Mesh(
-                    new THREE.RingGeometry(0.05, 0.07, 24),
-                    new THREE.MeshBasicMaterial({ color: 0x0099ff, side: THREE.DoubleSide, transparent: true, opacity: 0.8 })
-                );
-                const outerRing = new THREE.Mesh(
-                    new THREE.RingGeometry(0.08, 0.09, 24),
-                    new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.5 })
-                );
-                const grid = new THREE.Mesh(
-                    new THREE.PlaneGeometry(0.5, 0.5, 10, 10),
-                    new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.3, wireframe: true, side: THREE.DoubleSide })
-                );
 
-                [ring, outerRing, grid].forEach(mesh => this.reticle.add(mesh));
-                this.reticle.rotation.x = -Math.PI / 2;
+                // Círculo horizontal
+                const circle = new THREE.Mesh(
+                    new THREE.CircleGeometry(0.1, 32),
+                    new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.7, side: THREE.DoubleSide })
+                );
+                circle.rotation.x = -Math.PI / 2; // Horizontal
+
+                // Cruz vertical
+                const crossV = new THREE.Mesh(
+                    new THREE.PlaneGeometry(0.02, 0.2),
+                    new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.8, side: THREE.DoubleSide })
+                );
+                const crossH = new THREE.Mesh(
+                    new THREE.PlaneGeometry(0.2, 0.02),
+                    new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.8, side: THREE.DoubleSide })
+                );
+                crossH.rotation.z = Math.PI / 2;
+
+                this.reticle.add(circle, crossV, crossH);
                 this.reticle.visible = false;
                 this.scene.add(this.reticle);
-
-                const animateReticle = () => {
-                    if (this.reticle && this.reticle.visible) {
-                        const time = Date.now() * 0.005;
-                        outerRing.scale.setScalar(1 + Math.sin(time) * 0.2);
-                        grid.material.opacity = 0.2 + Math.sin(time * 2) * 0.1;
-                    }
-                    requestAnimationFrame(animateReticle);
-                };
-                animateReticle();
-                console.log('Reticle horizontal creado');
+                console.log('Reticle con círculo horizontal y cruz vertical creado');
             }
 
             async startAR() {
