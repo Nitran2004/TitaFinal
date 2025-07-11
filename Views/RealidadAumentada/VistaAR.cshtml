@@ -23,6 +23,22 @@
             user-select: none;
         }
 
+        .camera-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            display: none;
+        }
+
+        #camera-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         .canvas-container {
             position: fixed;
             top: 0;
@@ -493,6 +509,34 @@
                 box-shadow: 0 12px 30px rgba(16, 185, 129, 0.4);
             }
 
+        .ar-instructions {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 30px 40px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 30;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: white;
+            display: none;
+            max-width: 90%;
+        }
+
+            .ar-instructions h3 {
+                color: #10b981;
+                margin-bottom: 15px;
+                font-size: 1.2rem;
+            }
+
+            .ar-instructions p {
+                margin-bottom: 10px;
+                line-height: 1.5;
+            }
+
         @@media (max-width: 768px) {
             .allergens-grid
 
@@ -651,6 +695,11 @@
         </div>
     </div>
 
+    <!-- Contenedor de la cámara -->
+    <div class="camera-container" id="camera-container">
+        <video id="camera-video" autoplay playsinline muted></video>
+    </div>
+
     <div class="canvas-container">
         <canvas id="canvas3d"></canvas>
     </div>
@@ -664,6 +713,14 @@
         <h3>Error al cargar</h3>
         <p id="error-message">Ha ocurrido un error</p>
         <button class="btn btn-primary" onclick="app.reload()" style="margin-top: 16px;">Reintentar</button>
+    </div>
+
+    <div class="ar-instructions" id="ar-instructions">
+        <h3>🎉 AR Activado</h3>
+        <p>El modelo 3D ahora flota sobre la cámara</p>
+        <p>Mueve el dispositivo para ver el modelo desde diferentes ángulos</p>
+        <p>Usa los controles para ajustar escala y posición</p>
+        <button class="btn btn-primary" onclick="hideARInstructions()" style="margin-top: 15px;">Entendido</button>
     </div>
 
     <div class="panel nutrition-panel fade-in" id="nutrition-panel">
@@ -842,19 +899,15 @@
     <button class="ar-toggle" id="ar-toggle" onclick="toggleAR()">📷</button>
 
     <script>
-        class DesktopViewer {
+        class ARViewer {
             constructor() {
                 this.scene = null;
                 this.camera = null;
                 this.renderer = null;
                 this.controls = null;
                 this.model = null;
-                this.reticle = null;
-                this.arSession = null;
-                this.hitTestSource = null;
                 this.isARActive = false;
-                this.isARSupported = false;
-                this.modelStateBeforeAR = null;
+                this.cameraStream = null;
                 this.panelsVisible = false;
                 this.headerVisible = true;
                 this.currentPanel = null;
@@ -876,14 +929,17 @@
                     posYValue: document.getElementById('posY-value'),
                     rotYValue: document.getElementById('rotY-value'),
                     header: document.getElementById('header'),
-                    controlsPanel: document.getElementById('controls-panel')
+                    controlsPanel: document.getElementById('controls-panel'),
+                    cameraContainer: document.getElementById('camera-container'),
+                    cameraVideo: document.getElementById('camera-video'),
+                    arInstructions: document.getElementById('ar-instructions')
                 };
 
                 this.init();
             }
 
             init() {
-                console.log('Inicializando Enhanced Desktop Viewer:', this.config.modelFile);
+                console.log('Inicializando AR Viewer:', this.config.modelFile);
                 try {
                     this.setupScene();
                     this.setupCamera();
@@ -901,11 +957,7 @@
 
             setupScene() {
                 this.scene = new THREE.Scene();
-                const colors = ['%23667eea', '%23667eea', '%23764ba2', '%23764ba2', '%23667eea', '%23667eea'];
-                this.backgroundTexture = new THREE.CubeTextureLoader().load(
-                    colors.map(c => `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="${c}"/></svg>`)
-                );
-                this.scene.background = this.backgroundTexture;
+                // No agregar background para modo normal, se agregará después
             }
 
             setupCamera() {
@@ -915,51 +967,78 @@
 
             setupRenderer() {
                 const canvas = document.getElementById('canvas3d');
-                this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+                this.renderer = new THREE.WebGLRenderer({
+                    canvas,
+                    antialias: true,
+                    alpha: true
+                });
                 this.renderer.setSize(window.innerWidth, window.innerHeight);
                 this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 this.renderer.shadowMap.enabled = true;
                 this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
                 this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
                 this.renderer.toneMappingExposure = 1.2;
-                this.renderer.xr.enabled = true;
-                this.checkARSupport();
+
+                // Configurar transparencia para modo AR
+                this.updateRendererForMode();
+            }
+
+            updateRendererForMode() {
+                if (this.isARActive) {
+                    // Modo AR: fondo transparente
+                    this.renderer.setClearColor(0x000000, 0);
+                    this.scene.background = null;
+                } else {
+                    // Modo normal: fondo degradado
+                    this.renderer.setClearColor(0x667eea, 1);
+                    const colors = ['#667eea', '#667eea', '#764ba2', '#764ba2', '#667eea', '#667eea'];
+                    const loader = new THREE.CubeTextureLoader();
+                    const texture = loader.load(
+                        colors.map(c => `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="${c}"/></svg>`)
+                    );
+                    this.scene.background = texture;
+                }
             }
 
             setupLights() {
-                const lights = [
-                    new THREE.AmbientLight(0xffffff, 0.4),
-                    new THREE.DirectionalLight(0xffffff, 1.0),
-                    new THREE.DirectionalLight(0x64b5f6, 0.5),
-                    new THREE.DirectionalLight(0xffffff, 0.3)
-                ];
+                // Luz ambiental suave
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                this.scene.add(ambientLight);
 
-                lights[1].position.set(5, 10, 5);
-                lights[1].castShadow = true;
-                lights[1].shadow.mapSize.setScalar(2048);
-                lights[1].shadow.camera.near = 0.5;
-                lights[1].shadow.camera.far = 50;
-                lights[2].position.set(-3, 2, -3);
-                lights[3].position.set(0, -5, 10);
+                // Luz direccional principal
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+                directionalLight.position.set(5, 10, 5);
+                directionalLight.castShadow = true;
+                directionalLight.shadow.mapSize.setScalar(2048);
+                directionalLight.shadow.camera.near = 0.5;
+                directionalLight.shadow.camera.far = 50;
+                this.scene.add(directionalLight);
 
-                lights.forEach(light => this.scene.add(light));
+                // Luz de relleno
+                const fillLight = new THREE.DirectionalLight(0x64b5f6, 0.4);
+                fillLight.position.set(-3, 2, -3);
+                this.scene.add(fillLight);
+
+                // Luz trasera
+                const backLight = new THREE.DirectionalLight(0xffffff, 0.2);
+                backLight.position.set(0, -5, -10);
+                this.scene.add(backLight);
             }
 
             setupControls() {
                 this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-                Object.assign(this.controls, {
-                    enableDamping: true,
-                    dampingFactor: 0.05,
-                    screenSpacePanning: false,
-                    minDistance: 1,
-                    maxDistance: 20,
-                    maxPolarAngle: Math.PI / 1.8
-                });
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+                this.controls.screenSpacePanning = false;
+                this.controls.minDistance = 1;
+                this.controls.maxDistance = 20;
+                this.controls.maxPolarAngle = Math.PI / 1.8;
             }
 
             setupEventListeners() {
                 window.addEventListener('resize', () => this.onResize());
 
+                // Controles deslizantes
                 ['scale', 'posY', 'rotY'].forEach(type => {
                     const slider = this.dom[`${type}Slider`];
                     if (slider) {
@@ -970,9 +1049,9 @@
                     }
                 });
 
+                // Auto-hide header
                 let headerTimeout;
                 document.addEventListener('mousemove', () => {
-                    if (this.config.isMobile) return;
                     this.showHeader();
                     clearTimeout(headerTimeout);
                     headerTimeout = setTimeout(() => this.hideHeader(), 3000);
@@ -980,15 +1059,11 @@
             }
 
             setupUI() {
+                // Ocultar todos los paneles inicialmente
                 [this.dom.controlsPanel, document.getElementById('nutrition-panel'), document.getElementById('allergens-panel')].forEach(panel => {
                     if (panel) panel.classList.add('hidden');
                 });
                 this.currentPanel = null;
-                setTimeout(() => {
-                    [this.dom.controlsPanel, document.getElementById('nutrition-panel'), document.getElementById('allergens-panel')].forEach(panel => {
-                        if (panel) panel.classList.add('fade-in');
-                    });
-                }, 500);
             }
 
             addControlFeedback(element) {
@@ -1004,10 +1079,14 @@
             }
 
             hideHeader() {
-                if (this.dom.header && !this.config.isMobile) {
+                if (this.dom.header && !this.isMobile()) {
                     this.dom.header.classList.add('hidden');
                     this.headerVisible = false;
                 }
+            }
+
+            isMobile() {
+                return window.innerWidth <= 768;
             }
 
             loadModel() {
@@ -1051,6 +1130,18 @@
                 });
             }
 
+            onLoadProgress(xhr) {
+                if (xhr.lengthComputable && this.dom.loading) {
+                    const percent = Math.floor((xhr.loaded / xhr.total) * 100);
+                    this.dom.loading.querySelector('div:last-child').textContent = `Cargando modelo... ${percent}%`;
+                }
+            }
+
+            onLoadError(error) {
+                console.error('Error cargando modelo:', error);
+                this.showError(`Error de carga: ${error.message || 'Error desconocido'}`);
+            }
+
             animateScale(targetScale, callback) {
                 const animate = (startTime = Date.now()) => {
                     const elapsed = Date.now() - startTime;
@@ -1062,18 +1153,6 @@
                     else if (callback) callback();
                 };
                 animate();
-            }
-
-            onLoadProgress(xhr) {
-                if (xhr.lengthComputable && this.dom.loading) {
-                    const percent = Math.floor((xhr.loaded / xhr.total) * 100);
-                    this.dom.loading.querySelector('div:last-child').textContent = `Cargando modelo... ${percent}%`;
-                }
-            }
-
-            onLoadError(error) {
-                console.error('Error cargando modelo:', error);
-                this.showError(`Error de carga: ${error.message || 'Error desconocido'}`);
             }
 
             updateScale(value) {
@@ -1099,16 +1178,23 @@
 
             autoFit() {
                 if (!this.model) return;
+
                 const box = new THREE.Box3().setFromObject(this.model);
                 const center = box.getCenter(new THREE.Vector3());
                 const size = box.getSize(new THREE.Vector3());
                 const maxDim = Math.max(size.x, size.y, size.z);
                 const targetScale = maxDim > 0 ? 3 / maxDim : 1;
-                this.animateToValues({ scale: targetScale, position: center.clone().negate(), camera: true });
+
+                this.animateToValues({
+                    scale: targetScale,
+                    position: center.clone().negate(),
+                    camera: true
+                });
             }
 
             animateToValues(targets) {
                 if (!this.model) return;
+
                 const startScale = this.model.scale.x;
                 const startPos = this.model.position.clone();
 
@@ -1138,6 +1224,7 @@
 
             fitCameraToModel() {
                 if (!this.model || !this.camera) return;
+
                 const box = new THREE.Box3().setFromObject(this.model);
                 const center = box.getCenter(new THREE.Vector3());
                 const size = box.getSize(new THREE.Vector3());
@@ -1156,12 +1243,150 @@
                     if (this.controls) {
                         this.controls.target.lerp(center, easeOut);
                         this.controls.update();
+                    } else {
+                        this.camera.lookAt(center);
                     }
-                    else this.camera.lookAt(center);
 
                     if (progress < 1) requestAnimationFrame(() => animate(startTime));
                 };
                 animate();
+            }
+
+            async startCamera() {
+                try {
+                    console.log('Iniciando cámara...');
+                    const constraints = {
+                        video: {
+                            facingMode: 'environment', // Cámara trasera
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        }
+                    };
+
+                    this.cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+                    this.dom.cameraVideo.srcObject = this.cameraStream;
+
+                    return new Promise((resolve) => {
+                        this.dom.cameraVideo.addEventListener('loadedmetadata', () => {
+                            console.log('Cámara iniciada correctamente');
+                            resolve();
+                        });
+                    });
+                } catch (error) {
+                    console.error('Error iniciando cámara:', error);
+                    let errorMsg = error.message;
+                    if (error.name === 'NotAllowedError') {
+                        errorMsg = 'Permisos de cámara denegados. Por favor permite el acceso a la cámara.';
+                    } else if (error.name === 'NotFoundError') {
+                        errorMsg = 'No se encontró cámara trasera. Se usará la cámara frontal.';
+                    } else if (error.name === 'NotSupportedError') {
+                        errorMsg = 'Cámara no soportada en este navegador.';
+                    }
+                    throw new Error(errorMsg);
+                }
+            }
+
+            stopCamera() {
+                if (this.cameraStream) {
+                    console.log('Deteniendo cámara...');
+                    this.cameraStream.getTracks().forEach(track => track.stop());
+                    this.cameraStream = null;
+                    this.dom.cameraVideo.srcObject = null;
+                }
+            }
+
+            async toggleAR() {
+                if (this.isARActive) {
+                    await this.stopAR();
+                } else {
+                    await this.startAR();
+                }
+            }
+
+            async startAR() {
+                try {
+                    console.log('Iniciando modo AR...');
+
+                    // Iniciar cámara
+                    await this.startCamera();
+
+                    // Mostrar cámara de fondo
+                    this.dom.cameraContainer.style.display = 'block';
+
+                    // Actualizar renderer para transparencia
+                    this.isARActive = true;
+                    this.updateRendererForMode();
+
+                    // Ajustar modelo para AR (posición más adecuada para flotar)
+                    if (this.model) {
+                        this.model.position.set(0, 0, -3); // Más cercano para verse mejor
+                        // Mantener la escala actual o ajustarla ligeramente
+                        const currentScale = this.model.scale.x;
+                        this.model.scale.setScalar(Math.max(currentScale, 1.2)); // Mínimo 1.2x para AR
+                    }
+
+                    // Actualizar controles para modo AR
+                    if (this.controls) {
+                        this.controls.enableRotate = true;
+                        this.controls.enableZoom = true;
+                        this.controls.enablePan = true;
+                    }
+
+                    // Actualizar UI
+                    const arButton = document.getElementById('ar-toggle');
+                    if (arButton) {
+                        arButton.classList.add('active');
+                        arButton.textContent = '✓';
+                    }
+
+                    // Mostrar instrucciones
+                    this.showARInstructions();
+
+                    console.log('Modo AR activado');
+
+                } catch (error) {
+                    console.error('Error iniciando AR:', error);
+                    alert('Error AR: ' + error.message);
+                    this.isARActive = false;
+                    this.updateRendererForMode();
+                }
+            }
+
+            async stopAR() {
+                console.log('Deteniendo modo AR...');
+
+                // Detener cámara
+                this.stopCamera();
+
+                // Ocultar cámara
+                this.dom.cameraContainer.style.display = 'none';
+
+                // Restaurar modo normal
+                this.isARActive = false;
+                this.updateRendererForMode();
+
+                // Restaurar posición del modelo con autoajuste
+                if (this.model) {
+                    setTimeout(() => {
+                        this.autoFit();
+                    }, 100);
+                }
+
+                // Actualizar UI
+                const arButton = document.getElementById('ar-toggle');
+                if (arButton) {
+                    arButton.classList.remove('active');
+                    arButton.textContent = '📷';
+                }
+
+                console.log('Modo AR desactivado');
+            }
+
+            showARInstructions() {
+                this.dom.arInstructions.style.display = 'block';
+                setTimeout(() => {
+                    this.dom.arInstructions.style.display = 'none';
+                }, 5000); // Auto-hide después de 5 segundos
             }
 
             onResize() {
@@ -1189,225 +1414,9 @@
             animate() {
                 requestAnimationFrame(() => this.animate());
                 if (this.controls) this.controls.update();
-                if (this.renderer && this.scene && this.camera) this.renderer.render(this.scene, this.camera);
-            }
-
-            // AR Functionality
-            async checkARSupport() {
-                try {
-                    if (navigator.xr) {
-                        this.isARSupported = await navigator.xr.isSessionSupported('immersive-ar');
-                        console.log('AR Support:', this.isARSupported);
-                        if (this.isARSupported) this.createReticle();
-                    }
-                } catch (error) {
-                    console.log('AR no disponible:', error);
-                    this.isARSupported = false;
-                }
-            }
-
-            createReticle() {
-                this.reticle = new THREE.Group();
-
-                // Círculo horizontal
-                const circle = new THREE.Mesh(
-                    new THREE.CircleGeometry(0.1, 32),
-                    new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.7, side: THREE.DoubleSide })
-                );
-                circle.rotation.x = -Math.PI / 2; // Horizontal
-
-                // Cruz vertical
-                const crossV = new THREE.Mesh(
-                    new THREE.PlaneGeometry(0.02, 0.2),
-                    new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.8, side: THREE.DoubleSide })
-                );
-                const crossH = new THREE.Mesh(
-                    new THREE.PlaneGeometry(0.2, 0.02),
-                    new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.8, side: THREE.DoubleSide })
-                );
-                crossH.rotation.z = Math.PI / 2;
-
-                this.reticle.add(circle, crossV, crossH);
-                this.reticle.visible = false;
-                this.scene.add(this.reticle);
-                console.log('Reticle con círculo horizontal y cruz vertical creado');
-            }
-
-            async startAR() {
-                if (!this.isARSupported) {
-                    alert('AR no está disponible en este dispositivo/navegador');
-                    return;
-                }
-
-                try {
-                    console.log('Iniciando AR');
-                    const stream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
-                    });
-                    stream.getTracks().forEach(track => track.stop());
-
-                    this.arSession = await navigator.xr.requestSession('immersive-ar', {
-                        requiredFeatures: ['hit-test'],
-                        optionalFeatures: ['dom-overlay']
-                    });
-                    console.log('Sesión AR creada');
-
-                    this.renderer.xr.setReferenceSpaceType('local');
-                    await this.renderer.xr.setSession(this.arSession);
-
-                    this.arSession.addEventListener('select', () => this.onARSelect());
-                    this.arSession.addEventListener('end', () => this.onAREnd());
-
-                    // Guardar estado del modelo ANTES de ocultarlo
-                    if (this.model) {
-                        this.modelStateBeforeAR = {
-                            position: this.model.position.clone(),
-                            rotation: this.model.rotation.clone(),
-                            scale: this.model.scale.clone(),
-                            visible: this.model.visible
-                        };
-                        console.log('Estado del modelo guardado:', this.modelStateBeforeAR);
-                        this.model.visible = false; // Ocultar para que aparezca el reticle
-                    }
-
-                    this.scene.background = null;
-                    this.isARActive = true;
-
-                    const arButton = document.getElementById('ar-toggle');
-                    if (arButton) {
-                        arButton.classList.add('active');
-                        arButton.textContent = 'ON';
-                    }
-
-                    console.log('AR iniciado correctamente');
-                    this.renderer.setAnimationLoop((timestamp, frame) => this.renderAR(timestamp, frame));
-
-                } catch (error) {
-                    console.error('Error iniciando AR:', error);
-                    let errorMsg = error.message;
-                    if (error.name === 'NotAllowedError') errorMsg = 'Permisos de cámara denegados.';
-                    else if (error.name === 'NotFoundError') errorMsg = 'No se encontró cámara trasera.';
-                    else if (error.name === 'NotSupportedError') errorMsg = 'AR no soportado en este navegador.';
-                    alert('Error AR: ' + errorMsg);
-                }
-            }
-
-            renderAR(timestamp, frame) {
-                if (!frame || !this.isARActive) return;
-
-                const session = this.renderer.xr.getSession();
-                const referenceSpace = this.renderer.xr.getReferenceSpace();
-
-                // Inicializar hit test source si no existe
-                if (!this.hitTestSource) {
-                    session.requestReferenceSpace('viewer').then(viewerSpace => {
-                        session.requestHitTestSource({ space: viewerSpace })
-                            .then(source => {
-                                this.hitTestSource = source;
-                                console.log('Hit test source inicializado');
-                            })
-                            .catch(err => console.error('Error inicializando hit test:', err));
-                    });
+                if (this.renderer && this.scene && this.camera) {
                     this.renderer.render(this.scene, this.camera);
-                    return;
                 }
-
-                // Solo mostrar reticle si el modelo no está colocado
-                if (!this.model.visible) {
-                    const hitTestResults = frame.getHitTestResults(this.hitTestSource);
-
-                    if (hitTestResults.length > 0) {
-                        const hit = hitTestResults[0];
-                        const pose = hit.getPose(referenceSpace);
-
-                        if (pose) {
-                            // Actualizar posición del reticle
-                            const matrix = new THREE.Matrix4().fromArray(pose.transform.matrix);
-                            this.reticle.position.setFromMatrixPosition(matrix);
-                            this.reticle.visible = true;
-                        }
-                    } else {
-                        this.reticle.visible = false;
-                    }
-                }
-
-                this.renderer.render(this.scene, this.camera);
-            }
-
-            onARSelect() {
-                console.log('Superficie tocada para colocar modelo');
-                if (!this.reticle.visible || this.model.visible) {
-                    console.log('No se puede colocar - reticle visible:', this.reticle.visible, 'modelo visible:', this.model.visible);
-                    return;
-                }
-
-                // Obtener posición del reticle
-                const position = this.reticle.position.clone();
-                console.log('Colocando modelo en posición:', position);
-
-                // Colocar modelo en la posición del reticle
-                this.model.position.copy(position);
-                this.model.position.y += 0.3; // Elevar más para que sea visible
-
-                // Establecer escala más grande para AR (era 0.3, ahora 0.8)
-                this.model.scale.setScalar(0.8);
-
-                // Resetear rotación
-                this.model.rotation.set(0, 0, 0);
-
-                // Asegurar que todos los materiales sean visibles
-                this.model.traverse((child) => {
-                    if (child.isMesh) {
-                        child.visible = true;
-                        if (child.material) {
-                            child.material.transparent = false;
-                            child.material.opacity = 1.0;
-                            child.material.needsUpdate = true;
-                        }
-                    }
-                });
-
-                // Mostrar modelo y ocultar reticle
-                this.model.visible = true;
-                this.reticle.visible = false;
-
-                console.log('Modelo colocado en AR - Posición:', this.model.position, 'Escala:', this.model.scale);
-            }
-
-            onAREnd() {
-                console.log('Sesión AR finalizada');
-                this.isARActive = false;
-                this.hitTestSource = null;
-                if (this.reticle) this.reticle.visible = false;
-
-                // Restaurar estado del modelo
-                if (this.model && this.modelStateBeforeAR) {
-                    console.log('Restaurando estado del modelo...');
-                    this.model.position.copy(this.modelStateBeforeAR.position);
-                    this.model.rotation.copy(this.modelStateBeforeAR.rotation);
-                    this.model.scale.copy(this.modelStateBeforeAR.scale);
-                    this.model.visible = this.modelStateBeforeAR.visible;
-                    console.log('Modelo restaurado a:', {
-                        position: this.model.position,
-                        scale: this.model.scale,
-                        visible: this.model.visible
-                    });
-                }
-
-                this.scene.background = this.backgroundTexture;
-                const arButton = document.getElementById('ar-toggle');
-                if (arButton) {
-                    arButton.classList.remove('active');
-                    arButton.textContent = '📷';
-                }
-                this.modelStateBeforeAR = null;
-                this.renderer.setAnimationLoop(null);
-                this.animate();
-                console.log('Regreso a vista 3D normal');
-            }
-
-            stopAR() {
-                if (this.arSession) this.arSession.end();
             }
         }
 
@@ -1445,13 +1454,17 @@
         }
 
         function toggleAR() {
-            if (!app) return;
-            app.isARActive ? app.stopAR() : app.startAR();
+            if (app) app.toggleAR();
+        }
+
+        function hideARInstructions() {
+            const instructions = document.getElementById('ar-instructions');
+            if (instructions) instructions.style.display = 'none';
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('Iniciando Enhanced Desktop Viewer');
-            app = new DesktopViewer();
+            console.log('Iniciando AR Viewer con modelo real');
+            app = new ARViewer();
         });
 
         window.addEventListener('error', (e) => {
