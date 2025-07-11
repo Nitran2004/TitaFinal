@@ -312,11 +312,6 @@
             color: #ef4444;
         }
 
-        .ai-panel {
-            background: rgba(16, 185, 129, 0.12);
-            border-color: rgba(16, 185, 129, 0.25);
-        }
-
         .panel-header {
             display: flex;
             justify-content: space-between;
@@ -367,58 +362,6 @@
             .control-group:last-child {
                 margin-bottom: 0;
             }
-
-        .stat-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.2s ease;
-        }
-
-            .stat-item:last-child {
-                border-bottom: none;
-            }
-
-            .stat-item:hover {
-                background: rgba(255, 255, 255, 0.03);
-                border-radius: 8px;
-                padding-left: 8px;
-                padding-right: 8px;
-            }
-
-        .stat-label {
-            opacity: 0.85;
-            font-weight: 500;
-        }
-
-        .stat-value {
-            font-weight: 600;
-            color: #60a5fa;
-            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
-        }
-
-        .ai-decision, .ai-reasoning {
-            margin-bottom: 10px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            border-left: 3px solid #10b981;
-        }
-
-        .ai-decision {
-            color: #10b981;
-            font-weight: 600;
-            background: rgba(16, 185, 129, 0.1);
-        }
-
-        .ai-reasoning {
-            color: #6ee7b7;
-            font-style: italic;
-            opacity: 0.9;
-            background: rgba(110, 231, 183, 0.05);
-            font-size: 0.9rem;
-        }
 
         .control-label {
             display: flex;
@@ -566,8 +509,6 @@
             font-size: 1.3rem;
         }
 
-        }
-
         .header {
             padding: 16px 20px;
             min-height: auto;
@@ -633,19 +574,6 @@
             left: 20px;
         }
 
-        .allergens-grid {
-            grid-template-columns: 1fr;
-            gap: 8px;
-        }
-
-        .allergen-item {
-            padding: 10px 12px;
-        }
-
-        .allergen-icon {
-            font-size: 1.3rem;
-        }
-
         }
 
         @@media (max-width: 480px) {
@@ -699,14 +627,14 @@
             <h1>@ViewBag.ProductoNombre</h1>
             <div class="product-info">
                 <div class="product-price">
-                    💰 @ViewBag.ProductoPrecio
+                    @ViewBag.ProductoPrecio
                 </div>
                 <div class="product-meta">
                     <span class="meta-item">
-                        📦 Modelo 3D
+                        Modelo 3D
                     </span>
                     <span class="meta-item">
-                        🏷️ @ViewBag.ProductoCategoria
+                        @ViewBag.ProductoCategoria
                     </span>
                 </div>
             </div>
@@ -718,10 +646,8 @@
             }
         </div>
         <div class="header-actions">
-            <button class="btn btn-success" onclick="app.autoFit()">✨ Auto Ajustar</button>
-            <button class="btn" onclick="app.center()">🎯 Centrar</button>
-            <button class="btn btn-primary" onclick="app.resetCamera()">🔄 Reset</button>
-            <button class="btn" onclick="history.back()">← Volver</button>
+            <button class="btn btn-success" onclick="app.autoFit()">Auto Ajustar</button>
+            <button class="btn" onclick="history.back()">Volver</button>
         </div>
     </div>
 
@@ -735,34 +661,14 @@
     </div>
 
     <div class="error" id="error">
-        <h3>⚠️ Error al cargar</h3>
+        <h3>Error al cargar</h3>
         <p id="error-message">Ha ocurrido un error</p>
-        <button class="btn btn-primary" onclick="app.reload()" style="margin-top: 16px;">🔄 Reintentar</button>
-    </div>
-
-    <div class="panel stats-panel fade-in" id="stats-panel">
-        <div class="panel-header">
-            <div class="panel-title">📊 Estadísticas</div>
-            <button class="panel-close" onclick="togglePanel('stats-panel')">&times;</button>
-        </div>
-        <div id="stats-content">
-            <div class="stat-item"><span class="stat-label">Analizando...</span><span class="stat-value">⏳</span></div>
-        </div>
-    </div>
-
-    <div class="panel ai-panel fade-in" id="ai-panel">
-        <div class="panel-header">
-            <div class="panel-title">🤖 Sistema IA</div>
-            <button class="panel-close" onclick="togglePanel('ai-panel')">&times;</button>
-        </div>
-        <div id="ai-content">
-            <div class="ai-decision">Analizando modelo...</div>
-        </div>
+        <button class="btn btn-primary" onclick="app.reload()" style="margin-top: 16px;">Reintentar</button>
     </div>
 
     <div class="panel nutrition-panel fade-in" id="nutrition-panel">
         <div class="panel-header">
-            <div class="panel-title">🥗 Información Nutricional</div>
+            <div class="panel-title">Información Nutricional</div>
             <button class="panel-close" onclick="togglePanel('nutrition-panel')">&times;</button>
         </div>
         <div id="nutrition-content">
@@ -795,7 +701,7 @@
 
     <div class="panel allergens-panel fade-in" id="allergens-panel">
         <div class="panel-header">
-            <div class="panel-title">⚠️ Información de Alérgenos</div>
+            <div class="panel-title">Información de Alérgenos</div>
             <button class="panel-close" onclick="togglePanel('allergens-panel')">&times;</button>
         </div>
         <div id="allergens-content">
@@ -803,7 +709,7 @@
                 @if (!string.IsNullOrEmpty(ViewBag.Gluten) && ViewBag.Gluten.ToLower() == "true")
                 {
                     <div class="allergen-item allergen-present">
-                        <span class="allergen-icon">🌾</span>
+                        <span class="allergen-icon">G</span>
                         <span class="allergen-name">Gluten</span>
                         <span class="allergen-status">Contiene</span>
                     </div>
@@ -811,7 +717,7 @@
                 else
                 {
                     <div class="allergen-item allergen-absent">
-                        <span class="allergen-icon">🌾</span>
+                        <span class="allergen-icon">G</span>
                         <span class="allergen-name">Gluten</span>
                         <span class="allergen-status">No contiene</span>
                     </div>
@@ -820,7 +726,7 @@
                 @if (!string.IsNullOrEmpty(ViewBag.Lacteos) && ViewBag.Lacteos.ToLower() == "true")
                 {
                     <div class="allergen-item allergen-present">
-                        <span class="allergen-icon">🥛</span>
+                        <span class="allergen-icon">L</span>
                         <span class="allergen-name">Lácteos</span>
                         <span class="allergen-status">Contiene</span>
                     </div>
@@ -828,7 +734,7 @@
                 else
                 {
                     <div class="allergen-item allergen-absent">
-                        <span class="allergen-icon">🥛</span>
+                        <span class="allergen-icon">L</span>
                         <span class="allergen-name">Lácteos</span>
                         <span class="allergen-status">No contiene</span>
                     </div>
@@ -837,7 +743,7 @@
                 @if (!string.IsNullOrEmpty(ViewBag.Huevos) && ViewBag.Huevos.ToLower() == "true")
                 {
                     <div class="allergen-item allergen-present">
-                        <span class="allergen-icon">🥚</span>
+                        <span class="allergen-icon">H</span>
                         <span class="allergen-name">Huevos</span>
                         <span class="allergen-status">Contiene</span>
                     </div>
@@ -845,7 +751,7 @@
                 else
                 {
                     <div class="allergen-item allergen-absent">
-                        <span class="allergen-icon">🥚</span>
+                        <span class="allergen-icon">H</span>
                         <span class="allergen-name">Huevos</span>
                         <span class="allergen-status">No contiene</span>
                     </div>
@@ -854,7 +760,7 @@
                 @if (!string.IsNullOrEmpty(ViewBag.Frutos_Secos) && ViewBag.Frutos_Secos.ToLower() == "true")
                 {
                     <div class="allergen-item allergen-present">
-                        <span class="allergen-icon">🥜</span>
+                        <span class="allergen-icon">F</span>
                         <span class="allergen-name">Frutos Secos</span>
                         <span class="allergen-status">Contiene</span>
                     </div>
@@ -862,7 +768,7 @@
                 else
                 {
                     <div class="allergen-item allergen-absent">
-                        <span class="allergen-icon">🥜</span>
+                        <span class="allergen-icon">F</span>
                         <span class="allergen-name">Frutos Secos</span>
                         <span class="allergen-status">No contiene</span>
                     </div>
@@ -871,7 +777,7 @@
                 @if (!string.IsNullOrEmpty(ViewBag.Soja) && ViewBag.Soja.ToLower() == "true")
                 {
                     <div class="allergen-item allergen-present">
-                        <span class="allergen-icon">🫘</span>
+                        <span class="allergen-icon">S</span>
                         <span class="allergen-name">Soja</span>
                         <span class="allergen-status">Contiene</span>
                     </div>
@@ -879,7 +785,7 @@
                 else
                 {
                     <div class="allergen-item allergen-absent">
-                        <span class="allergen-icon">🫘</span>
+                        <span class="allergen-icon">S</span>
                         <span class="allergen-name">Soja</span>
                         <span class="allergen-status">No contiene</span>
                     </div>
@@ -888,7 +794,7 @@
                 @if (!string.IsNullOrEmpty(ViewBag.Pescado) && ViewBag.Pescado.ToLower() == "true")
                 {
                     <div class="allergen-item allergen-present">
-                        <span class="allergen-icon">🐟</span>
+                        <span class="allergen-icon">P</span>
                         <span class="allergen-name">Pescado</span>
                         <span class="allergen-status">Contiene</span>
                     </div>
@@ -896,7 +802,7 @@
                 else
                 {
                     <div class="allergen-item allergen-absent">
-                        <span class="allergen-icon">🐟</span>
+                        <span class="allergen-icon">P</span>
                         <span class="allergen-name">Pescado</span>
                         <span class="allergen-status">No contiene</span>
                     </div>
@@ -904,30 +810,32 @@
             </div>
         </div>
     </div>
-    <div class="panel-header">
-        <div class="panel-title">🎮 Controles</div>
-        <button class="panel-close" onclick="togglePanel('controls-panel')">&times;</button>
-    </div>
 
-    <div class="control-group">
-        <div class="control-label"><span>Escala</span><span class="control-value" id="scale-value">1.0</span></div>
-        <input type="range" id="scale-slider" class="control-slider" min="0.1" max="10" step="0.1" value="1.0">
-    </div>
+    <div class="panel fade-in" id="controls-panel">
+        <div class="panel-header">
+            <div class="panel-title">Controles</div>
+            <button class="panel-close" onclick="togglePanel('controls-panel')">&times;</button>
+        </div>
 
-    <div class="control-group">
-        <div class="control-label"><span>Posición Y</span><span class="control-value" id="posY-value">0.0</span></div>
-        <input type="range" id="posY-slider" class="control-slider" min="-5" max="5" step="0.1" value="0.0">
-    </div>
+        <div class="control-group">
+            <div class="control-label"><span>Escala</span><span class="control-value" id="scale-value">1.0</span></div>
+            <input type="range" id="scale-slider" class="control-slider" min="0.1" max="10" step="0.1" value="1.0">
+        </div>
 
-    <div class="control-group">
-        <div class="control-label"><span>Rotación Y</span><span class="control-value" id="rotY-value">0°</span></div>
-        <input type="range" id="rotY-slider" class="control-slider" min="0" max="360" step="5" value="0">
-    </div>
+        <div class="control-group">
+            <div class="control-label"><span>Posición Y</span><span class="control-value" id="posY-value">0.0</span></div>
+            <input type="range" id="posY-slider" class="control-slider" min="-5" max="5" step="0.1" value="0.0">
+        </div>
 
-    <div class="control-buttons">
-        <button class="btn" onclick="togglePanel('nutrition-panel')">🥗 Nutrición</button>
-        <button class="btn" onclick="togglePanel('allergens-panel')">⚠️ Alérgenos</button>
-    </div>
+        <div class="control-group">
+            <div class="control-label"><span>Rotación Y</span><span class="control-value" id="rotY-value">0°</span></div>
+            <input type="range" id="rotY-slider" class="control-slider" min="0" max="360" step="5" value="0">
+        </div>
+
+        <div class="control-buttons">
+            <button class="btn" onclick="togglePanel('nutrition-panel')">Nutrición</button>
+            <button class="btn" onclick="togglePanel('allergens-panel')">Alérgenos</button>
+        </div>
     </div>
 
     <button class="panel-toggle" id="panel-toggle" onclick="togglePanels()">🎮</button>
@@ -936,11 +844,20 @@
     <script>
         class DesktopViewer {
             constructor() {
-                this.scene = null; this.camera = null; this.renderer = null; this.controls = null; this.model = null;
-                this.reticle = null; this.arSession = null; this.hitTestSource = null;
-                this.isARActive = false; this.isARSupported = false; this.modelStateBeforeAR = null;
-                this.aiAnalysis = null; this.aiDecision = null;
-                this.panelsVisible = false; this.headerVisible = true; this.currentPanel = null;
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.controls = null;
+                this.model = null;
+                this.reticle = null;
+                this.arSession = null;
+                this.hitTestSource = null;
+                this.isARActive = false;
+                this.isARSupported = false;
+                this.modelStateBeforeAR = null;
+                this.panelsVisible = false;
+                this.headerVisible = true;
+                this.currentPanel = null;
 
                 this.config = {
                     modelPath: '@ViewBag.ModeloPath',
@@ -952,8 +869,6 @@
                     loading: document.getElementById('loading'),
                     error: document.getElementById('error'),
                     errorMessage: document.getElementById('error-message'),
-                    statsContent: document.getElementById('stats-content'),
-                    aiContent: document.getElementById('ai-content'),
                     scaleSlider: document.getElementById('scale-slider'),
                     posYSlider: document.getElementById('posY-slider'),
                     rotYSlider: document.getElementById('rotY-slider'),
@@ -961,8 +876,6 @@
                     posYValue: document.getElementById('posY-value'),
                     rotYValue: document.getElementById('rotY-value'),
                     header: document.getElementById('header'),
-                    statsPanel: document.getElementById('stats-panel'),
-                    aiPanel: document.getElementById('ai-panel'),
                     controlsPanel: document.getElementById('controls-panel')
                 };
 
@@ -970,11 +883,17 @@
             }
 
             init() {
-                console.log('🚀 Inicializando Enhanced Desktop Viewer:', this.config.modelFile);
+                console.log('Inicializando Enhanced Desktop Viewer:', this.config.modelFile);
                 try {
-                    this.setupScene(); this.setupCamera(); this.setupRenderer(); this.setupLights();
-                    this.setupControls(); this.setupEventListeners(); this.setupUI();
-                    this.loadModel(); this.animate();
+                    this.setupScene();
+                    this.setupCamera();
+                    this.setupRenderer();
+                    this.setupLights();
+                    this.setupControls();
+                    this.setupEventListeners();
+                    this.setupUI();
+                    this.loadModel();
+                    this.animate();
                 } catch (error) {
                     this.showError('Error de inicialización: ' + error.message);
                 }
@@ -1029,8 +948,12 @@
             setupControls() {
                 this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
                 Object.assign(this.controls, {
-                    enableDamping: true, dampingFactor: 0.05, screenSpacePanning: false,
-                    minDistance: 1, maxDistance: 20, maxPolarAngle: Math.PI / 1.8
+                    enableDamping: true,
+                    dampingFactor: 0.05,
+                    screenSpacePanning: false,
+                    minDistance: 1,
+                    maxDistance: 20,
+                    maxPolarAngle: Math.PI / 1.8
                 });
             }
 
@@ -1057,14 +980,12 @@
             }
 
             setupUI() {
-                [this.dom.statsPanel, this.dom.aiPanel, this.dom.controlsPanel,
-                 document.getElementById('nutrition-panel'), document.getElementById('allergens-panel')].forEach(panel => {
+                [this.dom.controlsPanel, document.getElementById('nutrition-panel'), document.getElementById('allergens-panel')].forEach(panel => {
                     if (panel) panel.classList.add('hidden');
                 });
                 this.currentPanel = null;
                 setTimeout(() => {
-                    [this.dom.statsPanel, this.dom.aiPanel, this.dom.controlsPanel,
-                     document.getElementById('nutrition-panel'), document.getElementById('allergens-panel')].forEach(panel => {
+                    [this.dom.controlsPanel, document.getElementById('nutrition-panel'), document.getElementById('allergens-panel')].forEach(panel => {
                         if (panel) panel.classList.add('fade-in');
                     });
                 }, 500);
@@ -1075,12 +996,26 @@
                 setTimeout(() => element.style.boxShadow = '', 200);
             }
 
-            showHeader() { if (this.dom.header) { this.dom.header.classList.remove('hidden'); this.headerVisible = true; } }
-            hideHeader() { if (this.dom.header && !this.config.isMobile) { this.dom.header.classList.add('hidden'); this.headerVisible = false; } }
+            showHeader() {
+                if (this.dom.header) {
+                    this.dom.header.classList.remove('hidden');
+                    this.headerVisible = true;
+                }
+            }
+
+            hideHeader() {
+                if (this.dom.header && !this.config.isMobile) {
+                    this.dom.header.classList.add('hidden');
+                    this.headerVisible = false;
+                }
+            }
 
             loadModel() {
-                console.log('🔄 Cargando modelo:', this.config.modelPath);
-                if (!this.config.modelPath) { this.showError('Ruta del modelo no definida'); return; }
+                console.log('Cargando modelo:', this.config.modelPath);
+                if (!this.config.modelPath) {
+                    this.showError('Ruta del modelo no definida');
+                    return;
+                }
 
                 const loader = new THREE.GLTFLoader();
                 loader.load(
@@ -1092,25 +1027,27 @@
             }
 
             onModelLoaded(gltf) {
-                console.log('✅ Modelo cargado:', this.config.modelFile);
+                console.log('Modelo cargado:', this.config.modelFile);
                 this.hideLoading();
                 this.model = gltf.scene;
 
                 this.model.traverse((node) => {
                     if (node.isMesh) {
-                        node.castShadow = true; node.receiveShadow = true;
+                        node.castShadow = true;
+                        node.receiveShadow = true;
                         if (node.material) node.material.envMapIntensity = 0.8;
                     }
                 });
 
                 this.scene.add(this.model);
                 this.model.visible = true;
-                this.runAI(); this.analyzeModel();
 
                 this.model.scale.set(0, 0, 0);
-                const targetScale = this.aiDecision ? this.aiDecision.scale : 1;
-                this.animateScale(targetScale, () => {
-                    setTimeout(() => { this.autoFit(); console.log('✨ Modelo autoajustado automáticamente'); }, 300);
+                this.animateScale(1, () => {
+                    setTimeout(() => {
+                        this.autoFit();
+                        console.log('Modelo autoajustado automáticamente');
+                    }, 300);
                 });
             }
 
@@ -1135,71 +1072,8 @@
             }
 
             onLoadError(error) {
-                console.error('❌ Error cargando modelo:', error);
+                console.error('Error cargando modelo:', error);
                 this.showError(`Error de carga: ${error.message || 'Error desconocido'}`);
-            }
-
-            runAI() {
-                try {
-                    this.aiAnalysis = this.analyzeModelAI();
-                    this.aiDecision = this.makeAIDecision();
-                    this.updateAIPanel(); this.applyAIDecisions();
-                    console.log('🤖 IA aplicada exitosamente');
-                } catch (error) { console.error('🔴 Error en IA:', error); }
-            }
-
-            analyzeModelAI() {
-                if (!this.model) return null;
-                const box = new THREE.Box3().setFromObject(this.model);
-                const center = box.getCenter(new THREE.Vector3());
-                const size = box.getSize(new THREE.Vector3());
-                const maxDim = Math.max(size.x, size.y, size.z);
-                return {
-                    center, size, maxDim,
-                    problemType: this.classifyProblem(),
-                    sizeType: maxDim < 0.5 ? 'small' : maxDim > 10 ? 'large' : 'normal'
-                };
-            }
-
-            classifyProblem() {
-                return (this.config.modelFile.includes('pizza3') || this.config.modelFile.includes('pizza4'))
-                    ? 'displaced_center_small' : 'normal';
-            }
-
-            makeAIDecision() {
-                if (!this.aiAnalysis) return null;
-                let decision = { scale: 1.0, rotationY: 0, centerCorrection: false, strategy: 'standard' };
-
-                if (this.aiAnalysis.problemType === 'displaced_center_small') {
-                    Object.assign(decision, {
-                        strategy: 'fix_displacement', centerCorrection: true,
-                        scale: this.aiAnalysis.maxDim < 0.5 ? 20.0 : 8.0,
-                        rotationY: this.config.modelFile.includes('pizza3') ? 50 :
-                            this.config.modelFile.includes('pizza4') ? 45 : 0
-                    });
-                } else if (this.aiAnalysis.sizeType === 'small') {
-                    decision.scale = 4.0 / Math.max(this.aiAnalysis.maxDim, 0.1);
-                }
-                return decision;
-            }
-
-            applyAIDecisions() {
-                if (!this.model || !this.aiDecision) return;
-                console.log('🤖 Aplicando decisiones IA');
-                if (this.aiDecision.centerCorrection) this.model.position.copy(this.aiAnalysis.center).negate();
-                this.model.rotation.y = this.aiDecision.rotationY * Math.PI / 180;
-                this.updateControlValues();
-            }
-
-            updateAIPanel() {
-                if (!this.aiDecision || !this.dom.aiContent) return;
-                this.dom.aiContent.innerHTML = `
-                            <div class="ai-decision">✨ Estrategia: ${this.aiDecision.strategy}</div>
-                            <div class="ai-decision">📏 Escala: ${this.aiDecision.scale.toFixed(1)}x</div>
-                            <div class="ai-decision">🔄 Rotación: ${this.aiDecision.rotationY}°</div>
-                            <div class="ai-reasoning">🎯 Centro: ${this.aiDecision.centerCorrection ? 'Corregido automáticamente' : 'Posición original'}</div>
-                            <div class="ai-reasoning">🧠 Optimización aplicada para mejor visualización</div>
-                        `;
             }
 
             updateScale(value) {
@@ -1208,60 +1082,19 @@
                     if (this.dom.scaleValue) this.dom.scaleValue.textContent = parseFloat(value).toFixed(1) + 'x';
                 }
             }
+
             updatePositionY(value) {
                 if (this.model) {
                     this.model.position.y = parseFloat(value);
                     if (this.dom.posYValue) this.dom.posYValue.textContent = parseFloat(value).toFixed(1);
                 }
             }
+
             updateRotationY(value) {
                 if (this.model) {
                     this.model.rotation.y = parseFloat(value) * Math.PI / 180;
                     if (this.dom.rotYValue) this.dom.rotYValue.textContent = value + '°';
                 }
-            }
-
-            updateControlValues() {
-                if (!this.model || !this.aiDecision) return;
-                const updates = [
-                    ['scale', this.aiDecision.scale, this.aiDecision.scale.toFixed(1) + 'x'],
-                    ['posY', this.model.position.y, this.model.position.y.toFixed(1)],
-                    ['rotY', this.aiDecision.rotationY, this.aiDecision.rotationY + '°']
-                ];
-                updates.forEach(([type, sliderVal, displayVal]) => {
-                    if (this.dom[`${type}Slider`]) this.dom[`${type}Slider`].value = sliderVal;
-                    if (this.dom[`${type}Value`]) this.dom[`${type}Value`].textContent = displayVal;
-                });
-            }
-
-            analyzeModel() {
-                if (!this.model || !this.dom.statsContent) return;
-                const box = new THREE.Box3().setFromObject(this.model);
-                const size = box.getSize(new THREE.Vector3());
-
-                let meshCount = 0, vertexCount = 0;
-                const materials = new Set();
-
-                this.model.traverse((node) => {
-                    if (node.isMesh) {
-                        meshCount++;
-                        if (node.geometry?.attributes.position) vertexCount += node.geometry.attributes.position.count;
-                        if (node.material) {
-                            (Array.isArray(node.material) ? node.material : [node.material])
-                                .forEach(mat => materials.add(mat));
-                        }
-                    }
-                });
-
-                this.dom.statsContent.innerHTML = [
-                    ['📄 Archivo', this.config.modelFile],
-                    ['📐 Dimensiones', `${size.x.toFixed(1)} × ${size.y.toFixed(1)} × ${size.z.toFixed(1)}`],
-                    ['🔷 Meshes', meshCount],
-                    ['📊 Vértices', vertexCount.toLocaleString()],
-                    ['🎨 Materiales', materials.size]
-                ].map(([label, value]) =>
-                    `<div class="stat-item"><span class="stat-label">${label}</span><span class="stat-value">${value}</span></div>`
-                ).join('');
             }
 
             autoFit() {
@@ -1275,10 +1108,7 @@
             }
 
             center() {
-                if (!this.model) return;
-                const box = new THREE.Box3().setFromObject(this.model);
-                const center = box.getCenter(new THREE.Vector3());
-                this.animateToValues({ position: center.clone().negate() });
+                // Método removido
             }
 
             animateToValues(targets) {
@@ -1311,25 +1141,7 @@
             }
 
             resetCamera() {
-                const startPos = this.camera.position.clone();
-                const targetPos = new THREE.Vector3(0, 2, 5);
-
-                const animate = (startTime = Date.now()) => {
-                    const elapsed = Date.now() - startTime;
-                    const progress = Math.min(elapsed / 1000, 1);
-                    const easeOut = 1 - Math.pow(1 - progress, 3);
-
-                    this.camera.position.lerpVectors(startPos, targetPos, easeOut);
-                    this.camera.lookAt(0, 0, 0);
-                    if (this.controls) { this.controls.target.set(0, 0, 0); this.controls.update(); }
-
-                    if (progress < 1) requestAnimationFrame(() => animate(startTime));
-                };
-                animate();
-            }
-
-            toggleWireframe() {
-                // Función removida - botón wireframe eliminado
+                // Método removido
             }
 
             fitCameraToModel() {
@@ -1349,7 +1161,10 @@
                     const easeOut = 1 - Math.pow(1 - progress, 3);
 
                     this.camera.position.lerpVectors(startPos, targetPos, easeOut);
-                    if (this.controls) { this.controls.target.lerp(center, easeOut); this.controls.update(); }
+                    if (this.controls) {
+                        this.controls.target.lerp(center, easeOut);
+                        this.controls.update();
+                    }
                     else this.camera.lookAt(center);
 
                     if (progress < 1) requestAnimationFrame(() => animate(startTime));
@@ -1365,26 +1180,27 @@
             }
 
             showError(message) {
-                console.error('❌', message);
+                console.error(message);
                 if (this.dom.errorMessage) this.dom.errorMessage.textContent = message;
                 this.hideLoading();
                 if (this.dom.error) this.dom.error.style.display = 'block';
             }
 
-            hideLoading() { if (this.dom.loading) this.dom.loading.style.display = 'none'; }
-            reload() { location.reload(); }
+            hideLoading() {
+                if (this.dom.loading) this.dom.loading.style.display = 'none';
+            }
+
+            reload() {
+                location.reload();
+            }
 
             animate() {
                 requestAnimationFrame(() => this.animate());
                 if (this.controls) this.controls.update();
-                if (this.model && this.aiDecision && this.aiDecision.strategy !== 'standard' &&
-                    this.dom.rotYSlider && this.dom.rotYSlider.value == 0) {
-                    this.model.rotation.y += 0.002;
-                }
                 if (this.renderer && this.scene && this.camera) this.renderer.render(this.scene, this.camera);
             }
 
-            // AR Functionality (simplified)
+            // AR Functionality
             async checkARSupport() {
                 try {
                     if (navigator.xr) {
@@ -1427,23 +1243,27 @@
                     requestAnimationFrame(animateReticle);
                 };
                 animateReticle();
-                console.log('✅ Reticle horizontal creado');
+                console.log('Reticle horizontal creado');
             }
 
             async startAR() {
-                if (!this.isARSupported) { alert('AR no está disponible en este dispositivo/navegador'); return; }
+                if (!this.isARSupported) {
+                    alert('AR no está disponible en este dispositivo/navegador');
+                    return;
+                }
 
                 try {
-                    console.log('🚀 Iniciando AR');
+                    console.log('Iniciando AR');
                     const stream = await navigator.mediaDevices.getUserMedia({
                         video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
                     });
                     stream.getTracks().forEach(track => track.stop());
 
                     this.arSession = await navigator.xr.requestSession('immersive-ar', {
-                        requiredFeatures: ['hit-test'], optionalFeatures: ['dom-overlay']
+                        requiredFeatures: ['hit-test'],
+                        optionalFeatures: ['dom-overlay']
                     });
-                    console.log('✅ Sesión AR creada');
+                    console.log('Sesión AR creada');
 
                     this.renderer.xr.setReferenceSpaceType('local');
                     await this.renderer.xr.setSession(this.arSession);
@@ -1453,8 +1273,10 @@
 
                     if (this.model) {
                         this.modelStateBeforeAR = {
-                            position: this.model.position.clone(), rotation: this.model.rotation.clone(),
-                            scale: this.model.scale.clone(), visible: this.model.visible
+                            position: this.model.position.clone(),
+                            rotation: this.model.rotation.clone(),
+                            scale: this.model.scale.clone(),
+                            visible: this.model.visible
                         };
                         this.model.visible = false;
                     }
@@ -1463,13 +1285,16 @@
                     this.isARActive = true;
 
                     const arButton = document.getElementById('ar-toggle');
-                    if (arButton) { arButton.classList.add('active'); arButton.textContent = '🔴'; }
+                    if (arButton) {
+                        arButton.classList.add('active');
+                        arButton.textContent = 'ON';
+                    }
 
-                    console.log('🎯 AR iniciado correctamente');
+                    console.log('AR iniciado correctamente');
                     this.renderer.setAnimationLoop((timestamp, frame) => this.renderAR(timestamp, frame));
 
                 } catch (error) {
-                    console.error('❌ Error iniciando AR:', error);
+                    console.error('Error iniciando AR:', error);
                     let errorMsg = error.message;
                     if (error.name === 'NotAllowedError') errorMsg = 'Permisos de cámara denegados.';
                     else if (error.name === 'NotFoundError') errorMsg = 'No se encontró cámara trasera.';
@@ -1486,8 +1311,11 @@
                 if (!this.hitTestSource) {
                     session.requestReferenceSpace('viewer').then(viewerSpace => {
                         session.requestHitTestSource({ space: viewerSpace })
-                            .then(source => { this.hitTestSource = source; console.log('✅ Hit test source inicializado'); })
-                            .catch(err => console.error('❌ Error inicializando hit test:', err));
+                            .then(source => {
+                                this.hitTestSource = source;
+                                console.log('Hit test source inicializado');
+                            })
+                            .catch(err => console.error('Error inicializando hit test:', err));
                     });
                     return;
                 }
@@ -1509,48 +1337,46 @@
             }
 
             onARSelect() {
-                console.log('🎯 Superficie tocada para colocar modelo');
-                if (!this.reticle.visible || this.model.visible) { console.log('⚠️ No se puede colocar'); return; }
+                console.log('Superficie tocada para colocar modelo');
+                if (!this.reticle.visible || this.model.visible) {
+                    console.log('No se puede colocar');
+                    return;
+                }
 
                 const position = new THREE.Vector3();
                 const quaternion = new THREE.Quaternion();
                 const scale = new THREE.Vector3();
                 this.reticle.matrix.decompose(position, quaternion, scale);
-                console.log('📍 Posición de superficie:', position);
+                console.log('Posición de superficie:', position);
 
                 if (this.modelStateBeforeAR) this.model.rotation.copy(this.modelStateBeforeAR.rotation);
 
                 this.model.position.set(position.x, position.y + 0.02, position.z);
-
-                if (this.aiAnalysis && this.aiAnalysis.problemType === 'displaced_center_small') {
-                    console.log('🍕 Aplicando configuración especial AR para pizza3/4');
-                    this.model.scale.setScalar(0.8);
-                    const center = this.aiAnalysis.center.clone();
-                    center.y = 0;
-                    this.model.position.add(center.negate());
-                } else {
-                    const originalScale = this.modelStateBeforeAR ? this.modelStateBeforeAR.scale.x : 1.0;
-                    const arScale = Math.min(0.5, originalScale * 0.3);
-                    this.model.scale.setScalar(arScale);
-                }
+                const originalScale = this.modelStateBeforeAR ? this.modelStateBeforeAR.scale.x : 1.0;
+                const arScale = Math.min(0.5, originalScale * 0.3);
+                this.model.scale.setScalar(arScale);
 
                 this.model.visible = true;
                 this.model.traverse((child) => {
                     if (child.isMesh) {
                         child.visible = true;
                         if (child.material) {
-                            Object.assign(child.material, { transparent: false, opacity: 1.0, side: THREE.DoubleSide });
+                            Object.assign(child.material, {
+                                transparent: false,
+                                opacity: 1.0,
+                                side: THREE.DoubleSide
+                            });
                             child.material.needsUpdate = true;
                         }
                     }
                 });
 
                 this.reticle.visible = false;
-                console.log('🎯 Modelo colocado en AR');
+                console.log('Modelo colocado en AR');
             }
 
             onAREnd() {
-                console.log('🔚 Sesión AR finalizada');
+                console.log('Sesión AR finalizada');
                 this.isARActive = false;
                 this.hitTestSource = null;
                 if (this.reticle) this.reticle.visible = false;
@@ -1561,19 +1387,24 @@
                             ? this.model[prop].copy(this.modelStateBeforeAR[prop])
                             : this.modelStateBeforeAR[prop];
                     });
-                    console.log('✅ Estado del modelo restaurado completamente');
+                    console.log('Estado del modelo restaurado completamente');
                 }
 
                 this.scene.background = this.backgroundTexture;
                 const arButton = document.getElementById('ar-toggle');
-                if (arButton) { arButton.classList.remove('active'); arButton.textContent = '📷'; }
+                if (arButton) {
+                    arButton.classList.remove('active');
+                    arButton.textContent = 'AR';
+                }
                 this.modelStateBeforeAR = null;
                 this.renderer.setAnimationLoop(null);
                 this.animate();
-                console.log('🎯 Regreso a vista 3D tradicional sin cambios');
+                console.log('Regreso a vista 3D tradicional sin cambios');
             }
 
-            stopAR() { if (this.arSession) this.arSession.end(); }
+            stopAR() {
+                if (this.arSession) this.arSession.end();
+            }
         }
 
         let app;
@@ -1585,21 +1416,27 @@
 
         function togglePanels() {
             if (!app) return;
-            const panels = ['controls-panel', 'stats-panel', 'ai-panel', 'nutrition-panel', 'allergens-panel'];
+            const panels = ['controls-panel', 'nutrition-panel', 'allergens-panel'];
             const currentIndex = panels.indexOf(app.currentPanel);
             const nextIndex = (currentIndex + 1) % panels.length;
 
             if (app.currentPanel) {
                 const currentPanel = document.getElementById(app.currentPanel);
-                if (currentPanel) { currentPanel.classList.remove('visible'); currentPanel.classList.add('hidden'); }
+                if (currentPanel) {
+                    currentPanel.classList.remove('visible');
+                    currentPanel.classList.add('hidden');
+                }
             }
 
             app.currentPanel = panels[nextIndex];
             const nextPanel = document.getElementById(app.currentPanel);
-            if (nextPanel) { nextPanel.classList.remove('hidden'); nextPanel.classList.add('visible'); }
+            if (nextPanel) {
+                nextPanel.classList.remove('hidden');
+                nextPanel.classList.add('visible');
+            }
 
             const toggleBtn = document.getElementById('panel-toggle');
-            const icons = ['🎮', '📊', '🤖', '🥗', '⚠️'];
+            const icons = ['🎮', '🥗', '⚠️'];
             if (toggleBtn) toggleBtn.textContent = icons[nextIndex];
         }
 
@@ -1609,12 +1446,12 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Iniciando Enhanced Desktop Viewer');
+            console.log('Iniciando Enhanced Desktop Viewer');
             app = new DesktopViewer();
         });
 
         window.addEventListener('error', (e) => {
-            console.error('🔴 Error global:', e.error);
+            console.error('Error global:', e.error);
             if (app) app.showError('Error global: ' + e.message);
         });
     </script>
