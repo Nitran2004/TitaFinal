@@ -1107,10 +1107,6 @@
                 this.animateToValues({ scale: targetScale, position: center.clone().negate(), camera: true });
             }
 
-            center() {
-                // Método removido
-            }
-
             animateToValues(targets) {
                 if (!this.model) return;
                 const startScale = this.model.scale.x;
@@ -1138,10 +1134,6 @@
                     else if (targets.camera) this.fitCameraToModel();
                 };
                 animate();
-            }
-
-            resetCamera() {
-                // Método removido
             }
 
             fitCameraToModel() {
@@ -1266,6 +1258,7 @@
                     this.arSession.addEventListener('select', () => this.onARSelect());
                     this.arSession.addEventListener('end', () => this.onAREnd());
 
+                    // Guardar estado del modelo ANTES de ocultarlo
                     if (this.model) {
                         this.modelStateBeforeAR = {
                             position: this.model.position.clone(),
@@ -1273,7 +1266,8 @@
                             scale: this.model.scale.clone(),
                             visible: this.model.visible
                         };
-                        this.model.visible = false;
+                        console.log('Estado del modelo guardado:', this.modelStateBeforeAR);
+                        this.model.visible = false; // Ocultar para que aparezca el reticle
                     }
 
                     this.scene.background = null;
@@ -1300,9 +1294,11 @@
 
             renderAR(timestamp, frame) {
                 if (!frame || !this.isARActive) return;
+
                 const session = this.renderer.xr.getSession();
                 const referenceSpace = this.renderer.xr.getReferenceSpace();
 
+                // Inicializar hit test source si no existe
                 if (!this.hitTestSource) {
                     session.requestReferenceSpace('viewer').then(viewerSpace => {
                         session.requestHitTestSource({ space: viewerSpace })
@@ -1312,21 +1308,28 @@
                             })
                             .catch(err => console.error('Error inicializando hit test:', err));
                     });
+                    this.renderer.render(this.scene, this.camera);
                     return;
                 }
 
+                // Solo mostrar reticle si el modelo no está colocado
                 if (!this.model.visible) {
                     const hitTestResults = frame.getHitTestResults(this.hitTestSource);
+
                     if (hitTestResults.length > 0) {
                         const hit = hitTestResults[0];
                         const pose = hit.getPose(referenceSpace);
+
                         if (pose) {
+                            // Actualizar posición del reticle
+                            const matrix = new THREE.Matrix4().fromArray(pose.transform.matrix);
+                            this.reticle.position.setFromMatrixPosition(matrix);
                             this.reticle.visible = true;
-                            this.reticle.matrix.fromArray(pose.transform.matrix);
-                            this.reticle.matrix.decompose(this.reticle.position, this.reticle.quaternion, this.reticle.scale);
                         }
-                    } else this.reticle.visible = false;
-                } else this.reticle.visible = false;
+                    } else {
+                        this.reticle.visible = false;
+                    }
+                }
 
                 this.renderer.render(this.scene, this.camera);
             }
@@ -1334,40 +1337,41 @@
             onARSelect() {
                 console.log('Superficie tocada para colocar modelo');
                 if (!this.reticle.visible || this.model.visible) {
-                    console.log('No se puede colocar');
+                    console.log('No se puede colocar - reticle visible:', this.reticle.visible, 'modelo visible:', this.model.visible);
                     return;
                 }
 
-                const position = new THREE.Vector3();
-                const quaternion = new THREE.Quaternion();
-                const scale = new THREE.Vector3();
-                this.reticle.matrix.decompose(position, quaternion, scale);
-                console.log('Posición de superficie:', position);
+                // Obtener posición del reticle
+                const position = this.reticle.position.clone();
+                console.log('Colocando modelo en posición:', position);
 
-                if (this.modelStateBeforeAR) this.model.rotation.copy(this.modelStateBeforeAR.rotation);
+                // Colocar modelo en la posición del reticle
+                this.model.position.copy(position);
+                this.model.position.y += 0.3; // Elevar más para que sea visible
 
-                this.model.position.set(position.x, position.y + 0.02, position.z);
-                const originalScale = this.modelStateBeforeAR ? this.modelStateBeforeAR.scale.x : 1.0;
-                const arScale = Math.min(0.5, originalScale * 0.3);
-                this.model.scale.setScalar(arScale);
+                // Establecer escala más grande para AR (era 0.3, ahora 0.8)
+                this.model.scale.setScalar(0.8);
 
-                this.model.visible = true;
+                // Resetear rotación
+                this.model.rotation.set(0, 0, 0);
+
+                // Asegurar que todos los materiales sean visibles
                 this.model.traverse((child) => {
                     if (child.isMesh) {
                         child.visible = true;
                         if (child.material) {
-                            Object.assign(child.material, {
-                                transparent: false,
-                                opacity: 1.0,
-                                side: THREE.DoubleSide
-                            });
+                            child.material.transparent = false;
+                            child.material.opacity = 1.0;
                             child.material.needsUpdate = true;
                         }
                     }
                 });
 
+                // Mostrar modelo y ocultar reticle
+                this.model.visible = true;
                 this.reticle.visible = false;
-                console.log('Modelo colocado en AR');
+
+                console.log('Modelo colocado en AR - Posición:', this.model.position, 'Escala:', this.model.scale);
             }
 
             onAREnd() {
@@ -1376,25 +1380,30 @@
                 this.hitTestSource = null;
                 if (this.reticle) this.reticle.visible = false;
 
+                // Restaurar estado del modelo
                 if (this.model && this.modelStateBeforeAR) {
-                    ['position', 'rotation', 'scale', 'visible'].forEach(prop => {
-                        this.model[prop] = typeof this.modelStateBeforeAR[prop].copy === 'function'
-                            ? this.model[prop].copy(this.modelStateBeforeAR[prop])
-                            : this.modelStateBeforeAR[prop];
+                    console.log('Restaurando estado del modelo...');
+                    this.model.position.copy(this.modelStateBeforeAR.position);
+                    this.model.rotation.copy(this.modelStateBeforeAR.rotation);
+                    this.model.scale.copy(this.modelStateBeforeAR.scale);
+                    this.model.visible = this.modelStateBeforeAR.visible;
+                    console.log('Modelo restaurado a:', {
+                        position: this.model.position,
+                        scale: this.model.scale,
+                        visible: this.model.visible
                     });
-                    console.log('Estado del modelo restaurado completamente');
                 }
 
                 this.scene.background = this.backgroundTexture;
                 const arButton = document.getElementById('ar-toggle');
                 if (arButton) {
                     arButton.classList.remove('active');
-                    arButton.textContent = 'AR';
+                    arButton.textContent = '📷';
                 }
                 this.modelStateBeforeAR = null;
                 this.renderer.setAnimationLoop(null);
                 this.animate();
-                console.log('Regreso a vista 3D tradicional sin cambios');
+                console.log('Regreso a vista 3D normal');
             }
 
             stopAR() {
