@@ -234,37 +234,6 @@ Sistema inteligente de imágenes que:
 - Minimización de consultas a base de datos
 - Responsividad móvil optimizada
 
-## Estructura de archivos
-
-```
-ProyectoIdentity/
-├── Controllers/
-│   ├── AccountController.cs
-│   ├── ProductosController.cs
-│   ├── MenuRecomendacionController.cs
-│   ├── PersonalizacionController.cs
-│   ├── FidelizacionController.cs
-│   └── RealidadAumentadaController.cs
-├── Models/
-│   ├── Producto.cs
-│   ├── Usuario.cs
-│   ├── Pedido.cs
-│   └── ViewModels/
-├── Views/
-│   ├── MenuRecomendacion/
-│   ├── Personalizacion/
-│   ├── Fidelizacion/
-│   └── Shared/
-├── Services/
-│   ├── AIRecommendationService.cs
-│   ├── MailJetEmailSender.cs
-│   └── DistanceCalculator.cs
-├── Data/
-│   └── ApplicationDbContext.cs
-└── wwwroot/
-    ├── css/
-    ├── js/
-    └── images/
 ```
 
 Este sistema proporciona una experiencia completa de restaurante digital con tecnologías modernas y funcionalidades avanzadas como IA y realidad aumentada.
