@@ -1,0 +1,202 @@
+﻿@model ProyectoIdentity.Controllers.LimiteAlcanzadoViewModel
+@{
+    ViewBag.Title = "Límite de productos alcanzado";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Card principal -->
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h3 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Límite de Productos Alcanzado
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Mensaje principal -->
+                    <div class="alert alert-warning mb-4">
+                        <h5><i class="fas fa-info-circle"></i> Estado actual:</h5>
+                        <p class="mb-0">@Model.MensajePersonalizado</p>
+                    </div>
+
+                    <!-- Estadísticas -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h2 class="text-warning mb-1">@Model.PedidosActivos</h2>
+                                    <small class="text-muted">Productos activos</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h2 class="text-success mb-1">@Model.LimiteMaximo</h2>
+                                    <small class="text-muted">Límite máximo</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Barra de progreso -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span><strong>Productos activos:</strong></span>
+                            <span>@Model.PedidosActivos / @Model.LimiteMaximo</span>
+                        </div>
+                        <div class="progress" style="height: 20px;">
+                            @{
+                                var porcentaje = (Model.PedidosActivos * 100) / Model.LimiteMaximo;
+                            }
+                            <div class="progress-bar bg-warning" role="progressbar"
+                                 style="width: @porcentaje%"
+                                 aria-valuenow="@Model.PedidosActivos"
+                                 aria-valuemin="0"
+                                 aria-valuemax="@Model.LimiteMaximo">
+                                @porcentaje%
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de pedidos pendientes -->
+                    @if (Model.PedidosPendientes.Any())
+                    {
+                        <h5><i class="fas fa-list"></i> Tus pedidos pendientes:</h5>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Fecha</th>
+                                        <th>Total</th>
+                                        <th>Estado</th>
+                                        <th>Tipo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var pedido in Model.PedidosPendientes)
+                                    {
+                                        <tr>
+                                            <td><strong>#@pedido.Id</strong></td>
+                                            <td>@pedido.FechaFormateada</td>
+                                            <td class="text-success"><strong>$@pedido.Total.ToString("F2")</strong></td>
+                                            <td>
+                                                <span class="badge @pedido.EstadoBadgeClass">
+                                                    @pedido.Estado
+                                                </span>
+                                            </td>
+                                            <td>@pedido.TipoServicio</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+
+                    <!-- Información adicional -->
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-lightbulb"></i> ¿Por qué existe este límite?</h6>
+                        <ul class="mb-0">
+                            <li>Para garantizar un servicio de calidad para todos los usuarios</li>
+                            <li>Para optimizar los tiempos de preparación y entrega</li>
+                            <li>Para evitar la acumulación excesiva de pedidos pendientes</li>
+                        </ul>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="row mt-4">
+                        <div class="col-md-6 mb-2">
+                            <a href="@Url.Action("Historial", "Fidelizacion")" class="btn btn-primary w-100">
+                                <i class="fas fa-history"></i> Ver historial completo
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-home"></i> Volver al inicio
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Mensaje de ayuda -->
+                    <div class="text-center mt-4">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i>
+                            Cuando tus pedidos cambien a "Entregado", podrás hacer nuevos pedidos automáticamente.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card con consejos -->
+            <div class="card mt-3 border-info">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tips"></i> Consejos mientras esperas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-star text-warning"></i> Acumula puntos</h6>
+                            <p class="small">Revisa tus puntos de fidelidad y descubre las recompensas disponibles.</p>
+                            <a href="@Url.Action("Index", "Fidelizacion")" class="btn btn-sm btn-outline-warning">
+                                Ver mis puntos
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-eye text-primary"></i> Explora el menú</h6>
+                            <p class="small">Descubre nuevos productos para tu próximo pedido.</p>
+                            <a href="@Url.Action("Index", "Personalizacion")" class="btn btn-sm btn-outline-primary">
+                                Ver productos
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .progress {
+        border-radius: 10px;
+    }
+
+    .badge {
+        font-size: 0.8em;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    .alert ul {
+        padding-left: 1.2rem;
+    }
+</style>
+
+<script>
+    // Auto-refresh cada 30 segundos para verificar si los pedidos cambiaron de estado
+    setInterval(function () {
+        // Solo recargar si hay pedidos pendientes
+        if (@Model.PedidosActivos > 0) {
+            console.log('[INFO] Verificando estado de pedidos...');
+            // Podrías agregar aquí una llamada AJAX para verificar el estado
+            // y redirigir si ya no hay pedidos activos
+        }
+    }, 30000); // 30 segundos
+
+    // Mensaje de bienvenida
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('[INFO] Vista de límite alcanzado cargada');
+        console.log('[INFO] Pedidos activos: @Model.PedidosActivos/@Model.LimiteMaximo');
+    });
+</script>

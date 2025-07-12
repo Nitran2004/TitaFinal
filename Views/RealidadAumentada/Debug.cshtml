@@ -1,0 +1,488 @@
+﻿@{
+    ViewData["Title"] = "Debug Carga de Archivos";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Carga - @ViewBag.ProductoNombre</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #222;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .test-section {
+            background: #333;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+
+            .test-section.error {
+                border-left-color: #f44336;
+            }
+
+            .test-section.warning {
+                border-left-color: #ff9800;
+            }
+
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 5px;
+        }
+
+        .btn-test {
+            background-color: #2196F3;
+        }
+
+        .btn-warning {
+            background-color: #ff9800;
+        }
+
+        .status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin: 5px 0;
+            display: inline-block;
+        }
+
+            .status.success {
+                background-color: #4CAF50;
+            }
+
+            .status.error {
+                background-color: #f44336;
+            }
+
+            .status.loading {
+                background-color: #2196F3;
+            }
+
+        .log-output {
+            background: #111;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 400px;
+            background: #000;
+            border-radius: 8px;
+            position: relative;
+            margin: 20px 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug Carga de Archivos GLB</h1>
+        <p>Archivo actual: <strong>@ViewBag.ModeloArchivo</strong> | ID: <strong>@ViewBag.ProductoId</strong></p>
+
+        <div class="test-section">
+            <h3>🎯 Pruebas Rápidas</h3>
+            <a href="/RealidadAumentada/VistaSimple?id=1" class="btn btn-test">ID 1 (pizza1.glb)</a>
+            <a href="/RealidadAumentada/VistaSimple?id=2" class="btn btn-test">ID 2 (pizza2.glb)</a>
+            <a href="/RealidadAumentada/VistaSimple?id=9" class="btn btn-warning">ID 9 (pizza3.glb)</a>
+            <a href="/RealidadAumentada/VistaSimple?id=10" class="btn btn-warning">ID 10 (pizza4.glb)</a>
+            <button class="btn" onclick="location.reload()">Recargar</button>
+        </div>
+
+        <div class="test-section">
+            <h3>📡 Prueba de Acceso HTTP</h3>
+            <p>Probando acceso directo al archivo...</p>
+            <div id="http-test">
+                <div class="status loading">Probando...</div>
+            </div>
+            <div class="log-output" id="http-log"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔧 Prueba de GLTFLoader</h3>
+            <p>Probando carga con Three.js GLTFLoader...</p>
+            <div id="gltf-test">
+                <div class="status loading">Probando...</div>
+            </div>
+            <div class="log-output" id="gltf-log"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎮 Vista 3D (Si carga exitosamente)</h3>
+            <div id="canvas-container">
+                <canvas id="canvas3d"></canvas>
+                <div id="loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white;">
+                    Esperando resultados de pruebas...
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📋 Resumen de Resultados</h3>
+            <div id="summary">
+                <p>Ejecutando pruebas...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
+
+    <script>
+        // Variables principales
+        const modelPath = '@ViewBag.ModeloPath';
+        const modelFile = '@ViewBag.ModeloArchivo';
+        const modelId = '@ViewBag.ProductoId';
+
+        let httpSuccess = false;
+        let gltfSuccess = false;
+        let scene, camera, renderer;
+
+        // Referencias DOM
+        const httpTest = document.getElementById('http-test');
+        const httpLog = document.getElementById('http-log');
+        const gltfTest = document.getElementById('gltf-test');
+        const gltfLog = document.getElementById('gltf-log');
+        const summary = document.getElementById('summary');
+        const loading = document.getElementById('loading');
+
+        // Función de logging
+        function log(element, message, isError = false) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}\n`;
+            element.textContent += logMessage;
+            element.scrollTop = element.scrollHeight;
+
+            if (isError) {
+                console.error(message);
+            } else {
+                console.log(message);
+            }
+        }
+
+        // Función para actualizar estado
+        function updateStatus(element, status, text) {
+            const statusEl = element.querySelector('.status');
+            statusEl.className = `status ${status}`;
+            statusEl.textContent = text;
+        }
+
+        // 1. PRUEBA HTTP
+        async function testHTTPAccess() {
+            log(httpLog, `=== INICIANDO PRUEBA HTTP ===`);
+            log(httpLog, `Archivo: ${modelFile}`);
+            log(httpLog, `Ruta: ${modelPath}`);
+            log(httpLog, `ID del producto: ${modelId}`);
+
+            try {
+                // Primero, HEAD request para verificar existencia
+                log(httpLog, `Enviando HEAD request...`);
+                const headResponse = await fetch(modelPath, { method: 'HEAD' });
+
+                log(httpLog, `Status HEAD: ${headResponse.status} ${headResponse.statusText}`);
+                log(httpLog, `Headers recibidos:`);
+
+                headResponse.headers.forEach((value, key) => {
+                    log(httpLog, `  ${key}: ${value}`);
+                });
+
+                if (!headResponse.ok) {
+                    throw new Error(`HEAD request falló: ${headResponse.status} ${headResponse.statusText}`);
+                }
+
+                // Luego, GET request para verificar contenido
+                log(httpLog, `Enviando GET request...`);
+                const getResponse = await fetch(modelPath);
+
+                log(httpLog, `Status GET: ${getResponse.status} ${getResponse.statusText}`);
+
+                if (!getResponse.ok) {
+                    throw new Error(`GET request falló: ${getResponse.status} ${getResponse.statusText}`);
+                }
+
+                const contentType = getResponse.headers.get('content-type');
+                const contentLength = getResponse.headers.get('content-length');
+
+                log(httpLog, `Content-Type: ${contentType}`);
+                log(httpLog, `Content-Length: ${contentLength} bytes`);
+
+                if (contentLength) {
+                    const sizeKB = (parseInt(contentLength) / 1024).toFixed(1);
+                    log(httpLog, `Tamaño: ${sizeKB} KB`);
+                }
+
+                // Verificar si es realmente un archivo GLB
+                const arrayBuffer = await getResponse.arrayBuffer();
+                const uint8Array = new Uint8Array(arrayBuffer);
+
+                // Los archivos GLB empiezan con "glTF" (0x676C5446)
+                const signature = String.fromCharCode(...uint8Array.slice(0, 4));
+                log(httpLog, `Signature del archivo: "${signature}"`);
+
+                if (signature === 'glTF') {
+                    log(httpLog, `✅ Archivo GLB válido confirmado`);
+                    httpSuccess = true;
+                    updateStatus(httpTest, 'success', '✅ HTTP OK');
+                } else {
+                    throw new Error(`Archivo no es GLB válido. Signature: "${signature}"`);
+                }
+
+            } catch (error) {
+                log(httpLog, `❌ Error HTTP: ${error.message}`, true);
+                updateStatus(httpTest, 'error', '❌ HTTP Error');
+                httpSuccess = false;
+            }
+
+            log(httpLog, `=== FIN PRUEBA HTTP ===\n`);
+        }
+
+        // 2. PRUEBA GLTF LOADER
+        async function testGLTFLoader() {
+            log(gltfLog, `=== INICIANDO PRUEBA GLTF LOADER ===`);
+
+            if (!httpSuccess) {
+                log(gltfLog, `⚠️ Saltando prueba GLTF porque HTTP falló`);
+                updateStatus(gltfTest, 'error', '❌ Saltado (HTTP falló)');
+                return;
+            }
+
+            try {
+                const loader = new THREE.GLTFLoader();
+                log(gltfLog, `GLTFLoader creado`);
+                log(gltfLog, `Intentando cargar: ${modelPath}`);
+
+                const gltf = await new Promise((resolve, reject) => {
+                    loader.load(
+                        modelPath,
+                        function (gltf) {
+                            log(gltfLog, `✅ GLTF cargado exitosamente`);
+                            resolve(gltf);
+                        },
+                        function (xhr) {
+                            if (xhr.lengthComputable) {
+                                const percent = Math.floor((xhr.loaded / xhr.total) * 100);
+                                log(gltfLog, `Progreso: ${percent}% (${xhr.loaded}/${xhr.total} bytes)`);
+                            }
+                        },
+                        function (error) {
+                            log(gltfLog, `❌ Error en GLTFLoader: ${error.message}`, true);
+                            reject(error);
+                        }
+                    );
+                });
+
+                // Analizar el modelo cargado
+                log(gltfLog, `Analizando modelo cargado...`);
+
+                const scene = gltf.scene;
+                let meshCount = 0;
+                let materialCount = 0;
+                let vertexCount = 0;
+
+                scene.traverse(function (node) {
+                    if (node.isMesh) {
+                        meshCount++;
+                        if (node.material) materialCount++;
+                        if (node.geometry && node.geometry.attributes.position) {
+                            vertexCount += node.geometry.attributes.position.count;
+                        }
+                    }
+                });
+
+                const box = new THREE.Box3().setFromObject(scene);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+
+                log(gltfLog, `📊 Estadísticas del modelo:`);
+                log(gltfLog, `  - Meshes: ${meshCount}`);
+                log(gltfLog, `  - Materiales: ${materialCount}`);
+                log(gltfLog, `  - Vértices: ${vertexCount}`);
+                log(gltfLog, `  - Dimensiones: ${size.x.toFixed(3)} × ${size.y.toFixed(3)} × ${size.z.toFixed(3)}`);
+                log(gltfLog, `  - Centro: (${center.x.toFixed(3)}, ${center.y.toFixed(3)}, ${center.z.toFixed(3)})`);
+                log(gltfLog, `  - Animaciones: ${gltf.animations ? gltf.animations.length : 0}`);
+
+                if (meshCount === 0) {
+                    throw new Error('El modelo no contiene meshes válidos');
+                }
+
+                gltfSuccess = true;
+                updateStatus(gltfTest, 'success', '✅ GLTF OK');
+
+                // Si todo está bien, cargar en el canvas
+                loadInCanvas(gltf);
+
+            } catch (error) {
+                log(gltfLog, `❌ Error GLTF: ${error.message}`, true);
+                updateStatus(gltfTest, 'error', '❌ GLTF Error');
+                gltfSuccess = false;
+            }
+
+            log(gltfLog, `=== FIN PRUEBA GLTF LOADER ===\n`);
+        }
+
+        // 3. CARGAR EN CANVAS
+        function loadInCanvas(gltf) {
+            log(gltfLog, `Cargando modelo en canvas 3D...`);
+
+            // Inicializar Three.js
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x333333);
+
+            camera = new THREE.PerspectiveCamera(75, 400 / 400, 0.01, 1000);
+
+            const canvas = document.getElementById('canvas3d');
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+            renderer.setSize(400, 400);
+
+            // Luces
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(5, 5, 5);
+            scene.add(dirLight);
+
+            // Agregar modelo
+            const model = gltf.scene;
+            scene.add(model);
+
+            // Auto-ajustar
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+
+            model.position.copy(center).negate();
+
+            if (maxDim > 0) {
+                const scale = 2 / maxDim;
+                model.scale.set(scale, scale, scale);
+            }
+
+            camera.position.set(0, 1, 3);
+            camera.lookAt(0, 0, 0);
+
+            loading.style.display = 'none';
+
+            // Animación
+            function animate() {
+                requestAnimationFrame(animate);
+                model.rotation.y += 0.01;
+                renderer.render(scene, camera);
+            }
+            animate();
+
+            log(gltfLog, `✅ Modelo renderizado en canvas`);
+        }
+
+        // 4. GENERAR RESUMEN
+        function generateSummary() {
+            log(gltfLog, `Generando resumen final...`);
+
+            let summaryHTML = `
+                        <h4>📊 Resultados para ${modelFile}:</h4>
+                        <p><strong>ID del Producto:</strong> ${modelId}</p>
+                        <p><strong>Archivo:</strong> ${modelFile}</p>
+                        <p><strong>Ruta:</strong> ${modelPath}</p>
+                        <p><strong>Prueba HTTP:</strong> ${httpSuccess ? '✅ Exitosa' : '❌ Falló'}</p>
+                        <p><strong>Prueba GLTF:</strong> ${gltfSuccess ? '✅ Exitosa' : '❌ Falló'}</p>
+                    `;
+
+            if (!httpSuccess) {
+                summaryHTML += `
+                            <div style="background: #f44336; padding: 15px; border-radius: 4px; margin: 10px 0;">
+                                <h4>❌ Problema Identificado: Acceso HTTP</h4>
+                                <p>El archivo <strong>${modelFile}</strong> no se puede acceder vía HTTP.</p>
+                                <p><strong>Posibles causas:</strong></p>
+                                <ul>
+                                    <li>El archivo no existe en <code>wwwroot/models3d/${modelFile}</code></li>
+                                    <li>Problema de permisos en el servidor</li>
+                                    <li>Error en la configuración del controlador</li>
+                                    <li>El archivo está corrupto o vacío</li>
+                                </ul>
+                                <p><strong>Solución:</strong> Verificar que el archivo existe y tiene permisos correctos.</p>
+                            </div>
+                        `;
+            } else if (!gltfSuccess) {
+                summaryHTML += `
+                            <div style="background: #ff9800; padding: 15px; border-radius: 4px; margin: 10px 0;">
+                                <h4>⚠️ Problema Identificado: Archivo GLB Inválido</h4>
+                                <p>El archivo se descarga correctamente pero no es un GLB válido.</p>
+                                <p><strong>Posibles causas:</strong></p>
+                                <ul>
+                                    <li>El archivo está corrupto</li>
+                                    <li>No es realmente un archivo GLB</li>
+                                    <li>Versión incompatible de glTF</li>
+                                    <li>Error durante la exportación desde el software 3D</li>
+                                </ul>
+                                <p><strong>Solución:</strong> Re-exportar el modelo desde el software 3D original.</p>
+                            </div>
+                        `;
+            } else {
+                summaryHTML += `
+                            <div style="background: #4CAF50; padding: 15px; border-radius: 4px; margin: 10px 0;">
+                                <h4>✅ Todo Funciona Correctamente</h4>
+                                <p>El archivo <strong>${modelFile}</strong> se carga sin problemas.</p>
+                                <p>Si no se ve en la aplicación principal, el problema puede estar en:</p>
+                                <ul>
+                                    <li>La lógica de auto-ajuste de escala</li>
+                                    <li>La posición inicial del modelo</li>
+                                    <li>La configuración de la cámara</li>
+                                </ul>
+                            </div>
+                        `;
+            }
+
+            summary.innerHTML = summaryHTML;
+        }
+
+        // EJECUTAR TODAS LAS PRUEBAS
+        async function runAllTests() {
+            console.log('=== INICIANDO DIAGNÓSTICO COMPLETO ===');
+            console.log('Archivo a probar:', modelFile);
+            console.log('Ruta:', modelPath);
+
+            await testHTTPAccess();
+            await testGLTFLoader();
+            generateSummary();
+
+            console.log('=== DIAGNÓSTICO COMPLETADO ===');
+        }
+
+        // Iniciar cuando la página esté lista
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('Página de debug cargada');
+            runAllTests();
+        });
+    </script>
+</body>
+</html>

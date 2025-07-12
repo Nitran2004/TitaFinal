@@ -1,0 +1,489 @@
+﻿@model List<ProyectoIdentity.Models.ItemCarritoPersonalizado>
+@{
+    ViewData["Title"] = "Mi Carrito de Recomendaciones IA";
+    bool esAdministrador = User.IsInRole("Administrador");
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h3><i class="fas fa-robot"></i> Mi Carrito de Recomendaciones IA</h3>
+                    <a href="@Url.Action("Recomendacion")" class="btn btn-outline-light">
+                        <i class="fas fa-plus"></i> Agregar Más Productos
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (!Model.Any())
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-robot fa-3x text-muted"></i>
+                            <h4 class="mt-3">Tu carrito está vacío</h4>
+                            <p class="text-muted">Explora nuestras recomendaciones personalizadas</p>
+                            <a href="@Url.Action("Recomendacion")" class="btn btn-warning">
+                                <i class="fas fa-robot"></i> Ver Recomendaciones IA
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- ✅ MOSTRAR ESTADO DE LÍMITES -->
+                        <div id="info-limite-carrito" class="alert alert-info mb-3">
+                            <i class="fas fa-info-circle"></i>
+                            <span id="mensaje-limite">Cargando información de límites...</span>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Precio</th>
+                                        <th>Cantidad</th>
+                                        <th>Puntos</th>
+                                        <th>Subtotal</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < Model.Count; i++)
+                                    {
+                                        var item = Model[i];
+                                        var puntosItem = (int)(item.Subtotal * 30);
+                                        <tr data-index="@i">
+                                            <td>
+                                                <strong>@item.Nombre</strong>
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-robot"></i> Recomendado por IA
+                                                </small>
+                                                @if (!string.IsNullOrEmpty(item.NotasEspeciales) && item.NotasEspeciales != "Producto recomendado por IA")
+                                                {
+                                                    <br>
+                                                    <small class="text-info"><i class="fas fa-sticky-note"></i> @item.NotasEspeciales</small>
+                                                }
+                                            </td>
+                                            <td data-precio="@item.Precio">$@item.Precio.ToString("F2")</td>
+                                            <td>
+                                                <div class="quantity-control-small">
+                                                    <button type="button" class="btn-quantity-small" onclick="cambiarCantidad(@i, -1)">-</button>
+                                                    <span class="cantidad-display" data-cantidad="@item.Cantidad">@item.Cantidad</span>
+                                                    <button type="button" class="btn-quantity-small" onclick="cambiarCantidad(@i, 1)">+</button>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success puntos-item">
+                                                    <i class="fas fa-star"></i> @puntosItem pts
+                                                </span>
+                                            </td>
+                                            <td><strong class="subtotal-display">$@item.Subtotal.ToString("F2")</strong></td>
+                                            <td>
+                                                <button type="button" class="btn btn-sm btn-danger" onclick="eliminarItem(@i)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6 offset-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h5>Resumen del Pedido</h5>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Total Items:</span>
+                                            <span id="totalItems">@Model.Sum(m => m.Cantidad)</span>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between">
+                                            <strong>Total a Pagar:</strong>
+                                            <strong class="text-success" id="totalPagar">$@Model.Sum(m => m.Subtotal).ToString("F2")</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5><i class="fas fa-utensils"></i> Finalizar Pedido</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Datos de Entrega</h6>
+                        <p class="mb-1"><strong>Usuario:</strong> @User.Identity.Name</p>
+                        @if (TempData["SucursalSeleccionada"] != null)
+                        {
+                            <p class="mb-1"><strong>Sucursal:</strong> @TempData["SucursalSeleccionada"]</p>
+                            <p class="mb-0"><strong>Dirección:</strong> @TempData["DireccionSeleccionada"]</p>
+                        }
+                        else
+                        {
+                            <p class="mb-0">Se usará la sucursal por defecto.</p>
+                        }
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Tipo de Servicio *</label>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="card service-option" data-service="Servir aquí">
+                                    <div class="card-body text-center">
+                                        <input type="radio" name="tipoServicio" id="servirAqui" value="Servir aquí" required>
+                                        <label for="servirAqui" class="w-100">
+                                            <i class="fas fa-chair fa-2x d-block mb-2 text-primary"></i>
+                                            <strong>Servir aquí</strong>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card service-option" data-service="Para llevar">
+                                    <div class="card-body text-center">
+                                        <input type="radio" name="tipoServicio" id="paraLlevar" value="Para llevar" required>
+                                        <label for="paraLlevar" class="w-100">
+                                            <i class="fas fa-shopping-bag fa-2x d-block mb-2 text-success"></i>
+                                            <strong>Para llevar</strong>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-warning w-100" id="btnProcesar" @(Model.Any() ? "" : "disabled") onclick="procesarPedido()">
+                        <i class="fas fa-check"></i> Confirmar Pedido IA
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let carritoLocal = @Html.Raw(Json.Serialize(Model));
+
+    // ✅ FUNCIÓN PARA CARGAR LÍMITES EN EL CARRITO
+    // ✅ FUNCIÓN PARA CARGAR LÍMITES EN EL CARRITO
+    async function cargarLimitesCarrito() {
+        try {
+            const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
+            const data = await response.json();
+
+            // ✅ ACTUALIZAR LÍMITES GLOBALES
+            limitesActuales = {
+                productosActuales: data.productosActuales || 0,
+                limite: data.limite || 3,
+                disponibles: data.disponibles || 3
+            };
+
+            const productosActuales = data.productosActuales || 0;
+            const limite = data.limite || 3;
+            const disponibles = data.disponibles || 3;
+
+            const infoElement = document.getElementById('info-limite-carrito');
+            const mensajeElement = document.getElementById('mensaje-limite');
+
+            if (!infoElement || !mensajeElement) return;
+
+            if (disponibles === 0) {
+                infoElement.className = 'alert alert-danger mb-3';
+                mensajeElement.innerHTML = `
+                    <strong>Límite alcanzado:</strong> Tienes ${productosActuales}/${limite} productos en pedidos activos.
+                    No puedes agregar más productos hasta que se entreguen los pendientes.
+                `;
+            } else if (disponibles <= 1) {
+                infoElement.className = 'alert alert-warning mb-3';
+                mensajeElement.innerHTML = `
+                    <strong>Casi en el límite:</strong> Solo puedes agregar ${disponibles} producto(s) más.
+                    Tienes ${productosActuales}/${limite} productos en pedidos activos.
+                `;
+            } else {
+                infoElement.className = 'alert alert-info mb-3';
+                mensajeElement.innerHTML = `
+                    Puedes agregar hasta ${disponibles} producto(s) más. (${productosActuales}/${limite} productos activos)
+                `;
+            }
+
+        } catch (error) {
+            console.error('Error al cargar límites:', error);
+            // Valores por defecto en caso de error
+            limitesActuales = { productosActuales: 0, limite: 3, disponibles: 3 };
+        }
+    }
+    // ✅ FUNCIÓN CON VALIDACIÓN CORRECTA DE LÍMITES GLOBALES
+    function cambiarCantidad(index, cambio) {
+        const fila = document.querySelector(`tr[data-index="${index}"]`);
+        if (!fila) return;
+
+        const cantidadDisplay = fila.querySelector('.cantidad-display');
+        const precioCell = fila.querySelector('td[data-precio]');
+        const subtotalDisplay = fila.querySelector('.subtotal-display');
+        const puntosDisplay = fila.querySelector('.puntos-item');
+
+        if (!cantidadDisplay || !precioCell || !subtotalDisplay) return;
+
+        let nuevaCantidad = parseInt(cantidadDisplay.textContent) + cambio;
+
+        // Si la cantidad es 0 o menos, eliminar item
+        if (nuevaCantidad <= 0) {
+            eliminarItem(index);
+            return;
+        }
+
+        // ✅ APLICAR LÍMITES IGUAL QUE EN DETALLE
+        if (nuevaCantidad < 1) nuevaCantidad = 1;
+        if (nuevaCantidad > limitesActuales.disponibles) {
+            alert(`Solo puedes agregar ${limitesActuales.disponibles} producto(s) más.`);
+            return;
+        }
+        if (nuevaCantidad > 10) nuevaCantidad = 10;
+
+        const precio = parseFloat(precioCell.getAttribute('data-precio'));
+        const nuevoSubtotal = precio * nuevaCantidad;
+        const nuevosPuntos = Math.floor(nuevoSubtotal * 30);
+
+        // Actualizar display
+        cantidadDisplay.textContent = nuevaCantidad;
+        cantidadDisplay.setAttribute('data-cantidad', nuevaCantidad);
+        subtotalDisplay.textContent = '$' + nuevoSubtotal.toFixed(2);
+        puntosDisplay.innerHTML = `<i class="fas fa-star"></i> ${nuevosPuntos} pts`;
+
+        // Actualizar carrito local
+        if (carritoLocal[index]) {
+            carritoLocal[index].Cantidad = nuevaCantidad;
+            carritoLocal[index].Subtotal = nuevoSubtotal;
+        }
+
+        actualizarTotales();
+        guardarCarrito();
+
+        // ✅ RECARGAR LÍMITES DESPUÉS DE CAMBIO
+        cargarLimitesCarrito();
+    }
+
+    // ✅ FUNCIÓN SIMPLE PARA ELIMINAR ITEM
+    function eliminarItem(index) {
+        const fila = document.querySelector(`tr[data-index="${index}"]`);
+        if (!fila) return;
+
+        // Eliminar inmediatamente del DOM
+        fila.remove();
+
+        // Eliminar del carrito local
+        carritoLocal.splice(index, 1);
+
+        // Reindexar filas restantes
+        const filasRestantes = document.querySelectorAll('tbody tr[data-index]');
+        filasRestantes.forEach((fila, nuevoIndex) => {
+            fila.setAttribute('data-index', nuevoIndex);
+
+            // Actualizar botones de cantidad
+            const botonesQuantity = fila.querySelectorAll('.btn-quantity-small');
+            if (botonesQuantity[0]) botonesQuantity[0].setAttribute('onclick', `cambiarCantidad(${nuevoIndex}, -1)`);
+            if (botonesQuantity[1]) botonesQuantity[1].setAttribute('onclick', `cambiarCantidad(${nuevoIndex}, 1)`);
+
+            // Actualizar botón eliminar
+            const botonEliminar = fila.querySelector('.btn-danger');
+            if (botonEliminar) botonEliminar.setAttribute('onclick', `eliminarItem(${nuevoIndex})`);
+        });
+
+        actualizarTotales();
+        guardarCarrito();
+
+        // Si no quedan items, recargar página
+        if (carritoLocal.length === 0) {
+            setTimeout(() => location.reload(), 500);
+        }
+    }
+
+    // ✅ FUNCIÓN SIMPLE PARA ACTUALIZAR TOTALES
+    function actualizarTotales() {
+        let totalItems = 0;
+        let totalPagar = 0;
+
+        // Calcular desde el DOM actual
+        document.querySelectorAll('tbody tr[data-index]').forEach(fila => {
+            const cantidad = parseInt(fila.querySelector('.cantidad-display').textContent) || 0;
+            const subtotalText = fila.querySelector('.subtotal-display').textContent.replace('$', '');
+            const subtotal = parseFloat(subtotalText) || 0;
+
+            totalItems += cantidad;
+            totalPagar += subtotal;
+        });
+
+        // Actualizar displays
+        const totalItemsEl = document.getElementById('totalItems');
+        const totalPagarEl = document.getElementById('totalPagar');
+
+        if (totalItemsEl) totalItemsEl.textContent = totalItems;
+        if (totalPagarEl) totalPagarEl.textContent = '$' + totalPagar.toFixed(2);
+
+        // Habilitar/deshabilitar botón
+        const btnProcesar = document.getElementById('btnProcesar');
+        if (btnProcesar) {
+            btnProcesar.disabled = totalItems === 0;
+        }
+    }
+
+    // ✅ FUNCIÓN PARA GUARDAR CARRITO
+    function guardarCarrito() {
+        fetch('@Url.Action("ActualizarCarrito")', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(carritoLocal)
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (!result.success) {
+                    console.error('Error al guardar carrito:', result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error de red:', error);
+            });
+    }
+
+    // ✅ FUNCIÓN PARA PROCESAR PEDIDO
+    function procesarPedido() {
+        const tipoServicio = document.querySelector('input[name="tipoServicio"]:checked')?.value;
+        if (!tipoServicio) {
+            alert('Por favor selecciona el tipo de servicio');
+            return;
+        }
+
+        if (!confirm('¿Confirmas tu pedido?')) return;
+
+        const data = {
+            TipoServicio: tipoServicio,
+            Observaciones: "Pedido generado por recomendación IA"
+        };
+
+        const btnProcesar = document.getElementById('btnProcesar');
+        btnProcesar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+        btnProcesar.disabled = true;
+
+        fetch('@Url.Action("ProcesarPedido")', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('✅ ¡Pedido confirmado exitosamente!');
+                    window.location.href = '@Url.Action("Confirmacion", "Personalizacion")?id=' + result.pedidoId;
+                } else {
+                    alert('❌ Error: ' + result.message);
+                    btnProcesar.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido IA';
+                    btnProcesar.disabled = false;
+                }
+            })
+            .catch(error => {
+                alert('❌ Error de conexión');
+                btnProcesar.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido IA';
+                btnProcesar.disabled = false;
+            });
+    }
+
+    // Manejar selección de servicio
+    document.querySelectorAll('.service-option').forEach(option => {
+        option.addEventListener('click', function () {
+            const radio = this.querySelector('input[type="radio"]');
+            radio.checked = true;
+            document.querySelectorAll('.service-option').forEach(o => o.classList.remove('selected'));
+            this.classList.add('selected');
+        });
+    });
+
+    // ✅ INICIALIZAR AL CARGAR LA PÁGINA
+    document.addEventListener('DOMContentLoaded', function () {
+        actualizarTotales();
+        cargarLimitesCarrito(); // Cargar límites del carrito
+    });
+</script>
+
+<style>
+    .btn-warning {
+        background-color: #F2A900;
+        border-color: #F2A900;
+        color: #fff;
+    }
+
+        .btn-warning:hover {
+            background-color: #e09600;
+            border-color: #d48e00;
+            color: #fff;
+        }
+
+        .btn-warning:disabled {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            opacity: 0.65;
+        }
+
+    .quantity-control-small {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-quantity-small {
+        width: 25px;
+        height: 25px;
+        border: 1px solid #ddd;
+        background: #f8f9fa;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+    }
+
+        .btn-quantity-small:hover {
+            background: #e9ecef;
+        }
+
+    .cantidad-display {
+        min-width: 25px;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .service-option {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid #dee2e6;
+    }
+
+        .service-option:hover, .service-option.selected {
+            border-color: #F2A900;
+            background-color: #fff8e6;
+            box-shadow: 0 0.25rem 0.5rem rgba(242, 169, 0, 0.25);
+        }
+
+        .service-option input {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .service-option label {
+            cursor: pointer;
+            margin: 0;
+            padding: 1rem 0;
+        }
+
+    .badge.bg-success {
+        background: linear-gradient(45deg, #28a745, #20c997) !important;
+    }
+</style>

@@ -1,0 +1,206 @@
+﻿@model ProyectoIdentity.Models.ResumenCanjeViewModel
+@{
+    ViewData["Title"] = "¡Canje Exitoso!";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            
+            <!-- Tarjeta principal del resumen -->
+            <div class="card shadow-lg border-0" style="border-radius: 20px; overflow: hidden;">
+                
+                <!-- Header con celebración -->
+                <div class="card-header text-center py-4" style="background: linear-gradient(135deg, #28a745, #20c997); color: white;">
+                    <div class="celebration-header">
+                        <i class="fas fa-gift fa-3x mb-3" style="animation: bounce 2s infinite;"></i>
+                        <h2 class="mb-1">¡Canje Exitoso!</h2>
+                        <p class="mb-0 opacity-75">Tu recompensa está lista</p>
+                    </div>
+                </div>
+
+                <!-- Cuerpo con detalles del canje -->
+                <div class="card-body p-4">
+                    
+                    <!-- Imagen y detalles de la recompensa -->
+                    <div class="text-center mb-4">
+                        <div class="recompensa-imagen-container mx-auto mb-3" style="width: 120px; height: 120px; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                            @if (Model.ImagenRecompensa != null && Model.ImagenRecompensa.Length > 0)
+                            {
+                                <img src="data:image/jpeg;base64,@Convert.ToBase64String(Model.ImagenRecompensa)" 
+                                     alt="@Model.NombreRecompensa" 
+                                     style="width: 100%; height: 100%; object-fit: cover;" />
+                            }
+                            else
+                            {
+                                <div class="d-flex align-items-center justify-content-center h-100" style="background: linear-gradient(45deg, #f8f9fa, #e9ecef);">
+                                    <i class="fas fa-utensils fa-2x text-muted"></i>
+                                </div>
+                            }
+                        </div>
+                        
+                        <h4 class="fw-bold text-dark">@Model.NombreRecompensa</h4>
+                        <p class="text-muted mb-0">
+                            <span class="badge bg-secondary">@Model.CategoriaRecompensa</span>
+                            • Valor original: <strong>$@Model.ValorOriginal.ToString("F2")</strong>
+                        </p>
+                    </div>
+
+                    <!-- Detalles del canje -->
+                    <div class="canje-details bg-light rounded-3 p-3 mb-4">
+                        <div class="row text-center">
+                            <div class="col-6 border-end">
+                                <div class="stat">
+                                    <i class="fas fa-star text-warning mb-2 d-block"></i>
+                                    <div class="fw-bold text-danger fs-5">-@Model.PuntosUtilizados pts</div>
+                                    <small class="text-muted">Puntos utilizados</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat">
+                                    <i class="fas fa-wallet text-success mb-2 d-block"></i>
+                                    <div class="fw-bold text-success fs-5">@Model.PuntosRestantes pts</div>
+                                    <small class="text-muted">Puntos restantes</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información del canje -->
+                    <div class="canje-info mb-4">
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <span class="text-muted">
+                                <i class="fas fa-calendar-alt me-2"></i>Fecha de canje:
+                            </span>
+                            <span class="fw-bold">@Model.FechaCanje.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <span class="text-muted">
+                                <i class="fas fa-ticket-alt me-2"></i>Código de canje:
+                            </span>
+                            <span class="fw-bold font-monospace">@Model.CodigoCanje</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-2">
+                            <span class="text-muted">
+                                <i class="fas fa-user me-2"></i>Canjeado por:
+                            </span>
+                            <span class="fw-bold">@Model.Usuario.Nombre</span>
+                        </div>
+                    </div>
+
+                    <!-- Instrucciones para el usuario -->
+                    <div class="alert alert-info border-0" style="background: linear-gradient(45deg, #e3f2fd, #f8f9ff); border-radius: 12px;">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-info-circle text-info me-3 mt-1"></i>
+                            <div>
+                                <h6 class="alert-heading mb-2">¿Cómo reclamar tu recompensa?</h6>
+                                <ul class="mb-0 small">
+                                    <li>Dirígete a <strong>cualquier sucursal</strong> de Verace Pizza</li>
+                                    <li>Presenta tu <strong>código de canje</strong> al personal</li>
+                                    <li>Válido por <strong>30 días</strong> desde la fecha de canje</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="action-buttons mt-4">
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <a href="@Url.Action("Recompensas", "Fidelizacion")" class="btn btn-outline-success w-100 rounded-pill">
+                                    <i class="fas fa-gift me-2"></i>Más Recompensas
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <a href="@Url.Action("MisPuntos", "Fidelizacion")" class="btn btn-outline-primary w-100 rounded-pill">
+                                    <i class="fas fa-star me-2"></i>Mis Puntos
+                                </a>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <a href="@Url.Action("Historial", "Fidelizacion")" class="btn btn-outline-secondary w-100 rounded-pill">
+                                <i class="fas fa-history me-2"></i>Ver Historial Completo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botón para hacer otro pedido -->
+            <div class="text-center mt-4">
+                <a href="@Url.Action("SeleccionMultiple", "Productos")" class="btn btn-primary btn-lg rounded-pill px-4">
+                    <i class="fas fa-shopping-cart me-2"></i>Realizar Nuevo Pedido
+                </a>
+                <p class="text-muted mt-2 small">¡Sigue acumulando puntos con cada compra!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateY(0);
+        }
+        40% {
+            transform: translateY(-10px);
+        }
+        60% {
+            transform: translateY(-5px);
+        }
+    }
+
+    .celebration-header {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .celebration-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+        animation: shimmer 3s infinite;
+    }
+
+    keyframes shimmer {
+        0% {
+            transform: translateX(-100%) translateY(-100%) rotate(45deg);
+        }
+        100% {
+            transform: translateX(100%) translateY(100%) rotate(45deg);
+        }
+    }
+
+    .stat {
+        transition: transform 0.2s ease;
+    }
+
+    .stat:hover {
+        transform: scale(1.05);
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        transition: all 0.2s ease;
+    }
+
+    .font-monospace {
+        font-family: 'Courier New', monospace;
+        background: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.9em;
+    }
+</style>
+
+<script>
+    // Opcional: Confetti celebration effect
+    document.addEventListener('DOMContentLoaded', function() {
+        // Aquí podrías agregar efectos de confetti usando una librería como canvas-confetti
+        console.log('¡Canje exitoso! 🎉');
+    });
+</script>

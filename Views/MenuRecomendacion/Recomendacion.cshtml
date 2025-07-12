@@ -1,0 +1,395 @@
+﻿@{
+    ViewBag.Title = "Recomendación de menú con IA";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!-- ✅ AGREGAR SOLO INFORMACIÓN DE LÍMITES -->
+<div id="info-limite-global" class="alert" style="display: none; margin: 20px;">
+    <!-- Contenido dinámico -->
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card mt-4 mb-3">
+                <div class="card-header">
+                    <h2>Recomendación de menú con IA</h2>
+                    <p class="text-muted">Sistema inteligente que recomienda platos basados en tus preferencias.</p>
+                </div>
+                <div class="card-body">
+                    <!-- Categoría -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Categoría:</label>
+                        <div class="categories-container">
+                            @foreach (var categoria in ViewBag.Categorias)
+                            {
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="categoria" id="cat-@categoria" value="@categoria">
+                                    <label class="form-check-label" for="cat-@categoria">@categoria</label>
+                                </div>
+                            }
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="categoria" id="cat-cualquiera" value="Cualquiera">
+                                <label class="form-check-label" for="cat-cualquiera">Cualquiera</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Presupuesto -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <label class="form-label fw-bold">Presupuesto ($):</label>
+                            <span class="badge bg-primary" id="presupuestoValor">9</span>
+                        </div>
+                        <input type="range" class="form-range" min="1" max="45" step="1" value="9" id="presupuestoSlider">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">1</small>
+                            <small class="text-muted">45</small>
+                        </div>
+                    </div>
+
+                    <!-- Ingredientes -->
+                    <div class="mb-4">
+                        <label for="ingredientes" class="form-label fw-bold">Ingredientes preferidos:</label>
+                        <input type="text" class="form-control" id="ingredientes" placeholder="Ej: Sin Carne, Con Carne, o ingredientes específicos">
+                        <div class="form-text">
+                            Puedes escribir "Sin Carne", "Con Carne", o ingredientes específicos como "queso, tomate"
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="d-flex mb-4">
+                        <button type="button" class="btn btn-outline-secondary me-2" id="btnLimpiar">Limpiar</button>
+                        <button type="button" class="btn btn-warning" id="btnRecomendar" onclick="procesarRecomendacion()">Recomendar</button>
+                    </div>
+
+                    <!-- Resultados -->
+                    <div id="resultados" style="display: none;">
+                        <h3 class="text-center mb-3">Recomendaciones Personalizadas</h3>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Precio</th>
+                                        <th>Calorías</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyResultados">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        // ✅ VARIABLES DE LÍMITES
+        let limitesActuales = {
+            productosActivos: 0,
+            limite: 3,
+            disponibles: 3,
+            productosEnCarritos: 0, // Total de ambos carritos
+            totalOcupados: 0,
+            permitido: true,
+            mensaje: ""
+        };
+
+        $(document).ready(function () {
+            // ✅ CARGAR LÍMITES AL INICIALIZAR
+            cargarLimitesProductos();
+
+            // Slider del presupuesto
+            $("#presupuestoSlider").on("input", function () {
+                $("#presupuestoValor").text($(this).val());
+            });
+
+            // Limpiar filtros
+            $("#btnLimpiar").click(function () {
+                $("input[name='categoria']").prop('checked', false);
+                $("#presupuestoSlider").val(9);
+                $("#presupuestoValor").text(9);
+                $("#ingredientes").val("");
+                $("#resultados").hide();
+            });
+
+            // ✅ OBTENER RECOMENDACIONES CON VALIDACIÓN DE LÍMITES
+            // ✅ FUNCIÓN SIMPLE PARA RECOMENDAR
+            function procesarRecomendacion() {
+                // Validar límites
+                if (limitesActuales.disponibles === 0) {
+                    alert('No puedes usar el sistema de recomendaciones porque has alcanzado el límite de productos.');
+                    return;
+                }
+
+                const categoria = document.querySelector("input[name='categoria']:checked")?.value || "";
+                const presupuesto = document.getElementById("presupuestoSlider").value;
+                const ingredientes = document.getElementById("ingredientes").value || "";
+
+                const btn = document.getElementById('btnRecomendar');
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analizando...';
+                btn.disabled = true;
+
+                const formData = new FormData();
+                formData.append('categoria', categoria);
+                formData.append('presupuesto', presupuesto);
+                formData.append('ingredientes', ingredientes);
+
+                fetch('@Url.Action("ObtenerRecomendaciones", "MenuRecomendacion")', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.success && data.data) {
+                            mostrarResultados(data.data);
+                            cargarLimitesProductos();
+
+                            // Restaurar botón aquí cuando todo esté listo
+                            btn.innerHTML = 'Recomendar';
+                            btn.disabled = false;
+                        } else {
+                            alert("No se encontraron recomendaciones");
+                            btn.innerHTML = 'Recomendar';
+                            btn.disabled = false;
+                        }
+                    })
+            }
+
+            // Asignar función al botón
+            document.getElementById('btnRecomendar').addEventListener('click', procesarRecomendacion);
+
+            // ✅ ESCUCHAR CAMBIOS DE CARRITO
+            window.addEventListener('storage', function (e) {
+                if (e.key === 'carritoActualizado') {
+                    console.log('[DEBUG] Carrito actualizado en otra pestaña, recargando límites...');
+                    cargarLimitesProductos();
+                }
+            });
+
+            // ✅ RECARGAR LÍMITES CUANDO LA VENTANA RECIBE FOCO
+            window.addEventListener('focus', function () {
+                console.log('[DEBUG] Ventana recibió foco, recargando límites...');
+                cargarLimitesProductos();
+            });
+
+            // ✅ RECARGAR LÍMITES CADA 30 SEGUNDOS
+            setInterval(function () {
+                cargarLimitesProductos();
+            }, 30000);
+        });
+
+        // ✅ FUNCIÓN PARA CARGAR LÍMITES
+        async function cargarLimitesProductos() {
+            try {
+                const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
+                const data = await response.json();
+                limitesActuales = data;
+                actualizarInterfazLimites();
+                console.log('[DEBUG] Límites cargados:', data);
+            } catch (error) {
+                console.error('Error al cargar límites:', error);
+            }
+        }
+
+        // ✅ FUNCIÓN PARA ACTUALIZAR INTERFAZ
+        function actualizarInterfazLimites() {
+            const { productosActivos, limite, disponibles, productosEnCarritos, totalOcupados, permitido, mensaje } = limitesActuales;
+            const btnPrincipal = document.getElementById('btnRecomendar') || document.getElementById('btnPersonalizar');
+            const infoLimiteGlobal = document.getElementById('info-limite-global');
+
+            if (!permitido || disponibles === 0) {
+                // SIN ESPACIOS DISPONIBLES
+                if (btnPrincipal) {
+                    btnPrincipal.disabled = true;
+                    btnPrincipal.innerHTML = '<i class="fas fa-ban"></i> Límite Alcanzado';
+                    btnPrincipal.className = 'btn btn-danger';
+                }
+
+                if (infoLimiteGlobal) {
+                    infoLimiteGlobal.className = 'alert alert-danger';
+                    infoLimiteGlobal.style.display = 'block';
+                    infoLimiteGlobal.innerHTML = `
+                        <h6><i class="fas fa-exclamation-triangle"></i> Límite de productos alcanzado</h6>
+                        <p><strong>Total ocupado:</strong> ${totalOcupados}/${limite} productos</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>En pedidos activos:</strong> ${productosActivos} productos
+                            </div>
+                            <div class="col-md-6">
+                                <strong>En ambos carritos:</strong> ${productosEnCarritos} productos
+                            </div>
+                        </div>
+                        <hr>
+                        <p class="mb-0"><em>No puedes agregar más productos hasta que se entreguen tus pedidos activos.</em></p>
+                        <p class="mb-0"><small class="text-muted">Los límites se aplican a personalización y recomendación IA conjuntamente.</small></p>
+                    `;
+                }
+            } else if (disponibles <= 1) {
+                // ÚLTIMO ESPACIO DISPONIBLE
+                if (btnPrincipal) {
+                    btnPrincipal.disabled = false;
+                    btnPrincipal.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Último espacio disponible';
+                    btnPrincipal.className = 'btn btn-warning';
+                }
+
+                if (infoLimiteGlobal) {
+                    infoLimiteGlobal.className = 'alert alert-warning';
+                    infoLimiteGlobal.style.display = 'block';
+                    infoLimiteGlobal.innerHTML = `
+                        <h6><i class="fas fa-info-circle"></i> Casi en el límite</h6>
+                        <p><strong>Disponibles:</strong> Solo ${disponibles} producto(s) más</p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>En pedidos activos:</strong> ${productosActivos} productos
+                            </div>
+                            <div class="col-md-6">
+                                <strong>En ambos carritos:</strong> ${productosEnCarritos} productos
+                            </div>
+                        </div>
+                        <hr>
+                        <p class="mb-0"><small class="text-muted">Límite aplicado conjuntamente a personalización y recomendación IA (${limite} productos máximo)</small></p>
+                    `;
+                }
+            } else {
+                // ESPACIO SUFICIENTE DISPONIBLE
+                if (btnPrincipal) {
+                    btnPrincipal.disabled = false;
+                    btnPrincipal.innerHTML = btnPrincipal.id === 'btnRecomendar' ? 'Recomendar' : 'Buscar Productos';
+                    btnPrincipal.className = 'btn btn-warning';
+                }
+
+                // ✅ MOSTRAR INFO SOLO SI HAY PRODUCTOS
+                if (productosActivos > 0 || productosEnCarritos > 0) {
+                    if (infoLimiteGlobal) {
+                        infoLimiteGlobal.className = 'alert alert-info';
+                        infoLimiteGlobal.style.display = 'block';
+                        infoLimiteGlobal.innerHTML = `
+                            <h6><i class="fas fa-info-circle"></i> Estado unificado de productos</h6>
+                            <p><strong>Disponibles:</strong> ${disponibles} producto(s) más</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>En pedidos activos:</strong> ${productosActivos} productos
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>En ambos carritos:</strong> ${productosEnCarritos} productos
+                                </div>
+                            </div>
+                            <hr>
+                            <p class="mb-0"><small class="text-muted">Límite compartido entre personalización y recomendación IA: ${totalOcupados}/${limite} productos</small></p>
+                        `;
+                    }
+                } else {
+                    if (infoLimiteGlobal) {
+                        infoLimiteGlobal.style.display = 'none';
+                    }
+                }
+            }
+
+            console.log('[DEBUG] Límites actualizados:', limitesActuales);
+        }
+
+        // ✅ FUNCIÓN MOSTRAR RESULTADOS
+        function mostrarResultados(data) {
+            var tbody = $("#tbodyResultados");
+            tbody.empty();
+
+            if (!data || data.length === 0) {
+                tbody.append('<tr><td colspan="4" class="text-center">No se encontraron resultados</td></tr>');
+                $("#resultados").show();
+                return;
+            }
+
+            for (var i = 0; i < data.length; i++) {
+                var item = data[i];
+                var id = item.id || item.Id || 0;
+                var nombre = item.nombre || item.Nombre || "Sin nombre";
+                var precio = item.precio || item.Precio || "0";
+                var calorias = item.calorias || item.Calorias || "0";
+
+                var botonSeleccionar = '';
+                if (!limitesActuales.permitido || limitesActuales.disponibles === 0) {
+                    botonSeleccionar = '<button class="btn btn-sm btn-secondary" disabled title="Límite global alcanzado"><i class="fas fa-ban"></i> Sin espacio</button>';
+                } else if (limitesActuales.disponibles <= 1) {
+                    botonSeleccionar = `<a href="@Url.Action("SeleccionarRecoleccion", "MenuRecomendacion")?productoId=${id}" class="btn btn-sm btn-warning" title="Último espacio global disponible"><i class="fas fa-exclamation-triangle"></i> Último espacio</a>`;
+                } else {
+                    botonSeleccionar = `<a href="@Url.Action("SeleccionarRecoleccion", "MenuRecomendacion")?productoId=${id}" class="btn btn-sm btn-warning"><i class="fas fa-plus"></i> Seleccionar</a>`;
+                }
+
+                var row = '<tr>' +
+                    '<td>' + nombre + '</td>' +
+                    '<td>$' + precio + '</td>' +
+                    '<td>' + calorias + '</td>' +
+                    '<td>' + botonSeleccionar + '</td>' +
+                    '</tr>';
+
+                tbody.append(row);
+            }
+
+            $("#resultados").show();
+        }
+        function guardarCarritoEnSesion() {
+            fetch('@Url.Action("ActualizarCarrito")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(carritoLocal)
+            })
+                .then(response => response.json())
+                .then(result => {
+                    if (!result.success) {
+                        console.error('[ERROR] Error al guardar carrito:', result.message);
+                    } else {
+                        // ✅ NOTIFICAR CAMBIO GLOBAL DE CARRITOS
+                        localStorage.setItem('carritosActualizados', Date.now().toString());
+                    }
+                })
+                .catch(error => {
+                    console.error('[ERROR] Error de red al guardar carrito:', error);
+                });
+        }
+
+        // ✅ ESCUCHAR CAMBIOS GLOBALES EN CARRITOS
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'carritosActualizados' || e.key === 'carritoActualizado') {
+                console.log('[DEBUG] Carritos actualizados globalmente, recargando límites...');
+                cargarLimitesProductos();
+            }
+        });
+    </script>
+}
+
+@section styles {
+    <style>
+        .btn-warning {
+            color: #fff;
+            background-color: #F2A900;
+            border-color: #F2A900;
+        }
+
+            .btn-warning:hover {
+                color: #fff;
+                background-color: #e09600;
+                border-color: #d48e00;
+            }
+
+        .categories-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+
+        #btnRecomendar:disabled {
+            opacity: 0.7;
+            cursor: not-allowed !important;
+        }
+    </style>
+}

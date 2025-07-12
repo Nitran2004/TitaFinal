@@ -1,0 +1,253 @@
+﻿@{
+    ViewBag.Title = "Mi Carrito - Pedido por Recomendación";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3><i class="fas fa-shopping-cart"></i> Mi Carrito</h3>
+                    <a href="@Url.Action("Recomendacion", "MenuRecomendacion")" class="btn btn-outline-secondary">
+                        <i class="fas fa-plus"></i> Agregar Más Productos
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div id="carritoVacio" style="display: none;">
+                        <div class="text-center py-5">
+                            <i class="fas fa-shopping-cart fa-3x text-muted"></i>
+                            <h4 class="mt-3">Tu carrito está vacío</h4>
+                            <p class="text-muted">Agrega productos desde las recomendaciones</p>
+                            <a href="@Url.Action("Recomendacion", "MenuRecomendacion")" class="btn btn-warning">
+                                Ver Recomendaciones
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div id="carritoConItems">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Precio</th>
+                                        <th>Cantidad</th>
+                                        <th>Subtotal</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaCarrito">
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6 offset-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h5>Resumen del Pedido</h5>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Total Items:</span>
+                                            <span id="totalItems">0</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <strong>Total a Pagar:</strong>
+                                            <strong id="totalPagar">$0.00</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5>Datos del Pedido</h5>
+                </div>
+                <div class="card-body">
+                    <form id="formPedido">
+                        <div class="mb-3">
+                            <label for="clienteNombre" class="form-label">Nombre Completo *</label>
+                            <input type="text" class="form-control" id="clienteNombre" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="clienteTelefono" class="form-label">Teléfono *</label>
+                            <input type="tel" class="form-control" id="clienteTelefono" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="direccion" class="form-label">Dirección de Entrega *</label>
+                            <textarea class="form-control" id="direccion" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="observaciones" class="form-label">Observaciones</label>
+                            <textarea class="form-control" id="observaciones" rows="2" placeholder="Observaciones especiales..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-warning w-100" id="btnProcesarPedido">
+                            <i class="fas fa-check"></i> Procesar Pedido
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+<script>
+    $(document).ready(function() {
+        cargarCarrito();
+        
+        // Manejar envío del formulario
+        $('#formPedido').submit(function(e) {
+            e.preventDefault();
+            procesarPedido();
+        });
+    });
+    
+    function cargarCarrito() {
+        let carrito = JSON.parse(localStorage.getItem('carritoRecomendacion') || '[]');
+        
+        if (carrito.length === 0) {
+            $('#carritoVacio').show();
+            $('#carritoConItems').hide();
+            return;
+        }
+        
+        $('#carritoVacio').hide();
+        $('#carritoConItems').show();
+        
+        let tabla = $('#tablaCarrito');
+        tabla.empty();
+        
+        let totalItems = 0;
+        let totalPagar = 0;
+        
+        carrito.forEach(function(item, index) {
+            totalItems += item.cantidad;
+            totalPagar += item.subtotal;
+            
+            let fila = `
+                <tr>
+                    <td>${item.nombre}</td>
+                    <td>$${item.precio}</td>
+                    <td>
+                        <div class="input-group" style="width: 120px;">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="cambiarCantidad(${index}, -1)">-</button>
+                            <input type="number" class="form-control text-center" value="${item.cantidad}" readonly>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="cambiarCantidad(${index}, 1)">+</button>
+                        </div>
+                    </td>
+                    <td>$${item.subtotal.toFixed(2)}</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarItem(${index})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tabla.append(fila);
+        });
+        
+        $('#totalItems').text(totalItems);
+        $('#totalPagar').text('$' + totalPagar.toFixed(2));
+    }
+    
+    function cambiarCantidad(index, cambio) {
+        let carrito = JSON.parse(localStorage.getItem('carritoRecomendacion') || '[]');
+        
+        carrito[index].cantidad += cambio;
+        
+        if (carrito[index].cantidad <= 0) {
+            carrito.splice(index, 1);
+        } else {
+            carrito[index].subtotal = carrito[index].cantidad * carrito[index].precio;
+        }
+        
+        localStorage.setItem('carritoRecomendacion', JSON.stringify(carrito));
+        cargarCarrito();
+    }
+    
+    function eliminarItem(index) {
+        let carrito = JSON.parse(localStorage.getItem('carritoRecomendacion') || '[]');
+        carrito.splice(index, 1);
+        localStorage.setItem('carritoRecomendacion', JSON.stringify(carrito));
+        cargarCarrito();
+    }
+    
+    function procesarPedido() {
+        let carrito = JSON.parse(localStorage.getItem('carritoRecomendacion') || '[]');
+        
+        if (carrito.length === 0) {
+            alert('El carrito está vacío');
+            return;
+        }
+        
+        let pedidoData = {
+            items: carrito,
+            clienteNombre: $('#clienteNombre').val(),
+            clienteTelefono: $('#clienteTelefono').val(),
+            direccion: $('#direccion').val(),
+            observaciones: $('#observaciones').val()
+        };
+        
+        $('#btnProcesarPedido').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Procesando...');
+        
+        $.ajax({
+            url: '@Url.Action("ProcesarPedido", "PedidoRecomendacion")',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(pedidoData),
+            success: function(response) {
+                if (response.success) {
+                    // Limpiar carrito
+                    localStorage.removeItem('carritoRecomendacion');
+                    // Redirigir a confirmación
+                    window.location.href = '@Url.Action("Confirmacion", "PedidoRecomendacion")/' + response.pedidoId;
+                } else {
+                    alert('Error: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('Error al procesar el pedido');
+            },
+            complete: function() {
+                $('#btnProcesarPedido').prop('disabled', false).html('<i class="fas fa-check"></i> Procesar Pedido');
+            }
+        });
+    }
+</script>
+}
+
+@section styles {
+<style>
+    .btn-warning {
+        color: #fff;
+        background-color: #F2A900;
+        border-color: #F2A900;
+    }
+
+    .btn-warning:hover {
+        color: #fff;
+        background-color: #e09600;
+        border-color: #d48e00;
+    }
+
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .input-group .btn {
+        border-radius: 0;
+    }
+    
+    .input-group .form-control {
+        border-left: none;
+        border-right: none;
+    }
+</style>
+}

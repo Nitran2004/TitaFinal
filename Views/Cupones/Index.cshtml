@@ -1,0 +1,343 @@
+﻿@model IEnumerable<ProyectoIdentity.Models.Cupon>
+@{
+    ViewData["Title"] = "Cupones Disponibles";
+}
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-warning text-dark">
+            <h2 class="mb-0">
+                <i class="fas fa-ticket-alt"></i> Cupones Disponibles
+            </h2>
+            <p class="mb-0">Descubre nuestras promociones especiales</p>
+        </div>
+        
+        <div class="card-body">
+            <!-- Barra de búsqueda -->
+            <div class="search-container mb-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-warning border-warning">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" 
+                           id="searchInput" 
+                           class="form-control border-warning" 
+                           placeholder="Buscar cupones por nombre, descripción, código o tipo..."
+                           style="border-left: none;">
+                </div>
+            </div>
+
+            @if (Model != null && Model.Any())
+            {
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="cuponesContainer">
+                    @foreach (var cupon in Model)
+                    {
+                        <div class="col cupon-item" 
+                             data-nombre="@cupon.Nombre.ToLower()" 
+                             data-descripcion="@cupon.Descripcion.ToLower()" 
+                             data-codigo="@cupon.CodigoQR.ToLower()" 
+                             data-tipo="@cupon.TipoDescuento.ToLower()">
+                            <div class="card h-100 cupon-card @(cupon.OtorgaPuntos ? "cupon-con-puntos" : "")">
+                                
+                                <!-- Badge de puntos si otorga puntos -->
+                                @if (cupon.OtorgaPuntos)
+                                {
+                                    <div class="puntos-badge">
+                                        <i class="fas fa-star"></i> ¡Gana Puntos!
+                                    </div>
+                                }
+                                
+                                <div class="card-header bg-gradient-warning text-center">
+                                    <h5 class="card-title mb-0">@cupon.Nombre</h5>
+                                </div>
+                                
+                                <div class="card-body text-center">
+                                    <div class="cupon-icon mb-3">
+                                        @if (cupon.TipoDescuento == "3x2")
+                                        {
+                                            <i class="fas fa-gift fa-3x text-warning"></i>
+                                        }
+                                        else if (cupon.TipoDescuento == "Porcentaje")
+                                        {
+                                            <i class="fas fa-percentage fa-3x text-success"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-dollar-sign fa-3x text-primary"></i>
+                                        }
+                                    </div>
+                                    
+                                    <div class="cupon-descuento mb-3">
+                                        @if (cupon.TipoDescuento == "3x2")
+                                        {
+                                            <span class="display-6 fw-bold text-warning">3x2</span>
+                                        }
+                                        else if (cupon.TipoDescuento == "Porcentaje")
+                                        {
+                                            <span class="display-6 fw-bold text-success">@cupon.ValorDescuento%</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="display-6 fw-bold text-primary">$@cupon.ValorDescuento</span>
+                                        }
+                                    </div>
+                                    
+                                    <p class="card-text">@cupon.Descripcion</p>
+                                    
+                                    <!-- Información de puntos -->
+                                    @if (cupon.OtorgaPuntos)
+                                    {
+                                        <div class="puntos-info mb-3">
+                                            <div class="alert alert-success p-2">
+                                                <i class="fas fa-star text-warning"></i>
+                                                <small><strong>¡Ganas puntos de fidelidad!</strong><br>
+                                                30 puntos por cada dólar gastado</small>
+                                            </div>
+                                        </div>
+                                    }
+                                    
+                                    @if (cupon.MontoMinimo > 0)
+                                    {
+                                        <p class="text-muted small">
+                                            <i class="fas fa-info-circle"></i> Monto mínimo: $@cupon.MontoMinimo
+                                        </p>
+                                    }
+                                    
+                                    @if (!string.IsNullOrEmpty(cupon.DiasAplicables) && cupon.DiasAplicables != "Todos")
+                                    {
+                                        <p class="text-muted small">
+                                            <i class="fas fa-calendar"></i> Válido: @cupon.DiasAplicables
+                                        </p>
+                                    }
+                                    
+                                    @if (cupon.FechaExpiracion.HasValue)
+                                    {
+                                        <p class="text-danger small">
+                                            <i class="fas fa-clock"></i> Expira: @cupon.FechaExpiracion.Value.ToString("dd/MM/yyyy")
+                                        </p>
+                                    }
+                                </div>
+                                
+                                <div class="card-footer text-center bg-light">
+                                    <div class="qr-code mb-2" style="display: inline-block; padding: 10px; background: white; border: 1px solid #ddd;">
+                                        <div id="qr-@cupon.Id"></div>
+                                    </div>
+                                    <br>
+                                    <div class="codigo-texto mb-2">
+                                        <small class="text-muted">Código: <strong>@cupon.CodigoQR</strong></small>
+                                    </div>
+                                    <a href="@Url.Action("Detalle", "Cupones", new { id = cupon.Id })" 
+                                       class="btn btn-warning btn-sm">
+                                        <i class="fas fa-eye"></i> Ver Detalle
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Mensaje cuando no hay resultados -->
+                <div id="noResultsMessage" class="text-center py-5" style="display: none;">
+                    <i class="fas fa-search fa-5x text-muted mb-3"></i>
+                    <h3 class="text-muted">No se encontraron cupones</h3>
+                    <p class="text-muted">Intenta con otros términos de búsqueda</p>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="fas fa-ticket-alt fa-5x text-muted mb-3"></i>
+                    <h3 class="text-muted">No hay cupones disponibles</h3>
+                    <p class="text-muted">Vuelve pronto para ver nuestras promociones especiales</p>
+                </div>
+            }
+            
+            <div class="mt-4 text-center">
+                <a href="@Url.Action("Menu", "Productos")" 
+                   class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Volver al menú
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .cupon-card {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 2px solid #ffc107;
+        position: relative;
+    }
+    
+    .cupon-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Estilo especial para cupones con puntos */
+    .cupon-con-puntos {
+        border: 2px solid #28a745 !important;
+        box-shadow: 0 4px 6px rgba(40, 167, 69, 0.2) !important;
+    }
+    
+    .cupon-con-puntos:hover {
+        box-shadow: 0 8px 15px rgba(40, 167, 69, 0.3) !important;
+    }
+    
+    /* Badge de puntos */
+    .puntos-badge {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        background: linear-gradient(45deg, #28a745, #20c997);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        z-index: 10;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.4);
+        animation: puntosGlow 2s ease-in-out infinite;
+    }
+    
+    .puntos-badge i {
+        margin-right: 3px;
+        animation: starSpin 3s linear infinite;
+    }
+    
+    @@keyframes puntosGlow {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    @@keyframes starSpin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .puntos-info {
+        border-left: 4px solid #28a745;
+    }
+    
+    .bg-gradient-warning {
+        background: linear-gradient(45deg, #ffc107, #ffed4e);
+    }
+    
+    .cupon-icon {
+        animation: pulse 2s infinite;
+    }
+    
+    @@keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+    
+    .qr-code {
+        border-radius: 8px;
+    }
+
+    /* Estilos para la búsqueda */
+    .search-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .search-container .form-control:focus {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+    }
+
+    .cupon-item {
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .cupon-item.hidden {
+        opacity: 0;
+        transform: scale(0.8);
+        pointer-events: none;
+        height: 0;
+        overflow: hidden;
+        margin: 0;
+        padding: 0;
+    }
+</style>
+
+@section Scripts {
+    <!-- QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Generar códigos QR
+            @foreach (var cupon in Model)
+            {
+                <text>
+                new QRious({
+                    element: document.getElementById('qr-@cupon.Id'),
+                    value: '@cupon.CodigoQR',
+                    size: 100,
+                    level: 'H'
+                });
+                </text>
+            }
+
+            // Funcionalidad de búsqueda
+            const searchInput = document.getElementById('searchInput');
+            const cuponesContainer = document.getElementById('cuponesContainer');
+            const noResultsMessage = document.getElementById('noResultsMessage');
+            const cuponItems = document.querySelectorAll('.cupon-item');
+
+            function filterCupones() {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                let visibleCount = 0;
+
+                cuponItems.forEach(item => {
+                    const nombre = item.getAttribute('data-nombre');
+                    const descripcion = item.getAttribute('data-descripcion');
+                    const codigo = item.getAttribute('data-codigo');
+                    const tipo = item.getAttribute('data-tipo');
+
+                    const matches = nombre.includes(searchTerm) || 
+                                  descripcion.includes(searchTerm) || 
+                                  codigo.includes(searchTerm) || 
+                                  tipo.includes(searchTerm);
+
+                    if (matches) {
+                        item.classList.remove('hidden');
+                        visibleCount++;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+
+                // Mostrar/ocultar mensaje de "no resultados"
+                if (visibleCount === 0 && searchTerm !== '') {
+                    cuponesContainer.style.display = 'none';
+                    noResultsMessage.style.display = 'block';
+                } else {
+                    cuponesContainer.style.display = 'flex';
+                    noResultsMessage.style.display = 'none';
+                }
+            }
+
+            // Event listener para búsqueda en tiempo real
+            searchInput.addEventListener('input', filterCupones);
+
+            // Limpiar búsqueda al presionar Escape
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    this.value = '';
+                    filterCupones();
+                }
+            });
+        });
+    </script>
+}

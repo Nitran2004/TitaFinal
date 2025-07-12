@@ -2,55 +2,148 @@
 @inject SignInManager<IdentityUser> SignInManager
 @inject UserManager<IdentityUser> UserManager
 
-<ul class="navbar-nav ml-auto">
+<ul class="navbar-nav ms-auto">
     @if (SignInManager.IsSignedIn(User))
     {
+        <!-- Indicador de Rol -->
         @if (User.IsInRole("Administrador"))
         {
             <li class="nav-item">
-                <a class="nav-link bold-link" asp-area="" asp-controller="Cuentas" asp-action="RegistroAdministrador"><strong>Tu rol es Administrador->> Registro Administrador</strong></a>
+                <a class="nav-link text-white" asp-area="" asp-controller="Cuentas" asp-action="RegistroAdministrador">
+                    <strong>Administrador → Registro Administrador</strong>
+                </a>
+            </li>
+        }
+        else if (User.IsInRole("Cajero"))
+        {
+            <li class="nav-item">
+                <span class="nav-link text-white">
+                    <strong>Cajero</strong>
+                </span>
             </li>
         }
         else
         {
             <li class="nav-item">
-                <a class="nav-link">Tu rol es: Desarrollador</a>
+                <span class="nav-link text-white">
+                    <strong>Registrado</strong>
+                </span>
             </li>
         }
 
+        <!-- Dropdown Mi Cuenta según roles -->
+        <!-- Dropdown Mi Cuenta según roles -->
         <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Mi cuenta
+            <a class="nav-link dropdown-toggle text-white" href="#" id="navbarDropdown" role="button"
+               data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-user me-1"></i> Mi cuenta
             </a>
             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                <li class="nav-item">
-                    <a class="nav-link" style="color: black;" href="#">Hola, @UserManager.GetUserName(User)</a>
-                </li>
                 <li>
-                    <hr class="dropdown-divider">
+                    <span class="dropdown-item-text">
+                        <i class="fas fa-user-circle me-2"></i>
+                        Hola, @UserManager.GetUserName(User)
+                    </span>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" style="color: black;" asp-area="" asp-controller="Usuarios" asp-action="EditarPerfil" asp-route-id="@UserManager.GetUserId(User)">Editar Perfil</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" style="color: black;" asp-area="" asp-controller="Usuarios" asp-action="CambiarPassword">Cambiar Contraseña</a>
+
+                <!-- PARA CAJERO - Solo editar y cambiar contraseña -->
+                @if (User.IsInRole("Cajero"))
+                {
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item" asp-controller="Usuarios" asp-action="EditarPerfil"
+                           asp-route-id="@UserManager.GetUserId(User)">
+                            <i class="fas fa-edit text-primary"></i> Editar Perfil
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" asp-controller="Usuarios" asp-action="CambiarPassword">
+                            <i class="fas fa-lock text-danger"></i> Cambiar Contraseña
+                        </a>
+                    </li>
+                }
+
+                <!-- PARA ADMIN Y REGISTRADO - Más opciones -->
+                @if (User.IsInRole("Administrador") || User.IsInRole("Registrado"))
+                {
+                    <!-- Mostrar puntos -->
+                    <li>
+                        <div class="dropdown-item-text bg-success text-white text-center" style="border-radius: 5px; margin: 5px;">
+                            <i class="fas fa-coins"></i> <span id="puntos-usuario">--- pts</span>
+                        </div>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="MisPuntos">
+                            <i class="fas fa-star text-warning"></i> Ver Mis Puntos
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="Historial">
+                            <i class="fas fa-history text-secondary"></i> Historial Completo
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item" asp-controller="Usuarios" asp-action="EditarPerfil"
+                           asp-route-id="@UserManager.GetUserId(User)">
+                            <i class="fas fa-edit text-primary"></i> Editar Perfil
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" asp-controller="Usuarios" asp-action="CambiarPassword">
+                            <i class="fas fa-lock text-danger"></i> Cambiar Contraseña
+                        </a>
+                    </li>
+                }
+
+                <!-- Separador antes del botón Cerrar Sesión -->
+                <li><hr class="dropdown-divider"></li>
+
+                <!-- Botón Cerrar Sesión -->
+                <li>
+                    <form asp-controller="Cuentas" asp-action="SalirAplicacion" method="post" class="d-inline">
+                        <button type="submit" class="dropdown-item">
+                            <i class="fas fa-sign-out-alt text-danger"></i> Cerrar Sesión
+                        </button>
+                    </form>
                 </li>
             </ul>
-        </li>
-
-        <li class="nav-item">
-            <form id="logoutForm" method="post" class="form-inline" asp-controller="Cuentas" asp-action="SalirAplicacion">
-                <button type="submit" class="btn">Salir</button>
-            </form>
         </li>
     }
     else
     {
         <li class="nav-item">
-            <a class="nav-link bold-link" asp-area="" asp-controller="Cuentas" asp-action="Registro">Registro</a>
+            <a class="nav-link text-white" asp-area="" asp-controller="Cuentas" asp-action="Registro">
+                <i class="fas fa-user-plus me-1"></i> Registro
+            </a>
         </li>
         <li class="nav-item">
-            <a class="nav-link bold-link" asp-area="" asp-controller="Cuentas" asp-action="Acceso">Iniciar Sesión</a>
+            <a class="nav-link text-white" asp-area="" asp-controller="Cuentas" asp-action="Acceso">
+                <i class="fas fa-sign-in-alt me-1"></i> Iniciar Sesión
+            </a>
         </li>
     }
 </ul>
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <script>
+        // Cargar puntos del usuario al inicializar (solo para Admin y Registrado)
+        document.addEventListener('DOMContentLoaded', function () {
+        @if (User.IsInRole("Administrador") || User.IsInRole("Registrado"))
+        {
+            <text>
+                    fetch('@Url.Action("ObtenerPuntos", "Fidelizacion")')
+                        .then(response => response.json())
+                        .then(data => {
+                            document.getElementById('puntos-usuario').textContent = data.puntos + ' pts';
+                        })
+                        .catch(error => {
+                            document.getElementById('puntos-usuario').textContent = '0 pts';
+                        });
+            </text>
+        }
+                });
+    </script>
+}

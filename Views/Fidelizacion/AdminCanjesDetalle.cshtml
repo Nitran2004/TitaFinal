@@ -1,0 +1,154 @@
+﻿@model ProyectoIdentity.Models.AdminCanjesDetalleAgrupadoViewModel
+
+<!-- Tabla del historial de canjes AGRUPADOS -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-history text-primary me-2"></i>
+                    Historial de Canjes Agrupados
+                    <span class="badge bg-primary ms-2">@Model.CanjesAgrupados.Count grupos</span>
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Código Canje</th>
+                                <th>Fecha</th>
+                                <th>Productos</th>
+                                <th>Puntos Totales</th>
+                                <th>Tipo Servicio</th>
+                                <th>Estado</th>
+                                <th>Actualizar Estado</th>
+                                <th>Valoración</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var grupo in Model.CanjesAgrupados)
+                            {
+                                <tr>
+                                    <td>
+                                        <code class="bg-warning text-dark px-2 py-1 rounded">@grupo.CodigoCanje</code>
+                                    </td>
+                                    <td>
+                                        <div>@grupo.FechaCanje.ToString("dd/MM/yyyy")</div>
+                                        <small class="text-muted">@grupo.FechaCanje.ToString("HH:mm:ss")</small>
+                                    </td>
+                                    <td>
+                                        <div class="productos-grupo">
+                                            @foreach (var canje in grupo.CanjesIndividuales)
+                                            {
+                                                <div class="producto-item">
+                                                    <strong>@canje.NombreProducto</strong>
+                                                    <span class="badge bg-info ms-2">@canje.CategoriaProducto</span>
+                                                    <small class="text-danger">(-@canje.PuntosUtilizados pts)</small>
+                                                </div>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-danger">-@grupo.TotalPuntosUtilizados pts</span>
+                                        <div><small class="text-muted">@grupo.CantidadRecompensas productos</small></div>
+                                    </td>
+                                    <td>
+                                        @if (grupo.TipoServicio == "Servir aquí")
+                                        {
+                                            <span class="badge bg-primary">
+                                                <i class="fas fa-chair"></i> Servir aquí
+                                            </span>
+                                        }
+                                        else if (grupo.TipoServicio == "Para llevar")
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-shopping-bag"></i> Para llevar
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">No seleccionado</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (grupo.Estado == "Preparándose")
+                                        {
+                                            <span class="badge bg-info">@grupo.Estado</span>
+                                        }
+                                        else if (grupo.Estado == "Listo para entregar")
+                                        {
+                                            <span class="badge bg-warning">@grupo.Estado</span>
+                                        }
+                                        else if (grupo.Estado == "Entregado")
+                                        {
+                                            <span class="badge bg-success">@grupo.Estado</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <form asp-action="ActualizarEstadoCanje" method="post" class="d-inline">
+                                            <input type="hidden" name="codigoCanje" value="@grupo.CodigoCanje" />
+                                            <input type="hidden" name="usuarioId" value="@Model.Usuario.Id" />
+                                            <select name="estado" class="form-select form-select-sm" onchange="this.form.submit()" style="width: auto;">
+                                                <option value="Preparándose" selected="@(grupo.Estado == "Preparándose")">Preparándose</option>
+                                                <option value="Listo para entregar" selected="@(grupo.Estado == "Listo para entregar")">Listo para entregar</option>
+                                                <option value="Entregado" selected="@(grupo.Estado == "Entregado")">Entregado</option>
+                                            </select>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        @{
+                                            var primerCanjeConComentario = grupo.CanjesIndividuales.FirstOrDefault(c => c.ComentarioEnviado == true);
+                                        }
+                                        @if (primerCanjeConComentario != null)
+                                        {
+                                            <div>
+                                                @for (int i = 1; i <= 5; i++)
+                                                {
+                                                    if (i <= (primerCanjeConComentario.Calificacion ?? 0))
+                                                    {
+                                                        <span class="text-warning">★</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">★</span>
+                                                    }
+                                                }
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(primerCanjeConComentario.Comentario))
+                                            {
+                                                <small class="text-muted" title="@primerCanjeConComentario.Comentario">
+                                                    "@(primerCanjeConComentario.Comentario.Length > 30 ? primerCanjeConComentario.Comentario.Substring(0, 30) + "..." : primerCanjeConComentario.Comentario)"
+                                                </small>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted">Sin valoración</small>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .productos-grupo {
+        max-width: 200px;
+    }
+
+    .producto-item {
+        margin-bottom: 5px;
+        padding: 2px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+        .producto-item:last-child {
+            border-bottom: none;
+        }
+</style>

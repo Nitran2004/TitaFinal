@@ -1,0 +1,31 @@
+﻿@model ProyectoIdentity.Models.PedidoViewModel
+
+<form asp-action="CrearPedidoMultiple" method="post">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Seleccionar</th>
+                <th>Producto</th>
+                <th>Precio</th>
+                <th>Cantidad</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.ProductosSeleccionados.Count; i++)
+            {
+                <tr>
+                    <td>
+                        <input type="checkbox" name="ProductosSeleccionados[@i].Seleccionado" value="true" />
+                        <input type="hidden" name="ProductosSeleccionados[@i].ProductoId" value="@Model.ProductosSeleccionados[i].ProductoId" />
+                    </td>
+                    <td>@Model.ProductosSeleccionados[i].Nombre</td>
+                    <td>$@Model.ProductosSeleccionados[i].Precio</td>
+                    <td>
+                        <input type="number" name="ProductosSeleccionados[@i].Cantidad" value="1" min="1" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <button type="submit" class="btn btn-agregar">Agregar al Carrito</button>
+</form>

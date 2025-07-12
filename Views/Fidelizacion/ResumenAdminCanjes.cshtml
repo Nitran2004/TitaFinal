@@ -1,0 +1,333 @@
+﻿@model ProyectoIdentity.Models.ResumenAdminCanjesViewModel
+@{
+    ViewData["Title"] = "Administración - Resumen de Canjes";
+}
+
+<div class="container-fluid mt-4">
+    <!-- Header principal -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-lg border-0" style="border-radius: 20px; overflow: hidden;">
+                <div class="card-header text-center py-4" style="background: linear-gradient(135deg, #6f42c1, #5a2d91); color: white;">
+                    <div class="admin-header">
+                        <i class="fas fa-chart-line fa-3x mb-3"></i>
+                        <h2 class="mb-1">Administración de Canjes</h2>
+                        <p class="mb-0 opacity-75">Panel de control para gestión de recompensas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas generales -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card-admin bg-primary">
+                <div class="stat-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>@Model.Estadisticas.TotalCanjesRealizados</h3>
+                    <p>Total Canjes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card-admin bg-success">
+                <div class="stat-icon">
+                    <i class="fas fa-gift"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>@Model.Estadisticas.TotalRecompensasCanjeadas</h3>
+                    <p>Recompensas Canjeadas</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card-admin bg-danger">
+                <div class="stat-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>@Model.Estadisticas.TotalPuntosUtilizados.ToString("N0")</h3>
+                    <p>Puntos Utilizados</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card-admin bg-info">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <h3>@Model.Estadisticas.UsuariosUnicos</h3>
+                    <p>Usuarios Activos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas adicionales -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 bg-light">
+                <div class="card-body text-center">
+                    <i class="fas fa-calendar-day text-warning fa-2x mb-2"></i>
+                    <h4 class="text-warning">@Model.Estadisticas.CanjesHoy</h4>
+                    <small class="text-muted">Canjes hoy</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 bg-light">
+                <div class="card-body text-center">
+                    <i class="fas fa-calendar-alt text-purple fa-2x mb-2"></i>
+                    <h4 class="text-purple">@Model.Estadisticas.CanjesEsteMes</h4>
+                    <small class="text-muted">Canjes este mes</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 bg-light">
+                <div class="card-body text-center">
+                    <i class="fas fa-dollar-sign text-success fa-2x mb-2"></i>
+                    <h4 class="text-success">$@Model.Estadisticas.TotalValorAhorrado.ToString("N2")</h4>
+                    <small class="text-muted">Valor total ahorrado</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros y búsqueda -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter text-secondary me-2"></i>
+                        Filtros y Búsqueda
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <input type="text" id="buscarUsuario" class="form-control" placeholder="Buscar por usuario o email...">
+                        </div>
+                        <div class="col-md-3">
+                            <input type="date" id="fechaDesde" class="form-control" placeholder="Fecha desde">
+                        </div>
+                        <div class="col-md-3">
+                            <input type="date" id="fechaHasta" class="form-control" placeholder="Fecha hasta">
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-primary w-100" onclick="aplicarFiltros()">
+                                <i class="fas fa-search me-1"></i>Filtrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de canjes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list text-primary me-2"></i>
+                        Registro Completo de Canjes
+                        <span class="badge bg-primary ms-2">@Model.CanjesAgrupados.Count canjes</span>
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="tablaCanjes">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Código Canje</th>
+                                    <th>Fecha</th>
+                                    <th>Productos</th>
+                                    <th>Puntos</th>
+                                    <th>Valor</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var canje in Model.CanjesAgrupados)
+                                {
+                                    <tr class="canje-row">
+                                        <td>
+                                            <div class="usuario-info">
+                                                <div class="fw-bold">@canje.NombreUsuario</div>
+                                                <small class="text-muted">@canje.EmailUsuario</small>
+                                                <br><small class="text-info">ID: @canje.UsuarioId.Substring(0, 8)...</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <code class="bg-light px-2 py-1 rounded">@canje.CodigoCanje</code>
+                                        </td>
+                                        <td>
+                                            <div class="fecha-info">
+                                                <div>@canje.FechaCanje.ToString("dd/MM/yyyy")</div>
+                                                <small class="text-muted">@canje.FechaCanje.ToString("HH:mm")</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="productos-info">
+                                                <span class="badge bg-secondary me-1">@canje.CantidadRecompensas items</span>
+                                                <br><small class="text-muted">@canje.ResumenProductos</small>
+                                                <br><small class="text-info">@canje.CategoriasCanjeadas</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-danger">-@canje.TotalPuntosUtilizados pts</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">$@canje.ValorTotalAhorrado.ToString("F2")</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group-vertical btn-group-sm">
+                                                <a href="@Url.Action("DetalleCanje", "Fidelizacion", new { codigo = canje.CodigoCanje })" 
+                                                   class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-eye"></i> Ver
+                                                </a>
+                                                <button class="btn btn-outline-info btn-sm" 
+                                                        onclick="mostrarDetalleRapido('@canje.CodigoCanje')">
+                                                    <i class="fas fa-info-circle"></i> Info
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .stat-card-admin {
+        border-radius: 15px;
+        color: white;
+        padding: 1.5rem;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease;
+    }
+
+    .stat-card-admin:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-icon {
+        font-size: 3rem;
+        margin-right: 1rem;
+        opacity: 0.8;
+    }
+
+    .stat-content h3 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: bold;
+    }
+
+    .stat-content p {
+        margin: 0;
+        opacity: 0.9;
+    }
+
+    .usuario-info {
+        min-width: 200px;
+    }
+
+    .fecha-info {
+        min-width: 100px;
+    }
+
+    .productos-info {
+        max-width: 250px;
+    }
+
+    .text-purple {
+        color: #6f42c1 !important;
+    }
+
+    .table th {
+        border-top: none;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .canje-row:hover {
+        background-color: #f8f9fa;
+    }
+
+    code {
+        font-size: 0.85rem;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+    }
+
+    media (max-width: 768px) {
+        .stat-card-admin {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .stat-icon {
+            margin-right: 0;
+            margin-bottom: 0.5rem;
+        }
+        
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+    }
+</style>
+
+<script>
+    function aplicarFiltros() {
+        const usuario = document.getElementById('buscarUsuario').value.toLowerCase();
+        const fechaDesde = document.getElementById('fechaDesde').value;
+        const fechaHasta = document.getElementById('fechaHasta').value;
+        
+        const filas = document.querySelectorAll('.canje-row');
+        
+        filas.forEach(function(fila) {
+            let mostrar = true;
+            
+            // Filtro por usuario
+            if (usuario) {
+                const textoUsuario = fila.querySelector('.usuario-info').textContent.toLowerCase();
+                if (!textoUsuario.includes(usuario)) {
+                    mostrar = false;
+                }
+            }
+            
+            // Filtros por fecha (aquí podrías implementar lógica más compleja)
+            
+            fila.style.display = mostrar ? '' : 'none';
+        });
+    }
+    
+    function mostrarDetalleRapido(codigo) {
+        alert('Función de detalle rápido para el canje: ' + codigo + '\n\nAquí podrías mostrar un modal con información adicional.');
+    }
+    
+    // Limpiar filtros
+    function limpiarFiltros() {
+        document.getElementById('buscarUsuario').value = '';
+        document.getElementById('fechaDesde').value = '';
+        document.getElementById('fechaHasta').value = '';
+        aplicarFiltros();
+    }
+</script>

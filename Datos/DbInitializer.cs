@@ -1,4 +1,4 @@
-﻿using ProyectoIdentity.Datos;
+﻿using Microsoft.EntityFrameworkCore;
 using ProyectoIdentity.Models;
 
 namespace ProyectoIdentity.Datos
@@ -17,7 +17,7 @@ namespace ProyectoIdentity.Datos
                 // PIZZAS
                 new Producto {
                     Nombre = "Pepperoni",
-                    Precio = 15,
+                    Precio = 8,
                     Categoria = "Pizza",
                     Descripcion = "Mozzarella, jamón y champiñones.",
                     Imagen = File.ReadAllBytes("wwwroot/images1/pexels-muffin-1653877.jpg"),
@@ -538,7 +538,7 @@ namespace ProyectoIdentity.Datos
                     Categoria = "Bebidas",
                     Descripcion = "Agua natural purificada, refrescante.",
                     Imagen = File.ReadAllBytes("wwwroot/images1/aguasingas.jpg"),
-                    InfoNutricional = "Volumen:500ml|Calorías:0Kcal - 0%|Carbohidratos:0g - 0%|Proteínas:0g - 0%|Grasas:0g - 0%|Sodio:5mg - 0%|Azúcares:0g - 0%|Minerales:Contiene",
+                    InfoNutricional = "Volumen:500ml|Calorías:1Kcal - 0%|Carbohidratos:0g - 0%|Proteínas:0g - 0%|Grasas:0g - 0%|Sodio:5mg - 0%|Azúcares:0g - 0%|Minerales:Contiene",
                     Alergenos = "Sin alérgenos"
                 },
 
@@ -657,47 +657,43 @@ namespace ProyectoIdentity.Datos
                     Nombre = "Promo Pilas",
                     Precio = 16m,
                     Categoria = "Promo",
-                    Descripcion = "Promoción ideal para empezar la noche: 1 pizza mediana a elección + 4 cervezas nacionales.",
+                    Descripcion = "2 pizzas Simples + 2 Gaseosas",
                     Imagen = File.ReadAllBytes("wwwroot/images1/470140898_18004212455697669_2952221237043222814_n.jpg"),
                     InfoNutricional = "Porción total:Para 4 personas|Calorías:1800Kcal - 90%|Carbohidratos:160g - 53%|Proteínas:60g - 120%|Grasas:55g - 70%|Sodio:2400mg - 100%|Alcohol:4.5% vol. (por cerveza)",
                     Alergenos = "Leche|Lactosa|Gluten|Cebada|Trigo|Puede variar según pizza elegida"
                 },
-
                 new Producto {
                     Nombre = "Promo Lovers",
                     Precio = 20m,
                     Categoria = "Promo",
-                    Descripcion = "Pack romántico: 1 pizza mediana especial + 2 cócteles + postre para compartir.",
+                    Descripcion = "2 pizzas Clásicas + 2 Gaseosas",
                     Imagen = File.ReadAllBytes("wwwroot/images1/promolovers.jpg"),
                     InfoNutricional = "Porción total:Para 2 personas|Calorías:1600Kcal - 80%|Carbohidratos:170g - 57%|Proteínas:40g - 80%|Grasas:45g - 58%|Sodio:1800mg - 75%|Alcohol:Varía según cócteles",
                     Alergenos = "Leche|Lactosa|Gluten|Trigo|Cítricos|Puede contener frutos secos|Varía según elecciones"
                 },
-
                 new Producto {
                     Nombre = "Promo King",
                     Precio = 24m,
                     Categoria = "Promo",
-                    Descripcion = "Combo festivo: 1 pizza familiar + 6 cervezas nacionales + nachos con queso.",
+                    Descripcion = "2 pizzas Signature + 2 Gaseosas",
                     Imagen = File.ReadAllBytes("wwwroot/images1/promoking1.jpg"),
                     InfoNutricional = "Porción total:Para 6 personas|Calorías:2400Kcal - 120%|Carbohidratos:220g - 73%|Proteínas:80g - 160%|Grasas:85g - 109%|Sodio:3200mg - 133%|Alcohol:4.5% vol. (por cerveza)",
                     Alergenos = "Leche|Lactosa|Gluten|Cebada|Trigo|Maíz|Puede variar según pizza elegida"
                 },
-
                 new Producto {
                     Nombre = "Promo Sanduchera",
                     Precio = 10m,
                     Categoria = "Promo",
-                    Descripcion = "Promoción para la hora del almuerzo: 2 sánduches a elección + 2 bebidas no alcohólicas.",
+                    Descripcion = "2 Sánduches + 2 Gaseosas",
                     Imagen = File.ReadAllBytes("wwwroot/images1/278953595_514677723447399_1453067101951070993_n.webp"),
                     InfoNutricional = "Porción total:Para 2 personas|Calorías:900Kcal - 45%|Carbohidratos:100g - 33%|Proteínas:35g - 70%|Grasas:30g - 38%|Sodio:1600mg - 67%|Azúcares:Varía según bebida",
                     Alergenos = "Gluten|Trigo|Puede contener lácteos|Puede contener mostaza|Puede variar según elecciones"
                 },
-
                 new Producto {
                     Nombre = "Promo Piqueo",
                     Precio = 18m,
                     Categoria = "Promo",
-                    Descripcion = "Tabla para compartir con variedad de picadas + 4 cervezas nacionales.",
+                    Descripcion = "2 Sánduches + 1 Nacho Verace + 2 Gaseosas",
                     Imagen = File.ReadAllBytes("wwwroot/images1/promopiqueo.avif"),
                     InfoNutricional = "Porción total:Para 4 personas|Calorías:1500Kcal - 75%|Carbohidratos:120g - 40%|Proteínas:50g - 100%|Grasas:60g - 77%|Sodio:2200mg - 92%|Alcohol:4.5% vol. (por cerveza)",
                     Alergenos = "Leche|Lactosa|Gluten|Cebada|Trigo|Puede contener frutos secos"
@@ -760,7 +756,7 @@ namespace ProyectoIdentity.Datos
                     Precio = 6m,
                     Categoria = "Shot",
                     Descripcion = "Shot de licor de hierbas alemán Jägermeister, servido helado.",
-                    Imagen = File.ReadAllBytes("wwwroot/images1/jaggerbomb.jpg"),
+                    Imagen = File.ReadAllBytes("wwwroot/images1/jaggershot.webp"),
                     InfoNutricional = "Volumen:45ml|Calorías:103Kcal - 5%|Carbohidratos:11g - 4%|Proteínas:0g - 0%|Grasas:0g - 0%|Alcohol:35% vol.|Sodio:0mg - 0%|Azúcares:11g - 22%|Hierbas:Alto contenido",
                     Alergenos = "Hierbas|Puede contener trazas de gluten"
                 },
@@ -817,8 +813,149 @@ namespace ProyectoIdentity.Datos
                 },
             };
 
+
+            if (!context.Sucursales.Any())
+            {
+                var sucursal = new Sucursal
+                {
+                    Nombre = "Verace Pizza",
+                    Direccion = "Av. de los Shyris N35-52",
+                    Latitud = -0.180653,
+                    Longitud = -78.487834
+                };
+
+                context.Sucursales.Add(sucursal);
+                context.SaveChanges();
+
+                // Ahora puedes usar la sucursal creada para CollectionPoints si hay FK
+                var point = new CollectionPoint
+                {
+                    Name = "Verace Pizza",
+                    Address = "Av. de los Shyris N35-52",
+                    Latitude = -0.240653,
+                    Longitude = -78.487834,
+                    SucursalId = sucursal.Id // ← importante si hay FK
+                };
+
+                context.CollectionPoints.Add(point);
+                context.SaveChanges();
+            }
+
+
+
             context.Productos.AddRange(productos);
             context.SaveChanges();
+
         }
+
+        public static void CrearCuponesPredeterminados(ApplicationDbContext context)
+        {
+            if (context.Cupones.Any()) return; // Si ya existen cupones, no crear más
+
+            var cupones = new List<Cupon>
+    {
+        // 1. Cupón para productos de Promos (IDs 64-68)
+        new Cupon
+        {
+            Nombre = "Promo Especial",
+            Descripcion = "15% de descuento en productos promocionales",
+            TipoDescuento = "Porcentaje",
+            ValorDescuento = 15,
+            MontoMinimo = 10,
+            ProductosAplicables = "64,65,66,67,68", // IDs de promos
+            DiasAplicables = "Todos",
+            CodigoQR = "PROMO15-" + Guid.NewGuid().ToString("N")[..8].ToUpper(),
+            FechaCreacion = DateTime.Now,
+            FechaExpiracion = DateTime.Now.AddMonths(3),
+            Activo = true,
+        },
+
+        // 2. Cupón para últimas 5 cervezas (IDs 21-25)
+        new Cupon
+        {
+            Nombre = "Happy Hour Cervezas",
+            Descripcion = "20% de descuento en cervezas seleccionadas",
+            TipoDescuento = "Porcentaje",
+            ValorDescuento = 20,
+            MontoMinimo = 8,
+            ProductosAplicables = "21,22,23,24,25", // Últimas 5 cervezas
+            DiasAplicables = "Monday,Tuesday,Wednesday,Thursday,Saturday,Sunday", // Todos excepto viernes
+            CodigoQR = "BEER20-" + Guid.NewGuid().ToString("N")[..8].ToUpper(),
+            FechaCreacion = DateTime.Now,
+            FechaExpiracion = DateTime.Now.AddMonths(3),
+            Activo = true,
+        },
+
+        // 3. Promoción 3x2 en Jarros, Pintas, Litros, Growlers (IDs 11,12,13,14) - TODOS LOS DÍAS EXCEPTO VIERNES
+        new Cupon
+        {
+            Nombre = "3x2 Cerveza Draft",
+            Descripcion = "Compra 2 y llévate 3 en Jarro, Pinta, Litro y Growler",
+            TipoDescuento = "3x2",
+            ValorDescuento = 0,
+            MontoMinimo = 0,
+            ProductosAplicables = "11,12,13,14", // Jarro, Pinta, Litro, Growler
+            DiasAplicables = "Monday,Tuesday,Wednesday,Thursday,Saturday,Sunday", // Todos excepto viernes
+            CodigoQR = "DRAFT3X2-" + Guid.NewGuid().ToString("N")[..8].ToUpper(),
+            FechaCreacion = DateTime.Now,
+            FechaExpiracion = DateTime.Now.AddMonths(6),
+            Activo = true,
+        },
+
+        // 4. Promoción 3x2 en Cocteles - SOLO JUEVES
+        new Cupon
+        {
+            Nombre = "Jueves de Cocteles 3x2",
+            Descripcion = "Compra 2 cocteles y llévate 3 - Solo los jueves",
+            TipoDescuento = "3x2",
+            ValorDescuento = 0,
+            MontoMinimo = 0,
+            ProductosAplicables = GetCoctelesIds(context), // Todos los productos de categoría Cocteles
+            DiasAplicables = "Thursday", // Solo jueves
+            CodigoQR = "COCKTAIL3X2-" + Guid.NewGuid().ToString("N")[..8].ToUpper(),
+            FechaCreacion = DateTime.Now,
+            FechaExpiracion = DateTime.Now.AddMonths(6),
+            Activo = true,
+        },
+
+        // 5. Cupón general de descuento fijo
+        new Cupon
+        {
+            Nombre = "Descuento VIP",
+            Descripcion = "$5 de descuento en tu pedido",
+            TipoDescuento = "Fijo",
+            ValorDescuento = 5,
+            MontoMinimo = 20,
+            ProductosAplicables = "", // Aplica a todos los productos
+            DiasAplicables = "Todos",
+            CodigoQR = "VIP5-" + Guid.NewGuid().ToString("N")[..8].ToUpper(),
+            FechaCreacion = DateTime.Now,
+            FechaExpiracion = DateTime.Now.AddMonths(1),
+            Activo = true,
+        }
+    };
+
+            context.Cupones.AddRange(cupones);
+            context.SaveChanges();
+        }
+
+        // Método auxiliar para obtener IDs de cocteles
+        private static string GetCoctelesIds(ApplicationDbContext context)
+        {
+            var coctelesIds = context.Productos
+                .Where(p => p.Categoria == "Cocteles")
+                .Select(p => p.Id)
+                .ToList();
+
+            return string.Join(",", coctelesIds);
+        }
+
+        // Llamar este método en el método Initialize principal del DbInitializer
+        // Agregar después de CrearProductos(context):
+        // CrearCuponesPredeterminados(context);
+
+
+
     }
 }
+

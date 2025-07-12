@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using ProyectoIdentity.Datos;  // Ajusta este namespace según tu proyecto
-using ProyectoIdentity.Models;  // Ajusta este namespace según tu proyecto
+using ProyectoIdentity.Datos;
+using ProyectoIdentity.Models;
 
-namespace ProyectoIdentity.Datos  // Ajusta este namespace según tu proyecto
+namespace ProyectoIdentity.Datos
 {
     public static class RecompensasInitializer
     {
@@ -22,190 +22,162 @@ namespace ProyectoIdentity.Datos  // Ajusta este namespace según tu proyecto
             {
                 // BEBIDAS - Bajo costo, ideal para recompensas iniciales
                 new ProductoRecompensa {
-                    ProductoId = 1, // Asignar ID correspondiente a "Agua sin gas"
+                    ProductoId = 52, // Agua sin gas
                     Nombre = "Agua sin gas",
                     PrecioOriginal = 1.00m,
                     PuntosNecesarios = 200,
-                    Imagen = "~/images1/aguasingas.jpg",
                     Categoria = "Bebidas"
                 },
 
                 new ProductoRecompensa {
-                    ProductoId = 2,
+                    ProductoId = 54, // Limonada
                     Nombre = "Limonada",
                     PrecioOriginal = 2.00m,
                     PuntosNecesarios = 350,
-                    Imagen = "~/images1/imperial.jpg",
                     Categoria = "Bebidas"
                 },
 
                 new ProductoRecompensa {
-                    ProductoId = 3,
+                    ProductoId = 61, // Café americano
                     Nombre = "Café americano",
                     PrecioOriginal = 1.50m,
                     PuntosNecesarios = 300,
-                    Imagen = "~/images1/americano.jpg",
                     Categoria = "Bebidas"
                 },
                 
                 // CERVEZAS - Recompensas de nivel medio
                 new ProductoRecompensa {
-                    ProductoId = 4,
+                    ProductoId = 11, // Jarro
                     Nombre = "Jarro",
                     PrecioOriginal = 4.00m,
                     PuntosNecesarios = 700,
-                    Imagen = "~/images1/jarro.jpg",
                     Categoria = "Cerveza"
                 },
 
                 new ProductoRecompensa {
-                    ProductoId = 5,
+                    ProductoId = 17, // Pilsener
                     Nombre = "Pilsener",
                     PrecioOriginal = 4.00m,
                     PuntosNecesarios = 700,
-                    Imagen = "~/images1/pilsener1.jpg",
                     Categoria = "Cerveza"
                 },
                 
                 // SHOTS - Opciones atractivas con costo moderado
                 new ProductoRecompensa {
-                    ProductoId = 6,
+                    ProductoId = 73, // Shot de aguardiente
                     Nombre = "Shot de aguardiente",
                     PrecioOriginal = 3.00m,
                     PuntosNecesarios = 500,
-                    Imagen = "~/images1/shotardiente.jpg",
-                    Categoria = "Shot"
-                },
-
-                new ProductoRecompensa {
-                    ProductoId = 7,
-                    Nombre = "Shot de tequila",
-                    PrecioOriginal = 3.00m,
-                    PuntosNecesarios = 500,
-                    Imagen = "~/images1/shottequila.jpg",
                     Categoria = "Shot"
                 },
                 
                 // SÁNDUCHES - Opciones de comida de nivel medio
                 new ProductoRecompensa {
-                    ProductoId = 8,
+                    ProductoId = 69, // Tradicional
                     Nombre = "Tradicional",
                     PrecioOriginal = 5.00m,
                     PuntosNecesarios = 800,
-                    Imagen = "~/images1/sanduchesp1.jpg",
                     Categoria = "Sánduches"
                 },
 
                 new ProductoRecompensa {
-                    ProductoId = 9,
+                    ProductoId = 71, // Veggie
                     Nombre = "Veggie",
                     PrecioOriginal = 5.00m,
                     PuntosNecesarios = 800,
-                    Imagen = "~/images1/veggie.webp",
                     Categoria = "Sánduches"
                 },
                 
                 // PICADAS - Opciones para compartir
                 new ProductoRecompensa {
-                    ProductoId = 10,
+                    ProductoId = 77, // Nachos Verace
                     Nombre = "Nachos Cheddar",
                     PrecioOriginal = 5.00m,
                     PuntosNecesarios = 850,
-                    Imagen = "~/images1/cheddar.jpg",
                     Categoria = "Picadas"
                 },
 
                 new ProductoRecompensa {
-                    ProductoId = 11,
+                    ProductoId = 11, // Bread Sticks (mismo que Jarro - verificar si es correcto)
                     Nombre = "Bread Sticks",
                     PrecioOriginal = 5.00m,
                     PuntosNecesarios = 850,
-                    Imagen = "~/images1/stciks.jpg",
                     Categoria = "Picadas"
                 },
                 
                 // PIZZAS - Recompensas más costosas para usuarios frecuentes
                 new ProductoRecompensa {
-                    ProductoId = 12,
+                    ProductoId = 1, // Pepperoni
                     Nombre = "Pepperoni",
                     PrecioOriginal = 8.00m,
                     PuntosNecesarios = 1400,
-                    Imagen = "~/images1/pexels-muffin-1653877.jpg",
                     Categoria = "Pizza"
                 },
 
                 new ProductoRecompensa {
-                    ProductoId = 13,
+                    ProductoId = 3, // Hawaiana
                     Nombre = "Hawaiana",
                     PrecioOriginal = 8.00m,
                     PuntosNecesarios = 1400,
-                    Imagen = "~/images1/pexels-brettjordan-842519.jpg",
                     Categoria = "Pizza"
                 },
 
                 new ProductoRecompensa {
-                    ProductoId = 14,
+                    ProductoId = 4, // Margarita
                     Nombre = "Margarita",
                     PrecioOriginal = 8.00m,
                     PuntosNecesarios = 1400,
-                    Imagen = "~/images1/marga.jpg",
                     Categoria = "Pizza"
                 },
                 
                 // COCTELES - Opciones premium para usuarios frecuentes
                 new ProductoRecompensa {
-                    ProductoId = 15,
+                    ProductoId = 38, // Cuba libre
                     Nombre = "Cuba libre",
                     PrecioOriginal = 6.00m,
                     PuntosNecesarios = 1000,
-                    Imagen = "~/images1/cubalibre.jpg",
                     Categoria = "Cocteles"
                 },
 
                 new ProductoRecompensa {
-                    ProductoId = 16,
+                    ProductoId = 39, // Mojito
                     Nombre = "Mojito",
                     PrecioOriginal = 6.00m,
                     PuntosNecesarios = 1000,
-                    Imagen = "~/images1/mojito.jpg",
                     Categoria = "Cocteles"
                 },
 
                 new ProductoRecompensa {
-                    ProductoId = 17,
+                    ProductoId = 43, // Gin Tonic
                     Nombre = "Gin Tonic",
                     PrecioOriginal = 6.00m,
                     PuntosNecesarios = 1000,
-                    Imagen = "~/images1/gintonic.jpg",
                     Categoria = "Cocteles"
                 },
                 
                 // COMBOS CERVEZA - Recompensas de alto nivel para clientes muy frecuentes
                 new ProductoRecompensa {
-                    ProductoId = 18,
+                    ProductoId = 21, // 3 jarros cerveza artesanal
                     Nombre = "3 jarros cerveza artesanal",
                     PrecioOriginal = 10.00m,
                     PuntosNecesarios = 1800,
-                    Imagen = "~/images1/jarro1.jpg",
                     Categoria = "Cerveza"
                 },
 
                 new ProductoRecompensa {
-                    ProductoId = 19,
+                    ProductoId = 24, // Combo 3 Pilsener
                     Nombre = "Combo 3 Pilsener",
                     PrecioOriginal = 10.00m,
                     PuntosNecesarios = 1800,
-                    Imagen = "~/images1/pilsener.jpg",
                     Categoria = "Cerveza"
                 },
                 
                 // PROMO - Recompensa máxima para clientes muy fieles
                 new ProductoRecompensa {
-                    ProductoId = 20,
+                    ProductoId = 67, // Promo Sanduchera
                     Nombre = "Promo Sanduchera",
                     PrecioOriginal = 10.00m,
                     PuntosNecesarios = 2000,
-                    Imagen = "~/images1/278953595_514677723447399_1453067101951070993_n.webp",
                     Categoria = "Promo"
                 }
             };

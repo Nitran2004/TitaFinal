@@ -1,0 +1,819 @@
+﻿@model ProyectoIdentity.Controllers.MenuRecomendacionController.Plato
+@{
+    ViewData["Title"] = Model.Nombre;
+    int puntosAGanar = (int)(Model.Precio * 30);
+    // ✅ OBTENER PRODUCTO COMPLETO PARA INGREDIENTES (aunque no los usemos)
+    var producto = ViewBag.ProductoCompleto as ProyectoIdentity.Models.Producto;
+    var ingredientes = new List<ProyectoIdentity.Models.Ingrediente>(); // Vacío para recomendaciones
+    bool esAdministrador = User.IsInRole("Administrador");
+    // ✅ CONDICIÓN PARA MOSTRAR BOTONES AR - SOLO PIZZA Y SÁNDWICHES
+    bool mostrarBotonesAR = Model.Categoria.ToLower() == "pizza" ;
+}
+
+<style>
+    .product-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .product-header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+
+    .product-image-container {
+        flex: 1;
+        min-width: 300px;
+        position: relative;
+    }
+
+    .product-image {
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+        object-fit: contain;
+        max-height: 500px;
+        min-height: 300px;
+    }
+
+    .product-info {
+        flex: 1;
+        min-width: 300px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .product-title {
+        font-size: 2.2em;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #333;
+    }
+
+    .product-description {
+        font-size: 1.1em;
+        color: #555;
+        margin-bottom: 20px;
+    }
+
+    .product-price {
+        font-size: 1.6em;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 5px;
+    }
+
+    .product-points {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 20px;
+        font-size: 1.1em;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        animation: pulse 2s infinite;
+    }
+
+    @@keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+    }
+
+    .points-breakdown {
+        background: #f8f9fa;
+        border-left: 4px solid #28a745;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 0 10px 10px 0;
+    }
+
+    .category-header-touch {
+        display: flex;
+        align-items: center;
+        background-color: #ffffff;
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        z-index: 10;
+    }
+
+    .category-header-touch:hover {
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+    }
+
+    .category-icon {
+        width: 28px;
+        height: 28px;
+        margin-right: 8px;
+    }
+
+    .touchable-text {
+        color: #333;
+        text-decoration: none;
+        font-size: 14px;
+        line-height: 1.2;
+        font-weight: 500;
+    }
+
+    .tight-line {
+        line-height: 1.1;
+    }
+
+    .btn-ar {
+        background-color: #ff4081;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 20px;
+        margin-top: 15px;
+        font-weight: bold;
+        cursor: pointer;
+        display: block;
+        width: 100%;
+        transition: all 0.3s;
+    }
+
+    .btn-ar:hover {
+        background-color: #e91e63;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3);
+    }
+
+    /* ✅ PLACEHOLDER RESPONSIVE */
+    .product-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        min-height: 300px;
+        border-radius: 8px;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* ✅ DESTACAR QUE ES RECOMENDACIÓN IA */
+    .ai-badge {
+        background: linear-gradient(45deg, #F2A900, #ffc107);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: bold;
+        display: inline-block;
+        margin-bottom: 15px;
+    }
+    /* Estilos para el formulario de personalización */
+.personalization-form {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.quantity-btn {
+    width: 35px;
+    height: 35px;
+    border: 1px solid #ddd;
+    background: #f8f9fa;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.quantity-btn:hover {
+    background: #28a745;
+    color: white;
+}
+
+.quantity-input {
+    width: 60px;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 8px;
+    font-weight: bold;
+}
+
+.price-summary {
+    background: #e8f5e8;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #28a745;
+}
+
+.btn-success {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.btn-warning {
+    background-color: #F2A900;
+    border-color: #F2A900;
+    color: #fff;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.btn-warning:hover {
+    background-color: #e09600;
+    border-color: #d48e00;
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.btn-outline-secondary {
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.btn-outline-secondary:hover {
+    transform: translateY(-2px);
+}
+
+/* Acordeón moderno */
+.accordion-section {
+    margin-top: 30px;
+}
+
+.accordion-item {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+.accordion-item:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.accordion-header {
+    padding: 15px;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+}
+
+.accordion-header:hover {
+    background-color: #e9ecef;
+}
+
+.accordion-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0;
+    color: #000;
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background-color: white;
+}
+
+.accordion-content-inner {
+    padding: 15px;
+}
+
+.nutrition-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.nutrition-table tr {
+    border-bottom: 1px solid #eee;
+}
+
+.nutrition-table tr:last-child {
+    border-bottom: none;
+}
+
+.nutrition-table td {
+    padding: 8px 0;
+}
+
+.nutrition-table td:first-child {
+    font-weight: bold;
+    width: 40%;
+}
+
+.allergen-list {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+}
+
+.allergen-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.allergen-list li:last-child {
+    border-bottom: none;
+}
+
+/* Responsive */
+@@media (max-width: 768px) {
+    .product-header {
+        flex-direction: column;
+    }
+
+    .product-container {
+        padding: 15px;
+    }
+
+    .category-header-touch {
+        position: static;
+        margin-bottom: 15px;
+        width: fit-content;
+    }
+}
+</style>
+
+    <div class="product-container">
+    <div class="product-header">
+        <!-- Imagen del producto -->
+        <div class="product-image-container">
+            @if (producto?.Imagen != null)
+            {
+                <img src="data:image/jpeg;base64,@Convert.ToBase64String(producto.Imagen)"
+                     alt="@Model.Nombre" class="product-image" />
+            }
+            else
+            {
+                <!-- Placeholder para recomendación -->
+                <div class="product-placeholder">
+                    <div class="text-center">
+                        <i class="fas fa-robot fa-4x mb-3 text-warning"></i>
+                        <h4>@Model.Nombre</h4>
+                        <small class="text-muted">Recomendado por IA</small>
+                    </div>
+                </div>
+            }
+
+            @if (mostrarBotonesAR)
+            {
+                <div class="category-header-touch">
+                    <img src="~/images1/ra.png" alt="Realidad Aumentada" class="category-icon" />
+                    <a href="#" class="touchable-text">
+                        <span class="tight-line">Realidad</span><br />
+                        <span class="tight-line">Aumentada</span>
+                    </a>
+                </div>
+
+                <!-- Botón de Realidad Aumentada debajo de la imagen -->
+                <button type="button" class="btn btn-ar" id="view-ar-btn" onclick="location.href='@Url.Action("VistaAR", "RealidadAumentada", new { id = Model.Id })'">
+                    Ver en Realidad Aumentada
+                    <i class="fas fa-cube ml-2"></i>
+                </button>
+            }
+        </div>
+
+        <!-- Información del producto -->
+        <div class="product-info">
+            <!-- ✅ BADGE DE IA -->
+            <div class="ai-badge">
+                <i class="fas fa-robot"></i> Recomendado por IA
+            </div>
+
+            <h1 class="product-title">@Model.Nombre</h1>
+            <div class="product-price">Precio: $@Model.Precio.ToString("F2")</div>
+
+            <!-- Puntos -->
+            <div class="product-points">
+                <i class="fas fa-star"></i> ¡Ganas @puntosAGanar puntos con este producto!
+            </div>
+
+            <div class="points-breakdown">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle"></i> <strong>Desglose de puntos:</strong><br>
+                    $@Model.Precio × 30 puntos por dólar = @puntosAGanar puntos<br>
+                    <em>Cada dólar que gastes te da 30 puntos de fidelidad</em>
+                </small>
+            </div>
+
+            <!-- ✅ SIMILITUD SI EXISTE -->
+            @if (Model.Similitud.HasValue)
+            {
+                <div class="mb-4" style="background: linear-gradient(45deg, #e3f2fd, #bbdefb); border: 1px solid #2196f3; padding: 15px; border-radius: 8px;">
+                    <h6><i class="fas fa-robot"></i> Análisis de Compatibilidad IA</h6>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-warning" role="progressbar"
+                             style="width: @((Model.Similitud.Value * 100).ToString("F1"))%">
+                            @((Model.Similitud.Value * 100).ToString("F1"))% Compatible
+                        </div>
+                    </div>
+                    <small class="text-muted mt-2">
+                        Este producto coincide con tus preferencias según nuestro análisis de inteligencia artificial
+                    </small>
+                </div>
+            }
+
+            <!-- ✅ FORMULARIO CON VALIDACIÓN DE LÍMITES (IGUAL QUE PersonalizacionController) -->
+            <div class="personalization-form">
+                <form id="personalizacionForm">
+                    <input type="hidden" id="productoId" value="@Model.Id" />
+                    <input type="hidden" id="esAdministrador" value="@esAdministrador.ToString().ToLower()" />
+
+                    <!-- Cantidad -->
+                    <div class="mb-4">
+                        <label class="form-label h6">Cantidad:</label>
+                        <div class="quantity-control">
+                            <button type="button" class="quantity-btn" onclick="cambiarCantidad(-1)">-</button>
+                            <input type="number" id="cantidad" value="1" min="1" max="10" class="quantity-input" readonly />
+                            <button type="button" class="quantity-btn" onclick="cambiarCantidad(1)">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Resumen -->
+                    <div class="price-summary">
+                        <div class="d-flex justify-content-between">
+                            <span><strong>Precio:</strong></span>
+                            <span id="precioFinal"><strong>$@Model.Precio.ToString("F2")</strong></span>
+                        </div>
+                        <div class="d-flex justify-content-between text-warning">
+                            <span><i class="fas fa-star"></i> Puntos a ganar:</span>
+                            <span id="puntosGanar">@puntosAGanar puntos</span>
+                        </div>
+                    </div>
+
+                    <!-- Botones -->
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="button" class="btn btn-success btn-lg" onclick="agregarAlCarrito()">
+                            <i class="fas fa-cart-plus"></i> Agregar al Carrito
+                        </button>
+                        <div class="row">
+                            <div class="col-6">
+                                <a href="@Url.Action("Recomendacion")" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-arrow-left"></i> Volver a IA
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <a href="@Url.Action("VerCarrito")" class="btn btn-warning w-100">
+                                    <i class="fas fa-shopping-cart"></i> Ver Carrito (<span id="contadorCarrito">0</span>)
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Información adicional (acordeón) -->
+    <div class="accordion-section">
+        <h2>Más información</h2>
+
+        <div class="accordion-item">
+            <div class="accordion-header" id="nutrition-header">
+                <h3 class="accordion-title">Información nutricional</h3>
+                <span>›</span>
+            </div>
+            <div class="accordion-content" id="nutrition-content">
+                <div class="accordion-content-inner">
+                    <table class="nutrition-table">
+                        @if (producto != null && !string.IsNullOrEmpty(producto.InfoNutricional))
+                        {
+                            @foreach (var linea in producto.InfoNutricional.Split('|'))
+                            {
+                                var partes = linea.Split(':');
+                                if (partes.Length == 2)
+                                {
+                                    <tr>
+                                        <td>@partes[0]</td>
+                                        <td>@partes[1]</td>
+                                    </tr>
+                                }
+                            }
+                        }
+                        else
+                        {
+                            <tr><td>Peso</td><td>Variable</td></tr>
+                            <tr><td>Calorías</td><td>@Model.Calorias Kcal</td></tr>
+                            <tr><td>Categoría</td><td>@Model.Categoria</td></tr>
+                            <tr><td>Precio</td><td>$@Model.Precio</td></tr>
+                            <tr><td>Ingredientes</td><td>@Model.Ingredientes</td></tr>
+                        }
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <div class="accordion-header" id="allergen-header">
+                <h3 class="accordion-title">Información alérgenos</h3>
+                <span>›</span>
+            </div>
+            <div class="accordion-content" id="allergen-content">
+                <div class="accordion-content-inner">
+                    <ul class="allergen-list">
+                        @if (producto != null && !string.IsNullOrEmpty(producto.Alergenos))
+                        {
+                            @foreach (var alergeno in producto.Alergenos.Split('|'))
+                            {
+                                <li>@alergeno</li>
+                            }
+                        }
+                        else
+                        {
+                            <li>Puede contener lácteos</li>
+                            <li>Puede contener gluten</li>
+                            <li>Consulta con el personal para más información sobre alérgenos</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- ✅ JAVASCRIPT CON VALIDACIÓN DE LÍMITES (IGUAL QUE PersonalizacionController) -->
+<script>
+    // ✅ VARIABLES GLOBALES PARA LÍMITES
+    let limitesActuales = { productosActuales: 0, limite: 3, disponibles: 3 };
+
+    // ✅ FUNCIÓN PARA CARGAR LÍMITES ACTUALES
+    async function cargarLimitesProductos() {
+        try {
+            const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
+            const data = await response.json();
+            
+            // Asegurar valores por defecto
+            limitesActuales = {
+                productosActuales: data.productosActuales || 0,
+                limite: data.limite || 3,
+                disponibles: data.disponibles || 3
+            };
+
+            console.log('[DEBUG] Límites cargados:', limitesActuales);
+
+            // Actualizar interfaz según límites
+            actualizarInterfazLimites();
+
+            // Si ya está en el límite, mostrar mensaje
+            if (limitesActuales.disponibles === 0) {
+                mostrarMensajeLimite(data.mensaje || 'Has alcanzado el límite de productos');
+            }
+        } catch (error) {
+            console.error('Error al cargar límites:', error);
+            // Valores por defecto en caso de error
+            limitesActuales = { productosActuales: 0, limite: 3, disponibles: 3 };
+        }
+    }
+
+    // ✅ FUNCIÓN PARA ACTUALIZAR LA INTERFAZ SEGÚN LÍMITES
+    function actualizarInterfazLimites() {
+        const cantidadInput = document.getElementById('cantidad');
+        const maxPermitido = Math.min(10, limitesActuales.disponibles);
+
+        // Actualizar el máximo permitido en el input
+        cantidadInput.max = maxPermitido;
+
+        // Si la cantidad actual excede el límite, ajustarla
+        if (parseInt(cantidadInput.value) > maxPermitido) {
+            cantidadInput.value = maxPermitido;
+        }
+
+        // Deshabilitar botón + si está en el límite
+        const botonMas = document.querySelector('.quantity-btn[onclick="cambiarCantidad(1)"]');
+        if (maxPermitido <= parseInt(cantidadInput.value)) {
+            botonMas.disabled = true;
+            botonMas.style.opacity = '0.5';
+            botonMas.style.cursor = 'not-allowed';
+        } else {
+            botonMas.disabled = false;
+            botonMas.style.opacity = '1';
+            botonMas.style.cursor = 'pointer';
+        }
+
+        // Mostrar información de límite
+        mostrarInfoLimite();
+    }
+
+    // ✅ FUNCIÓN PARA MOSTRAR INFORMACIÓN DEL LÍMITE
+    function mostrarInfoLimite() {
+        let infoElement = document.getElementById('info-limite');
+        if (!infoElement) {
+            // Crear elemento de información si no existe
+            infoElement = document.createElement('div');
+            infoElement.id = 'info-limite';
+            infoElement.className = 'alert alert-info mt-3';
+
+            const cantidadContainer = document.querySelector('.quantity-control').parentNode;
+            cantidadContainer.appendChild(infoElement);
+        }
+
+        const { productosActuales, limite, disponibles } = limitesActuales;
+        const productosActualesSeguro = productosActuales || 0;
+        const limiteSeguro = limite || 3;
+
+        if (disponibles === 0) {
+            infoElement.className = 'alert alert-warning mt-3';
+            infoElement.innerHTML = `
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Límite alcanzado:</strong> Tienes ${productosActualesSeguro}/${limiteSeguro} productos en pedidos activos.
+                    <br><small>Espera a que se entreguen para pedir más productos.</small>
+                `;
+        } else if (disponibles <= 1) {
+            infoElement.className = 'alert alert-warning mt-3';
+            infoElement.innerHTML = `
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Casi en el límite:</strong> Solo puedes agregar ${disponibles} producto(s) más.
+                    <br><small>Tienes ${productosActualesSeguro}/${limiteSeguro} productos en pedidos activos.</small>
+                `;
+        } else {
+            infoElement.className = 'alert alert-info mt-3';
+            infoElement.innerHTML = `
+                    <i class="fas fa-info-circle"></i>
+                    Puedes agregar hasta ${disponibles} producto(s) más. (${productosActualesSeguro}/${limiteSeguro} productos activos)
+                `;
+        }
+    }
+
+    // ✅ FUNCIÓN PARA MOSTRAR MENSAJE DE LÍMITE
+    function mostrarMensajeLimite(mensaje) {
+        const formContainer = document.querySelector('.personalization-form');
+        const botonAgregar = formContainer.querySelector('.btn-success');
+
+        // Deshabilitar formulario
+        botonAgregar.disabled = true;
+        botonAgregar.innerHTML = '<i class="fas fa-ban"></i> Límite Alcanzado';
+        botonAgregar.className = 'btn btn-secondary btn-lg';
+
+        // Agregar mensaje prominente
+        let mensajeElement = document.getElementById('mensaje-limite');
+        if (!mensajeElement) {
+            mensajeElement = document.createElement('div');
+            mensajeElement.id = 'mensaje-limite';
+            mensajeElement.className = 'alert alert-danger mt-3';
+            formContainer.insertBefore(mensajeElement, botonAgregar.parentNode);
+        }
+
+        mensajeElement.innerHTML = `
+                <h6><i class="fas fa-exclamation-triangle"></i> No puedes agregar más productos</h6>
+                <p>${mensaje}</p>
+                <a href="@Url.Action("Historial", "Fidelizacion")" class="btn btn-outline-primary btn-sm">
+                    Ver mis pedidos pendientes
+                </a>
+            `;
+    }
+
+    // ✅ ACTUALIZAR LA FUNCIÓN cambiarCantidad
+    function cambiarCantidad(cambio) {
+        const input = document.getElementById('cantidad');
+        let nuevaCantidad = parseInt(input.value) + cambio;
+
+        // Aplicar límites
+        if (nuevaCantidad < 1) nuevaCantidad = 1;
+        if (nuevaCantidad > limitesActuales.disponibles) nuevaCantidad = limitesActuales.disponibles;
+        if (nuevaCantidad > 10) nuevaCantidad = 10;
+
+        input.value = nuevaCantidad;
+        actualizarPrecioTotal();
+        actualizarInterfazLimites();
+    }
+
+    // ✅ FUNCIÓN PARA ACTUALIZAR PRECIO TOTAL
+    function actualizarPrecioTotal() {
+        try {
+            const cantidad = parseInt(document.getElementById('cantidad').value) || 1;
+            const precioUnitario = parseFloat('@Model.Precio') || 0;
+            const total = cantidad * precioUnitario;
+
+            // Actualizar precio total
+            const precioTotalElement = document.getElementById('precioFinal');
+            if (precioTotalElement) {
+                precioTotalElement.innerHTML = '<strong>$' + total.toFixed(2) + '</strong>';
+            }
+
+            // Actualizar puntos
+            const puntos = Math.floor(total * 30);
+            const puntosElement = document.getElementById('puntosGanar');
+            if (puntosElement) {
+                puntosElement.textContent = puntos + ' puntos';
+            }
+
+        } catch (error) {
+            console.error('[ERROR] Error en actualizarPrecioTotal:', error);
+        }
+    }
+
+    // ✅ FUNCIÓN AGREGAR AL CARRITO CON VALIDACIÓN DE LÍMITES
+    function agregarAlCarrito() {
+        const productoId = document.getElementById('productoId').value;
+        const cantidad = parseInt(document.getElementById('cantidad').value);
+
+        // Validación de límite antes de enviar
+        if (cantidad > limitesActuales.disponibles) {
+            alert(`Solo puedes agregar ${limitesActuales.disponibles} producto(s) más.`);
+            return;
+        }
+
+        const data = {
+            ProductoId: parseInt(productoId),
+            Cantidad: cantidad,
+            IngredientesRemovidos: [],
+            NotasEspeciales: "Pedido por recomendación IA"
+        };
+
+        // Mostrar loading
+        const boton = event.target;
+        const textoOriginal = boton.innerHTML;
+        boton.disabled = true;
+        boton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Agregando...';
+
+        fetch('@Url.Action("AgregarAlCarrito", "MenuRecomendacion")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('¡Producto agregado al carrito exitosamente!');
+                    document.getElementById('contadorCarrito').textContent = result.totalItems;
+
+                    // Recargar límites actuales
+                    cargarLimitesProductos();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al agregar al carrito');
+            })
+            .finally(() => {
+                boton.innerHTML = textoOriginal;
+                boton.disabled = false;
+            });
+    }
+
+    // Acordeón
+    document.querySelectorAll('.accordion-header').forEach(function (header) {
+        header.addEventListener('click', function () {
+            var targetId = this.id.replace('header', 'content');
+            var content = document.getElementById(targetId);
+
+            if (content) {
+                if (content.style.maxHeight) {
+                    content.style.maxHeight = null;
+                    this.querySelector('span').style.transform = 'rotate(0deg)';
+                } else {
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                    this.querySelector('span').style.transform = 'rotate(90deg)';
+                }
+            }
+        });
+    });
+
+    // ✅ INICIALIZAR AL CARGAR LA PÁGINA
+    document.addEventListener('DOMContentLoaded', function () {
+        cargarLimitesProductos();
+
+        // También cargar cuando se hace focus en la página (por si viene de otra pestaña)
+        window.addEventListener('focus', cargarLimitesProductos);
+    });
+
+    window.onload = function () {
+        actualizarPrecioTotal();
+    };
+</script>

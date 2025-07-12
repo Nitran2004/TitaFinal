@@ -1,0 +1,587 @@
+﻿@model ProyectoIdentity.Models.ProductoViewModel
+@{
+    ViewData["Title"] = "Editar Producto";
+}
+
+<style>
+    .form-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .form-header {
+        background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        color: white;
+        padding: 20px 30px;
+    }
+
+    .form-body {
+        padding: 30px;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+
+    .form-control {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+    }
+
+        .form-control:focus {
+            border-color: #f39c12;
+            box-shadow: 0 0 0 0.2rem rgba(243, 156, 18, 0.25);
+        }
+
+    .ingredient-item {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+
+    .ingredient-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .btn-remove-ingredient {
+        color: #dc3545;
+        background: none;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    .image-preview {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .drag-drop-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 40px;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+        .drag-drop-area:hover,
+        .drag-drop-area.dragover {
+            border-color: #f39c12;
+            background-color: #fef9e7;
+        }
+
+    .existing-image {
+        position: relative;
+        display: inline-block;
+    }
+
+        .existing-image img {
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+    .change-image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .existing-image:hover .change-image-overlay {
+        opacity: 1;
+    }
+
+    /* ✅ ESTILOS PARA BOTONES VISIBLES */
+    .btn-outline-danger, .btn-outline-success {
+        border: 2px solid;
+        background: white;
+        font-weight: 600;
+        padding: 8px 16px;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-danger {
+        border-color: #dc3545;
+        color: #dc3545;
+    }
+
+        .btn-outline-danger:hover {
+            background-color: #dc3545;
+            color: white;
+        }
+
+    .btn-outline-success {
+        border-color: #28a745;
+        color: #28a745;
+    }
+
+        .btn-outline-success:hover {
+            background-color: #28a745;
+            color: white;
+        }
+
+    /* ✅ MOSTRAR/OCULTAR INGREDIENTES SEGÚN CATEGORÍA */
+    .ingredientes-section {
+        display: none;
+    }
+
+        .ingredientes-section.personalizable {
+            display: block;
+        }
+
+    .categoria-info {
+        background: #e3f2fd;
+        border: 1px solid #2196f3;
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 15px;
+        color: #1976d2;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="form-container">
+                <div class="form-header">
+                    <h2><i class="fas fa-edit"></i> Editar Producto</h2>
+                    <p class="mb-0">Modifica la información del producto</p>
+                </div>
+
+                <div class="form-body">
+                    <form asp-action="EditarProducto" method="post" enctype="multipart/form-data" id="productForm">
+                        <input type="hidden" asp-for="Id">
+
+                        <div class="row">
+                            <!-- Información básica -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Nombre">
+                                        <i class="fas fa-utensils text-primary"></i> Nombre del Producto *
+                                    </label>
+                                    <input asp-for="Nombre" class="form-control" placeholder="Ej: Pizza Margherita">
+                                    <span asp-validation-for="Nombre" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Categoria">
+                                        <i class="fas fa-tags text-warning"></i> Categoría *
+                                    </label>
+                                    <input asp-for="Categoria" class="form-control" placeholder="Ej: Pizza" list="categoriasList" id="categoriaInput">
+                                    <datalist id="categoriasList">
+                                        <option value="Pizza"></option>
+                                        <option value="Cerveza"></option>
+                                        <option value="Cocteles"></option>
+                                        <option value="Bebidas"></option>
+                                        <option value="Sánduches"></option>
+                                        <option value="Picadas"></option>
+                                        <option value="Promo"></option>
+                                        <option value="Shot"></option>
+                                    </datalist>
+                                    <span asp-validation-for="Categoria" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Precio">
+                                        <i class="fas fa-dollar-sign text-success"></i> Precio *
+                                    </label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">$</span>
+                                        </div>
+                                        <input asp-for="Precio" class="form-control" placeholder="0.00" step="0.01">
+                                    </div>
+                                    <span asp-validation-for="Precio" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="imagen">
+                                        <i class="fas fa-image text-info"></i> Imagen del Producto
+                                    </label>
+
+                                    @if (Model.ImagenExistente != null)
+                                    {
+                                        <div class="existing-image mb-3" id="existingImageContainer">
+                                            <img src="data:image/jpeg;base64,@Convert.ToBase64String(Model.ImagenExistente)"
+                                                 alt="Imagen actual" class="image-preview">
+                                            <div class="change-image-overlay" onclick="document.getElementById('imagen').click()">
+                                                <div class="text-center">
+                                                    <i class="fas fa-camera fa-2x text-white mb-2"></i>
+                                                    <p class="text-white mb-0">Cambiar Imagen</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- ✅ BOTÓN MÁS VISIBLE -->
+                                        <div class="mb-3">
+                                            <button type="button" class="btn btn-outline-danger" onclick="removeExistingImage()">
+                                                <i class="fas fa-trash"></i> Quitar Imagen Actual
+                                            </button>
+                                        </div>
+                                    }
+
+                                    <div class="drag-drop-area" id="dropArea" style="@(Model.ImagenExistente != null ? "display: none;" : "")">
+                                        <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                                        <p class="text-muted mb-2">Arrastra una imagen aquí o haz clic para seleccionar</p>
+                                        <input type="file" name="imagen" id="imagen" accept="image/*" style="display: none;">
+                                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="document.getElementById('imagen').click()">
+                                            Seleccionar Imagen
+                                        </button>
+                                    </div>
+
+                                    <div id="imagePreview" class="mt-3" style="display: none;">
+                                        <img id="previewImg" class="image-preview" alt="Vista previa">
+                                        <button type="button" class="btn btn-outline-danger mt-2" onclick="removeNewImage()">
+                                            <i class="fas fa-times"></i> Quitar Nueva Imagen
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Descripcion">
+                                <i class="fas fa-align-left text-secondary"></i> Descripción
+                            </label>
+                            <textarea asp-for="Descripcion" class="form-control" rows="3" placeholder="Describe el producto..."></textarea>
+                            <span asp-validation-for="Descripcion" class="text-danger"></span>
+                        </div>
+
+                        <!-- ✅ SECCIÓN DE INGREDIENTES CON LÓGICA DE PERSONALIZACIÓN -->
+                        <div class="ingredientes-section" id="ingredientesSection">
+                            <div class="form-group">
+                                <label>
+                                    <i class="fas fa-list-ul text-success"></i> Ingredientes Personalizables
+                                </label>
+                                <div class="categoria-info" id="categoriaInfo">
+                                    <i class="fas fa-info-circle"></i> <span id="categoriaTexto">Esta categoría permite personalización de ingredientes</span>
+                                </div>
+                                <div class="mb-3">
+                                    <!-- ✅ BOTÓN MÁS VISIBLE -->
+                                    <button type="button" class="btn btn-outline-success" id="btnAgregarIngrediente">
+                                        <i class="fas fa-plus"></i> Agregar Ingrediente
+                                    </button>
+                                    <small class="text-muted ml-2">Define los ingredientes que pueden ser removidos por el cliente</small>
+                                </div>
+                                <div id="ingredientesContainer">
+                                    <!-- Los ingredientes se cargarán aquí -->
+                                </div>
+                                <input type="hidden" name="IngredientesJson" id="ingredientesJson">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="InfoNutricional">
+                                        <i class="fas fa-heartbeat text-danger"></i> Información Nutricional
+                                    </label>
+                                    <textarea asp-for="InfoNutricional" class="form-control" rows="3" placeholder="Calorías, proteínas, etc."></textarea>
+                                    <span asp-validation-for="InfoNutricional" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Alergenos">
+                                        <i class="fas fa-exclamation-triangle text-warning"></i> Alérgenos
+                                    </label>
+                                    <textarea asp-for="Alergenos" class="form-control" rows="3" placeholder="Gluten, lácteos, frutos secos, etc."></textarea>
+                                    <span asp-validation-for="Alergenos" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="my-4">
+
+                        <div class="form-group text-center">
+                            <button type="submit" class="btn btn-warning btn-lg mr-3">
+                                <i class="fas fa-save"></i> Guardar Cambios
+                            </button>
+                            <a href="@Url.Action("AdminProductos")" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-arrow-left"></i> Volver
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let ingredienteCounter = 0;
+        let ingredientesExistentes = @Html.Raw(Model.IngredientesJson ?? "[]");
+
+        // ✅ CATEGORÍAS PERSONALIZABLES
+        const categoriasPersonalizables = ['pizza', 'sánduches', 'sanduches', 'picadas'];
+
+        // Cargar ingredientes existentes al inicializar
+        document.addEventListener('DOMContentLoaded', function () {
+            verificarCategoria();
+            cargarIngredientesExistentes();
+
+            // Escuchar cambios en la categoría
+            document.getElementById('categoriaInput').addEventListener('input', verificarCategoria);
+        });
+
+        function verificarCategoria() {
+            const categoria = document.getElementById('categoriaInput').value.toLowerCase();
+            const section = document.getElementById('ingredientesSection');
+            const info = document.getElementById('categoriaInfo');
+            const texto = document.getElementById('categoriaTexto');
+
+            if (categoriasPersonalizables.includes(categoria)) {
+                section.classList.add('personalizable');
+                info.style.backgroundColor = '#e8f5e8';
+                info.style.borderColor = '#28a745';
+                info.style.color = '#155724';
+                texto.textContent = `La categoría "${categoria}" permite personalización de ingredientes`;
+            } else {
+                section.classList.remove('personalizable');
+                info.style.backgroundColor = '#fff3cd';
+                info.style.borderColor = '#ffc107';
+                info.style.color = '#856404';
+                texto.textContent = `La categoría "${categoria}" no permite personalización de ingredientes`;
+            }
+        }
+
+        function cargarIngredientesExistentes() {
+            try {
+                if (ingredientesExistentes && ingredientesExistentes.length > 0) {
+                    ingredientesExistentes.forEach(ingrediente => {
+                        agregarIngrediente(ingrediente.Nombre, ingrediente.Costo, ingrediente.Removible);
+                    });
+                }
+            } catch (e) {
+                console.error('Error al cargar ingredientes:', e);
+            }
+        }
+
+        // Manejo de imágenes
+        const dropArea = document.getElementById('dropArea');
+        const fileInput = document.getElementById('imagen');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        const existingImageContainer = document.getElementById('existingImageContainer');
+
+        if (dropArea) {
+            dropArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropArea.classList.add('dragover');
+            });
+
+            dropArea.addEventListener('dragleave', () => {
+                dropArea.classList.remove('dragover');
+            });
+
+            dropArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropArea.classList.remove('dragover');
+
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleImageFile(files[0]);
+                }
+            });
+
+            dropArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleImageFile(e.target.files[0]);
+            }
+        });
+
+        function handleImageFile(file) {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewImg.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    dropArea.style.display = 'none';
+                    if (existingImageContainer) {
+                        existingImageContainer.style.display = 'none';
+                    }
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('Por favor selecciona un archivo de imagen válido.');
+            }
+        }
+
+        function removeNewImage() {
+            fileInput.value = '';
+            imagePreview.style.display = 'none';
+
+            if (existingImageContainer) {
+                existingImageContainer.style.display = 'block';
+            } else {
+                dropArea.style.display = 'block';
+            }
+        }
+
+        function removeExistingImage() {
+            if (existingImageContainer) {
+                existingImageContainer.style.display = 'none';
+            }
+            dropArea.style.display = 'block';
+        }
+
+        // ✅ MANEJO DE INGREDIENTES COMPLETO
+        document.getElementById('btnAgregarIngrediente').addEventListener('click', function () {
+            agregarIngrediente();
+        });
+
+        function agregarIngrediente(nombre = '', costo = 0, removible = true) {
+            const container = document.getElementById('ingredientesContainer');
+            const ingredienteId = 'ingrediente_' + ingredienteCounter++;
+
+            const ingredienteHtml = `
+                    <div class="ingredient-item" id="${ingredienteId}">
+                        <div class="ingredient-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-leaf text-success"></i> ${nombre || 'Ingrediente'}
+                            </h6>
+                            <button type="button" class="btn-remove-ingredient" onclick="eliminarIngrediente('${ingredienteId}')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-5">
+                                <label class="small">Nombre:</label>
+                                <input type="text" class="form-control form-control-sm" placeholder="Ej: Queso"
+                                       value="${nombre}" onchange="actualizarIngredientes()">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="small">Costo ($):</label>
+                                <input type="number" class="form-control form-control-sm" placeholder="0.00" step="0.01"
+                                       value="${costo}" onchange="actualizarIngredientes()">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small">¿Removible?</label>
+                                <div class="form-check mt-2">
+                                    <input class="form-check-input" type="checkbox" ${removible ? 'checked' : ''}
+                                           onchange="actualizarIngredientes()">
+                                    <label class="form-check-label small">
+                                        El cliente puede quitarlo
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+            container.insertAdjacentHTML('beforeend', ingredienteHtml);
+            actualizarIngredientes();
+        }
+
+        function eliminarIngrediente(id) {
+            const elemento = document.getElementById(id);
+            if (elemento) {
+                elemento.remove();
+                actualizarIngredientes();
+            }
+        }
+
+        function actualizarIngredientes() {
+            const ingredientes = [];
+            const items = document.querySelectorAll('.ingredient-item');
+
+            items.forEach(item => {
+                const inputs = item.querySelectorAll('input');
+                const nombre = inputs[0].value.trim();
+                const costo = parseFloat(inputs[1].value) || 0;
+                const removible = inputs[2].checked;
+
+                if (nombre) {
+                    ingredientes.push({
+                        Nombre: nombre,
+                        Costo: costo,
+                        Removible: removible
+                    });
+                }
+            });
+
+            document.getElementById('ingredientesJson').value = JSON.stringify(ingredientes);
+        }
+
+        // Validación del formulario
+        document.getElementById('productForm').addEventListener('submit', function (e) {
+            const nombre = document.querySelector('[name="Nombre"]').value;
+            const categoria = document.querySelector('[name="Categoria"]').value;
+            const precio = document.querySelector('[name="Precio"]').value;
+
+            if (!nombre || !categoria || !precio) {
+                e.preventDefault();
+                alert('Por favor completa todos los campos obligatorios.');
+                return false;
+            }
+
+            if (parseFloat(precio) <= 0) {
+                e.preventDefault();
+                alert('El precio debe ser mayor a 0.');
+                return false;
+            }
+
+            // Actualizar ingredientes antes de enviar
+            actualizarIngredientes();
+
+            // Mostrar loading
+            const submitBtn = this.querySelector('[type="submit"]');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            submitBtn.disabled = true;
+        });
+
+        // Cargar categorías existentes
+        fetch('@Url.Action("ObtenerCategorias")')
+            .then(response => response.json())
+            .then(categorias => {
+                const datalist = document.getElementById('categoriasList');
+                categorias.forEach(cat => {
+                    if (!datalist.querySelector(`option[value="${cat}"]`)) {
+                        datalist.innerHTML += `<option value="${cat}"></option>`;
+                    }
+                });
+            })
+            .catch(error => console.error('Error cargando categorías:', error));
+    </script>
+}
+
+@section Styles {
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+}

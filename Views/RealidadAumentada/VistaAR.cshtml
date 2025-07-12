@@ -1,0 +1,1476 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vista 3D con AR - @ViewBag.ProductoNombre</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            user-select: none;
+        }
+
+        .camera-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            display: none;
+        }
+
+        #camera-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: grab;
+        }
+
+            canvas:active {
+                cursor: grabbing;
+            }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(30px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 24px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 80px;
+        }
+
+            .header.hidden {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+
+        .header-content {
+            flex: 1;
+            max-width: 60%;
+        }
+
+            .header-content h1 {
+                font-size: 1.8rem;
+                font-weight: 700;
+                margin-bottom: 6px;
+                background: linear-gradient(135deg, #fff 0%, #a855f7 50%, #3b82f6 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                letter-spacing: -0.02em;
+                line-height: 1.2;
+            }
+
+            .header-content .product-info {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                margin-bottom: 4px;
+                flex-wrap: wrap;
+            }
+
+            .header-content .product-price {
+                font-size: 1.1rem;
+                font-weight: 700;
+                color: #10b981;
+                background: rgba(16, 185, 129, 0.15);
+                padding: 4px 12px;
+                border-radius: 12px;
+                border: 1px solid rgba(16, 185, 129, 0.3);
+                backdrop-filter: blur(10px);
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .header-content .product-meta {
+                font-size: 0.85rem;
+                color: rgba(255, 255, 255, 0.7);
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+
+            .header-content .product-description {
+                opacity: 0.85;
+                font-size: 0.9rem;
+                color: rgba(255, 255, 255, 0.9);
+                line-height: 1.4;
+                margin-top: 4px;
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .header-content .meta-item {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                font-size: 0.8rem;
+                color: rgba(255, 255, 255, 0.6);
+                background: rgba(255, 255, 255, 0.08);
+                padding: 2px 8px;
+                border-radius: 8px;
+            }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+            .btn:hover {
+                background: rgba(255, 255, 255, 0.25);
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            }
+
+            .btn:active {
+                transform: translateY(0);
+            }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4f46e5, #7c3aed);
+            border: none;
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #059669, #0d9488);
+            border: none;
+        }
+
+        .panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 15;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 25px 25px 0 0;
+            padding: 24px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(100%);
+        }
+
+            .panel.visible {
+                transform: translateY(0);
+            }
+
+            .panel.hidden {
+                transform: translateY(100%);
+                opacity: 1;
+                pointer-events: none;
+            }
+
+        .nutrition-panel {
+            background: rgba(34, 197, 94, 0.12);
+            border-color: rgba(34, 197, 94, 0.25);
+        }
+
+        .allergens-panel {
+            background: rgba(251, 146, 60, 0.12);
+            border-color: rgba(251, 146, 60, 0.25);
+        }
+
+        .nutrition-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s ease;
+        }
+
+            .nutrition-item:last-child {
+                border-bottom: none;
+            }
+
+            .nutrition-item:hover {
+                background: rgba(255, 255, 255, 0.03);
+                border-radius: 8px;
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+
+        .nutrition-label {
+            opacity: 0.85;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .nutrition-value {
+            font-weight: 600;
+            color: #22c55e;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+            font-size: 0.9rem;
+        }
+
+        .allergens-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .allergen-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .allergen-present {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+            .allergen-present:hover {
+                background: rgba(239, 68, 68, 0.2);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+            }
+
+        .allergen-absent {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+
+            .allergen-absent:hover {
+                background: rgba(34, 197, 94, 0.2);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+            }
+
+        .allergen-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .allergen-name {
+            font-weight: 600;
+            flex: 1;
+            font-size: 0.9rem;
+        }
+
+        .allergen-status {
+            font-size: 0.8rem;
+            font-weight: 500;
+            padding: 4px 8px;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+
+        .allergen-present .allergen-status {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #fff 0%, #e0e7ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .panel-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .panel-close:hover {
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+                transform: scale(1.1);
+            }
+
+        .control-group {
+            margin-bottom: 16px;
+        }
+
+            .control-group:last-child {
+                margin-bottom: 0;
+            }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .control-value {
+            color: #60a5fa;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .control-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            appearance: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+            .control-slider::-webkit-slider-thumb {
+                appearance: none;
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+                background: linear-gradient(45deg, #60a5fa, #3b82f6);
+                cursor: pointer;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                transition: all 0.2s ease;
+            }
+
+                .control-slider::-webkit-slider-thumb:hover {
+                    transform: scale(1.1);
+                    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.4);
+                }
+
+        .control-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+        }
+
+        .loading, .error {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            padding: 30px 40px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 30;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.4);
+            display: none;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #60a5fa;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 16px;
+        }
+
+        @@keyframes spin {
+            to
+
+        {
+            transform: rotate(360deg);
+        }
+
+        }
+
+        .panel-toggle, .ar-toggle {
+            position: fixed;
+            bottom: 30px;
+            border: none;
+            border-radius: 50%;
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            cursor: pointer;
+            z-index: 25;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .panel-toggle {
+            right: 30px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            box-shadow: 0 12px 30px rgba(79, 70, 229, 0.4);
+        }
+
+        .ar-toggle {
+            left: 30px;
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            box-shadow: 0 12px 30px rgba(249, 115, 22, 0.4);
+        }
+
+            .panel-toggle:hover, .ar-toggle:hover {
+                transform: scale(1.1);
+            }
+
+            .panel-toggle:active, .ar-toggle:active {
+                transform: scale(0.95);
+            }
+
+            .ar-toggle.active {
+                background: linear-gradient(135deg, #10b981, #059669);
+                box-shadow: 0 12px 30px rgba(16, 185, 129, 0.4);
+            }
+
+        .ar-instructions {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 30px 40px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 30;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: white;
+            display: none;
+            max-width: 90%;
+        }
+
+            .ar-instructions h3 {
+                color: #10b981;
+                margin-bottom: 15px;
+                font-size: 1.2rem;
+            }
+
+            .ar-instructions p {
+                margin-bottom: 10px;
+                line-height: 1.5;
+            }
+
+        @@media (max-width: 768px) {
+            .allergens-grid
+
+        {
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        .allergen-item {
+            padding: 10px 12px;
+        }
+
+        .allergen-icon {
+            font-size: 1.3rem;
+        }
+
+        .header {
+            padding: 16px 20px;
+            min-height: auto;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .header-content {
+            max-width: 100%;
+        }
+
+            .header-content h1 {
+                font-size: 1.4rem;
+                margin-bottom: 8px;
+            }
+
+            .header-content .product-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .header-content .product-description {
+                white-space: normal;
+                overflow: visible;
+                text-overflow: initial;
+                max-height: 2.8em;
+                line-height: 1.4;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+
+        .header-actions {
+            width: 100%;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .btn {
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+
+        .panel {
+            padding: 20px 16px;
+        }
+
+        .panel-toggle, .ar-toggle {
+            width: 56px;
+            height: 56px;
+            bottom: 20px;
+            font-size: 24px;
+        }
+
+        .panel-toggle {
+            right: 20px;
+        }
+
+        .ar-toggle {
+            left: 20px;
+        }
+
+        }
+
+        @@media (max-width: 480px) {
+            .header
+
+        {
+            padding: 12px 16px;
+        }
+
+        .header-content h1 {
+            font-size: 1.2rem;
+        }
+
+        .header-content .product-price {
+            font-size: 1rem;
+        }
+
+        .header-content .product-description {
+            font-size: 0.85rem;
+        }
+
+        .panel {
+            padding: 16px 14px;
+        }
+
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @@keyframes fadeIn {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        }
+    </style>
+</head>
+<body>
+    <div class="header" id="header">
+        <div class="header-content">
+            <h1>@ViewBag.ProductoNombre</h1>
+            <div class="product-info">
+                <div class="product-price">
+                    @ViewBag.ProductoPrecio
+                </div>
+                <div class="product-meta">
+                    <span class="meta-item">
+                        Modelo 3D
+                    </span>
+                    <span class="meta-item">
+                        @ViewBag.ProductoCategoria
+                    </span>
+                </div>
+            </div>
+            @if (!string.IsNullOrEmpty(ViewBag.ProductoDescripcion))
+            {
+                <div class="product-description" title="@ViewBag.ProductoDescripcion">
+                    @ViewBag.ProductoDescripcion
+                </div>
+            }
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-success" onclick="app.autoFit()">Auto Ajustar</button>
+            <button class="btn" onclick="history.back()">Volver</button>
+        </div>
+    </div>
+
+    <!-- Contenedor de la cámara -->
+    <div class="camera-container" id="camera-container">
+        <video id="camera-video" autoplay playsinline muted></video>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="canvas3d"></canvas>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+        <div>Cargando modelo 3D...</div>
+    </div>
+
+    <div class="error" id="error">
+        <h3>Error al cargar</h3>
+        <p id="error-message">Ha ocurrido un error</p>
+        <button class="btn btn-primary" onclick="app.reload()" style="margin-top: 16px;">Reintentar</button>
+    </div>
+
+    <div class="ar-instructions" id="ar-instructions">
+        <h3>🎉 AR Activado</h3>
+        <p>El modelo 3D ahora flota sobre la cámara</p>
+        <p>Mueve el dispositivo para ver el modelo desde diferentes ángulos</p>
+        <p>Usa los controles para ajustar escala y posición</p>
+        <button class="btn btn-primary" onclick="hideARInstructions()" style="margin-top: 15px;">Entendido</button>
+    </div>
+
+    <div class="panel nutrition-panel fade-in" id="nutrition-panel">
+        <div class="panel-header">
+            <div class="panel-title">Información Nutricional</div>
+            <button class="panel-close" onclick="togglePanel('nutrition-panel')">&times;</button>
+        </div>
+        <div id="nutrition-content">
+            <div class="nutrition-item">
+                <span class="nutrition-label">Calorías</span>
+                <span class="nutrition-value">@ViewBag.Calorias kcal</span>
+            </div>
+            <div class="nutrition-item">
+                <span class="nutrition-label">Proteínas</span>
+                <span class="nutrition-value">@ViewBag.Proteinas g</span>
+            </div>
+            <div class="nutrition-item">
+                <span class="nutrition-label">Carbohidratos</span>
+                <span class="nutrition-value">@ViewBag.Carbohidratos g</span>
+            </div>
+            <div class="nutrition-item">
+                <span class="nutrition-label">Grasas</span>
+                <span class="nutrition-value">@ViewBag.Grasas g</span>
+            </div>
+            <div class="nutrition-item">
+                <span class="nutrition-label">Fibra</span>
+                <span class="nutrition-value">@ViewBag.Fibra g</span>
+            </div>
+            <div class="nutrition-item">
+                <span class="nutrition-label">Sodio</span>
+                <span class="nutrition-value">@ViewBag.Sodio mg</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel allergens-panel fade-in" id="allergens-panel">
+        <div class="panel-header">
+            <div class="panel-title">Información de Alérgenos</div>
+            <button class="panel-close" onclick="togglePanel('allergens-panel')">&times;</button>
+        </div>
+        <div id="allergens-content">
+            <div class="allergens-grid">
+                @if (!string.IsNullOrEmpty(ViewBag.Gluten) && ViewBag.Gluten.ToLower() == "true")
+                {
+                    <div class="allergen-item allergen-present">
+                        <span class="allergen-icon">G</span>
+                        <span class="allergen-name">Gluten</span>
+                        <span class="allergen-status">Contiene</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="allergen-item allergen-absent">
+                        <span class="allergen-icon">G</span>
+                        <span class="allergen-name">Gluten</span>
+                        <span class="allergen-status">No contiene</span>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(ViewBag.Lacteos) && ViewBag.Lacteos.ToLower() == "true")
+                {
+                    <div class="allergen-item allergen-present">
+                        <span class="allergen-icon">L</span>
+                        <span class="allergen-name">Lácteos</span>
+                        <span class="allergen-status">Contiene</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="allergen-item allergen-absent">
+                        <span class="allergen-icon">L</span>
+                        <span class="allergen-name">Lácteos</span>
+                        <span class="allergen-status">No contiene</span>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(ViewBag.Huevos) && ViewBag.Huevos.ToLower() == "true")
+                {
+                    <div class="allergen-item allergen-present">
+                        <span class="allergen-icon">H</span>
+                        <span class="allergen-name">Huevos</span>
+                        <span class="allergen-status">Contiene</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="allergen-item allergen-absent">
+                        <span class="allergen-icon">H</span>
+                        <span class="allergen-name">Huevos</span>
+                        <span class="allergen-status">No contiene</span>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(ViewBag.Frutos_Secos) && ViewBag.Frutos_Secos.ToLower() == "true")
+                {
+                    <div class="allergen-item allergen-present">
+                        <span class="allergen-icon">F</span>
+                        <span class="allergen-name">Frutos Secos</span>
+                        <span class="allergen-status">Contiene</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="allergen-item allergen-absent">
+                        <span class="allergen-icon">F</span>
+                        <span class="allergen-name">Frutos Secos</span>
+                        <span class="allergen-status">No contiene</span>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(ViewBag.Soja) && ViewBag.Soja.ToLower() == "true")
+                {
+                    <div class="allergen-item allergen-present">
+                        <span class="allergen-icon">S</span>
+                        <span class="allergen-name">Soja</span>
+                        <span class="allergen-status">Contiene</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="allergen-item allergen-absent">
+                        <span class="allergen-icon">S</span>
+                        <span class="allergen-name">Soja</span>
+                        <span class="allergen-status">No contiene</span>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(ViewBag.Pescado) && ViewBag.Pescado.ToLower() == "true")
+                {
+                    <div class="allergen-item allergen-present">
+                        <span class="allergen-icon">P</span>
+                        <span class="allergen-name">Pescado</span>
+                        <span class="allergen-status">Contiene</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="allergen-item allergen-absent">
+                        <span class="allergen-icon">P</span>
+                        <span class="allergen-name">Pescado</span>
+                        <span class="allergen-status">No contiene</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="panel fade-in" id="controls-panel">
+        <div class="panel-header">
+            <div class="panel-title">Controles</div>
+            <button class="panel-close" onclick="togglePanel('controls-panel')">&times;</button>
+        </div>
+
+        <div class="control-group">
+            <div class="control-label"><span>Escala</span><span class="control-value" id="scale-value">1.0</span></div>
+            <input type="range" id="scale-slider" class="control-slider" min="0.1" max="10" step="0.1" value="1.0">
+        </div>
+
+        <div class="control-group">
+            <div class="control-label"><span>Posición Y</span><span class="control-value" id="posY-value">0.0</span></div>
+            <input type="range" id="posY-slider" class="control-slider" min="-5" max="5" step="0.1" value="0.0">
+        </div>
+
+        <div class="control-group">
+            <div class="control-label"><span>Rotación Y</span><span class="control-value" id="rotY-value">0°</span></div>
+            <input type="range" id="rotY-slider" class="control-slider" min="0" max="360" step="5" value="0">
+        </div>
+
+        <div class="control-buttons">
+            <button class="btn" onclick="togglePanel('nutrition-panel')">Nutrición</button>
+            <button class="btn" onclick="togglePanel('allergens-panel')">Alérgenos</button>
+        </div>
+    </div>
+
+    <button class="panel-toggle" id="panel-toggle" onclick="togglePanels()">🎮</button>
+    <button class="ar-toggle" id="ar-toggle" onclick="toggleAR()">📷</button>
+
+    <script>
+        class ARViewer {
+            constructor() {
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.controls = null;
+                this.model = null;
+                this.isARActive = false;
+                this.cameraStream = null;
+                this.panelsVisible = false;
+                this.headerVisible = true;
+                this.currentPanel = null;
+
+                this.config = {
+                    modelPath: '@ViewBag.ModeloPath',
+                    modelFile: '@ViewBag.ModeloArchivo',
+                    modelId: '@ViewBag.ProductoId'
+                };
+
+                this.dom = {
+                    loading: document.getElementById('loading'),
+                    error: document.getElementById('error'),
+                    errorMessage: document.getElementById('error-message'),
+                    scaleSlider: document.getElementById('scale-slider'),
+                    posYSlider: document.getElementById('posY-slider'),
+                    rotYSlider: document.getElementById('rotY-slider'),
+                    scaleValue: document.getElementById('scale-value'),
+                    posYValue: document.getElementById('posY-value'),
+                    rotYValue: document.getElementById('rotY-value'),
+                    header: document.getElementById('header'),
+                    controlsPanel: document.getElementById('controls-panel'),
+                    cameraContainer: document.getElementById('camera-container'),
+                    cameraVideo: document.getElementById('camera-video'),
+                    arInstructions: document.getElementById('ar-instructions')
+                };
+
+                this.init();
+            }
+
+            init() {
+                console.log('Inicializando AR Viewer:', this.config.modelFile);
+                try {
+                    this.setupScene();
+                    this.setupCamera();
+                    this.setupRenderer();
+                    this.setupLights();
+                    this.setupControls();
+                    this.setupEventListeners();
+                    this.setupUI();
+                    this.loadModel();
+                    this.animate();
+                } catch (error) {
+                    this.showError('Error de inicialización: ' + error.message);
+                }
+            }
+
+            setupScene() {
+                this.scene = new THREE.Scene();
+                // No agregar background para modo normal, se agregará después
+            }
+
+            setupCamera() {
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 1000);
+                this.camera.position.set(0, 2, 5);
+            }
+
+            setupRenderer() {
+                const canvas = document.getElementById('canvas3d');
+                this.renderer = new THREE.WebGLRenderer({
+                    canvas,
+                    antialias: true,
+                    alpha: true
+                });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                this.renderer.toneMappingExposure = 1.2;
+
+                // Configurar transparencia para modo AR
+                this.updateRendererForMode();
+            }
+
+            updateRendererForMode() {
+                if (this.isARActive) {
+                    // Modo AR: fondo transparente
+                    this.renderer.setClearColor(0x000000, 0);
+                    this.scene.background = null;
+                } else {
+                    // Modo normal: fondo degradado
+                    this.renderer.setClearColor(0x667eea, 1);
+                    const colors = ['#667eea', '#667eea', '#764ba2', '#764ba2', '#667eea', '#667eea'];
+                    const loader = new THREE.CubeTextureLoader();
+                    const texture = loader.load(
+                        colors.map(c => `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="${c}"/></svg>`)
+                    );
+                    this.scene.background = texture;
+                }
+            }
+
+            setupLights() {
+                // Luz ambiental suave
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                this.scene.add(ambientLight);
+
+                // Luz direccional principal
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+                directionalLight.position.set(5, 10, 5);
+                directionalLight.castShadow = true;
+                directionalLight.shadow.mapSize.setScalar(2048);
+                directionalLight.shadow.camera.near = 0.5;
+                directionalLight.shadow.camera.far = 50;
+                this.scene.add(directionalLight);
+
+                // Luz de relleno
+                const fillLight = new THREE.DirectionalLight(0x64b5f6, 0.4);
+                fillLight.position.set(-3, 2, -3);
+                this.scene.add(fillLight);
+
+                // Luz trasera
+                const backLight = new THREE.DirectionalLight(0xffffff, 0.2);
+                backLight.position.set(0, -5, -10);
+                this.scene.add(backLight);
+            }
+
+            setupControls() {
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+                this.controls.screenSpacePanning = false;
+                this.controls.minDistance = 1;
+                this.controls.maxDistance = 20;
+                this.controls.maxPolarAngle = Math.PI / 1.8;
+            }
+
+            setupEventListeners() {
+                window.addEventListener('resize', () => this.onResize());
+
+                // Controles deslizantes
+                ['scale', 'posY', 'rotY'].forEach(type => {
+                    const slider = this.dom[`${type}Slider`];
+                    if (slider) {
+                        slider.addEventListener('input', (e) => {
+                            this[`update${type === 'posY' ? 'PositionY' : type === 'rotY' ? 'RotationY' : 'Scale'}`](e.target.value);
+                            this.addControlFeedback(e.target);
+                        });
+                    }
+                });
+
+                // Auto-hide header
+                let headerTimeout;
+                document.addEventListener('mousemove', () => {
+                    this.showHeader();
+                    clearTimeout(headerTimeout);
+                    headerTimeout = setTimeout(() => this.hideHeader(), 3000);
+                });
+            }
+
+            setupUI() {
+                // Ocultar todos los paneles inicialmente
+                [this.dom.controlsPanel, document.getElementById('nutrition-panel'), document.getElementById('allergens-panel')].forEach(panel => {
+                    if (panel) panel.classList.add('hidden');
+                });
+                this.currentPanel = null;
+            }
+
+            addControlFeedback(element) {
+                element.style.boxShadow = '0 0 20px rgba(96, 165, 250, 0.6)';
+                setTimeout(() => element.style.boxShadow = '', 200);
+            }
+
+            showHeader() {
+                if (this.dom.header) {
+                    this.dom.header.classList.remove('hidden');
+                    this.headerVisible = true;
+                }
+            }
+
+            hideHeader() {
+                if (this.dom.header && !this.isMobile()) {
+                    this.dom.header.classList.add('hidden');
+                    this.headerVisible = false;
+                }
+            }
+
+            isMobile() {
+                return window.innerWidth <= 768;
+            }
+
+            loadModel() {
+                console.log('Cargando modelo:', this.config.modelPath);
+                if (!this.config.modelPath) {
+                    this.showError('Ruta del modelo no definida');
+                    return;
+                }
+
+                const loader = new THREE.GLTFLoader();
+                loader.load(
+                    this.config.modelPath,
+                    (gltf) => this.onModelLoaded(gltf),
+                    (xhr) => this.onLoadProgress(xhr),
+                    (error) => this.onLoadError(error)
+                );
+            }
+
+            onModelLoaded(gltf) {
+                console.log('Modelo cargado:', this.config.modelFile);
+                this.hideLoading();
+                this.model = gltf.scene;
+
+                this.model.traverse((node) => {
+                    if (node.isMesh) {
+                        node.castShadow = true;
+                        node.receiveShadow = true;
+                        if (node.material) node.material.envMapIntensity = 0.8;
+                    }
+                });
+
+                this.scene.add(this.model);
+                this.model.visible = true;
+
+                this.model.scale.set(0, 0, 0);
+                this.animateScale(1, () => {
+                    setTimeout(() => {
+                        this.autoFit();
+                        console.log('Modelo autoajustado automáticamente');
+                    }, 300);
+                });
+            }
+
+            onLoadProgress(xhr) {
+                if (xhr.lengthComputable && this.dom.loading) {
+                    const percent = Math.floor((xhr.loaded / xhr.total) * 100);
+                    this.dom.loading.querySelector('div:last-child').textContent = `Cargando modelo... ${percent}%`;
+                }
+            }
+
+            onLoadError(error) {
+                console.error('Error cargando modelo:', error);
+                this.showError(`Error de carga: ${error.message || 'Error desconocido'}`);
+            }
+
+            animateScale(targetScale, callback) {
+                const animate = (startTime = Date.now()) => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / 1000, 1);
+                    const easeOut = 1 - Math.pow(1 - progress, 3);
+                    const currentScale = targetScale * easeOut;
+                    this.model.scale.setScalar(currentScale);
+                    if (progress < 1) requestAnimationFrame(() => animate(startTime));
+                    else if (callback) callback();
+                };
+                animate();
+            }
+
+            updateScale(value) {
+                if (this.model) {
+                    this.model.scale.setScalar(parseFloat(value));
+                    if (this.dom.scaleValue) this.dom.scaleValue.textContent = parseFloat(value).toFixed(1) + 'x';
+                }
+            }
+
+            updatePositionY(value) {
+                if (this.model) {
+                    this.model.position.y = parseFloat(value);
+                    if (this.dom.posYValue) this.dom.posYValue.textContent = parseFloat(value).toFixed(1);
+                }
+            }
+
+            updateRotationY(value) {
+                if (this.model) {
+                    this.model.rotation.y = parseFloat(value) * Math.PI / 180;
+                    if (this.dom.rotYValue) this.dom.rotYValue.textContent = value + '°';
+                }
+            }
+
+            autoFit() {
+                if (!this.model) return;
+
+                const box = new THREE.Box3().setFromObject(this.model);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const targetScale = maxDim > 0 ? 3 / maxDim : 1;
+
+                this.animateToValues({
+                    scale: targetScale,
+                    position: center.clone().negate(),
+                    camera: true
+                });
+            }
+
+            animateToValues(targets) {
+                if (!this.model) return;
+
+                const startScale = this.model.scale.x;
+                const startPos = this.model.position.clone();
+
+                const animate = (startTime = Date.now()) => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / 800, 1);
+                    const easeInOut = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+                    if (targets.scale !== undefined) {
+                        const currentScale = startScale + (targets.scale - startScale) * easeInOut;
+                        this.model.scale.setScalar(currentScale);
+                        if (this.dom.scaleSlider) this.dom.scaleSlider.value = currentScale;
+                        if (this.dom.scaleValue) this.dom.scaleValue.textContent = currentScale.toFixed(1) + 'x';
+                    }
+
+                    if (targets.position) {
+                        this.model.position.lerpVectors(startPos, targets.position, easeInOut);
+                        if (this.dom.posYSlider) this.dom.posYSlider.value = this.model.position.y;
+                        if (this.dom.posYValue) this.dom.posYValue.textContent = this.model.position.y.toFixed(1);
+                    }
+
+                    if (progress < 1) requestAnimationFrame(() => animate(startTime));
+                    else if (targets.camera) this.fitCameraToModel();
+                };
+                animate();
+            }
+
+            fitCameraToModel() {
+                if (!this.model || !this.camera) return;
+
+                const box = new THREE.Box3().setFromObject(this.model);
+                const center = box.getCenter(new THREE.Vector3());
+                const size = box.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const fov = this.camera.fov * (Math.PI / 180);
+                const cameraZ = Math.abs(maxDim / (2 * Math.tan(fov / 2))) * 1.5;
+                const targetPos = new THREE.Vector3(center.x, center.y + size.y / 4, center.z + cameraZ);
+                const startPos = this.camera.position.clone();
+
+                const animate = (startTime = Date.now()) => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / 1000, 1);
+                    const easeOut = 1 - Math.pow(1 - progress, 3);
+
+                    this.camera.position.lerpVectors(startPos, targetPos, easeOut);
+                    if (this.controls) {
+                        this.controls.target.lerp(center, easeOut);
+                        this.controls.update();
+                    } else {
+                        this.camera.lookAt(center);
+                    }
+
+                    if (progress < 1) requestAnimationFrame(() => animate(startTime));
+                };
+                animate();
+            }
+
+            async startCamera() {
+                try {
+                    console.log('Iniciando cámara...');
+                    const constraints = {
+                        video: {
+                            facingMode: 'environment', // Cámara trasera
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        }
+                    };
+
+                    this.cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+                    this.dom.cameraVideo.srcObject = this.cameraStream;
+
+                    return new Promise((resolve) => {
+                        this.dom.cameraVideo.addEventListener('loadedmetadata', () => {
+                            console.log('Cámara iniciada correctamente');
+                            resolve();
+                        });
+                    });
+                } catch (error) {
+                    console.error('Error iniciando cámara:', error);
+                    let errorMsg = error.message;
+                    if (error.name === 'NotAllowedError') {
+                        errorMsg = 'Permisos de cámara denegados. Por favor permite el acceso a la cámara.';
+                    } else if (error.name === 'NotFoundError') {
+                        errorMsg = 'No se encontró cámara trasera. Se usará la cámara frontal.';
+                    } else if (error.name === 'NotSupportedError') {
+                        errorMsg = 'Cámara no soportada en este navegador.';
+                    }
+                    throw new Error(errorMsg);
+                }
+            }
+
+            stopCamera() {
+                if (this.cameraStream) {
+                    console.log('Deteniendo cámara...');
+                    this.cameraStream.getTracks().forEach(track => track.stop());
+                    this.cameraStream = null;
+                    this.dom.cameraVideo.srcObject = null;
+                }
+            }
+
+            async toggleAR() {
+                if (this.isARActive) {
+                    await this.stopAR();
+                } else {
+                    await this.startAR();
+                }
+            }
+
+            async startAR() {
+                try {
+                    console.log('Iniciando modo AR...');
+
+                    // Iniciar cámara
+                    await this.startCamera();
+
+                    // Mostrar cámara de fondo
+                    this.dom.cameraContainer.style.display = 'block';
+
+                    // Actualizar renderer para transparencia
+                    this.isARActive = true;
+                    this.updateRendererForMode();
+
+                    // Ajustar modelo para AR (posición más adecuada para flotar)
+                    if (this.model) {
+                        this.model.position.set(0, 0, -3); // Más cercano para verse mejor
+                        // Mantener la escala actual o ajustarla ligeramente
+                        const currentScale = this.model.scale.x;
+                        this.model.scale.setScalar(Math.max(currentScale, 1.2)); // Mínimo 1.2x para AR
+                    }
+
+                    // Actualizar controles para modo AR
+                    if (this.controls) {
+                        this.controls.enableRotate = true;
+                        this.controls.enableZoom = true;
+                        this.controls.enablePan = true;
+                    }
+
+                    // Actualizar UI
+                    const arButton = document.getElementById('ar-toggle');
+                    if (arButton) {
+                        arButton.classList.add('active');
+                        arButton.textContent = '✓';
+                    }
+
+                    // Mostrar instrucciones
+                    this.showARInstructions();
+
+                    console.log('Modo AR activado');
+
+                } catch (error) {
+                    console.error('Error iniciando AR:', error);
+                    alert('Error AR: ' + error.message);
+                    this.isARActive = false;
+                    this.updateRendererForMode();
+                }
+            }
+
+            async stopAR() {
+                console.log('Deteniendo modo AR...');
+
+                // Detener cámara
+                this.stopCamera();
+
+                // Ocultar cámara
+                this.dom.cameraContainer.style.display = 'none';
+
+                // Restaurar modo normal
+                this.isARActive = false;
+                this.updateRendererForMode();
+
+                // Restaurar posición del modelo con autoajuste
+                if (this.model) {
+                    setTimeout(() => {
+                        this.autoFit();
+                    }, 100);
+                }
+
+                // Actualizar UI
+                const arButton = document.getElementById('ar-toggle');
+                if (arButton) {
+                    arButton.classList.remove('active');
+                    arButton.textContent = '📷';
+                }
+
+                console.log('Modo AR desactivado');
+            }
+
+            showARInstructions() {
+                this.dom.arInstructions.style.display = 'block';
+                setTimeout(() => {
+                    this.dom.arInstructions.style.display = 'none';
+                }, 5000); // Auto-hide después de 5 segundos
+            }
+
+            onResize() {
+                if (!this.camera || !this.renderer) return;
+                this.camera.aspect = window.innerWidth / window.innerHeight;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+
+            showError(message) {
+                console.error(message);
+                if (this.dom.errorMessage) this.dom.errorMessage.textContent = message;
+                this.hideLoading();
+                if (this.dom.error) this.dom.error.style.display = 'block';
+            }
+
+            hideLoading() {
+                if (this.dom.loading) this.dom.loading.style.display = 'none';
+            }
+
+            reload() {
+                location.reload();
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                if (this.controls) this.controls.update();
+                if (this.renderer && this.scene && this.camera) {
+                    this.renderer.render(this.scene, this.camera);
+                }
+            }
+        }
+
+        let app;
+
+        function togglePanel(panelId) {
+            const panel = document.getElementById(panelId);
+            if (panel) panel.classList.toggle('hidden');
+        }
+
+        function togglePanels() {
+            if (!app) return;
+            const panels = ['controls-panel', 'nutrition-panel', 'allergens-panel'];
+            const currentIndex = panels.indexOf(app.currentPanel);
+            const nextIndex = (currentIndex + 1) % panels.length;
+
+            if (app.currentPanel) {
+                const currentPanel = document.getElementById(app.currentPanel);
+                if (currentPanel) {
+                    currentPanel.classList.remove('visible');
+                    currentPanel.classList.add('hidden');
+                }
+            }
+
+            app.currentPanel = panels[nextIndex];
+            const nextPanel = document.getElementById(app.currentPanel);
+            if (nextPanel) {
+                nextPanel.classList.remove('hidden');
+                nextPanel.classList.add('visible');
+            }
+
+            const toggleBtn = document.getElementById('panel-toggle');
+            const icons = ['🎮', '🥗', '⚠️'];
+            if (toggleBtn) toggleBtn.textContent = icons[nextIndex];
+        }
+
+        function toggleAR() {
+            if (app) app.toggleAR();
+        }
+
+        function hideARInstructions() {
+            const instructions = document.getElementById('ar-instructions');
+            if (instructions) instructions.style.display = 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Iniciando AR Viewer con modelo real');
+            app = new ARViewer();
+        });
+
+        window.addEventListener('error', (e) => {
+            console.error('Error global:', e.error);
+            if (app) app.showError('Error global: ' + e.message);
+        });
+    </script>
+</body>
+</html>

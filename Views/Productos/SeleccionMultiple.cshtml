@@ -1,0 +1,321 @@
+﻿@model IEnumerable<ProyectoIdentity.Models.Producto>
+@{
+    ViewData["Title"] = "Selección múltiple de productos";
+}
+
+<style>
+    /* --------- Menú de Categorías --------- */
+    /* Modifica estos estilos para la barra de categorías */
+    .category-nav {
+        position: sticky;
+        top: 0;
+        background: #fff;
+        padding: 8px 0;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        z-index: 100;
+    }
+
+    .category-container {
+        display: flex;
+        overflow-x: auto;
+        gap: 16px;
+        padding: 0 24px;
+        scroll-behavior: smooth;
+        justify-content: center; /* Añadir esta línea para centrar */
+        margin: 0 auto; /* Añadir esta línea para centrar */
+        max-width: 900px; 
+    }
+    .category-container::-webkit-scrollbar { height:6px; }
+    .category-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius:3px; }
+    .category-btn {
+        flex:0 0 auto; display:flex; flex-direction:column; align-items:center;
+        border:none; background:transparent; cursor:pointer;
+        padding:6px 12px; transition:color .2s,transform .2s; color:#555;
+    }
+    .category-btn i { font-size:1.4rem; margin-bottom:4px; transition:transform .2s; }
+    .category-btn span { font-size:.85rem; white-space:nowrap; }
+    .category-btn.active,
+    .category-btn:hover { color:#28a745; transform:translateY(-3px); }
+    .category-btn.active i,
+    .category-btn:hover i { transform:scale(1.2); }
+    .category-btn.active::after {
+        content:''; display:block; width:100%; height:3px;
+        background:linear-gradient(90deg,#ffc107,#28a745);
+        border-radius:2px; margin-top:6px; animation:indicator-in .3s ease-out;
+    }
+    keyframes indicator-in { from{width:0} to{width:100%} }
+    media(max-width:576px){ .category-btn i{font-size:1.2rem} .category-btn span{font-size:.75rem} }
+
+    /* --------- Grid de Productos --------- */
+    .product-grid {
+        display:grid;
+        grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+        gap:24px;
+        margin:24px 0;
+    }
+    .product-card {
+        background:#fff; border-radius:12px; overflow:hidden;
+        box-shadow:0 4px 12px rgba(0,0,0,0.08);
+        transition:transform .3s,box-shadow .3s; position:relative;
+    }
+    .product-card:hover { transform:translateY(-5px); box-shadow:0 8px 24px rgba(0,0,0,0.1); }
+    .product-card.selected { border:2px solid #28a745; background:#f0fff4; }
+    .product-card img {
+        width:100%; height:180px; object-fit:cover;
+    }
+    .card-body {
+        padding:16px; text-align:center;
+    }
+    .product-name {
+        font-size:1.15rem; font-weight:600; color:#212529; margin:8px 0 4px;
+    }
+    .product-price {
+        font-size:1rem; font-weight:700; color:#e83e8c; margin-bottom:12px;
+    }
+    .product-controls {
+        display:flex; justify-content:center; gap:12px; margin-top:12px;
+    }
+    .quantity-control { display:flex; align-items:center; }
+    .quantity-btn {
+        background:#e9ecef; border:none; width:32px; height:32px;
+        border-radius:50%; font-size:1.1rem; cursor:pointer;
+        transition:background .2s;
+    }
+    .quantity-btn:hover { background:#28a745; color:#fff; }
+    .quantity-input {
+        width:50px; text-align:center;
+        border:1px solid #ced4da; border-radius:6px; margin:0 6px; padding:4px;
+    }
+
+    /* --------- Botón Flotante --------- */
+    .add-to-cart-container {
+        position:fixed; bottom:30px; right:30px;
+        background:#fff; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.1);
+        padding:16px 24px; display:flex; align-items:center; gap:16px;
+        z-index:120; transition:transform .3s,opacity .3s;
+    }
+    .add-to-cart-container.hidden {
+        opacity:0; transform:translateY(20px); pointer-events:none;
+    }
+    .cart-summary { text-align:right; }
+    .cart-total { font-size:1.25rem; font-weight:700; color:#e83e8c; }
+    .cart-count {
+        display:inline-block; background:#28a745; color:#fff;
+        border-radius:50%; padding:4px 10px; font-size:.9rem; margin-top:4px;
+    }
+    .add-to-cart-btn {
+        background:#28a745; color:#fff; border:none; border-radius:8px;
+        padding:10px 16px; font-size:1rem; font-weight:600; cursor:pointer;
+        display:flex; align-items:center; gap:8px; transition:background .2s;
+    }
+    .add-to-cart-btn:disabled { background:#adb5bd; cursor:not-allowed; }
+    .add-to-cart-btn:hover:not(:disabled) { background:#218838; }
+    /* Estilos adicionales para el botón de detalle */
+    .btn-info {
+        background-color: #17a2b8;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 5px 10px;
+        font-size: 0.85rem;
+        transition: background-color 0.2s, transform 0.2s;
+        display: inline-block;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+        .btn-info:hover {
+            background-color: #138496;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+    /* Ajuste del espacio entre el botón y los controles */
+    .product-controls {
+        margin-top: 8px; /* Reducido de 12px */
+    }
+
+    /* Opcional: Hacer que el botón sea más visible */
+    .btn-info i {
+        margin-right: 5px;
+    }
+</style>
+
+<h1 class="text-center mt-4">@(string.IsNullOrEmpty(ViewBag.CategoriaActual) || ViewBag.CategoriaActual.ToLower() == "todas" ? "Todos nuestros productos" : ViewBag.CategoriaActual)</h1>
+
+<nav class="category-nav">
+    <div class="category-container">
+        <button class="category-btn @(ViewBag.CategoriaActual?.ToLower() == "todas" ? "active" : "")" data-category="todas">
+            <i class="fas fa-layer-group"></i>
+            <span>Todas</span>
+        </button>
+        @foreach (var cat in ViewBag.Categorias)
+        {
+            <button class="category-btn @(ViewBag.CategoriaActual?.ToLower() == cat.ToLower() ? "active" : "")" data-category="@cat.ToLower()">
+                <i class="@GetCategoryIcon(cat)"></i>
+                <span>@cat</span>
+            </button>
+        }
+    </div>
+</nav>
+
+<form asp-controller="Productos" asp-action="ProcesarSeleccionMultiple" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="product-grid">
+        @{
+            var idx = 0;
+        }
+        @foreach (var p in Model)
+        {
+            <div class="product-card" data-categoria="@p.Categoria.ToLower()">
+                <img src="data:image/jpeg;base64,@Convert.ToBase64String(p.Imagen)" alt="@p.Nombre" />
+                <div class="card-body">
+                    <div class="product-name">@p.Nombre</div>
+                    <div class="product-price">$@p.Precio</div>
+                    <a href="@Url.Action("Detalle", "Productos", new { id = p.Id })" class="btn btn-info btn-sm mb-2">
+                        <i class="fas fa-eye"></i> Ver Detalle
+                    </a>
+                    <div class="product-controls">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input producto-checkbox"
+                                id="chk-@p.Id" name="seleccionados[@idx].Seleccionado"
+                                value="true" data-id="@p.Id" />
+                            <label class="form-check-label" for="chk-@p.Id">Seleccionar</label>
+                        </div>
+                        <input type="hidden" name="seleccionados[@idx].ProductoId" value="@p.Id" />
+                        <div class="quantity-control">
+                            <button type="button" class="quantity-btn decrease-btn" data-id="@p.Id">–</button>
+                            <input type="number" class="quantity-input"
+                                name="seleccionados[@idx].Cantidad" value="1"
+                                min="1" max="99" data-id="@p.Id" />
+                            <button type="button" class="quantity-btn increase-btn" data-id="@p.Id">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            idx++;
+        }
+    </div>
+
+    <div class="add-to-cart-container hidden" id="cart-container">
+        <div class="cart-summary">
+            <div>Total: <span class="cart-total">$0.00</span></div>
+            <div><small>Items: <span class="cart-count">0</span></small></div>
+        </div>
+        <button type="submit" class="add-to-cart-btn" id="submit-btn" disabled>
+            <i class="fas fa-shopping-cart"></i> Continuar Pedido
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const checks = document.querySelectorAll('.producto-checkbox');
+        const qtys = document.querySelectorAll('.quantity-input');
+        const decs = document.querySelectorAll('.decrease-btn');
+        const incs = document.querySelectorAll('.increase-btn');
+        const cards = document.querySelectorAll('.product-card');
+        const cartBox = document.getElementById('cart-container');
+        const totalEl = document.querySelector('.cart-total');
+        const countEl = document.querySelector('.cart-count');
+        const submit = document.getElementById('submit-btn');
+
+        function updateCart() {
+            let total = 0, count = 0;
+            checks.forEach(cb => {
+                if (cb.checked) {
+                    const id = cb.dataset.id;
+                    const card = cb.closest('.product-card');
+                    const price = parseFloat(card.querySelector('.product-price').textContent.replace('$', ''));
+                    const qty = parseInt(document.querySelector(`.quantity-input[data-id="${id}"]`).value);
+                    total += price * qty;
+                    count += qty;
+                }
+            });
+            totalEl.textContent = '$' + total.toFixed(2);
+            countEl.textContent = count;
+            submit.disabled = count === 0;
+            cartBox.classList.toggle('hidden', count === 0);
+        }
+
+        checks.forEach(cb => cb.addEventListener('change', () => {
+            cb.closest('.product-card').classList.toggle('selected', cb.checked);
+            updateCart();
+        }));
+
+        qtys.forEach(inp => inp.addEventListener('change', function () {
+            let v = parseInt(this.value) || 1;
+            this.value = Math.min(Math.max(v, 1), 99);
+            updateCart();
+        }));
+
+        decs.forEach(btn => btn.addEventListener('click', function () {
+            const inp = document.querySelector(`.quantity-input[data-id="${this.dataset.id}"]`);
+            inp.value = Math.max(1, parseInt(inp.value) - 1);
+            updateCart();
+        }));
+
+        incs.forEach(btn => btn.addEventListener('click', function () {
+            const inp = document.querySelector(`.quantity-input[data-id="${this.dataset.id}"]`);
+            inp.value = Math.min(99, parseInt(inp.value) + 1);
+            updateCart();
+        }));
+
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const cat = this.dataset.category;
+                
+                // Actualizar la URL con el parámetro de categoría
+                const url = new URL(window.location.href);
+                if (cat === 'todas') {
+                    url.searchParams.delete('categoria');
+                } else {
+                    url.searchParams.set('categoria', cat);
+                }
+                history.pushState({}, '', url);
+                
+                // Filtrar productos
+                cards.forEach(c => {
+                    c.style.display = (cat === 'todas' || c.dataset.categoria === cat) ? 'block' : 'none';
+                });
+                updateCart();
+            });
+        });
+
+        // Comprobar si hay una categoría seleccionada en localStorage
+        const storedCategory = localStorage.getItem('selectedCategory');
+        if (storedCategory) {
+            const categoryBtn = document.querySelector(`.category-btn[data-category="${storedCategory}"]`);
+            if (categoryBtn) {
+                categoryBtn.click();
+            }
+            // Limpiar después de usar
+            localStorage.removeItem('selectedCategory');
+        }
+
+        updateCart();
+    });
+</script>
+}
+
+@functions {
+    public string GetCategoryIcon(string category)
+    {
+        return category.ToLower() switch
+        {
+            "pizza" => "fas fa-pizza-slice",
+            "cerveza" => "fas fa-beer",
+            "cocteles" => "fas fa-cocktail",
+            "bebidas" => "fas fa-glass-whiskey",
+            "promo" => "fas fa-percentage",
+            "sánduches" or "sanduches" => "fas fa-hamburger",
+            "shot" => "fas fa-wine-glass-alt",
+            "picadas" => "fas fa-cheese",
+            _ => "fas fa-tag"
+        };
+    }
+}

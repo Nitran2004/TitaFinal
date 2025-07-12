@@ -1,0 +1,334 @@
+﻿@model IEnumerable<ProyectoIdentity.Models.Producto>
+@{
+    ViewData["Title"] = $"Productos - {ViewBag.CategoriaActual ?? "Todas las categorías"}";
+}
+
+<style>
+    .category-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .category-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .category-title {
+        font-size: 1.8em;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .filter-tabs {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 25px;
+    }
+
+    .filter-tab {
+        padding: 8px 15px;
+        border-radius: 20px;
+        background-color: #f0f0f0;
+        color: #333;
+        text-decoration: none;
+        transition: all 0.2s;
+        cursor: pointer;
+        font-weight: 500;
+        border: none;
+    }
+
+    .filter-tab:hover {
+        background-color: #e0e0e0;
+    }
+
+    .filter-tab.active {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+    }
+
+    .product-card {
+        background-color: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    }
+
+    .product-image {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+    }
+
+    .product-details {
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+
+    .product-name {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #333;
+    }
+
+    .product-price {
+        color: #e83e8c;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .product-description {
+        color: #666;
+        margin-bottom: 15px;
+        font-size: 0.9em;
+        flex-grow: 1;
+    }
+
+    /* Controles de cantidad */
+    .quantity-control {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+        justify-content: center;
+    }
+
+    .quantity-btn {
+        width: 32px;
+        height: 32px;
+        border: 1px solid #ddd;
+        background-color: #f0f0f0;
+        border-radius: 50%;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .quantity-input {
+        width: 40px;
+        height: 32px;
+        text-align: center;
+        border: 1px solid #ddd;
+        margin: 0 10px;
+    }
+
+    .product-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: auto;
+    }
+
+    .btn-details {
+        padding: 8px 15px;
+        background-color: white;
+        color: #333;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        text-decoration: none;
+        transition: all 0.2s;
+        font-weight: 500;
+    }
+
+    .btn-details:hover {
+        background-color: #f8f9fa;
+    }
+
+    .btn-add {
+        padding: 8px 15px;
+        background-color: #ffc107;
+        color: #333;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 500;
+    }
+
+    .btn-add:hover {
+        background-color: #ffca2c;
+    }
+
+    .empty-category {
+        padding: 30px;
+        text-align: center;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        margin-top: 20px;
+    }
+
+    .empty-icon {
+        font-size: 3em;
+        color: #ccc;
+        margin-bottom: 15px;
+    }
+
+    /* Responsive adjustments */
+    media (max-width: 768px) {
+        .products-grid {
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        }
+    }
+
+    media (max-width: 576px) {
+        .products-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="category-container">
+    <div class="category-header">
+        <h2 class="category-title">
+            @(ViewBag.CategoriaActual ?? "Todos los productos")
+        </h2>
+    </div>
+
+    <div class="filter-tabs">
+        <a asp-action="PorCategoria" class="filter-tab @(ViewBag.CategoriaActual == null ? "active" : "")">
+            Todas
+        </a>
+        @foreach (var categoria in ViewBag.Categorias)
+        {
+            <a asp-action="PorCategoria" asp-route-categoria="@categoria" 
+               class="filter-tab @(ViewBag.CategoriaActual == categoria ? "active" : "")">
+                @categoria
+            </a>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="empty-category">
+            <div class="empty-icon">📦</div>
+            <h3>No hay productos disponibles</h3>
+            <p>No se encontraron productos en esta categoría.</p>
+        </div>
+    }
+    else
+    {
+        <div class="products-grid">
+            @foreach (var producto in Model)
+            {
+                <div class="product-card" data-id="@producto.Id">
+                    <img src="data:image/jpeg;base64,@Convert.ToBase64String(producto.Imagen)" 
+                         alt="@producto.Nombre" class="product-image">
+                    
+                    <div class="product-details">
+                        <h3 class="product-name">@producto.Nombre</h3>
+                        <div class="product-price">$@producto.Precio</div>
+                        
+                        <p class="product-description">
+                            @(producto.Descripcion?.Length > 80 
+                                ? $"{producto.Descripcion.Substring(0, 80)}..." 
+                                : producto.Descripcion)
+                        </p>
+                        
+                        <!-- Control de cantidad -->
+                        <div class="quantity-control">
+                            <button type="button" class="quantity-btn decrease-btn">-</button>
+                            <input type="number" value="1" min="1" class="quantity-input" />
+                            <button type="button" class="quantity-btn increase-btn">+</button>
+                        </div>
+                        
+                        <div class="product-actions">
+                            <a asp-action="Detalle" asp-route-id="@producto.Id" class="btn-details">
+                                Ver detalle
+                            </a>
+                            
+                            <button class="btn-add" data-id="@producto.Id" data-name="@producto.Nombre" data-price="@producto.Precio">
+                                Añadir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Controles de cantidad
+        document.querySelectorAll('.decrease-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var input = this.parentElement.querySelector('.quantity-input');
+                var value = parseInt(input.value);
+                if (value > 1) {
+                    input.value = value - 1;
+                }
+            });
+        });
+        
+        document.querySelectorAll('.increase-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var input = this.parentElement.querySelector('.quantity-input');
+                var value = parseInt(input.value);
+                input.value = value + 1;
+            });
+        });
+        
+        // Botones de añadir al carrito
+        document.querySelectorAll('.btn-add').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var productId = this.getAttribute('data-id');
+                var productName = this.getAttribute('data-name');
+                var productPrice = parseFloat(this.getAttribute('data-price'));
+                var card = this.closest('.product-card');
+                var quantity = parseInt(card.querySelector('.quantity-input').value);
+                
+                // Obtener carrito actual
+                var carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+                
+                // Verificar si el producto ya está en el carrito
+                var existingIndex = carrito.findIndex(item => item.id === productId);
+                
+                if (existingIndex >= 0) {
+                    // Si ya existe, aumentar cantidad
+                    carrito[existingIndex].cantidad += quantity;
+                } else {
+                    // Si no existe, añadir nuevo
+                    carrito.push({
+                        id: productId,
+                        nombre: productName,
+                        precio: productPrice,
+                        cantidad: quantity
+                    });
+                }
+                
+                // Guardar carrito actualizado
+                localStorage.setItem('carrito', JSON.stringify(carrito));
+                
+                // Actualizar contador carrito (si existe la función)
+                if (window.actualizarContadorCarrito) {
+                    window.actualizarContadorCarrito();
+                }
+                
+                // Notificar al usuario
+                alert(quantity + ' ' + productName + ' añadido(s) al carrito');
+            });
+        });
+    });
+</script>

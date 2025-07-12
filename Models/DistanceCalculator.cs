@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ProyectoIdentity.Servicios
+namespace ProyectoIdentity.Services
 {
     public static class DistanceCalculator
     {

@@ -1,0 +1,399 @@
+﻿@{
+    ViewData["Title"] = "Escanear Cupón QR";
+}
+
+<div class="container mt-4">
+    <!-- Mostrar mensajes de error/éxito -->
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">
+                <i class="fas fa-qrcode"></i> Escanear Cupón QR
+            </h2>
+            <p class="mb-0">Escanea el código QR del cupón del cliente</p>
+        </div>
+
+        <div class="card-body">
+            <!-- Scanner QR -->
+            <div class="mb-4">
+                <h5>Escanear código QR:</h5>
+                <div class="scanner-container mb-3">
+                    <div id="qr-reader" style="width: 100%;"></div>
+                    <div id="scanner-status" class="alert alert-info mt-2">
+                        <i class="fas fa-camera"></i> Preparando cámara para escanear...
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4">
+            <div class="text-center">
+                <small class="text-muted">- O -</small>
+            </div>
+            <hr class="my-4">
+
+            <!-- Entrada manual del código -->
+            <div class="mb-4">
+                <h5>O ingresa el código manualmente:</h5>
+                <form method="post" action="@Url.Action("ProcesarCodigoManual")">
+                    @Html.AntiForgeryToken()
+                    <div class="input-group mb-3">
+                        <input type="text" name="codigoQR" id="codigoManualInput" class="form-control" placeholder="Ejemplo: PROMO15-ABC123" required>
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search"></i> Buscar Cupón
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Información del cupón encontrado -->
+            @if (ViewBag.CuponEncontrado != null)
+            {
+                var cupon = ViewBag.CuponEncontrado;
+                var productos = ViewBag.ProductosDisponibles as List<ProyectoIdentity.Models.Producto>;
+
+                <div class="card border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">✅ Cupón Válido Encontrado</h5>
+                    </div>
+                    <div class="card-body">
+                        <h4>@cupon.Nombre</h4>
+                        <p>@cupon.Descripcion</p>
+
+                        @if (cupon.TipoDescuento == "3x2")
+                        {
+                            <div class="alert alert-warning">
+                                <strong>Promoción 3x2:</strong> Compra 2 y llévate 3
+                            </div>
+                        }
+                        else if (cupon.TipoDescuento == "Porcentaje")
+                        {
+                            <div class="alert alert-info">
+                                <strong>Descuento:</strong> @cupon.ValorDescuento% de descuento
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info">
+                                <strong>Descuento:</strong> $@cupon.ValorDescuento de descuento
+                            </div>
+                        }
+
+                        <!-- Formulario para seleccionar productos -->
+                        <form asp-action="AplicarCupon" asp-controller="Cupones" method="post" onsubmit="return confirmarAplicacion();" id="formAplicarCupon">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="cuponId" value="@cupon.Id" />
+
+                            @* ✅ PASAR USUARIO QUE ESCANEÓ *@
+                            @if (ViewBag.UsuarioQueEscanea != null)
+                            {
+                                <input type="hidden" name="usuarioQueEscanea" value="@ViewBag.UsuarioQueEscanea" />
+                                <div class="alert alert-info">
+                                    <i class="fas fa-user"></i> <strong>Pedido para:</strong> Usuario autenticado
+                                </div>
+                            }
+
+                            <!-- OPCIONES DE SERVICIO -->
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="fas fa-utensils"></i> Opciones de Servicio</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold">
+                                            <i class="fas fa-concierge-bell"></i> Tipo de Servicio *
+                                        </label>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <div class="card service-option" data-service="Servir aquí">
+                                                    <div class="card-body text-center">
+                                                        <input class="form-check-input" type="radio" name="tipoServicio" id="servirAqui" value="Servir aquí" required>
+                                                        <label class="form-check-label w-100" for="servirAqui">
+                                                            <i class="fas fa-chair fa-2x d-block mb-2 text-primary"></i>
+                                                            <strong>Servir aquí</strong>
+                                                            <small class="d-block text-muted">Consumir en el restaurante</small>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <div class="card service-option" data-service="Para llevar">
+                                                    <div class="card-body text-center">
+                                                        <input class="form-check-input" type="radio" name="tipoServicio" id="paraLlevar" value="Para llevar" required>
+                                                        <label class="form-check-label w-100" for="paraLlevar">
+                                                            <i class="fas fa-shopping-bag fa-2x d-block mb-2 text-success"></i>
+                                                            <strong>Para llevar</strong>
+                                                            <small class="d-block text-muted">Recoger en el restaurante</small>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h6>Productos disponibles:</h6>
+                            <div class="row">
+                                @foreach (var producto in productos)
+                                {
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 class="card-title">@producto.Nombre</h6>
+                                                <p class="card-text">
+                                                    <strong>Precio:</strong> $@producto.Precio<br>
+                                                    <small class="text-muted">@producto.Descripcion</small>
+                                                </p>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">Cantidad:</span>
+                                                    <input type="number" name="productos[@producto.Id].Cantidad"
+                                                           class="form-control" value="0" min="0" max="10">
+                                                    <input type="hidden" name="productos[@producto.Id].Id" value="@producto.Id">
+                                                    <input type="hidden" name="productos[@producto.Id].Precio" value="@producto.Precio">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Campo oculto para tipo de servicio -->
+                            <input type="hidden" name="tipoServicioSeleccionado" id="tipoServicioHidden" value="" />
+
+                            <div class="mt-3 text-center">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-check"></i> Confirmar y Crear Pedido
+                                </button>
+                                <a href="@Url.Action("EscanearQR")" class="btn btn-secondary btn-lg ms-2">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            }
+
+            <div class="mt-4">
+                <a href="@Url.Action("Index", "Home")" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Volver al menú
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .scanner-container {
+        border: 2px dashed #007bff;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        background-color: #f8f9fa;
+    }
+
+    #qr-reader {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    /* Estilos para opciones de servicio */
+    .service-option {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid #dee2e6;
+        height: 100%;
+    }
+
+        .service-option:hover {
+            border-color: #28a745;
+            box-shadow: 0 0.25rem 0.5rem rgba(40, 167, 69, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .service-option.selected {
+            border-color: #28a745;
+            background-color: #f8fff9;
+            box-shadow: 0 0.25rem 0.5rem rgba(40, 167, 69, 0.25);
+        }
+
+        .service-option .form-check-input {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .service-option label {
+            cursor: pointer;
+            margin: 0;
+            padding: 1rem 0;
+        }
+</style>
+
+@section Scripts {
+    <!-- Html5-QRCode Scanner -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <script>
+        function confirmarAplicacion() {
+            // Verificar que al menos un producto tenga cantidad > 0
+            const cantidades = document.querySelectorAll('input[name*="Cantidad"]');
+            let tieneProductos = false;
+
+            cantidades.forEach(input => {
+                if (parseInt(input.value) > 0) {
+                    tieneProductos = true;
+                }
+            });
+
+            if (!tieneProductos) {
+                alert('Selecciona al menos un producto con cantidad mayor a 0');
+                return false;
+            }
+
+            // ✅ VERIFICAR QUE SE HAYA SELECCIONADO TIPO DE SERVICIO
+            const tipoServicio = document.querySelector('input[name="tipoServicio"]:checked');
+            if (!tipoServicio) {
+                alert('Por favor selecciona si es para "Servir aquí" o "Para llevar"');
+                return false;
+            }
+
+            // ✅ AGREGAR TIPO DE SERVICIO AL CAMPO OCULTO
+            document.getElementById('tipoServicioHidden').value = tipoServicio.value;
+
+            return confirm("¿Confirmar la aplicación del cupón y crear el pedido?");
+        }
+
+        // Manejar selección de tipo de servicio
+        document.querySelectorAll('input[name="tipoServicio"]').forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                // Actualizar estilos visuales
+                document.querySelectorAll('.service-option').forEach(function (option) {
+                    option.classList.remove('selected');
+                });
+                this.closest('.service-option').classList.add('selected');
+            });
+        });
+
+        // Efecto visual para las opciones de servicio
+        document.querySelectorAll('.service-option').forEach(function (option) {
+            option.addEventListener('click', function () {
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change'));
+            });
+        });
+
+        // ✅ Scanner QR - CÓDIGO ORIGINAL
+        let html5QrcodeScanner;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            inicializarScanner();
+        });
+
+        function inicializarScanner() {
+            try {
+                const html5QrCode = new Html5Qrcode("qr-reader");
+
+                const config = {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0
+                };
+
+                document.getElementById('qr-reader').innerHTML = `
+                            <div style="text-align: center; padding: 20px;">
+                                <button id="start-camera-btn" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-camera"></i> Activar Cámara
+                                </button>
+                                <div id="camera-preview" style="margin-top: 20px; display: none;"></div>
+                            </div>
+                        `;
+
+                document.getElementById('start-camera-btn').addEventListener('click', function () {
+                    this.disabled = true;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando cámara...';
+
+                    html5QrCode.start(
+                        { facingMode: "environment" },
+                        config,
+                        onScanSuccess,
+                        onScanFailure
+                    ).then(() => {
+                        document.getElementById('scanner-status').innerHTML =
+                            '<i class="fas fa-check-circle text-success"></i> Cámara activa. Apunta al código QR del cupón.';
+
+                        document.getElementById('start-camera-btn').style.display = 'none';
+                        document.getElementById('camera-preview').style.display = 'block';
+
+                        document.getElementById('camera-preview').innerHTML = `
+                                    <button id="stop-camera-btn" class="btn btn-danger">
+                                        <i class="fas fa-stop"></i> Detener Escáneo
+                                    </button>
+                                `;
+
+                        document.getElementById('stop-camera-btn').addEventListener('click', function () {
+                            html5QrCode.stop().then(() => {
+                                document.getElementById('start-camera-btn').style.display = 'block';
+                                document.getElementById('start-camera-btn').disabled = false;
+                                document.getElementById('start-camera-btn').innerHTML = '<i class="fas fa-camera"></i> Activar Cámara';
+                                document.getElementById('camera-preview').style.display = 'none';
+                                document.getElementById('scanner-status').innerHTML =
+                                    '<i class="fas fa-camera"></i> Cámara detenida. Presiona "Activar Cámara" para escanear.';
+                            });
+                        });
+
+                    }).catch(err => {
+                        console.error('Error al iniciar cámara:', err);
+                        document.getElementById('start-camera-btn').disabled = false;
+                        document.getElementById('start-camera-btn').innerHTML = '<i class="fas fa-camera"></i> Activar Cámara';
+                        document.getElementById('scanner-status').innerHTML =
+                            '<i class="fas fa-exclamation-triangle text-danger"></i> Error al acceder a la cámara. Usa entrada manual.';
+                    });
+                });
+
+                window.html5QrCodeInstance = html5QrCode;
+
+            } catch (error) {
+                console.error('Error inicializando scanner:', error);
+                document.getElementById('scanner-status').innerHTML =
+                    '<i class="fas fa-exclamation-triangle text-warning"></i> Error al inicializar cámara. Usa entrada manual.';
+            }
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log(`Código escaneado: ${decodedText}`);
+
+            if (window.html5QrCodeInstance) {
+                window.html5QrCodeInstance.stop();
+            }
+
+            document.getElementById('codigoManualInput').value = decodedText;
+
+            document.getElementById('scanner-status').innerHTML =
+                '<i class="fas fa-check-circle text-success"></i> ¡Código escaneado exitosamente!';
+
+            setTimeout(() => {
+                document.querySelector('form[action*="ProcesarCodigoManual"]').submit();
+            }, 500);
+        }
+
+        function onScanFailure(error) {
+            // Manejar errores silenciosamente
+        }
+    </script>
+}

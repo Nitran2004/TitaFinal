@@ -1,0 +1,638 @@
+﻿@model List<ProyectoIdentity.Models.ItemCarritoPersonalizado>
+@{
+    ViewData["Title"] = "Mi Carrito Personalizado";
+    bool esAdministrador = User.IsInRole("Administrador");
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-shopping-cart"></i> Mi Carrito Personalizado</h3>
+                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                        <i class="fas fa-plus"></i> Agregar Más Productos
+                    </a>
+                </div>
+
+                <div class="card-body">
+                    @if (!Model.Any())
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-shopping-cart fa-3x text-muted"></i>
+                            <h4 class="mt-3">Tu carrito está vacío</h4>
+                            <p class="text-muted">Personaliza productos desde nuestro menú</p>
+                            <a href="@Url.Action("Index")" class="btn btn-warning">
+                                Ver Menú Personalizable
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Precio</th>
+                                        <th>Cantidad</th>
+                                        <th>Personalización</th>
+                                        <th>Subtotal</th>
+                                        @if (esAdministrador)
+                                        {
+                                            <th>Análisis Interno</th>
+                                        }
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < Model.Count; i++)
+                                    {
+                                        var item = Model[i];
+                                        <tr data-index="@i">
+                                            <td>
+                                                <strong>@item.Nombre</strong>
+                                                @if (!string.IsNullOrEmpty(item.NotasEspeciales))
+                                                {
+                                                    <br>
+                                                    <small class="text-muted"><i class="fas fa-sticky-note"></i> @item.NotasEspeciales</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                <!-- ✅ USUARIO VE SIEMPRE PRECIO ORIGINAL -->
+                                                <strong>$@item.Precio.ToString("F2")</strong>
+                                                @if (esAdministrador && item.AhorroInterno > 0)
+                                                {
+                                                    <br>
+
+                                                    <small class="text-muted">Precio original</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="quantity-control-small">
+                                                    <button type="button" class="btn-quantity-small" onclick="cambiarCantidadCarrito(@i, -1)">-</button>
+                                                    <span class="cantidad-display" data-cantidad="@item.Cantidad">@item.Cantidad</span>
+                                                    <button type="button" class="btn-quantity-small" onclick="cambiarCantidadCarrito(@i, 1)">+</button>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                @if (item.IngredientesRemovidos.Any())
+                                                {
+                                                    <small class="text-info">
+                                                        <i class="fas fa-minus-circle"></i> Sin: @string.Join(", ", item.IngredientesRemovidos)
+                                                    </small>
+                                                }
+                                                else
+                                                {
+                                                    <small class="text-muted">Sin cambios</small>
+                                                }
+                                            </td>
+                                            <td>
+                                                <!-- ✅ USUARIO VE SUBTOTAL BASADO EN PRECIO ORIGINAL -->
+                                                <strong class="subtotal-display">$@item.Subtotal.ToString("F2")</strong>
+                                            </td>
+
+                                            @if (esAdministrador)
+                                            {
+                                                <td>
+                                                    @if (item.AhorroInterno > 0)
+                                                    {
+                                                        <div class="alert alert-success p-2 mb-0">
+                                                            <small>
+                                                                <strong>Costo real:</strong> $@((item.Precio - item.AhorroInterno) * item.Cantidad)<br>
+                                                                <strong>Margen:</strong> $@(item.AhorroInterno * item.Cantidad)<br>
+                                                                <span class="text-success">
+                                                                    <i class="fas fa-chart-line"></i>
+                                                                    @(((item.AhorroInterno / item.Precio) * 100).ToString("F1"))% margen
+                                                                </span>
+                                                            </small>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <small class="text-muted">Sin personalización</small>
+                                                    }
+                                                </td>
+                                            }
+
+                                            <td>
+                                                <button type="button" class="btn btn-sm btn-danger" onclick="eliminarDelCarrito(@i)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6 offset-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h5>Resumen del Pedido</h5>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Total Items:</span>
+                                            <span id="totalItems">@Model.Sum(m => m.Cantidad)</span>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between">
+                                            <strong>Total a Pagar:</strong>
+                                            <strong class="text-success" id="totalPagar">$@Model.Sum(m => m.Subtotal).ToString("F2")</strong>
+                                        </div>
+
+                                        @if (esAdministrador)
+                                        {
+                                            <hr>
+                                            <div class="alert alert-info p-2 mt-2">
+                                                <h6><i class="fas fa-chart-pie"></i> Análisis Interno</h6>
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Costo real total:</span>
+                                                    <span>$@Model.Where(m => m.AhorroInterno > 0).Sum(m => (m.Precio - m.AhorroInterno) * m.Cantidad).ToString("F2")</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Margen por personalización:</span>
+                                                    <span class="text-success">$@Model.Sum(m => m.AhorroInterno * m.Cantidad).ToString("F2")</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between">
+                                                    <span>Margen %:</span>
+                                                    <span class="text-success">
+                                                        @{
+                                                            var totalPago = Model.Sum(m => m.Subtotal);
+                                                            var totalMargen = Model.Sum(m => m.AhorroInterno * m.Cantidad);
+                                                            var porcentajeMargen = totalPago > 0 ? (totalMargen / totalPago) * 100 : 0;
+                                                        }
+                                                        @porcentajeMargen.ToString("F1")%
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-utensils"></i> Finalizar Pedido</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Datos de Entrega</h6>
+                        <p class="mb-1"><strong>Usuario:</strong> @User.Identity.Name</p>
+                        <p class="mb-0">Se usarán los datos de tu perfil.</p>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Tipo de Servicio *</label>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="card service-option" data-service="Servir aquí">
+                                    <div class="card-body text-center">
+                                        <input type="radio" name="tipoServicio" id="servirAqui" value="Servir aquí" required>
+                                        <label for="servirAqui" class="w-100">
+                                            <i class="fas fa-chair fa-2x d-block mb-2 text-primary"></i>
+                                            <strong>Servir aquí</strong>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card service-option" data-service="Para llevar">
+                                    <div class="card-body text-center">
+                                        <input type="radio" name="tipoServicio" id="paraLlevar" value="Para llevar" required>
+                                        <label for="paraLlevar" class="w-100">
+                                            <i class="fas fa-shopping-bag fa-2x d-block mb-2 text-success"></i>
+                                            <strong>Para llevar</strong>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-warning w-100" id="btnProcesar" @(Model.Any() ? "" : "disabled") onclick="procesarPedido()">
+                        <i class="fas fa-check"></i> Confirmar Pedido
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ MANTÉN TODO TU JAVASCRIPT EXISTENTE TAL COMO ESTÁ -->
+<script>
+    let carritoLocal = @Html.Raw(Json.Serialize(Model));
+
+    function cambiarCantidadCarrito(index, cambio) {
+        const fila = document.querySelector(`tr[data-index="${index}"]`);
+        const cantidadDisplay = fila.querySelector('.cantidad-display');
+        let nuevaCantidad = parseInt(cantidadDisplay.getAttribute('data-cantidad')) + cambio;
+
+        if (nuevaCantidad < 1) {
+            eliminarDelCarrito(index);
+            return;
+        }
+
+        if (nuevaCantidad > 3) nuevaCantidad = 3;
+
+        // Actualizar carrito local
+        carritoLocal[index].cantidad = nuevaCantidad;
+        carritoLocal[index].subtotal = carritoLocal[index].precio * nuevaCantidad;
+
+        // Actualizar display
+        cantidadDisplay.textContent = nuevaCantidad;
+        cantidadDisplay.setAttribute('data-cantidad', nuevaCantidad);
+
+        // Actualizar subtotal
+        const subtotalDisplay = fila.querySelector('.subtotal-display');
+        subtotalDisplay.textContent = '$' + carritoLocal[index].subtotal.toFixed(2);
+
+        actualizarResumen();
+        guardarCarritoEnSesion();
+    }
+
+    function eliminarDelCarrito(index) {
+        if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+            console.log(`[DEBUG] Eliminando producto en índice: ${index}`);
+            console.log(`[DEBUG] Carrito antes de eliminar:`, carritoLocal);
+
+            // ✅ VALIDAR QUE EL ÍNDICE EXISTE
+            if (index < 0 || index >= carritoLocal.length) {
+                console.error('[ERROR] Índice inválido:', index);
+                return;
+            }
+
+            // Eliminar el item del carrito local
+            carritoLocal.splice(index, 1);
+
+            console.log(`[DEBUG] Carrito después de eliminar:`, carritoLocal);
+
+            // ✅ GUARDAR INMEDIATAMENTE EN SESIÓN
+            guardarCarritoEnSesion();
+
+            // ✅ SI EL CARRITO QUEDA VACÍO, RECARGAR PÁGINA
+            if (carritoLocal.length === 0) {
+                console.log('[DEBUG] Carrito vacío - recargando página');
+                setTimeout(() => location.reload(), 500);
+                return;
+            }
+
+            // ✅ SI QUEDAN PRODUCTOS, ACTUALIZAR INTERFAZ
+            const fila = document.querySelector(`tr[data-index="${index}"]`);
+            if (fila) {
+                fila.remove();
+            }
+
+            // ✅ REINDEXAR TODAS LAS FILAS RESTANTES
+            document.querySelectorAll('tbody tr').forEach((fila, nuevoIndex) => {
+                fila.setAttribute('data-index', nuevoIndex);
+
+                // Actualizar botones de cantidad
+                const botonesDecremento = fila.querySelectorAll('button[onclick*="cambiarCantidadCarrito"][onclick*="-1"]');
+                botonesDecremento.forEach(boton => {
+                    boton.setAttribute('onclick', `cambiarCantidadCarrito(${nuevoIndex}, -1)`);
+                });
+
+                const botonesIncremento = fila.querySelectorAll('button[onclick*="cambiarCantidadCarrito"][onclick*="1)"]');
+                botonesIncremento.forEach(boton => {
+                    boton.setAttribute('onclick', `cambiarCantidadCarrito(${nuevoIndex}, 1)`);
+                });
+
+                // Actualizar botón eliminar
+                const botonEliminar = fila.querySelector('button[onclick*="eliminarDelCarrito"]');
+                if (botonEliminar) {
+                    botonEliminar.setAttribute('onclick', `eliminarDelCarrito(${nuevoIndex})`);
+                }
+            });
+
+            // Actualizar resumen y validar límites
+            actualizarResumen();
+            validarLimitesCarrito();
+
+            console.log(`[DEBUG] Eliminación completada. Items restantes: ${carritoLocal.length}`);
+        }
+    }
+
+    function actualizarResumen() {
+        // ✅ CALCULAR TOTALES CON VALIDACIONES
+        const totalItems = carritoLocal.reduce((total, item) => total + (item.cantidad || 0), 0);
+        const totalPagar = carritoLocal.reduce((total, item) => total + (item.subtotal || 0), 0);
+        const ahorroTotal = carritoLocal.reduce((total, item) => total + (item.ahorroInterno || 0), 0);
+
+        // ✅ ACTUALIZAR ELEMENTOS CON VALIDACIONES
+        const totalItemsElement = document.getElementById('totalItems');
+        if (totalItemsElement) {
+            totalItemsElement.textContent = totalItems;
+        }
+
+        const totalPagarElement = document.getElementById('totalPagar');
+        if (totalPagarElement) {
+            totalPagarElement.textContent = '$' + totalPagar.toFixed(2);
+        }
+
+        const ahorroElement = document.getElementById('ahorroTotal');
+        if (ahorroElement) {
+            ahorroElement.textContent = '$' + ahorroTotal.toFixed(2);
+        }
+
+        // ✅ ACTUALIZAR BOTÓN PROCESAR CON VALIDACIONES MEJORADAS
+        const btnProcesar = document.getElementById('btnProcesar');
+        if (btnProcesar) {
+            const puedeConfirmar = totalItems > 0 && totalItems <= 3;
+            btnProcesar.disabled = !puedeConfirmar;
+
+            if (totalItems > 3) {
+                btnProcesar.innerHTML = '<i class="fas fa-ban"></i> Límite Excedido (3 max)';
+                btnProcesar.className = 'btn btn-danger w-100';
+            } else if (totalItems === 0) {
+                btnProcesar.innerHTML = '<i class="fas fa-cart-plus"></i> Carrito Vacío';
+                btnProcesar.className = 'btn btn-secondary w-100';
+            } else {
+                btnProcesar.innerHTML = '<i class="fas fa-check"></i> Confirmar Pedido';
+                btnProcesar.className = 'btn btn-warning w-100';
+            }
+        }
+    }
+
+    function guardarCarritoEnSesion() {
+        console.log(`[DEBUG] Guardando carrito con ${carritoLocal.length} items`);
+
+        fetch('@Url.Action("ActualizarCarrito")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(carritoLocal)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('[DEBUG] Carrito guardado exitosamente:', data);
+
+                // ✅ SI EL CARRITO ESTÁ VACÍO EN EL SERVIDOR, RECARGAR
+                if (data.totalItems === 0 && carritoLocal.length === 0) {
+                    console.log('[DEBUG] Carrito confirmado como vacío - recargando página');
+                    setTimeout(() => location.reload(), 500);
+                }
+            })
+            .catch(error => {
+                console.error('[ERROR] Error al guardar carrito:', error);
+            });
+    }
+
+    function procesarPedido() {
+        const totalItems = carritoLocal.reduce((total, item) => total + (item.cantidad || 0), 0);
+
+        // ✅ VALIDACIONES ANTES DE PROCESAR
+        if (totalItems > 3) {
+            alert('No puedes procesar un pedido con más de 3 productos. Reduce la cantidad.');
+            return;
+        }
+
+        if (totalItems === 0) {
+            alert('Tu carrito está vacío');
+            return;
+        }
+
+        const tipoServicio = document.querySelector('input[name="tipoServicio"]:checked')?.value;
+        if (!tipoServicio) {
+            alert('Por favor selecciona el tipo de servicio');
+            return;
+        }
+
+        const data = {
+            TipoServicio: tipoServicio
+        };
+
+        const btnProcesar = document.getElementById('btnProcesar');
+        const textoOriginal = btnProcesar.innerHTML;
+
+        btnProcesar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+        btnProcesar.disabled = true;
+
+        fetch('@Url.Action("ProcesarPedido")', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    window.location.href = '@Url.Action("Confirmacion", "Personalizacion")?id=' + result.pedidoId;
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al procesar el pedido');
+            })
+            .finally(() => {
+                btnProcesar.innerHTML = textoOriginal;
+                btnProcesar.disabled = false;
+            });
+    }
+
+    // Manejar selección de servicio
+    document.querySelectorAll('.service-option').forEach(option => {
+        option.addEventListener('click', function () {
+            const radio = this.querySelector('input[type="radio"]');
+            if (radio) {
+                radio.checked = true;
+                document.querySelectorAll('.service-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+            }
+        });
+    });
+
+    // ✅ AGREGAR ESTA VARIABLE AL INICIO DEL SCRIPT
+    let limitesProductos = {
+        disponibles: 3,
+        productosActuales: 0,
+        productosEnCarritos: 0,
+        limite: 3
+    };
+    // ✅ FUNCIÓN PARA CARGAR LÍMITES (AGREGAR)
+    async function cargarLimitesCarrito() {
+        try {
+            const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
+            const data = await response.json();
+
+            // ✅ ASEGURAR QUE LOS VALORES NO SEAN UNDEFINED
+            limitesProductos = {
+                disponibles: data.disponibles || 0,
+                productosActuales: data.productosActivos || 0,
+                productosEnCarritos: data.productosEnCarritos || 0,
+                limite: data.limite || 3
+            };
+
+            console.log('[DEBUG] Límites cargados en carrito:', limitesProductos);
+            validarLimitesCarrito();
+        } catch (error) {
+            console.error('Error al cargar límites:', error);
+            // ✅ VALORES POR DEFECTO EN CASO DE ERROR
+            limitesProductos = {
+                disponibles: 3,
+                productosActuales: 0,
+                productosEnCarritos: 0,
+                limite: 3
+            };
+        }
+    }
+
+    // ✅ FUNCIÓN PARA VALIDAR LÍMITES EN CARRITO (AGREGAR)
+    function validarLimitesCarrito() {
+        const totalEnCarrito = carritoLocal.reduce((total, item) => total + (item.cantidad || 0), 0);
+
+        // ✅ MOSTRAR INFORMACIÓN DE LÍMITE CON VALORES SEGUROS
+        mostrarInfoLimiteCarrito(totalEnCarrito);
+    }
+
+    // ✅ FUNCIÓN PARA MOSTRAR INFO DE LÍMITE EN CARRITO (AGREGAR)
+    function mostrarInfoLimiteCarrito(totalEnCarrito) {
+        let infoElement = document.getElementById('info-limite-carrito');
+        if (!infoElement) {
+            infoElement = document.createElement('div');
+            infoElement.id = 'info-limite-carrito';
+
+            // Insertar después del header del carrito
+            const cardHeader = document.querySelector('.card-header');
+            if (cardHeader) {
+                cardHeader.parentNode.insertBefore(infoElement, cardHeader.nextSibling);
+            }
+        }
+
+        // ✅ USAR VALORES SEGUROS
+        const productosActivos = limitesProductos.productosActuales || 0;
+        const limite = limitesProductos.limite || 3;
+
+        if (totalEnCarrito >= 3) {
+            infoElement.className = 'alert alert-warning mx-3 mt-3 mb-0';
+            infoElement.innerHTML = `
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Límite alcanzado:</strong> Tienes ${totalEnCarrito}/3 productos en este carrito.
+                    <br><small>No puedes agregar más productos a este pedido.</small>
+                `;
+        } else if (totalEnCarrito >= 2) {
+            infoElement.className = 'alert alert-info mx-3 mt-3 mb-0';
+            infoElement.innerHTML = `
+        <i class="fas fa-info-circle"></i>
+        Puedes agregar ${3 - totalEnCarrito} producto(s) más. (${totalEnCarrito}/3 productos en carrito)
+        <br><small>Productos en pedidos activos: ${productosActivos}/3</small>  // ✅ Cambiar a /3
+    `;
+        } else if (totalEnCarrito > 0) {
+            infoElement.className = 'alert alert-success mx-3 mt-3 mb-0';
+            infoElement.innerHTML = `
+        <i class="fas fa-check-circle"></i>
+        Puedes agregar ${3 - totalEnCarrito} producto(s) más. (${totalEnCarrito}/3 productos en carrito)
+        <br><small>Productos en pedidos activos: ${productosActivos}/3</small>  // ✅ Cambiar a /3
+    `;
+        } else {
+            // ✅ OCULTAR CUANDO NO HAY PRODUCTOS
+            infoElement.style.display = 'none';
+        }
+    }
+
+    // ✅ INICIALIZAR AL CARGAR LA PÁGINA (AGREGAR AL FINAL DEL SCRIPT EXISTENTE)
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('[DEBUG] Inicializando VerCarrito...');
+        console.log('[DEBUG] Carrito inicial:', carritoLocal);
+
+        // ✅ VALIDAR CARRITO LOCAL
+        if (!Array.isArray(carritoLocal)) {
+            console.error('[ERROR] carritoLocal no es un array válido');
+            carritoLocal = [];
+        }
+
+        // Cargar límites y validar
+        cargarLimitesCarrito();
+        validarLimitesCarrito();
+        actualizarResumen();
+
+        // También validar cuando se hace focus en la página
+        window.addEventListener('focus', cargarLimitesCarrito);
+    });
+</script>
+
+<style>
+    .quantity-control-small {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-quantity-small {
+        width: 25px;
+        height: 25px;
+        border: 1px solid #ddd;
+        background: #f8f9fa;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+    }
+
+        .btn-quantity-small:hover {
+            background: #e9ecef;
+        }
+
+    .cantidad-display {
+        min-width: 25px;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .service-option {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid #dee2e6;
+    }
+
+        .service-option:hover, .service-option.selected {
+            border-color: #F2A900;
+            background-color: #fff8e6;
+            box-shadow: 0 0.25rem 0.5rem rgba(242, 169, 0, 0.25);
+        }
+
+        .service-option input {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .service-option label {
+            cursor: pointer;
+            margin: 0;
+            padding: 1rem 0;
+        }
+
+    .btn-warning {
+        background-color: #F2A900;
+        border-color: #F2A900;
+        color: #fff;
+    }
+
+        .btn-warning:hover {
+            background-color: #e09600;
+            border-color: #d48e00;
+            color: #fff;
+        }
+
+        .btn-warning:disabled {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            opacity: 0.65;
+        }
+</style>

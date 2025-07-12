@@ -235,6 +235,11 @@ namespace ProyectoIdentity.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
                     b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Descripcion")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("Latitude")
@@ -244,14 +249,21 @@ namespace ProyectoIdentity.Migrations
                         .HasColumnType("float");
 
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("SucursalId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SucursalId");
 
                     b.ToTable("CollectionPoints");
                 });
 
-            modelBuilder.Entity("ProyectoIdentity.Models.Departamento", b =>
+            modelBuilder.Entity("ProyectoIdentity.Models.Cupon", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -259,69 +271,140 @@ namespace ProyectoIdentity.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<string>("Nombre")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
 
-                    b.HasKey("Id");
-
-                    b.ToTable("Departamento");
-                });
-
-            modelBuilder.Entity("ProyectoIdentity.Models.Empleado", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<string>("LastName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Empleados");
-                });
-
-            modelBuilder.Entity("ProyectoIdentity.Models.Gasto", b =>
-                {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"), 1L, 1);
-
-                    b.Property<int?>("DepartamentoId")
-                        .HasColumnType("int");
+                    b.Property<string>("CodigoQR")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Descripcion")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("EmpleadoId")
-                        .HasColumnType("int");
+                    b.Property<string>("DiasAplicables")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("Fecha")
+                    b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("IdDepartamento")
+                    b.Property<DateTime?>("FechaExpiracion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("MontoMinimo")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("OtorgaPuntos")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ProductosAplicables")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TipoDescuento")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("ValorDescuento")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("VecesUsado")
                         .HasColumnType("int");
 
-                    b.Property<int>("IdEmpleado")
+                    b.HasKey("Id");
+
+                    b.HasIndex("CodigoQR")
+                        .IsUnique();
+
+                    b.ToTable("Cupones");
+                });
+
+            modelBuilder.Entity("ProyectoIdentity.Models.CuponCanjeado", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<decimal>("Monto")
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("CodigoQR")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("CuponId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("DescuentoAplicado")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<DateTime>("FechaCanje")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("PedidoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProductosCanjeados")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("TotalConDescuento")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<decimal>("TotalOriginal")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<string>("UsuarioId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CuponId");
+
+                    b.HasIndex("PedidoId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("CuponesCanjeados");
+                });
+
+            modelBuilder.Entity("ProyectoIdentity.Models.DetallePedido", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("int");
+
+                    b.Property<string>("IngredientesRemovidos")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NotasEspeciales")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PedidoId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PrecioUnitario")
                         .HasColumnType("decimal(18,2)");
 
-                    b.HasKey("ID");
+                    b.Property<int>("ProductoId")
+                        .HasColumnType("int");
 
-                    b.HasIndex("DepartamentoId");
+                    b.HasKey("Id");
 
-                    b.HasIndex("EmpleadoId");
+                    b.HasIndex("PedidoId");
 
-                    b.ToTable("Gasto");
+                    b.HasIndex("ProductoId");
+
+                    b.ToTable("DetallePedido");
                 });
 
             modelBuilder.Entity("ProyectoIdentity.Models.HistorialCanje", b =>
@@ -338,18 +421,20 @@ namespace ProyectoIdentity.Migrations
                     b.Property<int>("ProductoRecompensaId")
                         .HasColumnType("int");
 
-                    b.Property<int>("PuntosCanjeados")
+                    b.Property<int>("PuntosUtilizados")
                         .HasColumnType("int");
+
+                    b.Property<string>("TipoServicio")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("UsuarioId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ProductoRecompensaId");
-
-                    b.HasIndex("UsuarioId");
 
                     b.ToTable("HistorialCanjes", (string)null);
                 });
@@ -362,12 +447,91 @@ namespace ProyectoIdentity.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
+                    b.Property<int?>("Calificacion")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Comentario")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("ComentarioEnviado")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("EsCupon")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Estado")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("Preparándose");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("PuntoRecoleccionId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SucursalId")
+                        .IsRequired()
+                        .HasColumnType("int");
+
+                    b.Property<string>("TipoServicio")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("Total")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("UsuarioId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PuntoRecoleccionId");
+
+                    b.HasIndex("SucursalId");
+
+                    b.HasIndex("UsuarioId");
+
                     b.ToTable("Pedidos");
+                });
+
+            modelBuilder.Entity("ProyectoIdentity.Models.PedidoDetalle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("Cantidad")
+                        .HasColumnType("int");
+
+                    b.Property<string>("IngredientesRemovidos")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("NotasEspeciales")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("PedidoId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PrecioUnitario")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("ProductoId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PedidoId");
+
+                    b.HasIndex("ProductoId");
+
+                    b.ToTable("PedidoDetalle", (string)null);
                 });
 
             modelBuilder.Entity("ProyectoIdentity.Models.PedidoProducto", b =>
@@ -379,6 +543,7 @@ namespace ProyectoIdentity.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
                     b.Property<int?>("Cantidad")
+                        .IsRequired()
                         .HasColumnType("int");
 
                     b.Property<int>("PedidoId")
@@ -390,6 +555,9 @@ namespace ProyectoIdentity.Migrations
                     b.Property<int>("ProductoId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ProductoId1")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("Total")
                         .HasColumnType("decimal(18,2)");
 
@@ -398,6 +566,8 @@ namespace ProyectoIdentity.Migrations
                     b.HasIndex("PedidoId");
 
                     b.HasIndex("ProductoId");
+
+                    b.HasIndex("ProductoId1");
 
                     b.ToTable("PedidoProductos");
                 });
@@ -411,30 +581,39 @@ namespace ProyectoIdentity.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
                     b.Property<string>("Alergenos")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int?>("Cantidad")
                         .HasColumnType("int");
 
                     b.Property<string>("Categoria")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Descripcion")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<byte[]>("Imagen")
                         .HasColumnType("varbinary(max)");
 
                     b.Property<string>("InfoNutricional")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Ingredientes")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")
-                        .HasColumnType("nvarchar(max)");
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int?>("PedidoId")
                         .HasColumnType("int");
 
-                    b.Property<decimal?>("Precio")
+                    b.Property<decimal>("Precio")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("Total")
@@ -456,12 +635,11 @@ namespace ProyectoIdentity.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
                     b.Property<string>("Categoria")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("Imagen")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<byte[]>("Imagen")
+                        .HasColumnType("varbinary(max)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -471,7 +649,7 @@ namespace ProyectoIdentity.Migrations
                     b.Property<decimal>("PrecioOriginal")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("ProductoId")
+                    b.Property<int?>("ProductoId")
                         .HasColumnType("int");
 
                     b.Property<int>("PuntosNecesarios")
@@ -484,7 +662,7 @@ namespace ProyectoIdentity.Migrations
                     b.ToTable("ProductosRecompensa", (string)null);
                 });
 
-            modelBuilder.Entity("ProyectoIdentity.Models.Proyecto", b =>
+            modelBuilder.Entity("ProyectoIdentity.Models.Sucursal", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -492,15 +670,28 @@ namespace ProyectoIdentity.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<string>("Direccion")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("Latitud")
+                        .HasColumnType("decimal(10,8)");
+
+                    b.Property<decimal>("Longitud")
+                        .HasColumnType("decimal(11,8)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Proyectos");
+                    b.ToTable("Sucursales");
                 });
 
-            modelBuilder.Entity("ProyectoIdentity.Models.Tarea", b =>
+            modelBuilder.Entity("ProyectoIdentity.Models.TransaccionPuntos", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -508,45 +699,38 @@ namespace ProyectoIdentity.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int?>("EmpleadoId")
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("Fecha")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETDATE()");
+
+                    b.Property<int?>("PedidoId")
                         .HasColumnType("int");
 
-                    b.Property<string>("EstadoProgreso")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Puntos")
+                        .HasColumnType("int");
 
-                    b.Property<DateTime>("FechadeFin")
-                        .HasColumnType("datetime2");
+                    b.Property<int?>("RecompensaId")
+                        .HasColumnType("int");
 
-                    b.Property<DateTime>("FechadeInicio")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Nombredelatarea")
+                    b.Property<string>("Tipo")
                         .IsRequired()
-                        .HasMaxLength(21)
-                        .HasColumnType("nvarchar(21)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("Prioridad")
-                        .HasColumnType("int");
-
-                    b.Property<double?>("Productividad")
-                        .HasColumnType("float");
-
-                    b.Property<int>("ProyectoId")
-                        .HasColumnType("int");
-
-                    b.Property<double?>("TiempoEstimado")
-                        .HasColumnType("float");
-
-                    b.Property<double?>("TiempoUtilizado")
-                        .HasColumnType("float");
+                    b.Property<string>("UsuarioId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("EmpleadoId");
+                    b.HasIndex("UsuarioId", "Fecha");
 
-                    b.HasIndex("ProyectoId");
-
-                    b.ToTable("Tareas");
+                    b.ToTable("TransaccionesPuntos", (string)null);
                 });
 
             modelBuilder.Entity("ProyectoIdentity.Models.UsuarioPuntos", b =>
@@ -557,18 +741,65 @@ namespace ProyectoIdentity.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("PuntosAcumulados")
+                    b.Property<int>("PuntosActuales")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PuntosGanados")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PuntosGastados")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UltimaActualizacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UsuarioId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UsuarioPuntos", (string)null);
+                });
+
+            modelBuilder.Entity("ProyectoIdentity.Models.Valoracion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Comentarios")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PedidoId")
                         .HasColumnType("int");
 
                     b.Property<string>("UsuarioId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<int>("ValoracionCalidad")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ValoracionGeneral")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ValoracionTiempo")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("PedidoId");
 
                     b.HasIndex("UsuarioId");
 
-                    b.ToTable("UsuarioPuntos", (string)null);
+                    b.ToTable("Valoraciones");
                 });
 
             modelBuilder.Entity("ProyectoIdentity.Models.AppUsuario", b =>
@@ -576,34 +807,46 @@ namespace ProyectoIdentity.Migrations
                     b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUser");
 
                     b.Property<string>("Ciudad")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<int>("CodigoPais")
-                        .HasColumnType("int");
+                    b.Property<string>("CodigoPais")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("Direccion")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
-                    b.Property<bool>("Estado")
-                        .HasColumnType("bit");
+                    b.Property<string>("Estado")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<DateTime>("FechaNacimiento")
+                    b.Property<DateTime?>("FechaNacimiento")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Nombre")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Pais")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("Password")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("PuntosFidelidad")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.Property<string>("Telefono")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Url")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasIndex("PuntosFidelidad");
 
                     b.HasDiscriminator().HasValue("AppUsuario");
                 });
@@ -659,19 +902,59 @@ namespace ProyectoIdentity.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ProyectoIdentity.Models.Gasto", b =>
+            modelBuilder.Entity("ProyectoIdentity.Models.CollectionPoint", b =>
                 {
-                    b.HasOne("ProyectoIdentity.Models.Departamento", "Departamento")
-                        .WithMany("Gastos")
-                        .HasForeignKey("DepartamentoId");
+                    b.HasOne("ProyectoIdentity.Models.Sucursal", "Sucursal")
+                        .WithMany()
+                        .HasForeignKey("SucursalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.HasOne("ProyectoIdentity.Models.Empleado", "Empleado")
-                        .WithMany("Gastos")
-                        .HasForeignKey("EmpleadoId");
+                    b.Navigation("Sucursal");
+                });
 
-                    b.Navigation("Departamento");
+            modelBuilder.Entity("ProyectoIdentity.Models.CuponCanjeado", b =>
+                {
+                    b.HasOne("ProyectoIdentity.Models.Cupon", "Cupon")
+                        .WithMany()
+                        .HasForeignKey("CuponId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("Empleado");
+                    b.HasOne("ProyectoIdentity.Models.Pedido", "Pedido")
+                        .WithMany()
+                        .HasForeignKey("PedidoId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("ProyectoIdentity.Models.AppUsuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Cupon");
+
+                    b.Navigation("Pedido");
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("ProyectoIdentity.Models.DetallePedido", b =>
+                {
+                    b.HasOne("ProyectoIdentity.Models.Pedido", "Pedido")
+                        .WithMany("DetallesPedido")
+                        .HasForeignKey("PedidoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ProyectoIdentity.Models.Producto", "Producto")
+                        .WithMany("DetallesPedido")
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pedido");
+
+                    b.Navigation("Producto");
                 });
 
             modelBuilder.Entity("ProyectoIdentity.Models.HistorialCanje", b =>
@@ -682,15 +965,49 @@ namespace ProyectoIdentity.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "Usuario")
+                    b.Navigation("ProductoRecompensa");
+                });
+
+            modelBuilder.Entity("ProyectoIdentity.Models.Pedido", b =>
+                {
+                    b.HasOne("ProyectoIdentity.Models.CollectionPoint", "PuntoRecoleccion")
+                        .WithMany()
+                        .HasForeignKey("PuntoRecoleccionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("ProyectoIdentity.Models.Sucursal", "Sucursal")
+                        .WithMany()
+                        .HasForeignKey("SucursalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ProyectoIdentity.Models.AppUsuario", null)
                         .WithMany()
                         .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("PuntoRecoleccion");
+
+                    b.Navigation("Sucursal");
+                });
+
+            modelBuilder.Entity("ProyectoIdentity.Models.PedidoDetalle", b =>
+                {
+                    b.HasOne("ProyectoIdentity.Models.Pedido", "Pedido")
+                        .WithMany("Detalles")
+                        .HasForeignKey("PedidoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ProductoRecompensa");
+                    b.HasOne("ProyectoIdentity.Models.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Navigation("Usuario");
+                    b.Navigation("Pedido");
+
+                    b.Navigation("Producto");
                 });
 
             modelBuilder.Entity("ProyectoIdentity.Models.PedidoProducto", b =>
@@ -702,10 +1019,14 @@ namespace ProyectoIdentity.Migrations
                         .IsRequired();
 
                     b.HasOne("ProyectoIdentity.Models.Producto", "Producto")
-                        .WithMany("PedidoProductos")
+                        .WithMany()
                         .HasForeignKey("ProductoId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("ProyectoIdentity.Models.Producto", null)
+                        .WithMany("PedidoProductos")
+                        .HasForeignKey("ProductoId1");
 
                     b.Navigation("Pedido");
 
@@ -715,7 +1036,7 @@ namespace ProyectoIdentity.Migrations
             modelBuilder.Entity("ProyectoIdentity.Models.Producto", b =>
                 {
                     b.HasOne("ProyectoIdentity.Models.Pedido", "Pedido")
-                        .WithMany()
+                        .WithMany("Productos")
                         .HasForeignKey("PedidoId");
 
                     b.Navigation("Pedido");
@@ -726,66 +1047,55 @@ namespace ProyectoIdentity.Migrations
                     b.HasOne("ProyectoIdentity.Models.Producto", "Producto")
                         .WithMany()
                         .HasForeignKey("ProductoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Producto");
                 });
 
-            modelBuilder.Entity("ProyectoIdentity.Models.Tarea", b =>
+            modelBuilder.Entity("ProyectoIdentity.Models.TransaccionPuntos", b =>
                 {
-                    b.HasOne("ProyectoIdentity.Models.Empleado", "Empleado")
-                        .WithMany("Tareas")
-                        .HasForeignKey("EmpleadoId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                    b.HasOne("ProyectoIdentity.Models.AppUsuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
 
-                    b.HasOne("ProyectoIdentity.Models.Proyecto", "Proyecto")
-                        .WithMany("Tareas")
-                        .HasForeignKey("ProyectoId")
+            modelBuilder.Entity("ProyectoIdentity.Models.Valoracion", b =>
+                {
+                    b.HasOne("ProyectoIdentity.Models.Pedido", "Pedido")
+                        .WithMany()
+                        .HasForeignKey("PedidoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Empleado");
-
-                    b.Navigation("Proyecto");
-                });
-
-            modelBuilder.Entity("ProyectoIdentity.Models.UsuarioPuntos", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "Usuario")
+                    b.HasOne("ProyectoIdentity.Models.AppUsuario", "Usuario")
                         .WithMany()
                         .HasForeignKey("UsuarioId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("Pedido");
+
                     b.Navigation("Usuario");
-                });
-
-            modelBuilder.Entity("ProyectoIdentity.Models.Departamento", b =>
-                {
-                    b.Navigation("Gastos");
-                });
-
-            modelBuilder.Entity("ProyectoIdentity.Models.Empleado", b =>
-                {
-                    b.Navigation("Gastos");
-
-                    b.Navigation("Tareas");
                 });
 
             modelBuilder.Entity("ProyectoIdentity.Models.Pedido", b =>
                 {
+                    b.Navigation("Detalles");
+
+                    b.Navigation("DetallesPedido");
+
                     b.Navigation("PedidoProductos");
+
+                    b.Navigation("Productos");
                 });
 
             modelBuilder.Entity("ProyectoIdentity.Models.Producto", b =>
                 {
-                    b.Navigation("PedidoProductos");
-                });
+                    b.Navigation("DetallesPedido");
 
-            modelBuilder.Entity("ProyectoIdentity.Models.Proyecto", b =>
-                {
-                    b.Navigation("Tareas");
+                    b.Navigation("PedidoProductos");
                 });
 #pragma warning restore 612, 618
         }

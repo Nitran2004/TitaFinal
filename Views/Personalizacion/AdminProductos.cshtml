@@ -1,0 +1,525 @@
+﻿@model List<ProyectoIdentity.Models.Producto>
+@{
+    ViewData["Title"] = "Administrar Productos";
+}
+<meta name="RequestVerificationToken" content="@Html.AntiForgeryToken().ToString().Replace("<input name=\"__RequestVerificationToken\" type=\"hidden\" value=\"", "").Replace("\" />", "")" />
+
+<style>
+    .admin-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px 0;
+        margin-bottom: 30px;
+        border-radius: 8px;
+    }
+
+    .stats-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #667eea;
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .product-image {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+
+    .btn-action {
+        margin: 0 2px;
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+
+    .category-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+    .price-badge {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+
+    /* ✅ ESTILOS PARA LA COLUMNA DE INGREDIENTES */
+    .ingredientes-info {
+        max-width: 200px;
+        font-size: 11px;
+    }
+
+    .ingrediente-item {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 4px 6px;
+        margin: 2px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .ingrediente-nombre {
+        font-weight: 500;
+        color: #495057;
+    }
+
+    .ingrediente-costo {
+        color: #28a745;
+        font-weight: 600;
+    }
+
+    .ingrediente-removible {
+        font-size: 10px;
+        padding: 1px 4px;
+        border-radius: 8px;
+    }
+
+    .removible-si {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .removible-no {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .no-personalizable {
+        background: #fff3cd;
+        color: #856404;
+        padding: 8px;
+        border-radius: 4px;
+        text-align: center;
+        font-size: 11px;
+        border: 1px solid #ffeaa7;
+    }
+
+    .personalizable-badge {
+        background: #d1ecf1;
+        color: #0c5460;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 600;
+    }
+</style>
+
+<div class="admin-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1><i class="fas fa-cogs"></i> Administrar Productos</h1>
+                <p class="mb-0">Gestiona todos los productos del menú</p>
+            </div>
+            <div class="col-md-4 text-right">
+                <a href="@Url.Action("CrearProducto")" class="btn btn-success btn-lg">
+                    <i class="fas fa-plus"></i> Nuevo Producto
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    @Html.AntiForgeryToken()
+
+    <!-- Estadísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">@Model.Count</div>
+                <div class="text-muted">Total Productos</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">@Model.Select(p => p.Categoria).Distinct().Count()</div>
+                <div class="text-muted">Categorías</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">$@Model.Average(p => p.Precio).ToString("F2")</div>
+                <div class="text-muted">Precio Promedio</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">@Model.Count(p => !string.IsNullOrEmpty(p.Ingredientes))</div>
+                <div class="text-muted">Personalizables</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <input type="text" id="searchInput" class="form-control" placeholder="🔍 Buscar productos...">
+        </div>
+        <div class="col-md-4">
+            <select id="categoryFilter" class="form-control">
+                <option value="">Todas las categorías</option>
+                @foreach (var categoria in Model.Select(p => p.Categoria).Distinct().OrderBy(c => c))
+                {
+                    <option value="@categoria">@categoria</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-outline-secondary btn-block" onclick="limpiarFiltros()">
+                <i class="fas fa-eraser"></i> Limpiar
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla de productos -->
+    <div class="table-container">
+        <table class="table table-hover mb-0" id="productosTable">
+            <thead class="thead-light">
+                <tr>
+                    <th width="80">Imagen</th>
+                    <th width="150">Nombre</th>
+                    <th width="100">Categoría</th>
+                    <th width="80">Precio</th>
+                    <th width="150">Descripción</th>
+                    <th width="250">Ingredientes</th>
+                    <th width="200">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var producto in Model.OrderBy(p => p.Categoria).ThenBy(p => p.Nombre))
+                {
+                    <tr data-categoria="@producto.Categoria" data-nombre="@producto.Nombre.ToLower()">
+                        <td>
+                            @if (producto.Imagen != null)
+                            {
+                                <img src="data:image/jpeg;base64,@Convert.ToBase64String(producto.Imagen)"
+                                     class="product-image" alt="@producto.Nombre">
+                            }
+                            else
+                            {
+                                <div class="product-image bg-light d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-image text-muted"></i>
+                                </div>
+                            }
+                        </td>
+                        <td>
+                            <strong>@producto.Nombre</strong>
+                        </td>
+                        <td>
+                            <span class="category-badge" style="background-color: @GetCategoryColor(producto.Categoria); color: white;">
+                                @producto.Categoria
+                            </span>
+                        </td>
+                        <td>
+                            <span class="price-badge">$@producto.Precio.ToString("F2")</span>
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(producto.Descripcion))
+                            {
+                                @(producto.Descripcion.Length > 50 ? producto.Descripcion.Substring(0, 50) + "..." : producto.Descripcion)
+                            }
+                            else
+                            {
+                                <span class="text-muted">Sin descripción</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="ingredientes-info">
+                                @if (EsPersonalizableCategoria(producto.Categoria))
+                                {
+                                    @if (!string.IsNullOrEmpty(producto.Ingredientes))
+                                    {
+                                        <span class="personalizable-badge mb-2 d-block">
+                                            <i class="fas fa-check-circle"></i> Personalizable
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <div class="text-center">
+                                            <span class="badge badge-warning">
+                                                <i class="fas fa-exclamation-triangle"></i> Sin ingredientes
+                                            </span>
+                                            <small class="d-block text-muted">Categoría personalizable</small>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="no-personalizable">
+                                        <i class="fas fa-ban"></i> No personalizable
+                                    </div>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="@Url.Action("DetalleProducto", new { id = producto.Id })"
+                                   class="btn btn-info btn-action" title="Ver detalle">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="@Url.Action("EditarProducto", new { id = producto.Id })"
+                                   class="btn btn-warning btn-action" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button onclick="eliminarProducto(@producto.Id, '@producto.Nombre')"
+                                        class="btn btn-danger btn-action" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">No hay productos registrados</h4>
+            <p class="text-muted">Comienza agregando tu primer producto</p>
+            <a href="@Url.Action("CrearProducto")" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Crear Primer Producto
+            </a>
+        </div>
+    }
+</div>
+
+<!-- Modal de confirmación para eliminar -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar este producto?</p>
+                <div class="alert alert-warning">
+                    <strong id="productName"></strong>
+                </div>
+                <p class="text-muted">
+                    <i class="fas fa-info-circle"></i> Esta acción no se puede deshacer.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="fas fa-trash"></i> Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let productoAEliminar = null;
+
+        // Función para eliminar producto
+        // Función para eliminar producto (SIN MODAL - como AdminCupones)
+        function eliminarProducto(id, nombre) {
+            // ✅ CONFIRMACIÓN SIMPLE SIN MODAL
+            if (!confirm(`¿Estás seguro de que deseas eliminar permanentemente el producto "${nombre}"?`)) {
+                return;
+            }
+
+            // ✅ OBTENER TOKEN ANTIFORGERY
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+            fetch('@Url.Action("EliminarProducto")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ Id: id })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error en la respuesta del servidor');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        // ✅ ELIMINAR LA FILA DE LA TABLA
+                        const rows = document.querySelectorAll('#productosTable tbody tr');
+                        rows.forEach(row => {
+                            const buttons = row.querySelectorAll('button[onclick*="' + id + '"]');
+                            if (buttons.length > 0) {
+                                row.remove();
+                            }
+                        });
+
+                        mostrarMensaje('success', data.message);
+                        actualizarEstadisticas();
+                    } else {
+                        mostrarMensaje('error', data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    mostrarMensaje('error', 'Error al eliminar el producto');
+                });
+        }
+
+        //
+
+        // Confirmar eliminación
+        document.getElementById('confirmDelete').addEventListener('click', function () {
+            if (productoAEliminar) {
+                // Mostrar loading
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Eliminando...';
+                this.disabled = true;
+
+                // ✅ OBTENER TOKEN ANTIFORGERY
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ||
+                    document.querySelector('meta[name="RequestVerificationToken"]')?.content || '';
+
+                fetch('@Url.Action("EliminarProducto")', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token  // ✅ AGREGAR TOKEN
+                    },
+                    body: JSON.stringify({ Id: productoAEliminar })  // ✅ USAR 'Id' en lugar de 'id'
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Error en la respuesta del servidor');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.success) {
+                            // ✅ BUSCAR Y ELIMINAR LA FILA CORRECTAMENTE
+                            const rows = document.querySelectorAll('#productosTable tbody tr');
+                            rows.forEach(row => {
+                                const buttons = row.querySelectorAll('button[onclick*="' + productoAEliminar + '"]');
+                                if (buttons.length > 0) {
+                                    row.remove();
+                                }
+                            });
+
+                            mostrarMensaje('success', data.message);
+                            actualizarEstadisticas();
+                        } else {
+                            mostrarMensaje('error', data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        mostrarMensaje('error', 'Error al eliminar el producto');
+                    })
+                    .finally(() => {
+                        $('#deleteModal').modal('hide');
+                        document.getElementById('confirmDelete').innerHTML = '<i class="fas fa-trash"></i> Eliminar';
+                        document.getElementById('confirmDelete').disabled = false;
+                        productoAEliminar = null;
+                    });
+            }
+        });
+        // Filtros
+        document.getElementById('searchInput').addEventListener('input', filtrarTabla);
+        document.getElementById('categoryFilter').addEventListener('change', filtrarTabla);
+
+        function filtrarTabla() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const selectedCategory = document.getElementById('categoryFilter').value;
+            const rows = document.querySelectorAll('#productosTable tbody tr');
+
+            rows.forEach(row => {
+                const nombre = row.dataset.nombre;
+                const categoria = row.dataset.categoria;
+
+                const matchesSearch = nombre.includes(searchTerm);
+                const matchesCategory = !selectedCategory || categoria === selectedCategory;
+
+                row.style.display = (matchesSearch && matchesCategory) ? '' : 'none';
+            });
+        }
+
+        function limpiarFiltros() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('categoryFilter').value = '';
+            filtrarTabla();
+        }
+
+        function mostrarMensaje(tipo, mensaje) {
+            // Crear toast de notificación
+            const toastHtml = `
+                    <div class="alert alert-${tipo === 'success' ? 'success' : 'danger'} alert-dismissible fade show" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+                        <i class="fas fa-${tipo === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${mensaje}
+                        <button type="button" class="close" data-dismiss="alert">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                `;
+
+            document.body.insertAdjacentHTML('beforeend', toastHtml);
+
+            // Auto-ocultar después de 3 segundos
+            setTimeout(() => {
+                const alert = document.querySelector('.alert:last-of-type');
+                if (alert) alert.remove();
+            }, 3000);
+        }
+
+        function actualizarEstadisticas() {
+            // Actualizar contadores después de eliminar
+            location.reload(); // Por simplicidad, recargar la página
+        }
+    </script>
+}
+
+@functions {
+    public string GetCategoryColor(string categoria)
+    {
+        return categoria?.ToLower() switch
+        {
+            "pizza" => "#ff6b6b",
+            "cerveza" => "#feca57",
+            "cocteles" => "#48dbfb",
+            "bebidas" => "#0abde3",
+            "promo" => "#ff9ff3",
+            "sánduches" or "sanduches" => "#54a0ff",
+            "shot" => "#5f27cd",
+            "picadas" => "#00d2d3",
+            _ => "#636e72"
+        };
+    }
+
+    public bool EsPersonalizableCategoria(string categoria)
+    {
+        var categoriasPersonalizables = new[] { "pizza", "sánduches", "sanduches", "picadas" };
+        return categoriasPersonalizables.Contains(categoria?.ToLower());
+    }
+}

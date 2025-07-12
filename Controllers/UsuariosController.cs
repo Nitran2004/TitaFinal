@@ -25,6 +25,7 @@ namespace ProyectoIdentity.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Index()
         {
             var usuarios = await _contexto.AppUsuario.ToListAsync();
@@ -293,23 +294,61 @@ namespace ProyectoIdentity.Controllers
             return View(model);
         }
 
-
-        public class PlainTextPasswordHasher : IPasswordHasher<IdentityUser>
+        [HttpPost]
+        public async Task<IActionResult> RehashearPasswords()
         {
-            public string HashPassword(IdentityUser user, string password)
+            var usuarios = await _contexto.AppUsuario.ToListAsync();
+
+            foreach (var usuario in usuarios)
             {
-                // En lugar de hacer hashing, devolver la contraseña en texto claro
-                return password;
+                // Si la contraseña está en texto plano (no tiene el formato de hash)
+                if (!string.IsNullOrEmpty(usuario.PasswordHash) &&
+                    !usuario.PasswordHash.StartsWith("AQAAAA")) // Los hash de Identity empiezan así
+                {
+                    // Guardar contraseña temporal
+                    string passwordOriginal = usuario.PasswordHash;
+
+                    // Generar token de reset
+                    var token = await _userManager.GeneratePasswordResetTokenAsync(usuario);
+
+                    // Usar Identity para hashear correctamente
+                    var resultado = await _userManager.ResetPasswordAsync(usuario, token, passwordOriginal);
+                }
             }
 
-            public PasswordVerificationResult VerifyHashedPassword(IdentityUser user, string hashedPassword, string providedPassword)
-            {
-                // Verifica si la contraseña coincide
-                return hashedPassword == providedPassword ? PasswordVerificationResult.Success : PasswordVerificationResult.Failed;
-            }
+            return Json(new { success = true, message = "Contraseñas rehasheadas" });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> FixPasswords()
+        {
+            var usuarios = _contexto.AppUsuario.ToList();
+            var resultados = new List<string>();
 
+            foreach (var usuario in usuarios)
+            {
+                if (!string.IsNullOrEmpty(usuario.PasswordHash) &&
+                    !usuario.PasswordHash.StartsWith("AQA"))
+                {
+                    string contraseñaOriginal = usuario.PasswordHash;
 
+                    // Crear usuario temporal
+                    var tempUser = new IdentityUser { UserName = usuario.UserName };
+                    var passwordHasher = new PasswordHasher<IdentityUser>();
+
+                    // Generar hash correcto
+                    string nuevoHash = passwordHasher.HashPassword(tempUser, contraseñaOriginal);
+
+                    // Actualizar en BD directamente
+                    usuario.PasswordHash = nuevoHash;
+                    _contexto.Update(usuario);
+
+                    resultados.Add($"Usuario {usuario.UserName}: Hash actualizado");
+                }
+            }
+
+            _contexto.SaveChanges();
+            return Json(new { message = "Completado", detalles = resultados });
+        }
     }
 }

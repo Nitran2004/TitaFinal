@@ -4,114 +4,220 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Verace</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/recompensas.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="~/ProyectoIdentity.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Toastr CSS para notificaciones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+
     @RenderSection("Styles", required: false)
-    
-<style>
-    body {
-        padding-bottom: 60px;
-        min-height: 100vh;
-        position: relative;
-        background-color: white; /* Fondo blanco */
-    }
 
-    .footer {
-        position: absolute;
-        bottom: 0;
-        width: 100%;
-        white-space: nowrap;
-        line-height: 60px;
-    }
-
-    .mobile-footer-nav {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background-color: white;
-        border-top: 1px solid #e6e6e6;
-        z-index: 1000;
-    }
-
-    .nav-container {
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        width: 100%;
-        padding: 0;
-        margin: 0;
-        list-style: none;
-    }
-
-    .nav-item-mobile {
-        flex: 1;
-        text-align: center;
-        padding: 8px 0;
-    }
-
-    .nav-link-mobile {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-decoration: none;
-        color: #6c757d;
-        font-size: 12px;
-    }
-
-    .nav-link-mobile.active {
-        color: black;
-    }
-
-    .nav-link-mobile i {
-        font-size: 22px;
-        margin-bottom: 4px;
-    }
-
-    media (max-width: 768px) {
+    <style>
         body {
-            padding-bottom: 70px;
+            padding-bottom: 60px;
+            min-height: 100vh;
+            position: relative;
+            background-color: white;
+        }
+
+        /* Estilos para el navbar */
+        .navbar-dark .navbar-nav .nav-link {
+            color: white !important;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .navbar-dark .navbar-nav .nav-link:hover {
+            color: rgba(255, 255, 255, 0.8) !important;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            text-decoration: none;
+        }
+
+        .navbar-dark .navbar-nav .nav-link.active {
+            color: white !important;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            text-decoration: none;
+        }
+
+        /* Asegurar que no haya subrayado en los iconos */
+        .navbar-dark .navbar-nav .nav-link i {
+            text-decoration: none !important;
+        }
+
+        /* Estilos para dropdowns */
+        .dropdown-menu {
+            background-color: white;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            margin-top: 0.5rem;
+        }
+
+        .dropdown-menu .dropdown-item {
+            color: #212529;
+            padding: 0.75rem 1.25rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .dropdown-menu .dropdown-item:hover {
+            background-color: #f8f9fa;
+            color: #212529;
+            text-decoration: none;
+        }
+
+        .dropdown-menu .dropdown-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Separadores en dropdowns */
+        .dropdown-divider {
+            margin: 0.5rem 0;
+        }
+
+        /* Estilos para secciones del menú */
+        .nav-section-title {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0 1rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .footer {
-            display: none;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            white-space: nowrap;
+            line-height: 60px;
         }
 
-        main {
-            padding-bottom: 70px;
-        }
-    }
-
-    media (min-width: 769px) {
+        /* Navegación móvil */
         .mobile-footer-nav {
-            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: white;
+            border-top: 1px solid #e6e6e6;
+            z-index: 1000;
         }
-    }
 
-        /* Fuerza el color negro en los enlaces y en los spans dentro */
+        .nav-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 100%;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+
+        .nav-item-mobile {
+            flex: 1;
+            text-align: center;
+            padding: 8px 0;
+        }
+
+        .nav-link-mobile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #6c757d;
+            font-size: 12px;
+        }
+
+        .nav-link-mobile.active {
+            color: black;
+        }
+
+        .nav-link-mobile i {
+            font-size: 22px;
+            margin-bottom: 4px;
+        }
+
+        /* Botón flotante QR */
+        .floating-qr-scanner {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .btn-scan-floating {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #6f42c1, #5a2d91);
+            color: white;
+            border: none;
+            box-shadow: 0 4px 15px rgba(111, 66, 193, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-scan-floating:hover {
+            background: linear-gradient(45deg, #5a2d91, #6f42c1);
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(111, 66, 193, 0.6);
+            text-decoration: none;
+        }
+
+        @@media (max-width: 768px) {
+            body {
+                padding-bottom: 70px;
+            }
+
+            .footer {
+                display: none;
+            }
+
+            main {
+                padding-bottom: 70px;
+            }
+        }
+
+        @@edia (min-width: 769px) {
+            .mobile-footer-nav {
+                display: none;
+            }
+        }
+
         .mobile-footer-nav .nav-link-mobile,
         .mobile-footer-nav .nav-link-mobile span {
             color: black !important;
         }
 
-            /* Si también quieres que el icono herede el mismo color */
-            .mobile-footer-nav .nav-link-mobile i {
-                color: black !important;
-            }
-</style>
-
+        .mobile-footer-nav .nav-link-mobile i {
+            color: black !important;
+        }
+    </style>
 </head>
 <body>
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
             <div class="container">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
-                    <img src="~/images1/logo_bar_verace.png" alt="Logo" class="logo" style="height: 40px;">
+                    <img src="~/images1/logo_bar_verace.png" alt="Logo" class="logo" style="height: 78px; width: auto;">
                 </a>
                 <button class="navbar-toggler menu-button" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
@@ -119,107 +225,410 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                            @if (User.IsInRole("Administrador"))
-                            {
-                            <li class="nav-item">
-                                <a class="nav-link text-white" asp-area="" asp-controller="Usuarios" asp-action="Index">Administracion de Usuarios</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-white" asp-area="" asp-controller="Roles" asp-action="Index">Administracion de Roles</a>
+                        
+                        @if (User.IsInRole("Administrador"))
+                        {
+                            <!-- SECCIÓN ADMINISTRACIÓN DE SISTEMA -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="adminSystemDropdown" role="button" data-bs-toggle="dropdown">
+                                    Administración Sistema
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Usuarios" asp-action="Index">
+                                            <i class="fas fa-users"></i> Gestión de Usuarios
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Roles" asp-action="Index">
+                                            <i class="fas fa-user-tag"></i> Gestión de Roles
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Index", "AdminCupones")">
+                                            <i class="fas fa-ticket-alt"></i> Admin Cupones
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="Personalizacion" asp-action="AdminProductos">
+                                            <i class="fas fa-utensils"></i> Admin Productos
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("AdminRecompensas", "Fidelizacion")">
+                                            <i class="fas fa-gift"></i> Admin Recompensas
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-area="" asp-controller="AdminCollection" asp-action="Index">
+                                            <i class="fas fa-map-marker-alt"></i> Puntos de Recolección
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
                         }
-                        <li class="nav-item">
-                            <a class="nav-link text-white" asp-area="" asp-controller="Home" asp-action="Privacy">Privacidad</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" asp-area="" asp-controller="Books" asp-action="Index">Libros</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Pedidos" asp-action="Resumen">Pedidos</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Productos" asp-action="Index">Productos</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Productos" asp-action="Menu">Menu</a>
-                        </li>
-                    
-                    </ul>
-                    <div class="ms-auto">
-                        <a id="carrito-icono" class="btn btn-outline-dark" href="#" onclick="mostrarCarrito(); return false;">
-                            <i class="fas fa-shopping-cart me-1"></i>
-                            Carrito
-                            <span id="carrito-contador" class="badge bg-dark text-white ms-1 rounded-pill">0</span>
-                        </a>
-                    </div>
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Cuentas" asp-action="Registro">Registro</a>
-                    </li>
-                    @*Vista parcial para acceso (login y regitro)*@
-                    <partial name="_LoginRegistroVistaParcial" />
 
-@*                     <ul class="navbar-nav ml-auto">
-                        <li class="nav-item">
-                            @await Component.InvokeAsync("CartSummary")
-                        </li>
-                        <partial name="_LoginRegistroVistaParcial" />
-                    </ul> *@
+                        @if (User.IsInRole("Administrador") || User.IsInRole("Cajero"))
+                        {
+                            <!-- SECCIÓN OPERACIONES -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="operationsDropdown" role="button" data-bs-toggle="dropdown">
+                                    Operaciones
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Pedidos" asp-action="ResumenAdmin">
+                                            <i class="fas fa-shopping-cart"></i> Resumen de Pedidos
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="AdminCanjesIndex">
+                                            <i class="fas fa-gift"></i> Resumen de Canjes
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="Historial">
+                                            <i class="fas fa-history"></i> Resumen Completo
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Cupones" asp-action="EscanearQR">
+                                            <i class="fas fa-qrcode"></i> Escanear Cupones QR
+                                        </a>
+                                    </li>
+                                    <a class="dropdown-item" href="@Url.Action("MargenPorProducto", "Personalizacion")">
+                                        <i class="fas fa-chart-line"></i> Análisis de Costos
+                                    </a>
+                                </ul>
+                            </li>
+                        }
+
+                        <!-- PARA ADMINISTRADOR Y CAJERO - Dropdown -->
+                        @if (User.IsInRole("Administrador") || User.IsInRole("Cajero"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarProductos" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-store"></i> Tienda
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Personalizacion" asp-action="Index">
+                                            <i class="fas fa-box"></i> Productos Personalizables
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="MenuRecomendacion" asp-action="Recomendacion">
+                                            <i class="fas fa-robot"></i> Recomendaciones IA
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="Recompensas">
+                                            <i class="fas fa-gift"></i> Ver Recompensas
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Cupones" asp-action="Index">
+                                            <i class="fas fa-ticket-alt"></i> Mis Cupones
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+
+                        @if (User.IsInRole("Administrador") || User.IsInRole("Registrado"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarCarritos" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-shopping-cart"></i> Mis Carritos
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Personalizacion" asp-action="VerCarrito">
+                                            <i class="fas fa-utensils"></i> Carrito Personalización
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="MenuRecomendacion" asp-action="VerCarrito">
+                                            <i class="fas fa-robot"></i> Carrito Recomendaciones IA
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+
+                        <!-- PARA REGISTRADO - Menú normal como antes -->
+                        @if (User.IsInRole("Registrado"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Personalizacion" asp-action="Index">
+                                    Productos 
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="MenuRecomendacion" asp-action="Recomendacion">
+                                    Recomendaciones IA
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Fidelizacion" asp-action="Recompensas">
+                                    Ver Recompensas
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Cupones" asp-action="Index">
+                                    Mis Cupones
+                                </a>
+                            </li>
+                        }
+                        @if (User.IsInRole("Registrado") || User.IsInRole("Administrador"))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user-circle"></i> Mis Pedidos
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Personalizacion" asp-action="UltimoPedido">
+                                            <i class="fas fa-shopping-cart"></i> Pedidos
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Fidelizacion" asp-action="MisCanjes">
+                                            <i class="fas fa-exchange-alt"></i> Mis Canjes
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="PedidoRecomendacion" asp-action="MisPedidos">
+                                            <i class="fas fa-star"></i> Mis Pedidos Recomendación
+                                        </a>
+                                    </li>
+                                    
+                                </ul>
+                            </li>
+                        }                    
+                    </ul>
+
+                    <!-- Vista parcial para acceso (login y registro) -->
+                    <partial name="_LoginRegistroVistaParcial" />
                 </div>
             </div>
         </nav>
     </header>
-    
+
+    <!-- Botón flotante QR para móviles (solo admin/cajero) -->
+    @if (User.IsInRole("Administrador") || User.IsInRole("Cajero"))
+    {
+        <div class="floating-qr-scanner d-lg-none">
+            <a href="@Url.Action("EscanearQR", "Cupones")" class="btn btn-scan-floating" title="Escanear QR">
+                <i class="fas fa-qrcode fa-2x"></i>
+            </a>
+        </div>
+    }
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
-    
-    <!-- Barra de navegación inferior para móviles (según la imagen proporcionada) -->
-    <nav class="mobile-footer-nav">
-        <ul class="nav-container">
-            <li class="nav-item-mobile">
-                <a href="/Home/Index" class="nav-link-mobile active">
-                    <i class="bi bi-house-fill" style="color: black;"></i>
-                    <span style="color:black;">Inicio</span>
-                </a>
-            </li>
-            <li class="nav-item-mobile">
-                <a href="/Cupones/Cupones" class="nav-link-mobile">
-                    <i class="bi bi-tag-fill" style="color: black;"></i>
-                    <span style="color:black;">Cupones</span>
-                </a>
-            </li>
-            <li class="nav-item-mobile">
-                <a href="/Pedidos/Pedidos" class="nav-link-mobile">
-                    <i class="bi bi-list" style="color: black;"></i>
-                    <span style="color:black;">Pedidos</span>
-                </a>
-            </li>
-            <li class="nav-item-mobile">
-                <a href="/Recompensas/Recompensas" class="nav-link-mobile">
-                    <i class="bi bi-trophy" style="color: black;"></i>
-                    <span style="color:black;">Recompensas</span>
-                </a>
-            </li>
-            <li class="nav-item-mobile">
-                <a href="/Cuenta/Cuenta" class="nav-link-mobile">
-                    <i class="bi bi-person" style="color: black;"></i>
-                    <span style="color:black;">Cuenta</span>
-                </a>
-            </li>
-        </ul>
-    </nav>
-    
+
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2025 - Verace - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacidad</a>
+            &copy; 2025 - Verace
         </div>
     </footer>
-    
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Modal para visualizar el carrito -->
+    <div class="modal fade" id="carrito-modal" tabindex="-1" aria-labelledby="carrito-modal-label" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="carrito-modal-label">Tu Carrito</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Precio</th>
+                                <th>Cantidad</th>
+                                <th>Subtotal</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="carrito-items">
+                            <!-- Los items del carrito se cargarán aquí dinámicamente -->
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3" class="text-end fw-bold">Total:</td>
+                                <td id="carrito-total" class="fw-bold">$0.00</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Seguir Comprando</button>
+                    <form asp-controller="Pedidos" asp-action="ProcesarCarrito" method="post">
+                        <input type="hidden" id="pedido-json" name="pedidoJson" value="" />
+                        <button type="submit" class="btn btn-success">Procesar Pedido</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <!-- Toastr JS para notificaciones -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <!-- Configuración global de Toastr -->
+    <script>
+        toastr.options = {
+            "closeButton": true,
+            "debug": false,
+            "newestOnTop": false,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "preventDuplicates": false,
+            "onclick": null,
+            "showDuration": "300",
+            "hideDuration": "1000",
+            "timeOut": "5000",
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut"
+        };
+    </script>
+
+    <!-- Scripts para el carrito -->
+    <script>
+        // Función global para actualizar el contador del carrito
+        window.actualizarContadorCarrito = function () {
+            const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+            const cantidad = carrito.reduce((total, item) => total + parseInt(item.cantidad), 0);
+
+            const contadorElement = document.getElementById('carrito-contador');
+            if (contadorElement) {
+                contadorElement.textContent = cantidad;
+            }
+        }
+
+        // Función para mostrar el carrito
+        function mostrarCarrito() {
+            const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+            const tbody = document.getElementById('carrito-items');
+            tbody.innerHTML = '';
+
+            if (carrito.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Tu carrito está vacío</td></tr>';
+                document.getElementById('carrito-total').textContent = '$0.00';
+                document.getElementById('pedido-json').value = '';
+            } else {
+                let total = 0;
+
+                carrito.forEach((item, index) => {
+                    const subtotal = item.precio * item.cantidad;
+                    total += subtotal;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${item.nombre}</td>
+                        <td>${item.precio.toFixed(2)}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <button type="button" class="btn btn-sm btn-outline-secondary decrease-qty" data-index="${index}">-</button>
+                                <span class="mx-2">${item.cantidad}</span>
+                                <button type="button" class="btn btn-sm btn-outline-secondary increase-qty" data-index="${index}">+</button>
+                            </div>
+                        </td>
+                        <td>${subtotal.toFixed(2)}</td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-danger remove-item" data-index="${index}">Eliminar</button>
+                        </td>
+                    `;
+
+                    tbody.appendChild(tr);
+                });
+
+                document.getElementById('carrito-total').textContent = '$' + total.toFixed(2);
+                document.getElementById('pedido-json').value = JSON.stringify(carrito);
+            }
+
+            const carritoModal = new bootstrap.Modal(document.getElementById('carrito-modal'));
+            carritoModal.show();
+
+            configurarBotonesCarrito();
+        }
+
+        // Configurar eventos para los botones del carrito
+        function configurarBotonesCarrito() {
+            document.querySelectorAll('.decrease-qty').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+
+                    if (carrito[index].cantidad > 1) {
+                        carrito[index].cantidad--;
+                        localStorage.setItem('carrito', JSON.stringify(carrito));
+                        actualizarContadorCarrito();
+                        mostrarCarrito();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.increase-qty').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+
+                    carrito[index].cantidad++;
+                    localStorage.setItem('carrito', JSON.stringify(carrito));
+                    actualizarContadorCarrito();
+                    mostrarCarrito();
+                });
+            });
+
+            document.querySelectorAll('.remove-item').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+
+                    carrito.splice(index, 1);
+                    localStorage.setItem('carrito', JSON.stringify(carrito));
+                    actualizarContadorCarrito();
+                    mostrarCarrito();
+                });
+            });
+        }
+
+        // Inicializar contador al cargar la página
+        document.addEventListener('DOMContentLoaded', function () {
+            actualizarContadorCarrito();
+
+            // Si hay un mensaje para limpiar el carrito
+            if (@(TempData["LimpiarCarrito"] != null ? "true" : "false")) {
+                localStorage.removeItem('carrito');
+                actualizarContadorCarrito();
+            }
+
+            // Asegurar que los dropdowns funcionen
+            var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
+            var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+                return new bootstrap.Dropdown(dropdownToggleEl);
+            });
+        });
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

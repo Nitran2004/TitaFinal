@@ -1,0 +1,298 @@
+﻿@model RecompensasViewModel
+@{
+    ViewData["Title"] = "Mi Carrito de Recompensas";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3><i class="fas fa-gift"></i> Mi Carrito de Recompensas</h3>
+                    <a href="@Url.Action("Recompensas", "Fidelizacion")" class="btn btn-outline-secondary">
+                        <i class="fas fa-plus"></i> Agregar Más Recompensas
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div id="carritoVacio" style="display: none;">
+                        <div class="text-center py-5">
+                            <i class="fas fa-gift fa-3x text-muted"></i>
+                            <h4 class="mt-3">Tu carrito está vacío</h4>
+                            <p class="text-muted">Agrega recompensas desde el catálogo</p>
+                            <a href="@Url.Action("Recompensas", "Fidelizacion")" class="btn btn-success">
+                                Ver Recompensas
+                            </a>
+                        </div>
+                    </div>
+
+                    <div id="carritoConItems">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Recompensa</th>
+                                        <th>Puntos</th>
+                                        <th>Cantidad</th>
+                                        <th>Total Puntos</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaCarrito">
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6 offset-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h5>Resumen del Canje</h5>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Puntos Disponibles:</span>
+                                            <span class="text-primary fw-bold">@Model.PuntosUsuario pts</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Total Items:</span>
+                                            <span id="totalItems">0</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <strong>Total Puntos a Usar:</strong>
+                                            <strong id="totalPuntos">0 pts</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>Puntos Restantes:</span>
+                                            <span id="puntosRestantes" class="text-success">@Model.PuntosUsuario pts</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-ticket-alt"></i> Opciones de Canje</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Datos del Usuario</h6>
+                        <p class="mb-1"><strong>Usuario:</strong> @User.Identity.Name</p>
+                        <p class="mb-0">Se usarán los datos de tu perfil para el canje.</p>
+                    </div>
+
+                    <form id="formRecompensas">
+                        @Html.AntiForgeryToken()
+
+                        <div id="itemsOcultos">
+                            <!-- Aquí se insertarán dinámicamente los campos ocultos -->
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100" id="btnCanjearRecompensas" disabled>
+                            <i class="fas fa-gift"></i> Canjear Recompensas
+                        </button>
+
+                        <div class="mt-3 text-center">
+                            <small class="text-muted">
+                                <i class="fas fa-lock"></i> Canje seguro - Selecciona punto de recolección después
+                            </small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const PUNTOS_USUARIO = @Model.PuntosUsuario;
+        cargarCarrito();
+
+        // Manejar envío del formulario
+        document.getElementById('formRecompensas').addEventListener('submit', function (e) {
+            e.preventDefault();
+            procesarCanje();
+        });
+    });
+
+    function cargarCarrito() {
+        let carrito = JSON.parse(localStorage.getItem('carritoRecompensas') || '[]');
+
+        if (carrito.length === 0) {
+            document.getElementById('carritoVacio').style.display = 'block';
+            document.getElementById('carritoConItems').style.display = 'none';
+            return;
+        }
+
+        document.getElementById('carritoVacio').style.display = 'none';
+        document.getElementById('carritoConItems').style.display = 'block';
+
+        let tabla = document.getElementById('tablaCarrito');
+        tabla.innerHTML = '';
+
+        let totalItems = 0;
+        let totalPuntos = 0;
+
+        carrito.forEach(function (item, index) {
+            totalItems += item.cantidad;
+            totalPuntos += item.totalPuntos;
+
+            let fila = `
+                <tr>
+                    <td>${item.nombre}</td>
+                    <td>${item.puntosUnitarios} pts</td>
+                    <td>
+                        <div class="input-group" style="width: 120px;">
+                            <button class="btn btn-outline-secondary btn-sm" onclick="cambiarCantidad(${index}, -1)">-</button>
+                            <input type="number" class="form-control text-center" value="${item.cantidad}" readonly>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="cambiarCantidad(${index}, 1)">+</button>
+                        </div>
+                    </td>
+                    <td>${item.totalPuntos} pts</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarItem(${index})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tabla.innerHTML += fila;
+        });
+
+        document.getElementById('totalItems').textContent = totalItems;
+        document.getElementById('totalPuntos').textContent = totalPuntos + ' pts';
+        document.getElementById('puntosRestantes').textContent = (PUNTOS_USUARIO - totalPuntos) + ' pts';
+
+        // Validar si tiene suficientes puntos
+        const btnCanjear = document.getElementById('btnCanjearRecompensas');
+        if (totalPuntos <= PUNTOS_USUARIO && totalItems > 0) {
+            btnCanjear.disabled = false;
+            btnCanjear.className = 'btn btn-success w-100';
+            document.getElementById('puntosRestantes').className = 'text-success';
+        } else {
+            btnCanjear.disabled = true;
+            btnCanjear.className = 'btn btn-secondary w-100';
+            if (totalPuntos > PUNTOS_USUARIO) {
+                document.getElementById('puntosRestantes').className = 'text-danger';
+            }
+        }
+
+        // Actualizar campos ocultos para el formulario
+        actualizarCamposOcultos(carrito);
+    }
+
+    function cambiarCantidad(index, cambio) {
+        let carrito = JSON.parse(localStorage.getItem('carritoRecompensas') || '[]');
+
+        carrito[index].cantidad += cambio;
+
+        if (carrito[index].cantidad <= 0) {
+            carrito.splice(index, 1);
+        } else {
+            carrito[index].totalPuntos = carrito[index].cantidad * carrito[index].puntosUnitarios;
+        }
+
+        localStorage.setItem('carritoRecompensas', JSON.stringify(carrito));
+        cargarCarrito();
+    }
+
+    function eliminarItem(index) {
+        let carrito = JSON.parse(localStorage.getItem('carritoRecompensas') || '[]');
+        carrito.splice(index, 1);
+        localStorage.setItem('carritoRecompensas', JSON.stringify(carrito));
+        cargarCarrito();
+    }
+
+    function actualizarCamposOcultos(carrito) {
+        const container = document.getElementById('itemsOcultos');
+        container.innerHTML = '';
+
+        carrito.forEach(function (item, index) {
+            container.innerHTML += `
+                <input type="hidden" name="recompensasSeleccionadas[${index}].RecompensaId" value="${item.id}">
+                <input type="hidden" name="recompensasSeleccionadas[${index}].Seleccionada" value="true">
+                <input type="hidden" name="recompensasSeleccionadas[${index}].Cantidad" value="${item.cantidad}">
+            `;
+        });
+    }
+
+    function procesarCanje() {
+        let carrito = JSON.parse(localStorage.getItem('carritoRecompensas') || '[]');
+
+        if (carrito.length === 0) {
+            alert('El carrito está vacío');
+            return;
+        }
+
+        const btnCanjear = document.getElementById('btnCanjearRecompensas');
+        btnCanjear.disabled = true;
+        btnCanjear.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+
+        // Enviar el formulario
+        document.getElementById('formRecompensas').action = '@Url.Action("CanjearMultiplesRecompensas", "Fidelizacion")';
+        document.getElementById('formRecompensas').submit();
+    }
+
+    // Función para agregar al carrito (llamada desde la página de recompensas)
+    function agregarAlCarrito(id, nombre, puntosUnitarios) {
+        let carrito = JSON.parse(localStorage.getItem('carritoRecompensas') || '[]');
+
+        let itemExistente = carrito.find(item => item.id === id);
+
+        if (itemExistente) {
+            itemExistente.cantidad += 1;
+            itemExistente.totalPuntos = itemExistente.cantidad * itemExistente.puntosUnitarios;
+        } else {
+            carrito.push({
+                id: id,
+                nombre: nombre,
+                puntosUnitarios: puntosUnitarios,
+                cantidad: 1,
+                totalPuntos: puntosUnitarios
+            });
+        }
+
+        localStorage.setItem('carritoRecompensas', JSON.stringify(carrito));
+        alert(nombre + ' agregado al carrito!');
+    }
+</script>
+
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .input-group .btn {
+        border-radius: 0;
+    }
+
+    .input-group .form-control {
+        border-left: none;
+        border-right: none;
+    }
+
+    .alert-info {
+        background-color: #e7f3ff;
+        border-color: #b8daff;
+        color: #0c5460;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+
+        .btn-success:disabled {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+</style>
