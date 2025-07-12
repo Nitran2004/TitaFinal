@@ -9,7 +9,7 @@ using System.Text;
 
 namespace ProyectoIdentity.Controllers
 {
-    [Authorize]
+    //[Authorize]
     public class PersonalizacionController : Controller
     {
         private readonly ApplicationDbContext _context;
