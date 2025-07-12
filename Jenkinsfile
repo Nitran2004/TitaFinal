@@ -25,26 +25,22 @@ pipeline {
             }
         }
         
-        stage('Install SonarScanner') {
-            steps {
-                echo 'Verificando SonarScanner para .NET...'
-                bat '''
-                    dotnet tool list --global | findstr dotnet-sonarscanner || dotnet tool install --global dotnet-sonarscanner --ignore-failed-sources
-                    echo "SonarScanner verificado/instalado"
-                '''
-            }
-        }
-        
         stage('SonarQube Analysis Start') {
             steps {
                 echo 'Iniciando análisis de SonarQube...'
                 withSonarQubeEnv('SonarQube') {
-                    bat """
-                        dotnet sonarscanner begin ^
-                            /k:"${SONAR_PROJECT_KEY}" ^
-                            /n:"${SONAR_PROJECT_NAME}" ^
-                            /d:sonar.host.url="${SONAR_HOST_URL}"
-                    """
+                    script {
+                        def scannerHome = tool 'SonarQube Scanner'
+                        bat """
+                            "${scannerHome}\\bin\\sonar-scanner.bat" ^
+                                -Dsonar.projectKey=${SONAR_PROJECT_KEY} ^
+                                -Dsonar.projectName="${SONAR_PROJECT_NAME}" ^
+                                -Dsonar.sources=. ^
+                                -Dsonar.host.url=${SONAR_HOST_URL} ^
+                                -Dsonar.exclusions=**/bin/**,**/obj/**,**/*.dll,**/packages/** ^
+                                -Dsonar.cs.opencover.reportsPaths=**/coverage.opencover.xml
+                        """
+                    }
                 }
             }
         }
@@ -65,10 +61,8 @@ pipeline {
         
         stage('SonarQube Analysis End') {
             steps {
-                echo 'Finalizando análisis de SonarQube...'
-                withSonarQubeEnv('SonarQube') {
-                    bat 'dotnet sonarscanner end'
-                }
+                echo 'Análisis de SonarQube completado en stage anterior'
+                // El scanner general de SonarQube no requiere comando "end"
             }
         }
         
