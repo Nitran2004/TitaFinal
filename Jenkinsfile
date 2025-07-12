@@ -1,16 +1,13 @@
 pipeline {
     agent any
     
-    tools {
-        // Usar la configuración de .NET que configuramos en Jenkins
-        dotnetsdk '.NET 6'
-    }
-    
     environment {
         // Variables para SonarQube
         SONAR_PROJECT_KEY = 'mi-proyecto-csharp'
         SONAR_PROJECT_NAME = 'TitaFinal'
         SONAR_HOST_URL = 'http://localhost:9000'
+        // Path para .NET (asumiendo instalación estándar)
+        PATH = "${env.PATH};C:\\Program Files\\dotnet"
     }
     
     stages {
