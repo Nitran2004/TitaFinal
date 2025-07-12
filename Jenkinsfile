@@ -25,13 +25,6 @@ pipeline {
             }
         }
         
-        stage('Install SonarScanner') {
-            steps {
-                echo 'Instalando SonarScanner para .NET...'
-                bat 'dotnet tool install --global dotnet-sonarscanner --ignore-failed-sources'
-            }
-        }
-        
         stage('SonarQube Analysis Start') {
             steps {
                 echo 'Iniciando análisis de SonarQube...'
