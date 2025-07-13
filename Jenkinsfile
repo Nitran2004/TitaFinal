@@ -29,18 +29,15 @@ pipeline {
             steps {
                 echo 'Iniciando análisis de SonarQube...'
                 withSonarQubeEnv('SonarQube') {
-                    script {
-                        def scannerHome = tool 'SonarQube Scanner'
-                        bat """
-                            "${scannerHome}\\bin\\sonar-scanner.bat" ^
-                                -Dsonar.projectKey=${SONAR_PROJECT_KEY} ^
-                                -Dsonar.projectName="${SONAR_PROJECT_NAME}" ^
-                                -Dsonar.sources=. ^
-                                -Dsonar.host.url=${SONAR_HOST_URL} ^
-                                -Dsonar.exclusions=**/bin/**,**/obj/**,**/*.dll,**/packages/** ^
-                                -Dsonar.cs.opencover.reportsPaths=**/coverage.opencover.xml
-                        """
-                    }
+                    bat '''
+                        dotnet sonarscanner begin ^
+                            /k:"%SONAR_PROJECT_KEY%" ^
+                            /n:"%SONAR_PROJECT_NAME%" ^
+                            /d:sonar.host.url="%SONAR_HOST_URL%" ^
+                            /d:sonar.cs.opencover.reportsPaths="TestResults/**/coverage.opencover.xml" ^
+                            /d:sonar.cs.vstest.reportsPaths="TestResults/*.trx" ^
+                            /d:sonar.exclusions="**/bin/**,**/obj/**,**/*.dll,**/packages/**,**/wwwroot/lib/**"
+                    '''
                 }
             }
         }
@@ -52,17 +49,36 @@ pipeline {
             }
         }
         
-        stage('Test') {
+        stage('Test & Coverage') {
             steps {
-                echo 'Ejecutando pruebas...'
-                bat 'dotnet test --no-restore --no-build --configuration Release --logger trx --collect:"XPlat Code Coverage"'
+                echo 'Ejecutando pruebas y generando cobertura...'
+                bat '''
+                    dotnet test --no-restore --no-build --configuration Release ^
+                        --logger trx ^
+                        --collect:"XPlat Code Coverage" ^
+                        --results-directory TestResults ^
+                        -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+                '''
+            }
+            post {
+                always {
+                    // Publicar resultados de tests
+                    publishTestResults testResultsPattern: 'TestResults/*.trx'
+                    
+                    // Publicar cobertura (si tienes el plugin de Coverage)
+                    publishCoverage adapters: [
+                        openCoverageAdapter('TestResults/**/coverage.opencover.xml')
+                    ], sourceFileResolver: sourceFiles('STORE_LAST_BUILD')
+                }
             }
         }
         
         stage('SonarQube Analysis End') {
             steps {
-                echo 'Análisis de SonarQube completado en stage anterior'
-                // El scanner general de SonarQube no requiere comando "end"
+                echo 'Finalizando análisis de SonarQube...'
+                withSonarQubeEnv('SonarQube') {
+                    bat 'dotnet sonarscanner end'
+                }
             }
         }
         
@@ -74,18 +90,32 @@ pipeline {
                 }
             }
         }
+        
+        stage('Archive Artifacts') {
+            steps {
+                echo 'Archivando artefactos...'
+                archiveArtifacts artifacts: 'TestResults/**/*', allowEmptyArchive: true
+                archiveArtifacts artifacts: '**/bin/Release/**/*.dll', allowEmptyArchive: true
+            }
+        }
     }
     
     post {
         always {
             echo 'Pipeline completado'
             // Limpiar archivos temporales si es necesario
+            bat 'if exist TestResults rmdir /s /q TestResults'
         }
         success {
             echo 'Pipeline ejecutado exitosamente!'
+            echo 'Revisa la cobertura en SonarQube: ${SONAR_HOST_URL}/dashboard?id=${SONAR_PROJECT_KEY}'
         }
         failure {
             echo 'Pipeline falló. Revisar logs.'
+            // Enviar notificación de error (opcional)
+        }
+        unstable {
+            echo 'Pipeline inestable. Revisar Quality Gate.'
         }
     }
 }
