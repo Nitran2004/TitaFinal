@@ -18,17 +18,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Views\Productos\Bebidas.cshtml" />
-    <None Include="Views\Productos\Cerveza.cshtml" />
-    <None Include="Views\Productos\Cocteles.cshtml" />
     <None Include="Views\Productos\Detalle.cshtml" />
     <None Include="Views\Productos\Index.cshtml" />
     <None Include="Views\Productos\Menu.cshtml" />
-    <None Include="Views\Productos\Picadas.cshtml" />
-    <None Include="Views\Productos\Pizzas.cshtml" />
-    <None Include="Views\Productos\Promos.cshtml" />
-    <None Include="Views\Productos\Sanduches.cshtml" />
-    <None Include="Views\Productos\Shots.cshtml" />
   </ItemGroup>
 
   <ItemGroup>
