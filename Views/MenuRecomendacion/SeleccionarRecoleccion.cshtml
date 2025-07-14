@@ -13,40 +13,22 @@
             <p class="mb-0">Para: <strong>@productoNombre</strong></p>
         </div>
         <div class="card-body">
-            <!-- ✅ MENSAJE DE UBICACIÓN REQUERIDA -->
+            <!-- MENSAJE INICIAL -->
             <div id="locationRequired" class="alert alert-info">
                 <i class="fas fa-map-marker-alt"></i>
-                <strong>Solicitando acceso a tu ubicación...</strong>
-                <p class="mb-0">Acepta el permiso que aparece en tu navegador para continuar.</p>
+                <strong>Detectando tu ubicación...</strong>
+                <p class="mb-0">Acepta el permiso para calcular distancias.</p>
             </div>
 
+            <!-- MENSAJE DE CARGA -->
             <div id="loadingLocation" style="display: none;">
                 <div class="alert alert-warning">
-                    <i class="fas fa-spinner fa-spin"></i> Obteniendo tu ubicación para calcular distancias...
+                    <i class="fas fa-spinner fa-spin"></i> Obteniendo ubicación...
                 </div>
             </div>
 
-            <!-- ✅ MENSAJE DE ERROR CON FALLBACK PARA iOS -->
-            <div id="locationError" style="display: none;">
-                <div class="alert alert-danger">
-                    <h5><i class="fas fa-exclamation-triangle"></i> Ubicación denegada</h5>
-                    <p>Para continuar, necesitas permitir el acceso a tu ubicación:</p>
-                    <ol>
-                        <li><strong>Haz clic en el botón "Intentar de nuevo"</strong></li>
-                        <li><strong>Acepta el permiso</strong> cuando aparezca la ventana del navegador</li>
-                        <li>Si no aparece la ventana, haz clic en el <strong>ícono de ubicación</strong> en la barra de direcciones</li>
-                    </ol>
-                    <button id="retryLocation" class="btn btn-warning btn-lg">
-                        <i class="fas fa-location-arrow"></i> Intentar de nuevo
-                    </button>
-                    <button id="useQuitoLocation" class="btn btn-success btn-lg mt-2">
-                        <i class="fas fa-map"></i> Usar coordenadas de Quito
-                    </button>
-                    <small class="d-block mt-3 text-muted">
-                        <strong>💡 Tip:</strong> Busca el ícono <i class="fas fa-map-marker-alt"></i> o <i class="fas fa-lock"></i> en la barra de direcciones y haz clic para permitir la ubicación.
-                    </small>
-                </div>
-            </div>
+            <!-- MENSAJE DE ERROR -->
+            <div id="locationError" style="display: none;"></div>
 
             <!-- Contenedor de puntos -->
             <div id="puntosContainer" style="display: none;">
@@ -54,26 +36,27 @@
                     @foreach (var punto in Model)
                     {
                         <div class="col-md-6">
-                            <div class="card">
+                            <div class="card mb-3">
                                 <div class="card-body">
                                     <h5>@punto.Name</h5>
                                     <p>
                                         <strong>Sucursal:</strong> @punto.Sucursal.Nombre<br />
                                         <strong>Dirección:</strong> @punto.Address<br />
                                         <strong>Distancia:</strong>
-                                        <span class="distance-value"
-                                              data-id="@punto.Id"
+                                        <span class="distance-value" data-id="@punto.Id" 
                                               data-lat="@punto.Sucursal.Latitud.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                               data-lng="@punto.Sucursal.Longitud.ToString(System.Globalization.CultureInfo.InvariantCulture)">
                                             Calculando...
                                         </span>
                                     </p>
-                                    <form asp-action="ContinuarConDetalle" asp-controller="MenuRecomendacion" method="post">
+                                    
+                                    <!-- FORMULARIO SIMPLE -->
+                                    <form method="post" action="/MenuRecomendacion/ConfirmarRecoleccion">
+                                        <input type="hidden" name="id" value="@punto.Id" />
                                         <input type="hidden" name="productoId" value="@productoId" />
-                                        <input type="hidden" name="puntoRecoleccionId" value="@punto.Id" />
-                                        <input type="hidden" name="userLat" class="userLat-input" id="userLat-@punto.Id" value="" />
-                                        <input type="hidden" name="userLng" class="userLng-input" id="userLng-@punto.Id" value="" />
-                                        <input type="hidden" name="distancia" class="distancia-input" id="distancia-@punto.Id" value="" />
+                                        <input type="hidden" name="userLat" class="userLat-input" value="" />
+                                        <input type="hidden" name="userLng" class="userLng-input" value="" />
+                                        <input type="hidden" name="distancia" class="distancia-input" value="" />
                                         <button type="submit" class="btn btn-warning w-100">
                                             Seleccionar este punto
                                         </button>
@@ -97,194 +80,101 @@
 @section scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Elementos del DOM
+            console.log('🚀 Iniciando geolocalización');
+            
             const locationRequired = document.getElementById('locationRequired');
             const loadingLocation = document.getElementById('loadingLocation');
             const locationError = document.getElementById('locationError');
-            const retryLocationBtn = document.getElementById('retryLocation');
-            const useQuitoLocationBtn = document.getElementById('useQuitoLocation');
             const puntosContainer = document.getElementById('puntosContainer');
             const distanceElements = document.querySelectorAll('.distance-value');
             const userLatInputs = document.querySelectorAll('.userLat-input');
             const userLngInputs = document.querySelectorAll('.userLng-input');
             const distanciaInputs = document.querySelectorAll('.distancia-input');
 
-            // ✅ DETECTAR DISPOSITIVOS
-            function esSafariIOS() {
-                return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-            }
-
-            function esMobile() {
-                return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            }
-
-            // Función para calcular la distancia
+            // Función simple para calcular distancia
             function calcularDistancia(lat1, lon1, lat2, lon2) {
-                lat1 = parseFloat(String(lat1).replace(',', '.'));
-                lon1 = parseFloat(String(lon1).replace(',', '.'));
-                lat2 = parseFloat(String(lat2).replace(',', '.'));
-                lon2 = parseFloat(String(lon2).replace(',', '.'));
-
-                console.log(`Calculando distancia entre: (${lat1}, ${lon1}) y (${lat2}, ${lon2})`);
-
-                if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) {
-                    console.error("Coordenadas inválidas", { lat1, lon1, lat2, lon2 });
-                    return 0;
-                }
-
-                const toRad = function (deg) {
-                    return deg * (Math.PI / 180);
-                };
-
+                const toRad = (deg) => deg * (Math.PI / 180);
                 const R = 6371;
                 const dLat = toRad(lat2 - lat1);
                 const dLon = toRad(lon2 - lon1);
-
                 const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
                     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
                     Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
                 const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                const distance = R * c;
-
-                console.log(`Distancia calculada: ${distance} km`);
-
-                return distance;
+                return R * c;
             }
 
+            // Actualizar distancias
             function actualizarDistancias(userLat, userLng) {
-                console.log(`Actualizando distancias con coordenadas: ${userLat}, ${userLng}`);
+                console.log(`📍 Actualizando con: ${userLat}, ${userLng}`);
 
-                userLatInputs.forEach(input => {
-                    input.value = String(userLat).replace(',', '.');
-                });
-                userLngInputs.forEach(input => {
-                    input.value = String(userLng).replace(',', '.');
-                });
+                // Llenar inputs
+                userLatInputs.forEach(input => input.value = userLat);
+                userLngInputs.forEach(input => input.value = userLng);
 
+                // Calcular distancias
                 distanceElements.forEach(function (element) {
-                    const puntoId = element.getAttribute('data-id');
-                    const sucursalLat = parseFloat(element.getAttribute('data-lat').replace(',', '.'));
-                    const sucursalLng = parseFloat(element.getAttribute('data-lng').replace(',', '.'));
-
+                    const sucursalLat = parseFloat(element.getAttribute('data-lat'));
+                    const sucursalLng = parseFloat(element.getAttribute('data-lng'));
                     const distancia = calcularDistancia(userLat, userLng, sucursalLat, sucursalLng);
                     const distanciaRedondeada = distancia.toFixed(2);
 
-                    const distanciaInput = document.getElementById(`distancia-${puntoId}`);
+                    // Actualizar input de distancia del formulario correspondiente
+                    const puntoId = element.getAttribute('data-id');
+                    const form = element.closest('.card-body').querySelector('form');
+                    const distanciaInput = form.querySelector('.distancia-input');
                     if (distanciaInput) {
                         distanciaInput.value = distanciaRedondeada;
                     }
 
-                    element.textContent = distanciaRedondeada + ' km';
-                    element.classList.remove('text-success', 'text-warning', 'text-danger');
-
-                    if (distancia < 3) {
-                        element.classList.add('text-success');
-                        element.innerHTML = distanciaRedondeada + ' km <i class="fas fa-check-circle"></i>';
-                    } else if (distancia < 7) {
-                        element.classList.add('text-warning');
-                        element.innerHTML = distanciaRedondeada + ' km';
-                    } else {
-                        element.classList.add('text-danger');
-                        element.innerHTML = distanciaRedondeada + ' km';
-                    }
+                    // Mostrar distancia sin emojis
+                    element.innerHTML = `${distanciaRedondeada} km`;
                 });
 
+                // Mostrar puntos
                 locationRequired.style.display = 'none';
                 loadingLocation.style.display = 'none';
                 locationError.style.display = 'none';
                 puntosContainer.style.display = 'block';
             }
 
+            // Obtener ubicación
             function obtenerUbicacion() {
                 locationRequired.style.display = 'none';
                 loadingLocation.style.display = 'block';
-                locationError.style.display = 'none';
-                puntosContainer.style.display = 'none';
 
                 if (navigator.geolocation) {
-                    // ✅ CONFIGURACIÓN ESPECÍFICA POR DISPOSITIVO
-                    let options;
-                    if (esSafariIOS()) {
-                        options = {
-                            enableHighAccuracy: false,
-                            timeout: 30000,
-                            maximumAge: 300000
-                        };
-                    } else {
-                        options = {
-                            enableHighAccuracy: true,
-                            timeout: 15000,
-                            maximumAge: 0
-                        };
-                    }
-
                     navigator.geolocation.getCurrentPosition(
                         function (position) {
-                            const userLat = position.coords.latitude;
-                            const userLng = position.coords.longitude;
-                            actualizarDistancias(userLat, userLng);
+                            console.log('✅ Ubicación obtenida');
+                            actualizarDistancias(position.coords.latitude, position.coords.longitude);
                         },
                         function (error) {
+                            console.log('❌ Error, usando ubicación por defecto');
                             loadingLocation.style.display = 'none';
+                            locationError.innerHTML = `
+                                <div class="alert alert-warning">
+                                    <strong>No se pudo obtener tu ubicación.</strong> 
+                                    Usando ubicación de Quito por defecto.
+                                    <button onclick="obtenerUbicacion()" class="btn btn-sm btn-warning ms-2">Reintentar</button>
+                                </div>
+                            `;
                             locationError.style.display = 'block';
-                            puntosContainer.style.display = 'none';
-
-                            // ✅ FALLBACK AUTOMÁTICO PARA iOS
-                            if (esSafariIOS()) {
-                                setTimeout(function () {
-                                    console.log('[iOS FALLBACK] Usando coordenadas de Quito automáticamente');
-
-                                    loadingLocation.innerHTML = `
-                                                <div class="alert alert-success">
-                                                    <i class="fas fa-map-marker-alt"></i>
-                                                    <strong>📱 Usando coordenadas de Quito</strong>
-                                                    <p class="mb-0">Para iPhone/iPad usamos coordenadas de la ciudad por defecto.</p>
-                                                </div>
-                                            `;
-                                    loadingLocation.style.display = 'block';
-                                    locationError.style.display = 'none';
-
-                                    setTimeout(function () {
-                                        actualizarDistancias(-0.1857, -78.4678);
-                                    }, 2000);
-                                }, 3000);
-                            }
+                            // Usar Quito como ubicación por defecto
+                            actualizarDistancias(-0.1857, -78.4678);
                         },
-                        options
+                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
                     );
                 } else {
-                    loadingLocation.style.display = 'none';
-                    locationError.style.display = 'block';
-                    puntosContainer.style.display = 'none';
+                    console.log('❌ Geolocalización no soportada');
+                    actualizarDistancias(-0.1857, -78.4678);
                 }
             }
 
-            // ✅ CONFIGURACIÓN INICIAL SEGÚN DISPOSITIVO
-            if (esSafariIOS()) {
-                locationRequired.innerHTML = `
-                            <i class="fas fa-map-marker-alt"></i>
-                            <strong>📱 Solicitando acceso a tu ubicación...</strong>
-                            <p class="mb-0">En iPhone/iPad, si no permites la ubicación, usaremos coordenadas de Quito.</p>
-                            <small class="text-muted">💡 Acepta el permiso para distancias exactas</small>
-                        `;
-            }
+            // Hacer función global
+            window.obtenerUbicacion = obtenerUbicacion;
 
-            // Event listeners
-            if (retryLocationBtn) {
-                retryLocationBtn.addEventListener('click', function () {
-                    obtenerUbicacion();
-                });
-            }
-
-            if (useQuitoLocationBtn) {
-                useQuitoLocationBtn.addEventListener('click', function () {
-                    console.log('Usuario decidió usar coordenadas de Quito');
-                    actualizarDistancias(-0.1857, -78.4678);
-                });
-            }
-
-            // ✅ OBTENER UBICACIÓN AUTOMÁTICAMENTE AL CARGAR
+            // Iniciar
             obtenerUbicacion();
         });
     </script>
@@ -297,11 +187,11 @@
             background-color: #F2A900;
             border-color: #F2A900;
         }
-
-            .btn-warning:hover {
-                color: #fff;
-                background-color: #e09600;
-                border-color: #d48e00;
-            }
+        .btn-warning:hover {
+            background-color: #e09600;
+            border-color: #d48e00;
+        }
+        .fa-spinner { animation: spin 1s linear infinite; }
+        @@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 }

@@ -605,18 +605,18 @@
         container.innerHTML = '<div class="smart-fallback"><i class="fas fa-utensils"></i></div>';
     }
 
-    // ✅ VARIABLES GLOBALES PARA LÍMITES CORREGIDAS
+    // ✅ VARIABLES GLOBALES PARA LÍMITES CORREGIDAS - LÍMITE VISUAL SIEMPRE 3
     let limitesActuales = {
-        productosActivos: 0,        // ✅ NOMBRE CORRECTO
-        limite: 4,
-        disponibles: 4,
-        productosEnCarritos: 0,     // ✅ NOMBRE CORRECTO
+        productosActivos: 0,        
+        limite: 3,                  // ✅ LÍMITE VISUAL SIEMPRE 3
+        disponibles: 3,             // ✅ DISPONIBLES MÁXIMO 3
+        productosEnCarritos: 0,     
         totalOcupados: 0,
         permitido: true,
         mensaje: ""
     };
 
-    // ✅ FUNCIÓN PARA CARGAR LÍMITES CON NOMBRES CORREGIDOS
+    // ✅ FUNCIÓN PARA CARGAR LÍMITES CON LÍMITE VISUAL FIJO DE 3
     async function cargarEstadoUnificado() {
         try {
             const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
@@ -624,45 +624,48 @@
 
             console.log('[DEBUG] Datos recibidos:', data);
 
-            // ✅ TOMAR DATOS DEL BACKEND (límite 4 real)
+            // ✅ TOMAR DATOS DEL BACKEND PERO APLICAR LÍMITE VISUAL DE 3
             const productosActivos = data.productosActivos || 0;
             const productosCarritos = data.productosEnCarritos || 0;
-            const disponibles = data.disponibles || 0;
-            const limite = data.limite || 4;  // ✅ BACKEND MANEJA 4
+            const limiteBackend = data.limite || 4;  // Backend puede seguir usando 4
+            const disponiblesBackend = data.disponibles || 0;
             const totalOcupados = productosActivos + productosCarritos;
 
-            // ✅ ACTUALIZAR VARIABLES GLOBALES CON DATOS REALES
+            // ✅ APLICAR LÍMITE VISUAL DE 3 PARA TODO
+            const LIMITE_VISUAL = 3;
+            const productosActivosVisual = Math.min(LIMITE_VISUAL, productosActivos);
+            const productosCarritosVisual = Math.min(LIMITE_VISUAL, productosCarritos);
+            const totalVisual = productosActivosVisual + productosCarritosVisual;
+            const disponiblesVisual = Math.max(0, LIMITE_VISUAL - totalVisual);
+
+            // ✅ DETERMINAR SI ESTÁ PERMITIDO BASADO EN LÍMITE VISUAL
+            const permitidoVisual = totalVisual < LIMITE_VISUAL;
+
+            // ✅ ACTUALIZAR VARIABLES GLOBALES CON LÍMITE VISUAL DE 3
             limitesActuales = {
-                productosActivos: productosActivos,
-                limite: limite,  // Mantener el 4 del backend
-                disponibles: disponibles,
-                productosEnCarritos: productosCarritos,
-                totalOcupados: totalOcupados,
-                permitido: data.permitido || disponibles > 0,
+                productosActivos: productosActivosVisual,
+                limite: LIMITE_VISUAL,  // ✅ SIEMPRE 3
+                disponibles: disponiblesVisual,
+                productosEnCarritos: productosCarritosVisual,
+                totalOcupados: totalVisual,
+                permitido: permitidoVisual,
                 mensaje: data.mensaje || ""
             };
 
-            // ✅ MOSTRAR VISUALMENTE LÍMITE 3 (ENGAÑO PARA EL USUARIO)
-            const limiteVisual = 3;
-            const disponiblesVisuales = Math.min(3, disponibles);  // No mostrar más de 3
-            const activosVisuales = Math.min(3, productosActivos);  // No mostrar más de 3
-            const carritosVisuales = Math.min(3, productosCarritos); // No mostrar más de 3
-            const totalVisuales = activosVisuales + carritosVisuales;
-
             // ✅ ACTUALIZAR INTERFAZ CON VALORES VISUALES (LÍMITE 3)
-            document.getElementById('disponibles-count').textContent = disponiblesVisuales;
-            document.getElementById('activos-count').textContent = activosVisuales + '/' + limiteVisual;
-            document.getElementById('carritos-count').textContent = carritosVisuales;
-            document.getElementById('limite-info').textContent = Math.min(3, totalOcupados) + '/' + limiteVisual;
+            document.getElementById('disponibles-count').textContent = disponiblesVisual;
+            document.getElementById('activos-count').textContent = productosActivosVisual + '/' + LIMITE_VISUAL;
+            document.getElementById('carritos-count').textContent = productosCarritosVisual;
+            document.getElementById('limite-info').textContent = totalVisual + '/' + LIMITE_VISUAL;
 
             // ✅ MOSTRAR/OCULTAR Y CAMBIAR COLOR SEGÚN ESTADO
             const estadoElement = document.getElementById('estado-unificado');
 
-            if (totalOcupados > 0) {
+            if (totalVisual > 0) {
                 estadoElement.style.display = 'block';
 
-                // ✅ USAR DISPONIBLES REALES PARA LA LÓGICA, PERO MOSTRAR LÍMITE 3
-                if (disponibles === 0) {
+                // ✅ LÓGICA BASADA EN LÍMITE VISUAL DE 3
+                if (totalVisual >= LIMITE_VISUAL) {
                     estadoElement.className = 'alert alert-danger';
                     // ✅ DESHABILITAR TODOS LOS BOTONES
                     document.querySelectorAll('.btn-seleccionar').forEach(btn => {
@@ -670,7 +673,7 @@
                         btn.innerHTML = '<i class="fas fa-ban"></i> Límite Alcanzado';
                         btn.className = 'btn-seleccionar btn-secondary';
                     });
-                } else if (disponibles <= 1) {
+                } else if (disponiblesVisual <= 1) {
                     estadoElement.className = 'alert alert-warning';
                     // ✅ MANTENER BOTONES HABILITADOS PERO CON WARNING
                     document.querySelectorAll('.btn-seleccionar').forEach(btn => {
@@ -698,15 +701,15 @@
                 });
             }
 
-                console.log('[DEBUG] Estado unificado actualizado:', limitesActuales);
-            console.log(`[DEBUG] Visual: ${disponiblesVisuales} disponibles, ${totalVisuales}/3 ocupados`);
+            console.log('[DEBUG] Estado unificado actualizado:', limitesActuales);
+            console.log(`[DEBUG] Visual: ${disponiblesVisual} disponibles, ${totalVisual}/3 ocupados`);
         } catch (error) {
             console.error('Error al cargar estado unificado:', error);
-            // ✅ VALORES POR DEFECTO SEGUROS
+            // ✅ VALORES POR DEFECTO SEGUROS CON LÍMITE 3
             limitesActuales = {
                 productosActivos: 0,
-                limite: 4,
-                disponibles: 4,
+                limite: 3,  // ✅ LÍMITE VISUAL 3
+                disponibles: 3,
                 productosEnCarritos: 0,
                 totalOcupados: 0,
                 permitido: true,
@@ -715,24 +718,22 @@
         }
     }
 
-    // ✅ FUNCIÓN PARA VALIDAR Y SELECCIONAR PRODUCTO
+    // ✅ FUNCIÓN PARA VALIDAR Y SELECCIONAR PRODUCTO CON LÍMITE VISUAL DE 3
     async function validarYSeleccionar(productoId) {
         console.log(`[DEBUG] Validando selección para producto ${productoId}`);
 
         // Recargar límites antes de validar
         await cargarEstadoUnificado();
 
-        // ✅ USAR DISPONIBLES REALES DEL BACKEND (no los visuales)
-        if (limitesActuales.disponibles === 0) {
-            console.log('[DEBUG] Sin productos disponibles - mostrando modal');
+        // ✅ USAR LÍMITE VISUAL DE 3
+        if (limitesActuales.totalOcupados >= 3) {
+            console.log('[DEBUG] Límite de 3 productos alcanzado - mostrando modal');
             mostrarModalLimite();
             return false;
         }
 
-        // ✅ PERMITIR HASTA 3 PRODUCTOS EFECTIVOS (aunque backend maneje 4)
-        const totalEfectivo = Math.min(3, limitesActuales.totalOcupados);
-        if (totalEfectivo >= 3) {
-            console.log('[DEBUG] Límite visual de 3 alcanzado - mostrando modal');
+        if (limitesActuales.disponibles === 0) {
+            console.log('[DEBUG] Sin productos disponibles - mostrando modal');
             mostrarModalLimite();
             return false;
         }
@@ -740,6 +741,40 @@
         console.log('[DEBUG] Validación pasada - redirigiendo');
         // Si hay espacio disponible, continuar con la selección
         window.location.href = '@Url.Action("IniciarPersonalizacion")?id=' + productoId;
+    }
+
+    // ✅ FUNCIÓN PARA MOSTRAR MODAL DE LÍMITE
+    function mostrarModalLimite() {
+        const modal = new bootstrap.Modal(document.getElementById('modalLimiteAlcanzado'));
+        const content = document.getElementById('mensaje-limite-content');
+        
+        content.innerHTML = `
+            <div class="alert alert-warning">
+                <h6><i class="fas fa-exclamation-triangle"></i> Límite alcanzado</h6>
+                <p>Has alcanzado el límite máximo de <strong>3 productos</strong> entre personalización y recomendación IA.</p>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <div class="text-center">
+                        <h4 class="text-warning">${limitesActuales.totalOcupados}</h4>
+                        <small>Productos activos</small>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="text-center">
+                        <h4 class="text-success">3</h4>
+                        <small>Límite máximo</small>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <p class="text-muted mb-0">
+                <i class="fas fa-info-circle"></i>
+                Espera a que se entreguen tus pedidos para poder agregar nuevos productos.
+            </p>
+        `;
+        
+        modal.show();
     }
 
     // ✅ ESCUCHAR CAMBIOS EN CARRITOS
@@ -778,9 +813,9 @@
     window.debugLimites = function () {
         console.log('=== DEBUG LÍMITES ===');
         console.log('Límites actuales:', limitesActuales);
-        console.log('Disponibles reales:', limitesActuales.disponibles);
-        console.log('Disponibles visuales:', Math.min(3, limitesActuales.disponibles));
+        console.log('Disponibles:', limitesActuales.disponibles);
         console.log('Total ocupados:', limitesActuales.totalOcupados);
+        console.log('Límite:', limitesActuales.limite);
         console.log('===================');
     };
 

@@ -68,7 +68,7 @@
                             </p>
                             <p class="card-text">
                                 <strong>Distancia:</strong>
-                                <span class="@(ViewBag.Distancia < 3 ? "text-success" : (ViewBag.Distancia < 7 ? "text-warning" : "text-danger"))">
+                                <span id="distancia-display" class="@(ViewBag.Distancia < 3 ? "text-success" : (ViewBag.Distancia < 7 ? "text-warning" : "text-danger"))">
                                     @distanciaFormateada km
                                     @if (ViewBag.Distancia < 3)
                                     {
@@ -144,10 +144,12 @@
                     }
                     else
                     {
-                        <!-- Flujo normal: finalizar pedido -->
+                        <!-- 🔥 FORMULARIO CORREGIDO: Ahora envía los parámetros que espera el controlador -->
                         <form asp-action="FinalizarPedido" asp-controller="Recoleccion" method="post" id="formFinalizarPedido">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="puntoRecoleccionId" value="@puntoRecoleccionId" />
+                            <input type="hidden" name="tipoServicio" value="Para llevar" />
+                            <input type="hidden" name="observaciones" value="" />
                             <button type="submit" class="btn btn-success" id="btnFinalizar">
                                 <i class="fas fa-check"></i> Confirmar y finalizar pedido
                             </button>
@@ -165,10 +167,89 @@
     </div>
 </div>
 
+<!-- Datos para recálculo de distancia -->
+<script>
+    window.sucursalLat = @Model.Sucursal.Latitud.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    window.sucursalLng = @Model.Sucursal.Longitud.ToString(System.Globalization.CultureInfo.InvariantCulture);
+</script>
+
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const esPersonalizacion = @(esPersonalizacion ? "true" : "false");
+
+            // Función para calcular distancia
+            function calcularDistancia(lat1, lon1, lat2, lon2) {
+                lat1 = parseFloat(String(lat1).replace(',', '.'));
+                lon1 = parseFloat(String(lon1).replace(',', '.'));
+                lat2 = parseFloat(String(lat2).replace(',', '.'));
+                lon2 = parseFloat(String(lon2).replace(',', '.'));
+
+                if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) {
+                    return 0;
+                }
+
+                const toRad = function (deg) { return deg * (Math.PI / 180); };
+                const R = 6371;
+                const dLat = toRad(lat2 - lat1);
+                const dLon = toRad(lon2 - lon1);
+
+                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                return R * c;
+            }
+
+            // Función para actualizar la visualización de la distancia
+            function actualizarDistanciaEnVista(distancia) {
+                const distanciaDisplay = document.getElementById('distancia-display');
+
+                if (distanciaDisplay) {
+                    const distanciaRedondeada = distancia.toFixed(2);
+
+                    // Limpiar clases existentes
+                    distanciaDisplay.classList.remove('text-success', 'text-warning', 'text-danger');
+
+                    // Aplicar estilo según la distancia
+                    if (distancia < 3) {
+                        distanciaDisplay.classList.add('text-success');
+                        distanciaDisplay.innerHTML = `${distanciaRedondeada} km <i class="fas fa-check-circle"></i>`;
+                    } else if (distancia < 7) {
+                        distanciaDisplay.classList.add('text-warning');
+                        distanciaDisplay.innerHTML = `${distanciaRedondeada} km`;
+                    } else {
+                        distanciaDisplay.classList.add('text-danger');
+                        distanciaDisplay.innerHTML = `${distanciaRedondeada} km`;
+                    }
+                }
+            }
+
+            // Intentar obtener ubicación y recalcular
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function (position) {
+                        console.log('✅ Ubicación obtenida para recalcular');
+                        const userLat = position.coords.latitude;
+                        const userLng = position.coords.longitude;
+
+                        const distanciaCalculada = calcularDistancia(userLat, userLng, window.sucursalLat, window.sucursalLng);
+                        console.log(`Distancia recalculada: ${distanciaCalculada.toFixed(2)} km`);
+
+                        actualizarDistanciaEnVista(distanciaCalculada);
+                    },
+                    function (error) {
+                        console.log("Error obteniendo ubicación:", error);
+                        // Mantener la distancia que viene del servidor
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 300000
+                    }
+                );
+            }
 
             // Configurar el formulario según el tipo de flujo
             if (esPersonalizacion) {
@@ -192,6 +273,7 @@
                             e.preventDefault();
                             return false;
                         }
+                        console.log('✅ Enviando formulario a FinalizarPedido');
                         return true;
                     });
                 }

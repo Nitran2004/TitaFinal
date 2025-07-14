@@ -113,7 +113,7 @@ using (var scope = app.Services.CreateScope())
     DbInitializer.Initialize(context);
     RecompensasInitializer.Initialize(context);
 }
-///// app.UseHttpsRedirection();
+ app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 var provider = new FileExtensionContentTypeProvider();
