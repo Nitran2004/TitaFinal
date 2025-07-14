@@ -19,7 +19,7 @@
                     <!-- Mensaje principal -->
                     <div class="alert alert-warning mb-4">
                         <h5><i class="fas fa-info-circle"></i> Estado actual:</h5>
-                        <p class="mb-0">@Model.MensajePersonalizado</p>
+                        <p class="mb-0">@Model.MensajePersonalizado.Replace("3/4", "3/3").Replace("/4", "/3")</p>
                     </div>
 
                     <!-- Estadísticas -->
