@@ -204,13 +204,13 @@
                 infoElement.className = 'alert alert-warning mb-3';
                 mensajeElement.innerHTML = `
                     <strong>Casi en el límite:</strong> Solo puedes agregar ${disponibles} producto(s) más.
-                    Tienes ${productosActuales}/${limite} productos en pedidos activos.
-                `;
+@*                     Tienes ${productosActuales}/${limite} productos en pedidos activos.
+ *@                `;
             } else {
                 infoElement.className = 'alert alert-info mb-3';
                 mensajeElement.innerHTML = `
-                    Puedes agregar hasta ${disponibles} producto(s) más. (${productosActuales}/${limite} productos activos)
-                `;
+@*                     Puedes agregar hasta ${disponibles} producto(s) más. (${productosActuales}/${limite} productos activos)
+ *@                `;
             }
 
         } catch (error) {

@@ -647,22 +647,22 @@
             infoElement.className = 'alert alert-warning mt-3';
             infoElement.innerHTML = `
                     <i class="fas fa-exclamation-triangle"></i>
-                    <strong>Límite alcanzado:</strong> Tienes ${productosActualesSeguro}/${limiteSeguro} productos en pedidos activos.
-                    <br><small>Espera a que se entreguen para pedir más productos.</small>
+@*                     <strong>Límite alcanzado:</strong> Tienes ${productosActualesSeguro}/${limiteSeguro} productos en pedidos activos.
+ *@                    <br><small>Espera a que se entreguen para pedir más productos.</small>
                 `;
         } else if (disponibles <= 1) {
             infoElement.className = 'alert alert-warning mt-3';
             infoElement.innerHTML = `
                     <i class="fas fa-info-circle"></i>
                     <strong>Casi en el límite:</strong> Solo puedes agregar ${disponibles} producto(s) más.
-                    <br><small>Tienes ${productosActualesSeguro}/${limiteSeguro} productos en pedidos activos.</small>
-                `;
+@*                     <br><small>Tienes ${productosActualesSeguro}/${limiteSeguro} productos en pedidos activos.</small>
+ *@                `;
         } else {
             infoElement.className = 'alert alert-info mt-3';
             infoElement.innerHTML = `
                     <i class="fas fa-info-circle"></i>
-                    Puedes agregar hasta ${disponibles} producto(s) más. (${productosActualesSeguro}/${limiteSeguro} productos activos)
-                `;
+@*                     Puedes agregar hasta ${disponibles} producto(s) más. (${productosActualesSeguro}/${limiteSeguro} productos activos)
+ *@                `;
         }
     }
 
