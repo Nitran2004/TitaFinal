@@ -9,6 +9,10 @@
     // ✅ CONDICIÓN PARA MOSTRAR BOTONES AR - SOLO PIZZA Y SÁNDWICHES
     bool mostrarBotonesAR = Model.Categoria.ToLower() == "pizza" ;
 }
+<div id="info-limite-global" class="alert" style="display: none; margin: 20px;">
+    <!-- Contenido dinámico -->
+</div>
+
 
 <style>
     .product-container {
@@ -568,103 +572,59 @@
     // ✅ VARIABLES GLOBALES PARA LÍMITES
     let limitesActuales = { productosActuales: 0, limite: 3, disponibles: 3 };
 
-    // ✅ FUNCIÓN PARA CARGAR LÍMITES ACTUALES
-    async function cargarLimitesProductos() {
-        try {
-            const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
-            const data = await response.json();
-            
-            // Asegurar valores por defecto
-            limitesActuales = {
-                productosActuales: data.productosActuales || 0,
-                limite: data.limite || 3,
-                disponibles: data.disponibles || 3
-            };
-
-            console.log('[DEBUG] Límites cargados:', limitesActuales);
-
-            // Actualizar interfaz según límites
-            actualizarInterfazLimites();
-
-            // Si ya está en el límite, mostrar mensaje
-            if (limitesActuales.disponibles === 0) {
-                mostrarMensajeLimite(data.mensaje || 'Has alcanzado el límite de productos');
-            }
-        } catch (error) {
-            console.error('Error al cargar límites:', error);
-            // Valores por defecto en caso de error
-            limitesActuales = { productosActuales: 0, limite: 3, disponibles: 3 };
-        }
+   async function cargarLimitesProductos() {
+    try {
+        const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
+        const data = await response.json();
+        limitesActuales = data;
+        actualizarInterfazLimites();
+        console.log('[DEBUG] Límites cargados:', data);
+    } catch (error) {
+        console.error('Error al cargar límites:', error);
     }
+}
 
     // ✅ FUNCIÓN PARA ACTUALIZAR LA INTERFAZ SEGÚN LÍMITES
-    function actualizarInterfazLimites() {
-        const cantidadInput = document.getElementById('cantidad');
-        const maxPermitido = Math.min(10, limitesActuales.disponibles);
+       function actualizarInterfazLimites() {
+        const { productosActivos, limite, disponibles, productosEnCarritos, totalOcupados, permitido, mensaje } = limitesActuales;
+        const infoLimiteGlobal = document.getElementById('info-limite-global');
 
-        // Actualizar el máximo permitido en el input
-        cantidadInput.max = maxPermitido;
-
-        // Si la cantidad actual excede el límite, ajustarla
-        if (parseInt(cantidadInput.value) > maxPermitido) {
-            cantidadInput.value = maxPermitido;
-        }
-
-        // Deshabilitar botón + si está en el límite
-        const botonMas = document.querySelector('.quantity-btn[onclick="cambiarCantidad(1)"]');
-        if (maxPermitido <= parseInt(cantidadInput.value)) {
-            botonMas.disabled = true;
-            botonMas.style.opacity = '0.5';
-            botonMas.style.cursor = 'not-allowed';
-        } else {
-            botonMas.disabled = false;
-            botonMas.style.opacity = '1';
-            botonMas.style.cursor = 'pointer';
-        }
-
-        // Mostrar información de límite
-        mostrarInfoLimite();
-    }
-
-    // ✅ FUNCIÓN PARA MOSTRAR INFORMACIÓN DEL LÍMITE
-    function mostrarInfoLimite() {
-        let infoElement = document.getElementById('info-limite');
-        if (!infoElement) {
-            // Crear elemento de información si no existe
-            infoElement = document.createElement('div');
-            infoElement.id = 'info-limite';
-            infoElement.className = 'alert alert-info mt-3';
-
-            const cantidadContainer = document.querySelector('.quantity-control').parentNode;
-            cantidadContainer.appendChild(infoElement);
-        }
-
-        const { productosActuales, limite, disponibles } = limitesActuales;
-        const productosActualesSeguro = productosActuales || 0;
-        const limiteSeguro = limite || 3;
-
-        if (disponibles === 0) {
-            infoElement.className = 'alert alert-warning mt-3';
-            infoElement.innerHTML = `
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <strong>Límite alcanzado:</strong> Tienes ${productosActualesSeguro}/${limiteSeguro} productos en pedidos activos.
-                    <br><small>Espera a que se entreguen para pedir más productos.</small>
+        if (!permitido || disponibles === 0) {
+            if (infoLimiteGlobal) {
+                infoLimiteGlobal.className = 'alert alert-danger';
+                infoLimiteGlobal.style.display = 'block';
+                infoLimiteGlobal.innerHTML = `
+                    <h6><i class="fas fa-exclamation-triangle"></i> Límite de productos alcanzado</h6>
+                    <p><strong>Total ocupado:</strong> ${totalOcupados}/${limite} productos</p>
                 `;
+            }
         } else if (disponibles <= 1) {
-            infoElement.className = 'alert alert-warning mt-3';
-            infoElement.innerHTML = `
-                    <i class="fas fa-info-circle"></i>
-                    <strong>Casi en el límite:</strong> Solo puedes agregar ${disponibles} producto(s) más.
-                    <br><small>Tienes ${productosActualesSeguro}/${limiteSeguro} productos en pedidos activos.</small>
+            if (infoLimiteGlobal) {
+                infoLimiteGlobal.className = 'alert alert-warning';
+                infoLimiteGlobal.style.display = 'block';
+                infoLimiteGlobal.innerHTML = `
+                    <h6><i class="fas fa-info-circle"></i> Casi en el límite</h6>
+                    <p><strong>Disponibles:</strong> Solo ${disponibles} producto(s) más</p>
                 `;
+            }
         } else {
-            infoElement.className = 'alert alert-info mt-3';
-            infoElement.innerHTML = `
-                    <i class="fas fa-info-circle"></i>
-                    Puedes agregar hasta ${disponibles} producto(s) más. (${productosActualesSeguro}/${limiteSeguro} productos activos)
-                `;
+            if (productosActivos > 0 || productosEnCarritos > 0) {
+                if (infoLimiteGlobal) {
+                    infoLimiteGlobal.className = 'alert alert-info';
+                    infoLimiteGlobal.style.display = 'block';
+                    infoLimiteGlobal.innerHTML = `
+                        <h6><i class="fas fa-info-circle"></i> Estado unificado de productos</h6>
+                        <p><strong>Disponibles:</strong> ${disponibles} producto(s) más</p>
+                    `;
+                }
+            } else {
+                if (infoLimiteGlobal) {
+                    infoLimiteGlobal.style.display = 'none';
+                }
+            }
         }
     }
+
 
     // ✅ FUNCIÓN PARA MOSTRAR MENSAJE DE LÍMITE
     function mostrarMensajeLimite(mensaje) {

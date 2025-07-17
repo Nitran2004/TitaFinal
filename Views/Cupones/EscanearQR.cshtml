@@ -147,30 +147,38 @@
                                 </div>
                             </div>
 
-                            <h6>Productos disponibles:</h6>
-                            <div class="row">
-                                @foreach (var producto in productos)
-                                {
-                                    <div class="col-md-6 mb-3">
-                                        <div class="card">
-                                            <div class="card-body">
-                                                <h6 class="card-title">@producto.Nombre</h6>
-                                                <p class="card-text">
-                                                    <strong>Precio:</strong> $@producto.Precio<br>
-                                                    <small class="text-muted">@producto.Descripcion</small>
-                                                </p>
-                                                <div class="input-group">
-                                                    <span class="input-group-text">Cantidad:</span>
-                                                    <input type="number" name="productos[@producto.Id].Cantidad"
-                                                           class="form-control" value="0" min="0" max="10">
-                                                    <input type="hidden" name="productos[@producto.Id].Id" value="@producto.Id">
-                                                    <input type="hidden" name="productos[@producto.Id].Precio" value="@producto.Precio">
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                }
-                            </div>
+<!-- Reemplaza la sección de productos con este código mejorado -->
+<h6>Productos disponibles:</h6>
+<div class="row">
+    @foreach (var producto in productos)
+    {
+        <div class="col-12 col-md-6 mb-3">
+            <div class="card producto-card">
+                <div class="card-body">
+                    <h6 class="card-title nombre-producto">@producto.Nombre</h6>
+                    <p class="card-text">
+                        <span class="precio-producto">Precio: $@producto.Precio</span><br>
+                        <small class="text-muted">@producto.Descripcion</small>
+                    </p>
+                    <div class="input-group input-group-cantidad">
+                        <span class="input-group-text">
+                            <i class="fas fa-shopping-cart me-1"></i>Cantidad:
+                        </span>
+                        <input type="number" 
+                               name="productos[@producto.Id].Cantidad"
+                               class="form-control cantidad-input" 
+                               value="0" 
+                               min="0" 
+                               max="10"
+                               placeholder="0">
+                        <input type="hidden" name="productos[@producto.Id].Id" value="@producto.Id">
+                        <input type="hidden" name="productos[@producto.Id].Precio" value="@producto.Precio">
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
 
                             <!-- Campo oculto para tipo de servicio -->
                             <input type="hidden" name="tipoServicioSeleccionado" id="tipoServicioHidden" value="" />
@@ -198,50 +206,270 @@
 </div>
 
 <style>
-    .scanner-container {
-        border: 2px dashed #007bff;
-        border-radius: 8px;
-        padding: 20px;
+  /* Estilos existentes mejorados */
+.scanner-container {
+    border: 2px dashed #007bff;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    background-color: #f8f9fa;
+}
+
+#qr-reader {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Estilos para opciones de servicio */
+.service-option {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid #dee2e6;
+    height: 100%;
+}
+
+.service-option:hover {
+    border-color: #28a745;
+    box-shadow: 0 0.25rem 0.5rem rgba(40, 167, 69, 0.25);
+    transform: translateY(-2px);
+}
+
+.service-option.selected {
+    border-color: #28a745;
+    background-color: #f8fff9;
+    box-shadow: 0 0.25rem 0.5rem rgba(40, 167, 69, 0.25);
+}
+
+.service-option .form-check-input {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.service-option label {
+    cursor: pointer;
+    margin: 0;
+    padding: 1rem 0;
+}
+
+/* 🔥 NUEVOS ESTILOS PARA MÓVIL */
+
+/* Mejorar tarjetas de productos en móvil */
+@@media (max-width: 768px) {
+    .col-md-6 {
+        margin-bottom: 1rem;
+    }
+    
+    /* Hacer que las tarjetas de productos ocupen el ancho completo en móvil */
+    .row .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    /* Mejorar el input-group de cantidad */
+    .input-group {
+        flex-wrap: nowrap;
+        width: 100%;
+    }
+    
+    .input-group-text {
+        min-width: 90px;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .input-group .form-control {
+        min-width: 80px;
+        font-size: 1.1rem;
+        font-weight: bold;
         text-align: center;
-        background-color: #f8f9fa;
     }
-
+    
+    /* Mejorar el espaciado de las tarjetas */
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .card-title {
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .card-text {
+        margin-bottom: 0.75rem;
+    }
+    
+    .card-text strong {
+        font-size: 1rem;
+    }
+    
+    /* Mejorar opciones de servicio en móvil */
+    .service-option .card-body {
+        padding: 0.75rem;
+    }
+    
+    .service-option i {
+        font-size: 1.5rem !important;
+    }
+    
+    /* Botones más grandes en móvil */
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-size: 1.1rem;
+    }
+    
+    /* Mejorar el contenedor principal */
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    /* Mejorar alerts en móvil */
+    .alert {
+        font-size: 0.9rem;
+        padding: 0.75rem;
+    }
+    
+    /* Mejorar scanner en móvil */
+    .scanner-container {
+        padding: 15px;
+    }
+    
     #qr-reader {
-        border-radius: 8px;
-        overflow: hidden;
+        min-height: 200px;
     }
+}
 
-    /* Estilos para opciones de servicio */
-    .service-option {
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: 2px solid #dee2e6;
-        height: 100%;
+/* Estilos específicos para pantallas muy pequeñas */
+@@media (max-width: 480px) {
+    .card-header h2 {
+        font-size: 1.3rem;
     }
+    
+    .card-header p {
+        font-size: 0.9rem;
+    }
+    
+    .input-group-text {
+        font-size: 0.8rem;
+        min-width: 85px;
+        padding: 0.4rem 0.6rem;
+    }
+    
+    .btn {
+        font-size: 0.9rem;
+    }
+    
+    .btn-lg {
+        font-size: 1rem;
+        padding: 0.65rem 1.25rem;
+    }
+    
+    /* Hacer que el input de cantidad sea más visible */
+    .input-group .form-control {
+        font-size: 1.2rem;
+        font-weight: bold;
+        min-width: 70px;
+        padding: 0.5rem;
+    }
+    
+    /* Mejorar el espaciado general */
+    .mb-3 {
+        margin-bottom: 1rem !important;
+    }
+    
+    .mb-4 {
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .mt-4 {
+        margin-top: 1.5rem !important;
+    }
+}
 
-        .service-option:hover {
-            border-color: #28a745;
-            box-shadow: 0 0.25rem 0.5rem rgba(40, 167, 69, 0.25);
-            transform: translateY(-2px);
-        }
+/* Estilos específicos para el input de cantidad */
+.cantidad-input {
+    font-size: 1.2rem !important;
+    font-weight: bold !important;
+    text-align: center !important;
+    background-color: #f8f9fa !important;
+    border: 2px solid #dee2e6 !important;
+}
 
-        .service-option.selected {
-            border-color: #28a745;
-            background-color: #f8fff9;
-            box-shadow: 0 0.25rem 0.5rem rgba(40, 167, 69, 0.25);
-        }
+.cantidad-input:focus {
+    background-color: #fff !important;
+    border-color: #007bff !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
 
-        .service-option .form-check-input {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-        }
+/* Mejorar la visualización del precio */
+.precio-producto {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #28a745;
+}
 
-        .service-option label {
-            cursor: pointer;
-            margin: 0;
-            padding: 1rem 0;
-        }
+/* Mejorar la visualización del nombre del producto */
+.nombre-producto {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+/* Contenedor de producto mejorado */
+.producto-card {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    transition: border-color 0.3s ease;
+    margin-bottom: 1rem;
+}
+
+.producto-card:hover {
+    border-color: #007bff;
+}
+
+/* Mejorar el diseño del input-group */
+.input-group-cantidad {
+    background-color: #f8f9fa;
+    border-radius: 0.375rem;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+}
+
+.input-group-cantidad .input-group-text {
+    background-color: transparent;
+    border: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    min-width: 95px;
+    padding: 0.5rem 0.75rem;
+    white-space: nowrap;
+}
+
+.input-group-cantidad .form-control {
+    background-color: white;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    flex: 0 0 80px;
+    max-width: 80px;
+}
+
+/* Ajustes adicionales para móvil */
+@@media (max-width: 480px) {
+    .input-group-cantidad .input-group-text {
+        font-size: 0.85rem;
+        min-width: 90px;
+        padding: 0.4rem 0.6rem;
+    }
+    
+    .input-group-cantidad .form-control {
+        flex: 0 0 75px;
+        max-width: 75px;
+    }
+}
 </style>
 
 @section Scripts {

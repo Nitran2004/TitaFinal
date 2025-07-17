@@ -11,6 +11,10 @@ using ProyectoIdentity.Servicios;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configuración adicional para cargar archivos de configuración privados
+builder.Configuration.AddJsonFile("appsettings.Production.json", optional: true, reloadOnChange: true);
+builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
 // Configuramos la conexión a SQL Server
 builder.Services.AddDbContext<ApplicationDbContext>(opciones =>
     opciones.UseSqlServer(builder.Configuration.GetConnectionString("ConexionSql"))
@@ -113,7 +117,7 @@ using (var scope = app.Services.CreateScope())
     DbInitializer.Initialize(context);
     RecompensasInitializer.Initialize(context);
 }
-///// app.UseHttpsRedirection();
+ app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 var provider = new FileExtensionContentTypeProvider();

@@ -600,6 +600,23 @@
 </style>
 
 <div class="product-container">
+    <div id="estado-unificado" class="alert alert-info" style="display: none;">
+        <h6><i class="fas fa-info-circle"></i> Estado unificado de productos</h6>
+        <div class="row">
+            <div class="col-md-4">
+                <strong>Disponibles:</strong> <span id="disponibles-count">-</span> producto(s) más
+            </div>
+            <div class="col-md-4">
+                <strong>Pedidos realizados:</strong> <span id="activos-count">-</span>
+            </div>
+            <div class="col-md-4">
+                <strong>En ambos carritos:</strong> <span id="carritos-count">-</span> productos
+            </div>
+        </div>
+        <small class="text-muted d-block mt-2">
+            <em>Límite compartido entre personalización y recomendación IA: <span id="limite-info">0/3</span> productos</em>
+        </small>
+    </div>
     <div class="product-header">
         <!-- Imagen del producto MEJORADA -->
         <div class="product-image-container">
@@ -913,7 +930,7 @@
         productosEnCarritos: 0  // ✅ NOMBRE CORREGIDO
     };
 
-    // ✅ FUNCIÓN PARA CARGAR LÍMITES ACTUALES (MEJORADA)
+    // ✅ FUNCIÓN PARA CARGAR LÍMITES CON ESTADO UNIFICADO
     async function cargarLimitesProductos() {
         try {
             const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
@@ -922,13 +939,12 @@
             // ✅ ASEGURAR QUE LOS VALORES NO SEAN UNDEFINED
             limitesActuales = {
                 productosActivos: data.productosActivos || 0,
-                limite: data.limite || 4,
-                disponibles: data.disponibles || 0,
+                limite: 3,  // ✅ LÍMITE VISUAL SIEMPRE 3
+                disponibles: Math.min(3, data.disponibles || 0),  // ✅ MÁXIMO 3 VISUAL
                 productosEnCarritos: data.productosEnCarritos || 0
             };
 
             console.log('[DEBUG] Límites cargados:', limitesActuales);
-            console.log(`[DEBUG] Productos activos: ${limitesActuales.productosActivos}, En carrito: ${limitesActuales.productosEnCarritos}, Disponibles: ${limitesActuales.disponibles}`);
 
             // Actualizar interfaz según límites
             actualizarInterfazLimites();
@@ -937,15 +953,101 @@
             if (limitesActuales.disponibles === 0) {
                 mostrarMensajeLimite(data.mensaje || 'No puedes agregar más productos');
             }
+
+            // ✅ TAMBIÉN CARGAR ESTADO UNIFICADO
+            cargarEstadoUnificado();
+
         } catch (error) {
             console.error('Error al cargar límites:', error);
             // ✅ VALORES POR DEFECTO EN CASO DE ERROR
             limitesActuales = {
                 productosActivos: 0,
-                limite: 4,
-                disponibles: 4,
+                limite: 3,  // ✅ LÍMITE VISUAL 3
+                disponibles: 3,
                 productosEnCarritos: 0
             };
+        }
+    }
+
+    // ✅ FUNCIÓN PARA CARGAR ESTADO UNIFICADO EN DETALLE
+    async function cargarEstadoUnificado() {
+        try {
+            const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
+            const data = await response.json();
+
+            console.log('[DEBUG] Datos recibidos:', data);
+
+            // ✅ TOMAR DATOS DEL BACKEND PERO APLICAR LÍMITE VISUAL DE 3
+            const productosActivos = data.productosActivos || 0;
+            const productosCarritos = data.productosEnCarritos || 0;
+            const totalOcupados = productosActivos + productosCarritos;
+
+            // ✅ APLICAR LÍMITE VISUAL DE 3 PARA TODO
+            const LIMITE_VISUAL = 3;
+            const productosActivosVisual = Math.min(LIMITE_VISUAL, productosActivos);
+            const productosCarritosVisual = Math.min(LIMITE_VISUAL, productosCarritos);
+            const totalVisual = productosActivosVisual + productosCarritosVisual;
+            const disponiblesVisual = Math.max(0, LIMITE_VISUAL - totalVisual);
+
+            // ✅ ACTUALIZAR VARIABLES GLOBALES CON LÍMITE VISUAL DE 3
+            limitesActuales = {
+                productosActivos: productosActivosVisual,
+                limite: LIMITE_VISUAL,  // ✅ SIEMPRE 3
+                disponibles: disponiblesVisual,
+                productosEnCarritos: productosCarritosVisual,
+                totalOcupados: totalVisual,
+                permitido: totalVisual < LIMITE_VISUAL,
+                mensaje: data.mensaje || ""
+            };
+
+            // ✅ ACTUALIZAR INTERFAZ CON VALORES VISUALES (LÍMITE 3)
+            document.getElementById('disponibles-count').textContent = disponiblesVisual;
+            document.getElementById('activos-count').textContent = productosActivosVisual + '/' + LIMITE_VISUAL;
+            document.getElementById('carritos-count').textContent = productosCarritosVisual;
+            document.getElementById('limite-info').textContent = totalVisual + '/' + LIMITE_VISUAL;
+
+            // ✅ MOSTRAR/OCULTAR Y CAMBIAR COLOR SEGÚN ESTADO
+            const estadoElement = document.getElementById('estado-unificado');
+
+            if (totalVisual > 0) {
+                estadoElement.style.display = 'block';
+
+                // ✅ LÓGICA BASADA EN LÍMITE VISUAL DE 3
+                if (totalVisual >= LIMITE_VISUAL) {
+                    estadoElement.className = 'alert alert-danger';
+                } else if (disponiblesVisual <= 1) {
+                    estadoElement.className = 'alert alert-warning';
+                } else {
+                    estadoElement.className = 'alert alert-info';
+                }
+            } else {
+                // ✅ OCULTAR CUANDO NO HAY PRODUCTOS
+                estadoElement.style.display = 'none';
+            }
+
+            console.log('[DEBUG] Estado unificado actualizado en detalle');
+            console.log(`[DEBUG] Visual: ${disponiblesVisual} disponibles, ${totalVisual}/3 ocupados`);
+
+            // ✅ ACTUALIZAR INTERFAZ DE LÍMITES EXISTENTE
+            actualizarInterfazLimites();
+
+        } catch (error) {
+            console.error('Error al cargar estado unificado:', error);
+            // ✅ VALORES POR DEFECTO SEGUROS CON LÍMITE 3
+            limitesActuales = {
+                productosActivos: 0,
+                limite: 3,  // ✅ LÍMITE VISUAL 3
+                disponibles: 3,
+                productosEnCarritos: 0,
+                totalOcupados: 0,
+                permitido: true,
+                mensaje: ""
+            };
+
+            const estadoElement = document.getElementById('estado-unificado');
+            if (estadoElement) {
+                estadoElement.style.display = 'none';
+            }
         }
     }
 
@@ -988,63 +1090,9 @@
         mostrarInfoLimite();
     }
 
-    // ✅ FUNCIÓN PARA MOSTRAR INFORMACIÓN DEL LÍMITE (MEJORADA)
-    function mostrarInfoLimite() {
-        let infoElement = document.getElementById('info-limite');
-        if (!infoElement) {
-            infoElement = document.createElement('div');
-            infoElement.id = 'info-limite';
-            infoElement.className = 'alert alert-info mt-3';
-
-            const cantidadContainer = document.querySelector('.quantity-control').parentNode;
-            cantidadContainer.appendChild(infoElement);
-        }
-
-        // ✅ ENGAÑAR VISUALMENTE - MOSTRAR LÍMITE 3 AUNQUE EL BACKEND SEA 4
-        const { productosActivos, productosEnCarritos } = limitesActuales;
-        const limiteVisual = 3;  // ✅ MOSTRAR SIEMPRE 3 AL USUARIO
-        const disponiblesVisuales = Math.max(0, Math.min(3, limitesActuales.disponibles));
-
-        console.log(`[DEBUG] Visual - Activos: ${productosActivos}, Carritos: ${productosEnCarritos}, Disponibles mostrados: ${disponiblesVisuales}`);
-
-        // ✅ LÓGICA CLARA PARA MOSTRAR MENSAJES (CON LÍMITE VISUAL 3)
-        if (disponiblesVisuales <= 0) {
-            infoElement.className = 'alert alert-danger mt-3';
-            infoElement.innerHTML = `
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <strong>Límite alcanzado:</strong><br>
-                    • Productos en pedidos activos: ${productosActivos}/${limiteVisual}<br>
-                    • Productos en carrito actual: ${productosEnCarritos}<br>
-                    • <em>No puedes agregar más productos hasta que se entreguen los pedidos activos.</em>
-                `;
-        } else if (disponiblesVisuales === 1) {
-            infoElement.className = 'alert alert-warning mt-3';
-            infoElement.innerHTML = `
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <strong>¡Último producto disponible!</strong><br>
-                    • Productos en pedidos activos: ${productosActivos}/${limiteVisual}<br>
-                    • Productos en carrito actual: ${productosEnCarritos}<br>
-                    • Solo puedes agregar 1 producto más.
-                `;
-        } else if (disponiblesVisuales <= 2) {
-            infoElement.className = 'alert alert-warning mt-3';
-            infoElement.innerHTML = `
-                    <i class="fas fa-info-circle"></i>
-                    <strong>Casi en el límite:</strong><br>
-                    • Productos en pedidos activos: ${productosActivos}/${limiteVisual}<br>
-                    • Productos en carrito actual: ${productosEnCarritos}<br>
-                    • Puedes agregar hasta ${disponiblesVisuales} producto(s) más.
-                `;
-        } else {
-            infoElement.className = 'alert alert-info mt-3';
-            infoElement.innerHTML = `
-                    <i class="fas fa-info-circle"></i>
-                    <strong>Estado actual:</strong><br>
-                    • Productos en pedidos activos: ${productosActivos}/${limiteVisual}<br>
-                    • Productos en carrito actual: ${productosEnCarritos}<br>
-                    • Puedes agregar hasta ${Math.min(3, disponiblesVisuales)} producto(s) más.
-                `;
-        }
+       function mostrarInfoLimite() {
+        // Función vacía - no muestra nada pero mantiene la funcionalidad
+        console.log('Info límite ocultada por diseño');
     }
 
     // ✅ FUNCIÓN PARA MOSTRAR MENSAJE DE LÍMITE
@@ -1291,20 +1339,37 @@
         });
     });
 
-    // ✅ INICIALIZACIÓN (ACTUALIZADA)
+    // ✅ INICIALIZACIÓN ACTUALIZADA
     document.addEventListener('DOMContentLoaded', function () {
         console.log('[DEBUG] Inicializando página de detalle...');
+
+        // ✅ CARGAR ESTADO UNIFICADO PRIMERO
+        cargarEstadoUnificado();
+
+        // ✅ CÓDIGO EXISTENTE
         cargarLimitesProductos();
 
-        window.addEventListener('focus', cargarLimitesProductos);
+        window.addEventListener('focus', function () {
+            console.log('[DEBUG] Página enfocada - recargando límites...');
+            cargarLimitesProductos();
+            cargarEstadoUnificado(); // ✅ AGREGAR ESTA LÍNEA
+        });
+
+        // ✅ RECARGAR PERIÓDICAMENTE CADA 30 SEGUNDOS
+        setInterval(function () {
+            cargarLimitesProductos();
+            cargarEstadoUnificado(); // ✅ AGREGAR ESTA LÍNEA
+        }, 30000);
 
         if (typeof calcularAhorro === 'function') {
             calcularAhorro();
         }
     });
 
-    // ✅ CARGAR CONTADOR DEL CARRITO AL INICIALIZAR (ORIGINAL)
-    window.onload = function () {
-        calcularAhorro();
-    };
+    window.addEventListener('storage', function (e) {
+        if (e.key === 'carritosActualizados' || e.key === 'carritoActualizado') {
+            console.log('[DEBUG] Carritos actualizados globalmente, recargando estado...');
+            cargarEstadoUnificado();
+        }
+    });
 </script>
