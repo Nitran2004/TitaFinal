@@ -5,6 +5,23 @@
 }
 
 <div class="container mt-4">
+    <div id="estado-unificado" class="alert alert-info" style="display: none;">
+        <h6><i class="fas fa-info-circle"></i> Estado unificado de productos</h6>
+        <div class="row">
+            <div class="col-md-4">
+                <strong>Disponibles:</strong> <span id="disponibles-count">-</span> producto(s) más
+            </div>
+            <div class="col-md-4">
+                <strong>Pedidos realizados:</strong> <span id="activos-count">-</span>
+            </div>
+            <div class="col-md-4">
+                <strong>En ambos carritos:</strong> <span id="carritos-count">-</span> productos
+            </div>
+        </div>
+        <small class="text-muted d-block mt-2">
+            <em>Límite compartido entre personalización y recomendación IA: <span id="limite-info">0/3</span> productos</em>
+        </small>
+    </div>
     <div class="row">
         <div class="col-md-8">
             <div class="card">
@@ -256,6 +273,63 @@
         actualizarResumen();
         guardarCarritoEnSesion();
     }
+    // ✅ FUNCIÓN PARA CARGAR ESTADO UNIFICADO EN CARRITO
+    async function cargarEstadoUnificado() {
+        try {
+            const response = await fetch('@Url.Action("ObtenerLimitesProductos")');
+            const data = await response.json();
+
+            console.log('[DEBUG] Datos recibidos:', data);
+
+            // ✅ TOMAR DATOS DEL BACKEND PERO APLICAR LÍMITE VISUAL DE 3
+            const productosActivos = data.productosActivos || 0;
+            const productosCarritos = data.productosEnCarritos || 0;
+            const totalOcupados = productosActivos + productosCarritos;
+
+            // ✅ APLICAR LÍMITE VISUAL DE 3 PARA TODO
+            const LIMITE_VISUAL = 3;
+            const productosActivosVisual = Math.min(LIMITE_VISUAL, productosActivos);
+            const productosCarritosVisual = Math.min(LIMITE_VISUAL, productosCarritos);
+            const totalVisual = productosActivosVisual + productosCarritosVisual;
+            const disponiblesVisual = Math.max(0, LIMITE_VISUAL - totalVisual);
+
+            // ✅ ACTUALIZAR INTERFAZ CON VALORES VISUALES (LÍMITE 3)
+            document.getElementById('disponibles-count').textContent = disponiblesVisual;
+            document.getElementById('activos-count').textContent = productosActivosVisual + '/' + LIMITE_VISUAL;
+            document.getElementById('carritos-count').textContent = productosCarritosVisual;
+            document.getElementById('limite-info').textContent = totalVisual + '/' + LIMITE_VISUAL;
+
+            // ✅ MOSTRAR/OCULTAR Y CAMBIAR COLOR SEGÚN ESTADO
+            const estadoElement = document.getElementById('estado-unificado');
+
+            if (totalVisual > 0) {
+                estadoElement.style.display = 'block';
+
+                // ✅ LÓGICA BASADA EN LÍMITE VISUAL DE 3
+                if (totalVisual >= LIMITE_VISUAL) {
+                    estadoElement.className = 'alert alert-warning ';
+                } else if (disponiblesVisual <= 1) {
+                    estadoElement.className = 'alert alert-warning';
+                } else {
+                    estadoElement.className = 'alert alert-info';
+                }
+            } else {
+                // ✅ OCULTAR CUANDO NO HAY PRODUCTOS
+                estadoElement.style.display = 'none';
+            }
+
+            console.log('[DEBUG] Estado unificado actualizado en carrito');
+            console.log(`[DEBUG] Visual: ${disponiblesVisual} disponibles, ${totalVisual}/3 ocupados`);
+
+        } catch (error) {
+            console.error('Error al cargar estado unificado:', error);
+            // ✅ VALORES POR DEFECTO SEGUROS CON LÍMITE 3
+            const estadoElement = document.getElementById('estado-unificado');
+            if (estadoElement) {
+                estadoElement.style.display = 'none';
+            }
+        }
+    }
 
     function eliminarDelCarrito(index) {
         if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
@@ -498,7 +572,7 @@
         mostrarInfoLimiteCarrito(totalEnCarrito);
     }
 
-    // ✅ FUNCIÓN PARA MOSTRAR INFO DE LÍMITE EN CARRITO (AGREGAR)
+    @* // ✅ FUNCIÓN PARA MOSTRAR INFO DE LÍMITE EN CARRITO (AGREGAR)
     function mostrarInfoLimiteCarrito(totalEnCarrito) {
         let infoElement = document.getElementById('info-limite-carrito');
         if (!infoElement) {
@@ -541,26 +615,45 @@
             // ✅ OCULTAR CUANDO NO HAY PRODUCTOS
             infoElement.style.display = 'none';
         }
-    }
+    } *@
 
-    // ✅ INICIALIZAR AL CARGAR LA PÁGINA (AGREGAR AL FINAL DEL SCRIPT EXISTENTE)
     document.addEventListener('DOMContentLoaded', function () {
         console.log('[DEBUG] Inicializando VerCarrito...');
         console.log('[DEBUG] Carrito inicial:', carritoLocal);
 
-        // ✅ VALIDAR CARRITO LOCAL
+        // ✅ CÓDIGO EXISTENTE
         if (!Array.isArray(carritoLocal)) {
             console.error('[ERROR] carritoLocal no es un array válido');
             carritoLocal = [];
         }
 
-        // Cargar límites y validar
+        // ✅ AGREGAR ESTA LÍNEA
+        cargarEstadoUnificado();
+
+        // ✅ CÓDIGO EXISTENTE
         cargarLimitesCarrito();
         validarLimitesCarrito();
         actualizarResumen();
 
         // También validar cuando se hace focus en la página
-        window.addEventListener('focus', cargarLimitesCarrito);
+        window.addEventListener('focus', function () {
+            cargarLimitesCarrito();
+            cargarEstadoUnificado(); // ✅ AGREGAR ESTA LÍNEA
+        });
+
+        // ✅ RECARGAR PERIÓDICAMENTE CADA 30 SEGUNDOS
+        setInterval(function () {
+            cargarLimitesCarrito();
+            cargarEstadoUnificado(); // ✅ AGREGAR ESTA LÍNEA
+        }, 30000);
+    });
+
+    // ✅ ESCUCHAR CAMBIOS EN CARRITOS
+    window.addEventListener('storage', function (e) {
+        if (e.key === 'carritosActualizados' || e.key === 'carritoActualizado') {
+            console.log('[DEBUG] Carritos actualizados globalmente, recargando estado...');
+            cargarEstadoUnificado();
+        }
     });
 </script>
 
