@@ -55,4 +55,17 @@ pipeline {
             }
         }
     }
+    
+    post {
+        always {
+            echo 'Pipeline completado'
+        }
+        success {
+            echo 'Pipeline ejecutado exitosamente!'
+            echo 'Revisa el análisis en SonarQube: ${SONAR_HOST_URL}/dashboard?id=${SONAR_PROJECT_KEY}'
+        }
+        failure {
+            echo 'Pipeline falló. Revisar logs.'
+        }
+    }
 }
