@@ -25,23 +25,18 @@ pipeline {
             }
         }
         
-        stage('Debug SonarScanner') {
-            steps {
-                echo 'Verificando instalación de SonarScanner...'
-                bat '''
-                    echo "Verificando dotnet tools:"
-                    dotnet tool list --global
-                    echo "Verificando PATH:"
-                    echo %PATH%
-                    echo "Buscando sonarscanner:"
-                    where dotnet-sonarscanner
-                '''
-            }
-        }
         
         stage('SonarQube Analysis Start') {
             steps {
                 echo 'Iniciando análisis de SonarQube...'
+                bat '''
+                    echo "Verificando si existe sonarscanner..."
+                    if exist "C:\\WINDOWS\\system32\\config\\systemprofile\\.dotnet\\tools\\dotnet-sonarscanner.exe" (
+                        echo "SonarScanner encontrado!"
+                    ) else (
+                        echo "SonarScanner NO encontrado en la ruta esperada"
+                    )
+                '''
                 withSonarQubeEnv('SonarQube') {
                     bat '''
                         C:\\WINDOWS\\system32\\config\\systemprofile\\.dotnet\\tools\\dotnet-sonarscanner.exe begin ^
