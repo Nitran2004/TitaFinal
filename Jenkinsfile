@@ -1,14 +1,14 @@
 pipeline {
     agent any
     
-    environment {
-        // Variables para SonarQube
-        SONAR_PROJECT_KEY = 'mi-proyecto-csharp'
-        SONAR_PROJECT_NAME = 'TitaFinal'
-        SONAR_HOST_URL = 'http://localhost:9000'
-        // Path para .NET (asumiendo instalación estándar)
-        PATH = "${env.PATH};C:\\Program Files\\dotnet"
-    }
+environment {
+    // Variables para SonarQube
+    SONAR_PROJECT_KEY = 'mi-proyecto-csharp'
+    SONAR_PROJECT_NAME = 'TitaFinal'
+    SONAR_HOST_URL = 'http://localhost:9000'
+    // Path para .NET y herramientas globales
+    PATH = "${env.PATH};C:\\Program Files\\dotnet;%USERPROFILE%\\.dotnet\\tools"
+}
     
     stages {
         stage('Checkout') {
