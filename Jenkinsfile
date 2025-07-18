@@ -9,6 +9,20 @@ environment {
     // Path para .NET y herramientas globales
     PATH = "${env.PATH};C:\\Program Files\\dotnet;%USERPROFILE%\\.dotnet\\tools"
 }
+
+    stage('Debug SonarScanner') {
+    steps {
+        echo 'Verificando instalación de SonarScanner...'
+        bat '''
+            echo "Verificando dotnet tools:"
+            dotnet tool list --global
+            echo "Verificando PATH:"
+            echo %PATH%
+            echo "Buscando sonarscanner:"
+            where dotnet-sonarscanner
+        '''
+    }
+}
     
     stages {
         stage('Checkout') {
