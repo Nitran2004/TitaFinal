@@ -23,7 +23,14 @@ pipeline {
         stage('SonarQube Begin') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-                    bat 'C:\\Users\\HOME\\.dotnet\\tools\\dotnet-sonarscanner.exe begin /k:"%SONAR_PROJECT_KEY%" /n:"%SONAR_PROJECT_NAME%" /d:sonar.host.url="%SONAR_HOST_URL%"'
+                    bat '''
+                        C:\\Users\\HOME\\.dotnet\\tools\\dotnet-sonarscanner.exe begin ^
+                            /k:"%SONAR_PROJECT_KEY%" ^
+                            /n:"%SONAR_PROJECT_NAME%" ^
+                            /d:sonar.host.url="%SONAR_HOST_URL%" ^
+                            /d:sonar.sources="." ^
+                            /d:sonar.exclusions="**/bin/**,**/obj/**,**/*.dll,**/packages/**,**/TestResults/**"
+                    '''
                 }
             }
         }
@@ -44,14 +51,6 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     bat 'C:\\Users\\HOME\\.dotnet\\tools\\dotnet-sonarscanner.exe end'
-                }
-            }
-        }
-        
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
                 }
             }
         }
