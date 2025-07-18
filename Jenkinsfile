@@ -64,7 +64,7 @@ pipeline {
             post {
                 always {
                     // Publicar resultados de tests
-                    publishTestResults testResultsPattern: 'TestResults/*.trx'
+                    junit testResultsPattern: 'TestResults/*.trx'
                     
                     // Publicar cobertura (si tienes el plugin de Coverage)
                     publishCoverage adapters: [
