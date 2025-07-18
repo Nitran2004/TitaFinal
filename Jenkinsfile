@@ -44,7 +44,7 @@ pipeline {
                 echo 'Iniciando análisis de SonarQube...'
                 withSonarQubeEnv('SonarQube') {
                     bat '''
-                        C:\\Users\\%USERNAME%\\.dotnet\\tools\\dotnet-sonarscanner.exe begin ^
+                        C:\\WINDOWS\\system32\\config\\systemprofile\\.dotnet\\tools\\dotnet-sonarscanner.exe begin ^
                             /k:"%SONAR_PROJECT_KEY%" ^
                             /n:"%SONAR_PROJECT_NAME%" ^
                             /d:sonar.host.url="%SONAR_HOST_URL%" ^
@@ -91,7 +91,7 @@ pipeline {
             steps {
                 echo 'Finalizando análisis de SonarQube...'
                 withSonarQubeEnv('SonarQube') {
-                    bat 'C:\\Users\\%USERNAME%\\.dotnet\\tools\\dotnet-sonarscanner.exe end'
+                    bat 'C:\\WINDOWS\\system32\\config\\systemprofile\\.dotnet\\tools\\dotnet-sonarscanner.exe end'
                 }
             }
         }
