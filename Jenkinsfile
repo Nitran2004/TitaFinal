@@ -1,28 +1,14 @@
 pipeline {
     agent any
     
-environment {
-    // Variables para SonarQube
-    SONAR_PROJECT_KEY = 'mi-proyecto-csharp'
-    SONAR_PROJECT_NAME = 'TitaFinal'
-    SONAR_HOST_URL = 'http://localhost:9000'
-    // Path para .NET y herramientas globales
-    PATH = "${env.PATH};C:\\Program Files\\dotnet;%USERPROFILE%\\.dotnet\\tools"
-}
-
-    stage('Debug SonarScanner') {
-    steps {
-        echo 'Verificando instalación de SonarScanner...'
-        bat '''
-            echo "Verificando dotnet tools:"
-            dotnet tool list --global
-            echo "Verificando PATH:"
-            echo %PATH%
-            echo "Buscando sonarscanner:"
-            where dotnet-sonarscanner
-        '''
+    environment {
+        // Variables para SonarQube
+        SONAR_PROJECT_KEY = 'mi-proyecto-csharp'
+        SONAR_PROJECT_NAME = 'TitaFinal'
+        SONAR_HOST_URL = 'http://localhost:9000'
+        // Path para .NET y herramientas globales
+        PATH = "${env.PATH};C:\\Program Files\\dotnet;%USERPROFILE%\\.dotnet\\tools"
     }
-}
     
     stages {
         stage('Checkout') {
@@ -39,12 +25,26 @@ environment {
             }
         }
         
+        stage('Debug SonarScanner') {
+            steps {
+                echo 'Verificando instalación de SonarScanner...'
+                bat '''
+                    echo "Verificando dotnet tools:"
+                    dotnet tool list --global
+                    echo "Verificando PATH:"
+                    echo %PATH%
+                    echo "Buscando sonarscanner:"
+                    where dotnet-sonarscanner
+                '''
+            }
+        }
+        
         stage('SonarQube Analysis Start') {
             steps {
                 echo 'Iniciando análisis de SonarQube...'
                 withSonarQubeEnv('SonarQube') {
                     bat '''
-                            dotnet-sonarscanner begin ^
+                        C:\\Users\\%USERNAME%\\.dotnet\\tools\\dotnet-sonarscanner.exe begin ^
                             /k:"%SONAR_PROJECT_KEY%" ^
                             /n:"%SONAR_PROJECT_NAME%" ^
                             /d:sonar.host.url="%SONAR_HOST_URL%" ^
@@ -91,7 +91,7 @@ environment {
             steps {
                 echo 'Finalizando análisis de SonarQube...'
                 withSonarQubeEnv('SonarQube') {
-bat 'dotnet-sonarscanner end'
+                    bat 'C:\\Users\\%USERNAME%\\.dotnet\\tools\\dotnet-sonarscanner.exe end'
                 }
             }
         }
