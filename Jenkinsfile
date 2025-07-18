@@ -30,16 +30,18 @@ pipeline {
             steps {
                 echo 'Iniciando análisis de SonarQube...'
                 bat '''
-                    echo "Verificando si existe sonarscanner..."
-                    if exist "C:\\WINDOWS\\system32\\config\\systemprofile\\.dotnet\\tools\\dotnet-sonarscanner.exe" (
-                        echo "SonarScanner encontrado!"
-                    ) else (
-                        echo "SonarScanner NO encontrado en la ruta esperada"
-                    )
+                    echo "Buscando dotnet-sonarscanner en todo el sistema..."
+                    dir /s /b C:\\dotnet-sonarscanner.exe 2>nul || echo "No encontrado en C:\\"
+                    dir /s /b "C:\\Program Files"\\dotnet-sonarscanner.exe 2>nul || echo "No encontrado en Program Files"
+                    dir /s /b "C:\\Users"\\*\\dotnet-sonarscanner.exe 2>nul || echo "No encontrado en Users"
+                    dir /s /b "C:\\WINDOWS"\\*\\dotnet-sonarscanner.exe 2>nul || echo "No encontrado en Windows"
+                    
+                    echo "Probando ejecutar directamente con dotnet..."
+                    dotnet tool run dotnet-sonarscanner -- --version
                 '''
                 withSonarQubeEnv('SonarQube') {
                     bat '''
-                        C:\\WINDOWS\\system32\\config\\systemprofile\\.dotnet\\tools\\dotnet-sonarscanner.exe begin ^
+                        dotnet tool run dotnet-sonarscanner -- begin ^
                             /k:"%SONAR_PROJECT_KEY%" ^
                             /n:"%SONAR_PROJECT_NAME%" ^
                             /d:sonar.host.url="%SONAR_HOST_URL%" ^
@@ -86,7 +88,7 @@ pipeline {
             steps {
                 echo 'Finalizando análisis de SonarQube...'
                 withSonarQubeEnv('SonarQube') {
-                    bat 'C:\\WINDOWS\\system32\\config\\systemprofile\\.dotnet\\tools\\dotnet-sonarscanner.exe end'
+                    bat 'dotnet tool run dotnet-sonarscanner -- end'
                 }
             }
         }
