@@ -1,54 +1,46 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<Nullable>disable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <Nullable>disable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
+	<ItemGroup>
+		<Compile Remove="Views\Alineamientos\**" />
+		<Compile Remove="Views\Modelos\**" />
+		<Content Remove="Views\Alineamientos\**" />
+		<Content Remove="Views\Modelos\**" />
+		<EmbeddedResource Remove="Views\Alineamientos\**" />
+		<EmbeddedResource Remove="Views\Modelos\**" />
+		<None Remove="Views\Alineamientos\**" />
+		<None Remove="Views\Modelos\**" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Compile Remove="Views\Alineamientos\**" />
-    <Compile Remove="Views\Modelos\**" />
-    <Content Remove="Views\Alineamientos\**" />
-    <Content Remove="Views\Modelos\**" />
-    <EmbeddedResource Remove="Views\Alineamientos\**" />
-    <EmbeddedResource Remove="Views\Modelos\**" />
-    <None Remove="Views\Alineamientos\**" />
-    <None Remove="Views\Modelos\**" />
-  </ItemGroup>
+	<ItemGroup>
+		<None Include="Views\Productos\Detalle.cshtml" />
+		<None Include="Views\Productos\Index.cshtml" />
+		<None Include="Views\Productos\Menu.cshtml" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Include="Views\Productos\Detalle.cshtml" />
-    <None Include="Views\Productos\Index.cshtml" />
-    <None Include="Views\Productos\Menu.cshtml" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Mailjet.Api" Version="1.2.3" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.1" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="6.0.1" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.10" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.1">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.1" />
+		<PackageReference Include="System.Windows.Extensions" Version="8.0.0" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Mailjet.Api" Version="1.2.3" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="6.0.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.10" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.1">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.1" />
-    <PackageReference Include="System.Windows.Extensions" Version="8.0.0" />
-
-	  <PackageReference Include="xunit" Version="2.4.2" />
-	  <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3" />
-	  <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.2" />
-	  <PackageReference Include="coverlet.collector" Version="3.1.2" />
-	  
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Update="wwwroot\models3d\aguasingas.jpg">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Update="wwwroot\models3d\pizza1.glb">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
+	<ItemGroup>
+		<Content Update="wwwroot\models3d\aguasingas.jpg">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Update="wwwroot\models3d\pizza1.glb">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 </Project>
