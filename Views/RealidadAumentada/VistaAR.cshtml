@@ -384,6 +384,12 @@
             margin-bottom: 16px;
         }
 
+        .ar-header-buttons {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
         .ar-title {
             font-weight: 600;
             font-size: 16px;
@@ -541,6 +547,10 @@
         .ar-header {
             flex-direction: column;
             gap: 8px;
+        }
+
+        .ar-header-buttons {
+            gap: 6px;
         }
 
         .info-table td {
@@ -713,14 +723,20 @@
     <div id="instructions" class="hidden">
         <div class="ar-header">
             <div class="ar-title">AR ACTIVO</div>
-            <button class="btn btn-collapse" id="collapseBtn" onclick="toggleARCollapse()">
-                <span id="collapseIcon">🔽</span>
-            </button>
+            <div class="ar-header-buttons">
+                <button class="btn btn-collapse" id="relocateBtn" onclick="relocateModel()" title="Reubicar modelo">
+                    <span>🔄</span>
+                </button>
+                <button class="btn btn-collapse" id="collapseBtn" onclick="toggleARCollapse()">
+                    <span id="collapseIcon">🔽</span>
+                </button>
+            </div>
         </div>
         <div class="ar-content" id="arContent">
             <p>Busca el <strong>cursor verde</strong> moviéndote lentamente</p>
             <p><strong>Toca</strong> para colocar la pizza</p>
             <p><strong>Pellizca con dos dedos</strong> para redimensionar</p>
+            <p><strong>Botón 🔄</strong> para reubicar en otra posición</p>
             <div style="margin-top: 20px;">
                 <div class="control-row">
                     <button class="btn btn-small" onclick="autoFitModel()">Auto-Ajustar</button>
@@ -1588,6 +1604,51 @@
                 this.updateDebugInfo();
             }
 
+            relocateModel() {
+                if (!this.isARMode || !this.modelAdded) {
+                    console.log('No se puede reubicar: no estamos en AR o no hay modelo colocado');
+                    return;
+                }
+
+                console.log('🔄 Reubicando modelo...');
+
+                // Ocultar el modelo actual
+                const objectToHide = this.useTestMode ? this.testCube : this.model;
+                objectToHide.visible = false;
+
+                // Resetear estado de colocación
+                this.modelAdded = false;
+
+                // Resetear escalas y pellizco
+                this.currentScale = 1.0;
+                this.initialScale = 1.0;
+                this.isScaling = false;
+
+                // Ocultar información de escala
+                this.hideScaleInfo();
+
+                // Resetear posición y rotación del objeto
+                objectToHide.position.set(0, 0, 0);
+                objectToHide.rotation.set(0, 0, 0);
+                objectToHide.quaternion.set(0, 0, 0, 1);
+
+                // Restaurar escala base
+                if (this.useTestMode) {
+                    objectToHide.scale.setScalar(1.0);
+                } else {
+                    objectToHide.scale.setScalar(this.targetScale);
+                }
+
+                // El cursor volverá a aparecer automáticamente en el próximo frame
+                // cuando el hit testing detecte superficies
+
+                console.log('✅ Modelo listo para reubicación');
+                console.log('   - Busca la rejilla verde moviéndote lentamente');
+                console.log('   - Toca para colocar en nueva posición');
+
+                this.updateDebugInfo();
+            }
+
             animate() {
                 requestAnimationFrame(() => this.animate());
 
@@ -1622,6 +1683,10 @@
 
         function stopAR() {
             if (app) app.stopAR();
+        }
+
+        function relocateModel() {
+            if (app) app.relocateModel();
         }
 
         function toggleARCollapse() {

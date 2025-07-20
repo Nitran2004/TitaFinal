@@ -27,6 +27,8 @@ namespace ProyectoIdentity.Controllers
         // GET: /Home/Index
         public IActionResult Index()
         {
+            // Ya no necesitamos cargar productos en el Index
+            // porque ahora solo mostramos enlaces a las categorías
             return View();
         }
 

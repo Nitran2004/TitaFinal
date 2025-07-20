@@ -8,6 +8,7 @@ using ProyectoIdentity.Datos;
 using ProyectoIdentity.Models;
 using ProyectoIdentity.Services;
 using ProyectoIdentity.Servicios;
+//using static ProyectoIdentity.Controllers.UsuariosController;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,11 +40,14 @@ builder.Services.AddControllers()
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
+
 // Configuración de Identity
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 {
+    // Configuración de opciones de Identity
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(1);
     options.Lockout.MaxFailedAccessAttempts = 10;
+
     options.Password.RequireDigit = false;
     options.Password.RequireLowercase = false;
     options.Password.RequireUppercase = false;
@@ -104,6 +108,7 @@ builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
 builder.Logging.AddEventSourceLogger();
+
 builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 // Construcción de la aplicación
@@ -126,7 +131,7 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     try
     {
-        var context = services.GetRequiredService<ApplicationDbContext>();
+    var context = services.GetRequiredService<ApplicationDbContext>();
         var logger = services.GetRequiredService<ILogger<Program>>();
 
         logger.LogInformation("Verificando conexión a base de datos...");
@@ -156,7 +161,7 @@ using (var scope = app.Services.CreateScope())
         // Inicializar datos existentes (si las tablas existen)
         try
         {
-            DbInitializer.Initialize(context);
+    DbInitializer.Initialize(context);
             logger.LogInformation("✅ DbInitializer ejecutado");
         }
         catch (Exception ex)
@@ -166,7 +171,7 @@ using (var scope = app.Services.CreateScope())
 
         try
         {
-            RecompensasInitializer.Initialize(context);
+    RecompensasInitializer.Initialize(context);
             logger.LogInformation("✅ RecompensasInitializer ejecutado");
         }
         catch (Exception ex)
@@ -185,18 +190,21 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Middleware
-app.UseHttpsRedirection();
+ app.UseHttpsRedirection();
 
 // Configuración de archivos estáticos
 var provider = new FileExtensionContentTypeProvider();
 provider.Mappings[".glb"] = "model/gltf-binary";
 
+// Usa archivos estáticos con la configuración personalizada
 app.UseStaticFiles(new StaticFileOptions
 {
     ContentTypeProvider = provider
 });
 
 app.UseRouting();
+
+// Middleware de CORS, sesión y autenticación
 app.UseCors();
 app.UseSession();
 app.UseRequestLocalization();
