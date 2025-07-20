@@ -7,7 +7,8 @@
     var ingredientes = new List<ProyectoIdentity.Models.Ingrediente>(); // Vacío para recomendaciones
     bool esAdministrador = User.IsInRole("Administrador");
     // ✅ CONDICIÓN PARA MOSTRAR BOTONES AR - SOLO PIZZA Y SÁNDWICHES
-    bool mostrarBotonesAR = Model.Categoria.ToLower() == "pizza" ;
+    bool mostrarBotonesAR = new[] { "pizza", "sánduches", "picadas" }.Contains(Model.Categoria.ToLower());
+
 }
 <div id="info-limite-global" class="alert" style="display: none; margin: 20px;">
     <!-- Contenido dinámico -->
