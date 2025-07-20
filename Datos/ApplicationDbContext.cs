@@ -18,7 +18,6 @@ namespace ProyectoIdentity.Datos
         public DbSet<PedidoProducto> PedidoProductos { get; set; }
         public DbSet<PedidoDetalle> PedidoDetalles { get; set; }
         public DbSet<Sucursal> Sucursales { get; set; }
-
         public DbSet<DescuentosIngredientes> DescuentosIngredientes { get; set; }
         public DbSet<Cupon> Cupones { get; set; }
         public DbSet<CuponCanjeado> CuponesCanjeados { get; set; }
@@ -29,6 +28,12 @@ namespace ProyectoIdentity.Datos
         public DbSet<HistorialCanje> HistorialCanjes { get; set; }
         public DbSet<TransaccionPuntos> TransaccionesPuntos { get; set; }
         public DbSet<Valoracion> Valoraciones { get; set; }
+
+        // Sistema de chat (añadidos del primer código)
+        public DbSet<SolicitudChat> SolicitudesChat { get; set; }
+        public DbSet<HistorialChat> HistorialChat { get; set; }
+        //public DbSet<ConfiguracionChat> ConfiguracionChat { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -117,7 +122,7 @@ namespace ProyectoIdentity.Datos
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // ✅ CONFIGURACIÓN PARA PRODUCTO
+            // ✅ CONFIGURACIÓN PARA PRODUCTO (combinada con el primer código)
             modelBuilder.Entity<Producto>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -128,6 +133,8 @@ namespace ProyectoIdentity.Datos
                 entity.Property(e => e.InfoNutricional).HasMaxLength(1000);
                 entity.Property(e => e.Alergenos).HasMaxLength(500);
                 entity.Property(e => e.Ingredientes).HasColumnType("nvarchar(max)");
+                entity.Property(e => e.Total).HasColumnType("decimal(18,2)"); // Añadido del primer código
+                entity.Property(e => e.Imagen).HasMaxLength(500); // Añadido del primer código
             });
 
             // ✅ CONFIGURACIÓN PARA APPUSUARIO
@@ -253,6 +260,92 @@ namespace ProyectoIdentity.Datos
             {
                 entity.HasKey(e => e.Id);
             });
+
+            // =====================================================
+            // CONFIGURACIONES DEL SISTEMA DE CHAT (del primer código)
+            // =====================================================
+
+            // Configuración para SolicitudChat
+            modelBuilder.Entity<SolicitudChat>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Mensaje).HasMaxLength(2000).IsRequired();
+                entity.Property(e => e.EstadoSolicitud).HasMaxLength(50).HasDefaultValue("Pendiente");
+                entity.Property(e => e.RespuestaIA).HasMaxLength(4000);
+                entity.Property(e => e.UsuarioId).HasMaxLength(450);
+
+                // Relación con Producto
+                entity.HasOne(e => e.ProductoRecomendado)
+                      .WithMany()
+                      .HasForeignKey(e => e.ProductoRecomendadoId)
+                      .OnDelete(DeleteBehavior.SetNull);
+
+                // Índices
+                entity.HasIndex(e => e.FechaCreacion);
+                entity.HasIndex(e => e.EstadoSolicitud);
+                entity.HasIndex(e => e.UsuarioId);
+            });
+
+            // Configuración para HistorialChat
+            modelBuilder.Entity<HistorialChat>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Mensaje).HasMaxLength(2000).IsRequired();
+                entity.Property(e => e.Respuesta).HasMaxLength(4000);
+                entity.Property(e => e.TipoMensaje).HasMaxLength(50).HasDefaultValue("usuario");
+                entity.Property(e => e.UsuarioId).HasMaxLength(450);
+
+                // Relación con Producto
+                entity.HasOne(e => e.Producto)
+                      .WithMany()
+                      .HasForeignKey(e => e.ProductoId)
+                      .OnDelete(DeleteBehavior.SetNull);
+
+                // Índices
+                entity.HasIndex(e => e.Fecha);
+                entity.HasIndex(e => e.UsuarioId);
+                entity.HasIndex(e => e.TipoMensaje);
+            });
+
+            //// Configuración para ConfiguracionChat
+            //modelBuilder.Entity<ConfiguracionChat>(entity =>
+            //{
+            //    entity.HasKey(e => e.Id);
+            //    entity.Property(e => e.Clave).HasMaxLength(100).IsRequired();
+            //    entity.Property(e => e.Valor).HasMaxLength(2000);
+            //    entity.Property(e => e.Descripcion).HasMaxLength(500);
+
+            //    // Índice único en la clave
+            //    entity.HasIndex(e => e.Clave).IsUnique();
+            //});
+
+            //// Datos iniciales para configuración del chat
+            //modelBuilder.Entity<ConfiguracionChat>().HasData(
+            //    new ConfiguracionChat
+            //    {
+            //        Id = 1,
+            //        Clave = "max_productos_contexto",
+            //        Valor = "15",
+            //        Descripcion = "Número máximo de productos a incluir en el contexto para la IA",
+            //        FechaActualizacion = DateTime.Now
+            //    },
+            //    new ConfiguracionChat
+            //    {
+            //        Id = 2,
+            //        Clave = "temperatura_ia",
+            //        Valor = "0.7",
+            //        Descripcion = "Temperatura para la generación de respuestas de la IA",
+            //        FechaActualizacion = DateTime.Now
+            //    },
+            //    new ConfiguracionChat
+            //    {
+            //        Id = 3,
+            //        Clave = "max_tokens_respuesta",
+            //        Valor = "500",
+            //        Descripcion = "Número máximo de tokens en las respuestas de la IA",
+            //        FechaActualizacion = DateTime.Now
+            //    }
+            //);
         }
     }
 }

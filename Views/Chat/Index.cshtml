@@ -1,0 +1,349 @@
+﻿@{
+    ViewData["Title"] = "Chat de Recomendaciones";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-robot"></i> Asistente de Recomendaciones
+                    </h4>
+                    <small>Pregúntame sobre nuestros productos. Ejemplo: "Quiero una pizza sin gluten"</small>
+                </div>
+                
+                <div class="card-body chat-container" id="chatContainer" style="height: 400px; overflow-y: auto;">
+                    <div class="mensaje-bot mb-3">
+                        <div class="d-flex">
+                            <div class="avatar-bot me-2">
+                                <i class="fas fa-robot text-primary"></i>
+                            </div>
+                            <div class="bubble bg-light p-3 rounded">
+                                ¡Hola! Soy tu asistente de recomendaciones. Puedo ayudarte a encontrar el producto perfecto. 
+                                ¿Qué te gustaría comer o beber hoy?
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-footer">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="mensajeInput" 
+                               placeholder="Escribe tu mensaje aquí..." 
+                               onkeypress="manejarEnter(event)">
+                        <button class="btn btn-primary" type="button" onclick="enviarMensaje()">
+                            <i class="fas fa-paper-plane"></i> Enviar
+                        </button>
+                    </div>
+                    
+                    <!-- Botones de sugerencias rápidas -->
+                    <div class="mt-2">
+                        <small class="text-muted">Sugerencias rápidas:</small><br>
+                        <button class="btn btn-outline-secondary btn-sm me-1 mt-1" onclick="enviarSugerencia('Pizza sin gluten')">
+                            Pizza sin gluten
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm me-1 mt-1" onclick="enviarSugerencia('Cerveza artesanal')">
+                            Cerveza artesanal
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm me-1 mt-1" onclick="enviarSugerencia('Bebida sin alcohol')">
+                            Bebida sin alcohol
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm me-1 mt-1" onclick="enviarSugerencia('Algo light')">
+                            Algo light
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para mostrar detalles del producto -->
+<div class="modal fade" id="modalProducto" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalProductoTitulo"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalProductoCuerpo">
+                <!-- Contenido del producto se carga aquí -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="agregarAlCarrito()">Agregar al Carrito</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.chat-container {
+    background-color: #f8f9fa;
+}
+
+.mensaje-usuario {
+    text-align: right;
+}
+
+.mensaje-bot {
+    text-align: left;
+}
+
+.bubble {
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.mensaje-usuario .bubble {
+    background-color: #007bff !important;
+    color: white;
+    margin-left: auto;
+}
+
+.avatar-bot {
+    min-width: 30px;
+}
+
+.producto-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px;
+    margin: 5px 0;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.producto-card:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.typing-indicator {
+    display: none;
+}
+
+.typing-indicator span {
+    height: 10px;
+    width: 10px;
+    float: left;
+    margin: 0 1px;
+    background-color: #9e9ea1;
+    display: block;
+    border-radius: 50%;
+    opacity: 0.4;
+    animation: 1s blink ease-in-out infinite both;
+}
+
+.typing-indicator span:nth-child(2) {
+    animation-delay: .2s;
+}
+
+.typing-indicator span:nth-child(3) {
+    animation-delay: .4s;
+}
+
+@@keyframes blink {
+    0%, 80%, 100% {
+        opacity: .4;
+    }
+    40% {
+        opacity: 1;
+    }
+}
+</style>
+
+<script>
+let productoSeleccionado = null;
+
+function manejarEnter(event) {
+    if (event.key === 'Enter') {
+        enviarMensaje();
+    }
+}
+
+function enviarSugerencia(mensaje) {
+    document.getElementById('mensajeInput').value = mensaje;
+    enviarMensaje();
+}
+
+function enviarMensaje() {
+    const input = document.getElementById('mensajeInput');
+    const mensaje = input.value.trim();
+    
+    if (!mensaje) return;
+    
+    // Limpiar input
+    input.value = '';
+    
+    // Mostrar mensaje del usuario
+    mostrarMensajeUsuario(mensaje);
+    
+    // Mostrar indicador de escritura
+    mostrarIndicadorEscritura();
+    
+    // Enviar mensaje al servidor
+        fetch('/api/chatapi/mensaje', {
+            method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ mensaje: mensaje })
+    })
+    .then(response => response.json())
+    .then(data => {
+        ocultarIndicadorEscritura();
+        mostrarRespuestaBot(data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        ocultarIndicadorEscritura();
+        mostrarMensajeError();
+    });
+}
+
+function mostrarMensajeUsuario(mensaje) {
+    const container = document.getElementById('chatContainer');
+    const mensajeDiv = document.createElement('div');
+    mensajeDiv.className = 'mensaje-usuario mb-3';
+    mensajeDiv.innerHTML = `
+        <div class="d-flex justify-content-end">
+            <div class="bubble bg-primary text-white p-3 rounded">
+                ${mensaje}
+            </div>
+            <div class="avatar-usuario ms-2">
+                <i class="fas fa-user text-primary"></i>
+            </div>
+        </div>
+    `;
+    container.appendChild(mensajeDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+function mostrarIndicadorEscritura() {
+    const container = document.getElementById('chatContainer');
+    const indicador = document.createElement('div');
+    indicador.id = 'indicadorEscritura';
+    indicador.className = 'mensaje-bot mb-3';
+    indicador.innerHTML = `
+        <div class="d-flex">
+            <div class="avatar-bot me-2">
+                <i class="fas fa-robot text-primary"></i>
+            </div>
+            <div class="bubble bg-light p-3 rounded typing-indicator" style="display: block;">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    `;
+    container.appendChild(indicador);
+    container.scrollTop = container.scrollHeight;
+}
+
+function ocultarIndicadorEscritura() {
+    const indicador = document.getElementById('indicadorEscritura');
+    if (indicador) {
+        indicador.remove();
+    }
+}
+
+function mostrarRespuestaBot(data) {
+    const container = document.getElementById('chatContainer');
+    const mensajeDiv = document.createElement('div');
+    mensajeDiv.className = 'mensaje-bot mb-3';
+    
+    let contenido = `
+        <div class="d-flex">
+            <div class="avatar-bot me-2">
+                <i class="fas fa-robot text-primary"></i>
+            </div>
+            <div class="bubble bg-light p-3 rounded">
+                ${data.respuesta}
+    `;
+    
+    // Si hay un producto recomendado, agregar tarjeta del producto
+    if (data.productoId > 0) {
+        contenido += `
+            <div class="producto-card mt-2" onclick="mostrarDetallesProducto(${data.productoId}, '${data.nombreProducto}', '${data.categoria}', ${data.precio})">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${data.nombreProducto}</strong><br>
+                        <small class="text-muted">${data.categoria}</small>
+                    </div>
+                    <div class="text-end">
+                        <strong class="text-success">$${data.precio}</strong><br>
+                        <small class="text-primary">Ver detalles</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    contenido += `
+            </div>
+        </div>
+    `;
+    
+    mensajeDiv.innerHTML = contenido;
+    container.appendChild(mensajeDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+function mostrarMensajeError() {
+    const container = document.getElementById('chatContainer');
+    const mensajeDiv = document.createElement('div');
+    mensajeDiv.className = 'mensaje-bot mb-3';
+    mensajeDiv.innerHTML = `
+        <div class="d-flex">
+            <div class="avatar-bot me-2">
+                <i class="fas fa-robot text-danger"></i>
+            </div>
+            <div class="bubble bg-light p-3 rounded text-danger">
+                Lo siento, hubo un error procesando tu mensaje. Por favor intenta de nuevo.
+            </div>
+        </div>
+    `;
+    container.appendChild(mensajeDiv);
+    container.scrollTop = container.scrollHeight;
+}
+
+function mostrarDetallesProducto(id, nombre, categoria, precio) {
+    productoSeleccionado = { id, nombre, categoria, precio };
+    
+    document.getElementById('modalProductoTitulo').textContent = nombre;
+    document.getElementById('modalProductoCuerpo').innerHTML = `
+        <div class="row">
+            <div class="col-12">
+                <h6>Información del Producto</h6>
+                <p><strong>Categoría:</strong> ${categoria}</p>
+                <p><strong>Precio:</strong> $${precio}</p>
+                <p><strong>ID:</strong> ${id}</p>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    Para ver más detalles como información nutricional y alérgenos, 
+                    consulta la sección de productos.
+                </div>
+            </div>
+        </div>
+    `;
+    
+    new bootstrap.Modal(document.getElementById('modalProducto')).show();
+}
+
+function agregarAlCarrito() {
+    if (productoSeleccionado) {
+        // Aquí integrarías con tu sistema de carrito existente
+        alert(`Producto "${productoSeleccionado.nombre}" agregado al carrito!`);
+        bootstrap.Modal.getInstance(document.getElementById('modalProducto')).hide();
+    }
+}
+
+// Auto-focus en el input al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('mensajeInput').focus();
+});
+</script>
