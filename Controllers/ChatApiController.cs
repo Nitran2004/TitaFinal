@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ProyectoIdentity.Datos;
 using ProyectoIdentity.Models;
 using ProyectoIdentity.Servicios;
+using System.Collections.Generic;
 using System.Security.Claims;
 
 namespace ProyectoIdentity.Controllers
@@ -64,7 +65,7 @@ namespace ProyectoIdentity.Controllers
                 _recomendador.Inicializar(productos);
 
                 // Obtener recomendación
-                var recomendacion = await _recomendador.ObtenerRecomendacion(request.Mensaje);
+                var recomendacion = await _recomendador.ObtenerRecomendacion(request.Mensaje, productos);
 
                 // Actualizar solicitud con resultado
                 solicitud.EstadoSolicitud = "Completada";

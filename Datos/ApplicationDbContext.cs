@@ -33,6 +33,8 @@ namespace ProyectoIdentity.Datos
         public DbSet<SolicitudChat> SolicitudesChat { get; set; }
         public DbSet<HistorialChat> HistorialChat { get; set; }
         //public DbSet<ConfiguracionChat> ConfiguracionChat { get; set; }
+        public DbSet<TipoAlergeno> TiposAlergenos { get; set; }
+        public DbSet<UsuarioAlergeno> UsuarioAlergenos { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -81,6 +83,60 @@ namespace ProyectoIdentity.Datos
                       .WithOne(d => d.Pedido)
                       .HasForeignKey(d => d.PedidoId)
                       .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<TipoAlergeno>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.ToTable("TiposAlergenos");
+
+                entity.Property(e => e.Nombre)
+                      .IsRequired()
+                      .HasMaxLength(100);
+
+                entity.Property(e => e.Descripcion)
+                      .HasMaxLength(500);
+
+                entity.Property(e => e.Activo)
+                      .HasDefaultValue(true);
+
+                entity.Property(e => e.FechaCreacion)
+                      .HasDefaultValueSql("GETDATE()");
+
+                // Índices
+                entity.HasIndex(e => e.Nombre).IsUnique();
+                entity.HasIndex(e => e.Activo);
+            });
+
+            // Configuración para UsuarioAlergeno
+            modelBuilder.Entity<UsuarioAlergeno>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.ToTable("UsuarioAlergenos");
+
+                entity.Property(e => e.UsuarioId)
+                      .IsRequired()
+                      .HasMaxLength(450);
+
+                entity.Property(e => e.TipoAlergenoId)
+                      .IsRequired();
+
+                entity.Property(e => e.FechaRegistro)
+                      .HasDefaultValueSql("GETDATE()");
+
+                entity.Property(e => e.Notas)
+                      .HasMaxLength(500);
+
+                // Relación con TipoAlergeno
+                entity.HasOne(e => e.TipoAlergeno)
+                      .WithMany(ta => ta.UsuarioAlergenos)
+                      .HasForeignKey(e => e.TipoAlergenoId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                // Índices
+                entity.HasIndex(e => e.UsuarioId);
+                entity.HasIndex(e => e.TipoAlergenoId);
+                entity.HasIndex(e => new { e.UsuarioId, e.TipoAlergenoId }).IsUnique();
             });
 
             // ✅ CONFIGURACIÓN PARA PEDIDOPRODUCTO

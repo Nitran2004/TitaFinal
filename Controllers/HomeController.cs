@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ProyectoIdentity.Datos;
 using ProyectoIdentity.Models;
 using ProyectoIdentity.Servicios;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace ProyectoIdentity.Controllers
@@ -49,6 +50,9 @@ namespace ProyectoIdentity.Controllers
                     .Where(p => p.Cantidad > 0)
                     .ToListAsync();
 
+                _logger.LogInformation("Tipo de la variable productos: {Tipo}", productos.GetType());
+
+
                 if (!productos.Any())
                 {
                     return Json(new
@@ -65,7 +69,7 @@ namespace ProyectoIdentity.Controllers
                 _recomendador.Inicializar(productos);
 
                 // Obtener recomendación
-                var recomendacion = await _recomendador.ObtenerRecomendacion(request.Mensaje);
+                var recomendacion = await _recomendador.ObtenerRecomendacion(request.Mensaje,  productos);
 
                 // Enriquecer respuesta con datos del producto
                 if (recomendacion.ProductoId > 0)

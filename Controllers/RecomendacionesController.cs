@@ -58,7 +58,7 @@ public class RecomendacionesController : ControllerBase
             _recomendador.Inicializar(productos);
 
             // 3. Obtener recomendación basada en TUS datos
-            var recomendacion = await _recomendador.ObtenerRecomendacion(request.Consulta);
+            var recomendacion = await _recomendador.ObtenerRecomendacion(request.Consulta, productos);
 
             // 4. Si encontró un producto específico, enriquecer con más datos
             if (recomendacion.ProductoId > 0)
