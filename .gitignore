@@ -361,8 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-
-# ConfiguraciÃ³n con contraseÃ±as sensibles
+# Configuración con contraseñas sensibles
 appsettings.Production.json
 appsettings.Local.json
 appsettings.*.json
