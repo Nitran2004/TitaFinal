@@ -1,14 +1,19 @@
-﻿<!DOCTYPE html>
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vista 3D con AR - @ViewBag.ProductoNombre</title>
+    <title>AR Optimizado - @ViewBag.ProductoNombre</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
-
     <style>
+        import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
         * {
             margin: 0;
             padding: 0;
@@ -16,42 +21,25 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 50%, #0c0c0c 100%);
+            color: #ffffff;
             overflow: hidden;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            user-select: none;
+            font-weight: 400;
         }
 
-        .camera-container {
+        #container {
             position: fixed;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 0;
-            display: none;
-        }
-
-        #camera-video {
             width: 100%;
             height: 100%;
-            object-fit: cover;
-        }
-
-        .canvas-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 1;
         }
 
         canvas {
+            display: block;
             width: 100%;
             height: 100%;
-            display: block;
             cursor: grab;
         }
 
@@ -59,393 +47,273 @@
                 cursor: grabbing;
             }
 
-        .header {
+        /* UI Principal */
+        #ui {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 20;
-            background: rgba(0, 0, 0, 0.15);
-            backdrop-filter: blur(30px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 24px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            min-height: 80px;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 24px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
         }
 
-            .header.hidden {
-                transform: translateY(-100%);
-                opacity: 0;
-            }
-
-        .header-content {
-            flex: 1;
-            max-width: 60%;
-        }
-
-            .header-content h1 {
-                font-size: 1.8rem;
-                font-weight: 700;
-                margin-bottom: 6px;
-                background: linear-gradient(135deg, #fff 0%, #a855f7 50%, #3b82f6 100%);
+            #ui h3 {
+                font-weight: 600;
+                font-size: 20px;
+                margin-bottom: 8px;
+                background: linear-gradient(135deg, #fff 0%, #a0a0a0 100%);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 background-clip: text;
-                letter-spacing: -0.02em;
-                line-height: 1.2;
             }
 
-            .header-content .product-info {
-                display: flex;
-                align-items: center;
-                gap: 16px;
-                margin-bottom: 4px;
-                flex-wrap: wrap;
-            }
-
-            .header-content .product-price {
-                font-size: 1.1rem;
-                font-weight: 700;
-                color: #10b981;
-                background: rgba(16, 185, 129, 0.15);
-                padding: 4px 12px;
-                border-radius: 12px;
-                border: 1px solid rgba(16, 185, 129, 0.3);
-                backdrop-filter: blur(10px);
-                display: inline-flex;
-                align-items: center;
-                gap: 4px;
-            }
-
-            .header-content .product-meta {
-                font-size: 0.85rem;
-                color: rgba(255, 255, 255, 0.7);
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                flex-wrap: wrap;
-            }
-
-            .header-content .product-description {
-                opacity: 0.85;
-                font-size: 0.9rem;
-                color: rgba(255, 255, 255, 0.9);
-                line-height: 1.4;
-                margin-top: 4px;
-                max-width: 100%;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
-
-            .header-content .meta-item {
-                display: flex;
-                align-items: center;
-                gap: 4px;
-                font-size: 0.8rem;
-                color: rgba(255, 255, 255, 0.6);
-                background: rgba(255, 255, 255, 0.08);
-                padding: 2px 8px;
-                border-radius: 8px;
-            }
-
-        .header-actions {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            flex-shrink: 0;
-        }
-
-        .btn {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 8px 16px;
-            border-radius: 12px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 13px;
+        #precio {
+            font-size: 18px;
             font-weight: 500;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-            .btn:hover {
-                background: rgba(255, 255, 255, 0.25);
-                transform: translateY(-2px);
-                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-            }
-
-            .btn:active {
-                transform: translateY(0);
-            }
-
-        .btn-primary {
-            background: linear-gradient(45deg, #4f46e5, #7c3aed);
-            border: none;
-        }
-
-        .btn-success {
-            background: linear-gradient(45deg, #059669, #0d9488);
-            border: none;
-        }
-
-        .panel {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 15;
-            background: rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 25px 25px 0 0;
-            padding: 24px;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-            transform: translateY(100%);
-        }
-
-            .panel.visible {
-                transform: translateY(0);
-            }
-
-            .panel.hidden {
-                transform: translateY(100%);
-                opacity: 1;
-                pointer-events: none;
-            }
-
-        .nutrition-panel {
-            background: rgba(34, 197, 94, 0.12);
-            border-color: rgba(34, 197, 94, 0.25);
-        }
-
-        .allergens-panel {
-            background: rgba(251, 146, 60, 0.12);
-            border-color: rgba(251, 146, 60, 0.25);
-        }
-
-        .nutrition-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.2s ease;
-        }
-
-            .nutrition-item:last-child {
-                border-bottom: none;
-            }
-
-            .nutrition-item:hover {
-                background: rgba(255, 255, 255, 0.03);
-                border-radius: 8px;
-                padding-left: 8px;
-                padding-right: 8px;
-            }
-
-        .nutrition-label {
-            opacity: 0.85;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        .nutrition-value {
-            font-weight: 600;
-            color: #22c55e;
-            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
-            font-size: 0.9rem;
-        }
-
-        .allergens-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 12px;
-        }
-
-        .allergen-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .allergen-present {
-            background: rgba(239, 68, 68, 0.15);
-            border-color: rgba(239, 68, 68, 0.3);
-        }
-
-            .allergen-present:hover {
-                background: rgba(239, 68, 68, 0.2);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
-            }
-
-        .allergen-absent {
-            background: rgba(34, 197, 94, 0.15);
-            border-color: rgba(34, 197, 94, 0.3);
-        }
-
-            .allergen-absent:hover {
-                background: rgba(34, 197, 94, 0.2);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
-            }
-
-        .allergen-icon {
-            font-size: 1.5rem;
-            flex-shrink: 0;
-        }
-
-        .allergen-name {
-            font-weight: 600;
-            flex: 1;
-            font-size: 0.9rem;
-        }
-
-        .allergen-status {
-            font-size: 0.8rem;
-            font-weight: 500;
-            padding: 4px 8px;
-            border-radius: 6px;
-            flex-shrink: 0;
-        }
-
-        .allergen-present .allergen-status {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-        }
-
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .panel-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: linear-gradient(135deg, #fff 0%, #e0e7ff 100%);
+            color: #4CAF50;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .panel-close {
-            background: rgba(255, 255, 255, 0.1);
-            border: none;
-            color: rgba(255, 255, 255, 0.8);
+        .btn {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(76, 175, 80, 0.1) 100%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #ffffff;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 14px 28px;
+            border-radius: 12px;
             cursor: pointer;
-            padding: 8px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
             font-size: 16px;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-weight: 500;
+            margin: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(76, 175, 80, 0.2);
+            font-family: 'Inter', sans-serif;
+            text-decoration: none;
+            display: inline-block;
         }
 
-            .panel-close:hover {
-                background: rgba(255, 255, 255, 0.2);
-                color: white;
-                transform: scale(1.1);
+            .btn:hover {
+                background: linear-gradient(135deg, rgba(76, 175, 80, 0.3) 0%, rgba(76, 175, 80, 0.2) 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+                border-color: rgba(76, 175, 80, 0.5);
             }
 
-        .control-group {
-            margin-bottom: 16px;
+            .btn:disabled {
+                background: rgba(255, 255, 255, 0.05);
+                border-color: rgba(255, 255, 255, 0.1);
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+                color: rgba(255, 255, 255, 0.4);
+            }
+
+        .btn-primary {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
         }
 
-            .control-group:last-child {
+            .btn-primary:hover {
+                background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(59, 130, 246, 0.2) 100%);
+                border-color: rgba(59, 130, 246, 0.5);
+                box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+            }
+
+        .btn-danger {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+            border-color: rgba(239, 68, 68, 0.3);
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.2);
+        }
+
+            .btn-danger:hover {
+                background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(239, 68, 68, 0.2) 100%);
+                border-color: rgba(239, 68, 68, 0.5);
+                box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+            }
+
+        .btn-small {
+            font-size: 12px;
+            padding: 8px 16px;
+            margin: 4px;
+        }
+
+        #status {
+            margin: 16px 0;
+            font-size: 14px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.5;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Panel de Debug Expandido */
+        #debugInfo {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 20px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 400;
+            z-index: 150;
+            max-width: 350px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            font-family: 'Monaco', 'Courier New', monospace;
+            color: #10b981;
+        }
+
+            #debugInfo h4 {
+                color: #4CAF50;
+                font-size: 14px;
+                margin-bottom: 12px;
+                font-weight: 600;
+                text-align: center;
+                border-bottom: 1px solid rgba(34, 197, 94, 0.3);
+                padding-bottom: 8px;
+            }
+
+        .debug-section {
+            margin-bottom: 16px;
+            padding: 12px;
+            background: rgba(34, 197, 94, 0.1);
+            border-radius: 8px;
+            border-left: 3px solid #10b981;
+        }
+
+            .debug-section:last-child {
                 margin-bottom: 0;
             }
 
-        .control-label {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .control-value {
-            color: #60a5fa;
-            font-weight: 600;
-            font-size: 13px;
-        }
-
-        .control-slider {
-            width: 100%;
-            height: 6px;
-            border-radius: 3px;
-            background: rgba(255, 255, 255, 0.2);
-            outline: none;
-            appearance: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-            .control-slider::-webkit-slider-thumb {
-                appearance: none;
-                width: 18px;
-                height: 18px;
-                border-radius: 50%;
-                background: linear-gradient(45deg, #60a5fa, #3b82f6);
-                cursor: pointer;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-                transition: all 0.2s ease;
+            .debug-section h5 {
+                color: #22c55e;
+                font-size: 11px;
+                margin-bottom: 8px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
             }
 
-                .control-slider::-webkit-slider-thumb:hover {
-                    transform: scale(1.1);
-                    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.4);
-                }
-
-        .control-buttons {
+        .debug-item {
             display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 16px;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            color: rgba(255, 255, 255, 0.9);
         }
 
-        .loading, .error {
+            .debug-item:last-child {
+                margin-bottom: 0;
+            }
+
+        .debug-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 10px;
+            flex: 1;
+        }
+
+        .debug-value {
+            color: #10b981;
+            font-weight: 600;
+            font-size: 10px;
+            flex: 1;
+            text-align: right;
+        }
+
+        /* Controles de Vista Previa */
+        #previewControls {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+            .control-row:last-child {
+                margin-bottom: 0;
+            }
+
+        .instructions {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        /* Instrucciones AR */
+        #instructions {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 1.6;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+        }
+
+            #instructions p {
+                margin: 8px 0;
+                color: rgba(255, 255, 255, 0.9);
+            }
+
+        /* Loading */
+        .loading {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(20px);
             padding: 30px 40px;
             border-radius: 20px;
             text-align: center;
-            z-index: 30;
+            z-index: 300;
             border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .error {
-            background: rgba(239, 68, 68, 0.2);
-            border-color: rgba(239, 68, 68, 0.4);
-            display: none;
         }
 
         .loading-spinner {
@@ -453,7 +321,7 @@
             height: 40px;
             border: 3px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            border-top-color: #60a5fa;
+            border-top-color: #4CAF50;
             animation: spin 1s ease-in-out infinite;
             margin: 0 auto 16px;
         }
@@ -467,1009 +335,1302 @@
 
         }
 
-        .panel-toggle, .ar-toggle {
-            position: fixed;
-            bottom: 30px;
-            border: none;
-            border-radius: 50%;
-            width: 64px;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            color: white;
-            cursor: pointer;
-            z-index: 25;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .panel-toggle {
-            right: 30px;
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            box-shadow: 0 12px 30px rgba(79, 70, 229, 0.4);
-        }
-
-        .ar-toggle {
-            left: 30px;
-            background: linear-gradient(135deg, #f97316, #ea580c);
-            box-shadow: 0 12px 30px rgba(249, 115, 22, 0.4);
-        }
-
-            .panel-toggle:hover, .ar-toggle:hover {
-                transform: scale(1.1);
-            }
-
-            .panel-toggle:active, .ar-toggle:active {
-                transform: scale(0.95);
-            }
-
-            .ar-toggle.active {
-                background: linear-gradient(135deg, #10b981, #059669);
-                box-shadow: 0 12px 30px rgba(16, 185, 129, 0.4);
-            }
-
-        .ar-instructions {
+        /* Información de Escala durante Pellizco */
+        #scaleInfo {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(76, 175, 80, 0.15);
             backdrop-filter: blur(20px);
-            padding: 30px 40px;
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 24px 32px;
             border-radius: 20px;
             text-align: center;
-            z-index: 30;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            color: white;
-            display: none;
-            max-width: 90%;
+            font-size: 20px;
+            font-weight: 600;
+            color: #4CAF50;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 200;
+            box-shadow: 0 8px 32px rgba(76, 175, 80, 0.2);
         }
 
-            .ar-instructions h3 {
-                color: #10b981;
-                margin-bottom: 15px;
-                font-size: 1.2rem;
+        #scaleValue {
+            background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        /* Toggle para Debug */
+        #debugToggle {
+            position: fixed;
+            top: 120px;
+            right: 20px;
+            background: rgba(16, 185, 129, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            z-index: 160;
+            transition: all 0.3s ease;
+        }
+
+            #debugToggle:hover {
+                background: rgba(16, 185, 129, 0.3);
+                transform: translateY(-2px);
             }
 
-            .ar-instructions p {
-                margin-bottom: 10px;
-                line-height: 1.5;
-            }
-
+        /* Responsividad */
         @@media (max-width: 768px) {
-            .allergens-grid
+            #debugInfo
 
         {
-            grid-template-columns: 1fr;
-            gap: 8px;
+            right: 12px;
+            top: 12px;
+            max-width: calc(100vw - 24px);
+            font-size: 9px;
+            max-height: 60vh;
         }
 
-        .allergen-item {
-            padding: 10px 12px;
+        #debugToggle {
+            right: 12px;
+            top: 100px;
         }
 
-        .allergen-icon {
-            font-size: 1.3rem;
+        #ui {
+            left: 12px;
+            right: 12px;
+            top: 12px;
+            padding: 20px;
         }
 
-        .header {
-            padding: 16px 20px;
-            min-height: auto;
+        #previewControls, #instructions {
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
+            padding: 16px;
+        }
+
+        .control-row {
             flex-direction: column;
-            align-items: flex-start;
-            gap: 12px;
-        }
-
-        .header-content {
-            max-width: 100%;
-        }
-
-            .header-content h1 {
-                font-size: 1.4rem;
-                margin-bottom: 8px;
-            }
-
-            .header-content .product-info {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-
-            .header-content .product-description {
-                white-space: normal;
-                overflow: visible;
-                text-overflow: initial;
-                max-height: 2.8em;
-                line-height: 1.4;
-                display: -webkit-box;
-                -webkit-line-clamp: 2;
-                -webkit-box-orient: vertical;
-                overflow: hidden;
-            }
-
-        .header-actions {
-            width: 100%;
-            justify-content: flex-end;
             gap: 8px;
         }
 
         .btn {
-            font-size: 12px;
-            padding: 6px 12px;
+            font-size: 14px;
+            padding: 12px 20px;
         }
 
-        .panel {
-            padding: 20px 16px;
-        }
-
-        .panel-toggle, .ar-toggle {
-            width: 56px;
-            height: 56px;
-            bottom: 20px;
-            font-size: 24px;
-        }
-
-        .panel-toggle {
-            right: 20px;
-        }
-
-        .ar-toggle {
-            left: 20px;
-        }
-
-        }
-
-        @@media (max-width: 480px) {
-            .header
-
-        {
-            padding: 12px 16px;
-        }
-
-        .header-content h1 {
-            font-size: 1.2rem;
-        }
-
-        .header-content .product-price {
-            font-size: 1rem;
-        }
-
-        .header-content .product-description {
-            font-size: 0.85rem;
-        }
-
-        .panel {
-            padding: 16px 14px;
-        }
-
-        }
-
-        .fade-in {
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        @@keyframes fadeIn {
-            from
-
-        {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
+        /* Información de escala más pequeña en móvil */
+        #scaleInfo {
+            font-size: 18px;
+            padding: 20px 24px;
         }
 
         }
     </style>
 </head>
 <body>
-    <div class="header" id="header">
-        <div class="header-content">
-            <h1>@ViewBag.ProductoNombre</h1>
-            <div class="product-info">
-                <div class="product-price">
-                    @ViewBag.ProductoPrecio
-                </div>
-                <div class="product-meta">
-                    <span class="meta-item">
-                        Modelo 3D
-                    </span>
-                    <span class="meta-item">
-                        @ViewBag.ProductoCategoria
-                    </span>
-                </div>
-            </div>
-            @if (!string.IsNullOrEmpty(ViewBag.ProductoDescripcion))
-            {
-                <div class="product-description" title="@ViewBag.ProductoDescripcion">
-                    @ViewBag.ProductoDescripcion
-                </div>
-            }
-        </div>
-        <div class="header-actions">
-            <button class="btn btn-success" onclick="app.autoFit()">Auto Ajustar</button>
-            <button class="btn" onclick="history.back()">Volver</button>
-        </div>
-    </div>
+    <div id="container"></div>
 
-    <!-- Contenedor de la cámara -->
-    <div class="camera-container" id="camera-container">
-        <video id="camera-video" autoplay playsinline muted></video>
-    </div>
-
-    <div class="canvas-container">
-        <canvas id="canvas3d"></canvas>
-    </div>
-
-    <div class="loading" id="loading">
+    <!-- Loading -->
+    <div id="loading" class="loading">
         <div class="loading-spinner"></div>
         <div>Cargando modelo 3D...</div>
     </div>
 
-    <div class="error" id="error">
-        <h3>Error al cargar</h3>
-        <p id="error-message">Ha ocurrido un error</p>
-        <button class="btn btn-primary" onclick="app.reload()" style="margin-top: 16px;">Reintentar</button>
+    <!-- UI Principal -->
+    <div id="ui">
+        <h3>@ViewBag.ProductoNombre</h3>
+        @if (ViewBag.ProductoPrecio != null)
+        {
+            <div id="precio">$@ViewBag.ProductoPrecio</div>
+        }
+        <div id="status">Preparando modelo...</div>
     </div>
 
-    <div class="ar-instructions" id="ar-instructions">
-        <h3>🎉 AR Activado</h3>
-        <p>El modelo 3D ahora flota sobre la cámara</p>
-        <p>Mueve el dispositivo para ver el modelo desde diferentes ángulos</p>
-        <p>Usa los controles para ajustar escala y posición</p>
-        <button class="btn btn-primary" onclick="hideARInstructions()" style="margin-top: 15px;">Entendido</button>
-    </div>
+    <!-- Toggle Debug -->
+    <button id="debugToggle" onclick="toggleDebugInfo()">📊 Debug</button>
 
-    <div class="panel nutrition-panel fade-in" id="nutrition-panel">
-        <div class="panel-header">
-            <div class="panel-title">Información Nutricional</div>
-            <button class="panel-close" onclick="togglePanel('nutrition-panel')">&times;</button>
-        </div>
-        <div id="nutrition-content">
-            <div class="nutrition-item">
-                <span class="nutrition-label">Calorías</span>
-                <span class="nutrition-value">@ViewBag.Calorias kcal</span>
+    <!-- Panel de Debug Simplificado -->
+    <div id="debugInfo">
+        <h4>📊 Debug AR</h4>
+
+        <div class="debug-section">
+            <h5>Modelo</h5>
+            <div class="debug-item">
+                <span class="debug-label">Estado:</span>
+                <span class="debug-value" id="debug-loaded">❌</span>
             </div>
-            <div class="nutrition-item">
-                <span class="nutrition-label">Proteínas</span>
-                <span class="nutrition-value">@ViewBag.Proteinas g</span>
+            <div class="debug-item">
+                <span class="debug-label">Tamaño:</span>
+                <span class="debug-value" id="debug-size-current">Calculando...</span>
             </div>
-            <div class="nutrition-item">
-                <span class="nutrition-label">Carbohidratos</span>
-                <span class="nutrition-value">@ViewBag.Carbohidratos g</span>
-            </div>
-            <div class="nutrition-item">
-                <span class="nutrition-label">Grasas</span>
-                <span class="nutrition-value">@ViewBag.Grasas g</span>
-            </div>
-            <div class="nutrition-item">
-                <span class="nutrition-label">Fibra</span>
-                <span class="nutrition-value">@ViewBag.Fibra g</span>
-            </div>
-            <div class="nutrition-item">
-                <span class="nutrition-label">Sodio</span>
-                <span class="nutrition-value">@ViewBag.Sodio mg</span>
+            <div class="debug-item">
+                <span class="debug-label">Escala:</span>
+                <span class="debug-value" id="debug-scale-current">1.0x</span>
             </div>
         </div>
-    </div>
 
-    <div class="panel allergens-panel fade-in" id="allergens-panel">
-        <div class="panel-header">
-            <div class="panel-title">Información de Alérgenos</div>
-            <button class="panel-close" onclick="togglePanel('allergens-panel')">&times;</button>
+        <div class="debug-section">
+            <h5>Posición AR</h5>
+            <div class="debug-item">
+                <span class="debug-label">Modelo:</span>
+                <span class="debug-value" id="debug-pos-model">0, 0, 0</span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">Cursor:</span>
+                <span class="debug-value" id="debug-pos-cursor">0, 0, 0</span>
+            </div>
         </div>
-        <div id="allergens-content">
-            <div class="allergens-grid">
-                @if (!string.IsNullOrEmpty(ViewBag.Gluten) && ViewBag.Gluten.ToLower() == "true")
-                {
-                    <div class="allergen-item allergen-present">
-                        <span class="allergen-icon">G</span>
-                        <span class="allergen-name">Gluten</span>
-                        <span class="allergen-status">Contiene</span>
-                    </div>
-                }
-                else
-                {
-                    <div class="allergen-item allergen-absent">
-                        <span class="allergen-icon">G</span>
-                        <span class="allergen-name">Gluten</span>
-                        <span class="allergen-status">No contiene</span>
-                    </div>
-                }
 
-                @if (!string.IsNullOrEmpty(ViewBag.Lacteos) && ViewBag.Lacteos.ToLower() == "true")
-                {
-                    <div class="allergen-item allergen-present">
-                        <span class="allergen-icon">L</span>
-                        <span class="allergen-name">Lácteos</span>
-                        <span class="allergen-status">Contiene</span>
-                    </div>
-                }
-                else
-                {
-                    <div class="allergen-item allergen-absent">
-                        <span class="allergen-icon">L</span>
-                        <span class="allergen-name">Lácteos</span>
-                        <span class="allergen-status">No contiene</span>
-                    </div>
-                }
-
-                @if (!string.IsNullOrEmpty(ViewBag.Huevos) && ViewBag.Huevos.ToLower() == "true")
-                {
-                    <div class="allergen-item allergen-present">
-                        <span class="allergen-icon">H</span>
-                        <span class="allergen-name">Huevos</span>
-                        <span class="allergen-status">Contiene</span>
-                    </div>
-                }
-                else
-                {
-                    <div class="allergen-item allergen-absent">
-                        <span class="allergen-icon">H</span>
-                        <span class="allergen-name">Huevos</span>
-                        <span class="allergen-status">No contiene</span>
-                    </div>
-                }
-
-                @if (!string.IsNullOrEmpty(ViewBag.Frutos_Secos) && ViewBag.Frutos_Secos.ToLower() == "true")
-                {
-                    <div class="allergen-item allergen-present">
-                        <span class="allergen-icon">F</span>
-                        <span class="allergen-name">Frutos Secos</span>
-                        <span class="allergen-status">Contiene</span>
-                    </div>
-                }
-                else
-                {
-                    <div class="allergen-item allergen-absent">
-                        <span class="allergen-icon">F</span>
-                        <span class="allergen-name">Frutos Secos</span>
-                        <span class="allergen-status">No contiene</span>
-                    </div>
-                }
-
-                @if (!string.IsNullOrEmpty(ViewBag.Soja) && ViewBag.Soja.ToLower() == "true")
-                {
-                    <div class="allergen-item allergen-present">
-                        <span class="allergen-icon">S</span>
-                        <span class="allergen-name">Soja</span>
-                        <span class="allergen-status">Contiene</span>
-                    </div>
-                }
-                else
-                {
-                    <div class="allergen-item allergen-absent">
-                        <span class="allergen-icon">S</span>
-                        <span class="allergen-name">Soja</span>
-                        <span class="allergen-status">No contiene</span>
-                    </div>
-                }
-
-                @if (!string.IsNullOrEmpty(ViewBag.Pescado) && ViewBag.Pescado.ToLower() == "true")
-                {
-                    <div class="allergen-item allergen-present">
-                        <span class="allergen-icon">P</span>
-                        <span class="allergen-name">Pescado</span>
-                        <span class="allergen-status">Contiene</span>
-                    </div>
-                }
-                else
-                {
-                    <div class="allergen-item allergen-absent">
-                        <span class="allergen-icon">P</span>
-                        <span class="allergen-name">Pescado</span>
-                        <span class="allergen-status">No contiene</span>
-                    </div>
-                }
+        <div class="debug-section">
+            <h5>Estado AR</h5>
+            <div class="debug-item">
+                <span class="debug-label">Modo:</span>
+                <span class="debug-value" id="debug-mode">Vista Previa</span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">Cursor:</span>
+                <span class="debug-value" id="debug-cursor-status">❌</span>
+            </div>
+            <div class="debug-item">
+                <span class="debug-label">Colocado:</span>
+                <span class="debug-value" id="debug-placed">❌</span>
             </div>
         </div>
     </div>
 
-    <div class="panel fade-in" id="controls-panel">
-        <div class="panel-header">
-            <div class="panel-title">Controles</div>
-            <button class="panel-close" onclick="togglePanel('controls-panel')">&times;</button>
+    <!-- Controles de Vista Previa Simplificados -->
+    <div id="previewControls">
+        <div class="instructions">
+            🎮 <strong>Vista Previa 3D:</strong> Verifica que el modelo se ve correctamente antes de activar AR.
+            <br>🤏 <strong>En AR:</strong> Usa pellizco de dedos para redimensionar después de colocar.
         </div>
-
-        <div class="control-group">
-            <div class="control-label"><span>Escala</span><span class="control-value" id="scale-value">1.0</span></div>
-            <input type="range" id="scale-slider" class="control-slider" min="0.1" max="10" step="0.1" value="1.0">
-        </div>
-
-        <div class="control-group">
-            <div class="control-label"><span>Posición Y</span><span class="control-value" id="posY-value">0.0</span></div>
-            <input type="range" id="posY-slider" class="control-slider" min="-5" max="5" step="0.1" value="0.0">
-        </div>
-
-        <div class="control-group">
-            <div class="control-label"><span>Rotación Y</span><span class="control-value" id="rotY-value">0°</span></div>
-            <input type="range" id="rotY-slider" class="control-slider" min="0" max="360" step="5" value="0">
-        </div>
-
-        <div class="control-buttons">
-            <button class="btn" onclick="togglePanel('nutrition-panel')">Nutrición</button>
-            <button class="btn" onclick="togglePanel('allergens-panel')">Alérgenos</button>
+        <div class="control-row">
+            <button class="btn btn-primary" id="startARButton" onclick="startAR()" disabled>🚀 Iniciar AR</button>
         </div>
     </div>
 
-    <button class="panel-toggle" id="panel-toggle" onclick="togglePanels()">🎮</button>
-    <button class="ar-toggle" id="ar-toggle" onclick="toggleAR()">📷</button>
+    <!-- Instrucciones AR con Controles Integrados -->
+    <div id="instructions" class="hidden">
+        <p><strong>🥽 AR ACTIVO</strong></p>
+        <p>📱 Busca el <strong>cursor verde</strong> moviéndote lentamente</p>
+        <p>🎯 <strong>Toca</strong> para colocar la pizza</p>
+        <p>🤏 <strong>Pellizca con dos dedos</strong> para redimensionar</p>
+        <p id="ar-mode-text">🍕 Modo: MODELO REAL (colores originales)</p>
+
+        <!-- Controles de AR -->
+        <div style="margin-top: 20px;">
+            <div class="control-row">
+                <button class="btn btn-small" onclick="autoFitModel()">🎯 Auto-Ajustar</button>
+                <button class="btn btn-small" onclick="resetView()">🔄 Reset</button>
+                <button class="btn btn-small" onclick="toggleTestMode()" id="testModeBtn">🧪 Cubo: OFF</button>
+                <button class="btn btn-small" onclick="forceSimpleMaterials()">🎨 Optimizar</button>
+            </div>
+            <div class="control-row">
+                <button class="btn btn-danger" onclick="stopAR()">❌ Salir de AR</button>
+                <button class="btn btn-small" onclick="forceVisibility()">👁️ Forzar Visibilidad</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información de Escala durante Pellizco -->
+    <div id="scaleInfo">
+        Escala: <span id="scaleValue">1.0x</span>
+    </div>
 
     <script>
-        class ARViewer {
+        // Variables globales
+        const PRODUCTO_ID = @ViewBag.ProductoId;
+        const PRODUCTO_NOMBRE = '@ViewBag.ProductoNombre';
+        const MODELO_ARCHIVO = '@ViewBag.ModeloArchivo';
+        const MODELO_PATH = '@Html.Raw(ViewBag.ModeloPath)';
+
+        class OptimizedWebAR {
             constructor() {
                 this.scene = null;
                 this.camera = null;
                 this.renderer = null;
                 this.controls = null;
                 this.model = null;
-                this.isARActive = false;
-                this.cameraStream = null;
-                this.panelsVisible = false;
-                this.headerVisible = true;
-                this.currentPanel = null;
+                this.isARMode = false;
 
-                this.config = {
-                    modelPath: '@ViewBag.ModeloPath',
-                    modelFile: '@ViewBag.ModeloArchivo',
-                    modelId: '@ViewBag.ProductoId'
-                };
+                // Variables AR
+                this.xrSession = null;
+                this.xrRefSpace = null;
+                this.modelMatrix = new THREE.Matrix4();
+                this.modelAdded = false;
+                this.hitTestSource = null;
+                this.cursor = null;
+                this.cursorVisible = false;
 
-                this.dom = {
-                    loading: document.getElementById('loading'),
-                    error: document.getElementById('error'),
-                    errorMessage: document.getElementById('error-message'),
-                    scaleSlider: document.getElementById('scale-slider'),
-                    posYSlider: document.getElementById('posY-slider'),
-                    rotYSlider: document.getElementById('rotY-slider'),
-                    scaleValue: document.getElementById('scale-value'),
-                    posYValue: document.getElementById('posY-value'),
-                    rotYValue: document.getElementById('rotY-value'),
-                    header: document.getElementById('header'),
-                    controlsPanel: document.getElementById('controls-panel'),
-                    cameraContainer: document.getElementById('camera-container'),
-                    cameraVideo: document.getElementById('camera-video'),
-                    arInstructions: document.getElementById('ar-instructions')
-                };
+                // Objeto de prueba
+                this.testCube = null;
+                this.useTestMode = false;
+
+                // Debug info
+                this.originalBoundingBox = null;
+                this.originalCenter = new THREE.Vector3();
+                this.originalScale = 1.0;
+                this.targetScale = 1.0;
+                this.modelLoaded = false;
+                this.debugMode = true; // Activo por defecto
+                this.materialStats = { total: 0, converted: 0 };
 
                 this.init();
             }
 
-            init() {
-                console.log('Inicializando AR Viewer:', this.config.modelFile);
-                try {
-                    this.setupScene();
-                    this.setupCamera();
-                    this.setupRenderer();
-                    this.setupLights();
-                    this.setupControls();
-                    this.setupEventListeners();
-                    this.setupUI();
-                    this.loadModel();
-                    this.animate();
-                } catch (error) {
-                    this.showError('Error de inicialización: ' + error.message);
-                }
+            async init() {
+                console.log('🚀 Iniciando AR Optimizado...');
+                this.setupScene();
+                this.setupCamera();
+                this.setupRenderer();
+                this.setupLights();
+                this.setupControls();
+                this.createCursor();
+                this.createTestCube();
+                await this.loadModel();
+                this.setupEventListeners();
+                this.animate();
+                this.updateDebugInfo();
             }
 
             setupScene() {
                 this.scene = new THREE.Scene();
-                // No agregar background para modo normal, se agregará después
+                const loader = new THREE.CubeTextureLoader();
+                const colors = ['#0c0c0c', '#0c0c0c', '#1a1a1a', '#1a1a1a', '#0c0c0c', '#0c0c0c'];
+                const texture = loader.load(
+                    colors.map(c => `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="${c}"/></svg>`)
+                );
+                this.scene.background = texture;
             }
 
             setupCamera() {
-                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 1000);
+                this.camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 1000);
                 this.camera.position.set(0, 2, 5);
             }
 
             setupRenderer() {
-                const canvas = document.getElementById('canvas3d');
-                this.renderer = new THREE.WebGLRenderer({
-                    canvas,
-                    antialias: true,
-                    alpha: true
-                });
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                this.renderer.setPixelRatio(window.devicePixelRatio);
                 this.renderer.setSize(window.innerWidth, window.innerHeight);
-                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                this.renderer.shadowMap.enabled = true;
-                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-                this.renderer.toneMappingExposure = 1.2;
-
-                // Configurar transparencia para modo AR
-                this.updateRendererForMode();
-            }
-
-            updateRendererForMode() {
-                if (this.isARActive) {
-                    // Modo AR: fondo transparente
-                    this.renderer.setClearColor(0x000000, 0);
-                    this.scene.background = null;
-                } else {
-                    // Modo normal: fondo degradado
-                    this.renderer.setClearColor(0x667eea, 1);
-                    const colors = ['#667eea', '#667eea', '#764ba2', '#764ba2', '#667eea', '#667eea'];
-                    const loader = new THREE.CubeTextureLoader();
-                    const texture = loader.load(
-                        colors.map(c => `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="${c}"/></svg>`)
-                    );
-                    this.scene.background = texture;
-                }
+                this.renderer.xr.enabled = true;
+                this.renderer.shadowMap.enabled = false; // Deshabilitado para debug
+                this.renderer.toneMapping = THREE.NoToneMapping; // Sin tone mapping para debug
+                this.renderer.outputEncoding = THREE.sRGBEncoding;
+                document.getElementById('container').appendChild(this.renderer.domElement);
             }
 
             setupLights() {
-                // Luz ambiental suave
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                // Luces súper brillantes para debug
+                const ambientLight = new THREE.AmbientLight(0xffffff, 2.0);
                 this.scene.add(ambientLight);
 
-                // Luz direccional principal
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0);
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 3.0);
                 directionalLight.position.set(5, 10, 5);
-                directionalLight.castShadow = true;
-                directionalLight.shadow.mapSize.setScalar(2048);
-                directionalLight.shadow.camera.near = 0.5;
-                directionalLight.shadow.camera.far = 50;
                 this.scene.add(directionalLight);
 
-                // Luz de relleno
-                const fillLight = new THREE.DirectionalLight(0x64b5f6, 0.4);
-                fillLight.position.set(-3, 2, -3);
-                this.scene.add(fillLight);
-
-                // Luz trasera
-                const backLight = new THREE.DirectionalLight(0xffffff, 0.2);
-                backLight.position.set(0, -5, -10);
-                this.scene.add(backLight);
+                console.log('💡 Luces optimizadas para AR');
             }
 
             setupControls() {
                 this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
                 this.controls.enableDamping = true;
                 this.controls.dampingFactor = 0.05;
-                this.controls.screenSpacePanning = false;
-                this.controls.minDistance = 1;
-                this.controls.maxDistance = 20;
-                this.controls.maxPolarAngle = Math.PI / 1.8;
+                this.controls.minDistance = 0.5;
+                this.controls.maxDistance = 50;
             }
 
-            setupEventListeners() {
-                window.addEventListener('resize', () => this.onResize());
+            createTestCube() {
+                const geometry = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+                const material = new THREE.MeshBasicMaterial({
+                    color: 0xff0000,
+                    transparent: false,
+                    opacity: 1.0,
+                    side: THREE.DoubleSide
+                });
 
-                // Controles deslizantes
-                ['scale', 'posY', 'rotY'].forEach(type => {
-                    const slider = this.dom[`${type}Slider`];
-                    if (slider) {
-                        slider.addEventListener('input', (e) => {
-                            this[`update${type === 'posY' ? 'PositionY' : type === 'rotY' ? 'RotationY' : 'Scale'}`](e.target.value);
-                            this.addControlFeedback(e.target);
-                        });
+                this.testCube = new THREE.Mesh(geometry, material);
+                this.testCube.visible = false;
+                this.scene.add(this.testCube);
+                console.log('🧪 Cubo de prueba creado');
+            }
+
+            createCursor() {
+                const group = new THREE.Group();
+
+                const size = 0.5;
+                const divisions = 12;
+                const gridHelper = new THREE.GridHelper(size, divisions, 0x00ff00, 0x00ff00);
+                gridHelper.material.opacity = 0.9;
+                gridHelper.material.transparent = true;
+                group.add(gridHelper);
+
+                group.visible = false;
+                this.cursor = group;
+                this.scene.add(this.cursor);
+            }
+
+            async loadModel() {
+                const statusEl = document.getElementById('status');
+                const loadingEl = document.getElementById('loading');
+
+                try {
+                    statusEl.textContent = `🔬 Cargando modelo para debug...`;
+
+                    const modeloArchivo = MODELO_ARCHIVO || 'pizza2.glb';
+                    console.log(`🎯 Cargando: ${modeloArchivo}`);
+
+                    const loader = new THREE.GLTFLoader();
+                    const gltf = await new Promise((resolve, reject) => {
+                        loader.load(
+                            `/models3d/${modeloArchivo}`,
+                            resolve,
+                            (progress) => {
+                                const percent = Math.round((progress.loaded / progress.total) * 100);
+                                statusEl.textContent = `🔬 Cargando... ${percent}%`;
+                            },
+                            reject
+                        );
+                    });
+
+                    // ⭐ IMPORTANTE: Crear wrapper para que se comporte como el cubo
+                    this.model = new THREE.Group();
+                    const originalModel = gltf.scene;
+
+                    console.log('📦 GLTF cargado:', gltf);
+
+                    // ANÁLISIS COMPLETO DEL MODELO ORIGINAL
+                    this.analyzeModelStructure(originalModel);
+                    this.calculateOriginalBoundingBox(originalModel);
+                    this.analyzeAndConvertMaterials(originalModel);
+
+                    // ⭐ CENTRAR EL MODELO ORIGINAL EN EL WRAPPER
+                    const box = new THREE.Box3().setFromObject(originalModel);
+                    const center = box.getCenter(new THREE.Vector3());
+
+                    // Mover el modelo original para que su centro esté en (0,0,0) del wrapper
+                    originalModel.position.sub(center);
+
+                    // Agregar el modelo centrado al wrapper
+                    this.model.add(originalModel);
+
+                    console.log(`📐 Modelo centrado en wrapper:`);
+                    console.log(`  - Centro original: ${center.x.toFixed(3)}, ${center.y.toFixed(3)}, ${center.z.toFixed(3)}`);
+                    console.log(`  - Posición en wrapper: ${originalModel.position.x.toFixed(3)}, ${originalModel.position.y.toFixed(3)}, ${originalModel.position.z.toFixed(3)}`);
+
+                    // El wrapper ahora está en (0,0,0) y contiene el modelo centrado
+                    this.model.position.set(0, 0, 0);
+
+                    // Auto-ajustar para vista previa
+                    this.autoFitModel();
+
+                    this.model.visible = true;
+                    this.scene.add(this.model);
+                    this.modelLoaded = true;
+
+                    this.fitCameraToModel();
+                    loadingEl.style.display = 'none';
+
+                    statusEl.textContent = `✅ Modelo cargado y centrado en wrapper`;
+                    console.log('✅ Modelo procesado con wrapper - Debería posicionarse como el cubo');
+
+                    await this.checkARSupport();
+                    this.updateDebugInfo();
+
+                } catch (error) {
+                    console.error('❌ Error cargando modelo:', error);
+                    statusEl.textContent = `❌ Error: ${error.message}`;
+                    loadingEl.style.display = 'none';
+                    this.createFallbackCube();
+                }
+            }
+
+            // 👆 MÉTODOS PARA PELLIZCO DE DEDOS EN AR
+            onTouchStart(event) {
+                // Solo funciona en AR cuando el modelo está colocado
+                if (!this.isARMode || !this.modelAdded) return;
+
+                this.lastTouches = Array.from(event.touches);
+
+                if (event.touches.length === 2) {
+                    event.preventDefault();
+                    this.isScaling = true;
+                    this.initialDistance = this.getDistance(event.touches[0], event.touches[1]);
+                    this.initialScale = this.currentScale;
+
+                    console.log('🤏 Iniciando pellizco de dedos');
+                    console.log(`📏 Distancia inicial: ${this.initialDistance.toFixed(0)}px`);
+                    console.log(`📏 Escala inicial: ${this.initialScale.toFixed(2)}x`);
+
+                    this.showScaleInfo();
+                }
+            }
+
+            onTouchMove(event) {
+                if (!this.isARMode || !this.modelAdded || !this.isScaling) return;
+
+                if (event.touches.length === 2) {
+                    event.preventDefault();
+
+                    const currentDistance = this.getDistance(event.touches[0], event.touches[1]);
+                    const scaleChange = currentDistance / this.initialDistance;
+
+                    // Aplicar cambio de escala con límites razonables
+                    this.currentScale = Math.max(0.2, Math.min(5.0, this.initialScale * scaleChange));
+
+                    this.updateModelScale();
+                    this.updateScaleDisplay();
+                    this.updateDebugInfo();
+                }
+            }
+
+            onTouchEnd(event) {
+                if (!this.isARMode || !this.modelAdded) return;
+
+                if (event.touches.length < 2) {
+                    this.isScaling = false;
+                    console.log(`🎯 Pellizco terminado - Escala final: ${this.currentScale.toFixed(2)}x`);
+
+                    // Ocultar info de escala después de un momento
+                    this.hideScaleInfo();
+                    this.updateDebugInfo();
+                }
+            }
+
+            getDistance(touch1, touch2) {
+                const dx = touch1.clientX - touch2.clientX;
+                const dy = touch1.clientY - touch2.clientY;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            updateModelScale() {
+                if (!this.model || !this.modelAdded) return;
+
+                const objectToScale = this.useTestMode ? this.testCube : this.model;
+
+                // Aplicar escala: escala base del target × escala actual del pellizco
+                const finalScale = this.targetScale * this.currentScale;
+                objectToScale.scale.setScalar(finalScale);
+
+                console.log(`📏 Escala aplicada: ${finalScale.toFixed(3)}x (base: ${this.targetScale.toFixed(2)}x × pellizco: ${this.currentScale.toFixed(2)}x)`);
+            }
+
+            updateScaleDisplay() {
+                const scaleValueEl = document.getElementById('scaleValue');
+                if (scaleValueEl) {
+                    scaleValueEl.textContent = this.currentScale.toFixed(1) + 'x';
+                }
+            }
+
+            showScaleInfo() {
+                const scaleInfoEl = document.getElementById('scaleInfo');
+                if (scaleInfoEl) {
+                    scaleInfoEl.style.opacity = '1';
+                    scaleInfoEl.style.pointerEvents = 'none';
+
+                    // Limpiar timeout anterior si existe
+                    if (this.scaleTimeout) {
+                        clearTimeout(this.scaleTimeout);
                     }
-                });
-
-                // Auto-hide header
-                let headerTimeout;
-                document.addEventListener('mousemove', () => {
-                    this.showHeader();
-                    clearTimeout(headerTimeout);
-                    headerTimeout = setTimeout(() => this.hideHeader(), 3000);
-                });
-            }
-
-            setupUI() {
-                // Ocultar todos los paneles inicialmente
-                [this.dom.controlsPanel, document.getElementById('nutrition-panel'), document.getElementById('allergens-panel')].forEach(panel => {
-                    if (panel) panel.classList.add('hidden');
-                });
-                this.currentPanel = null;
-            }
-
-            addControlFeedback(element) {
-                element.style.boxShadow = '0 0 20px rgba(96, 165, 250, 0.6)';
-                setTimeout(() => element.style.boxShadow = '', 200);
-            }
-
-            showHeader() {
-                if (this.dom.header) {
-                    this.dom.header.classList.remove('hidden');
-                    this.headerVisible = true;
                 }
             }
 
-            hideHeader() {
-                if (this.dom.header && !this.isMobile()) {
-                    this.dom.header.classList.add('hidden');
-                    this.headerVisible = false;
+            hideScaleInfo() {
+                const scaleInfoEl = document.getElementById('scaleInfo');
+                if (scaleInfoEl) {
+                    this.scaleTimeout = setTimeout(() => {
+                        scaleInfoEl.style.opacity = '0';
+                    }, 2000); // Se oculta después de 2 segundos
                 }
             }
 
-            isMobile() {
-                return window.innerWidth <= 768;
-            }
+            analyzeModelStructure(model = this.model) {
+                if (!model) return;
 
-            loadModel() {
-                console.log('Cargando modelo:', this.config.modelPath);
-                if (!this.config.modelPath) {
-                    this.showError('Ruta del modelo no definida');
-                    return;
-                }
+                let nodeCount = 0;
+                let meshCount = 0;
+                let materialCount = 0;
 
-                const loader = new THREE.GLTFLoader();
-                loader.load(
-                    this.config.modelPath,
-                    (gltf) => this.onModelLoaded(gltf),
-                    (xhr) => this.onLoadProgress(xhr),
-                    (error) => this.onLoadError(error)
-                );
-            }
-
-            onModelLoaded(gltf) {
-                console.log('Modelo cargado:', this.config.modelFile);
-                this.hideLoading();
-                this.model = gltf.scene;
-
-                this.model.traverse((node) => {
+                model.traverse((node) => {
+                    nodeCount++;
                     if (node.isMesh) {
-                        node.castShadow = true;
-                        node.receiveShadow = true;
-                        if (node.material) node.material.envMapIntensity = 0.8;
+                        meshCount++;
+                        if (node.material) {
+                            materialCount++;
+                        }
                     }
                 });
 
-                this.scene.add(this.model);
-                this.model.visible = true;
+                console.log(`📊 ESTRUCTURA DEL MODELO:`);
+                console.log(`  - Nodos totales: ${nodeCount}`);
+                console.log(`  - Meshes: ${meshCount}`);
+                console.log(`  - Materiales: ${materialCount}`);
+                console.log(`  - Tipo: ${model.type}`);
+                console.log(`  - Hijos: ${model.children.length}`);
 
-                this.model.scale.set(0, 0, 0);
-                this.animateScale(1, () => {
-                    setTimeout(() => {
-                        this.autoFit();
-                        console.log('Modelo autoajustado automáticamente');
-                    }, 300);
+                this.materialStats.total = materialCount;
+            }
+
+            calculateOriginalBoundingBox(model = this.model) {
+                if (!model) return;
+
+                this.originalBoundingBox = new THREE.Box3().setFromObject(model);
+                const size = this.originalBoundingBox.getSize(new THREE.Vector3());
+                this.originalCenter = this.originalBoundingBox.getCenter(new THREE.Vector3());
+
+                console.log(`📐 DIMENSIONES ORIGINALES:`);
+                console.log(`  - Tamaño: ${size.x.toFixed(3)} x ${size.y.toFixed(3)} x ${size.z.toFixed(3)}`);
+                console.log(`  - Centro: ${this.originalCenter.x.toFixed(3)}, ${this.originalCenter.y.toFixed(3)}, ${this.originalCenter.z.toFixed(3)}`);
+                console.log(`  - Min: ${this.originalBoundingBox.min.x.toFixed(3)}, ${this.originalBoundingBox.min.y.toFixed(3)}, ${this.originalBoundingBox.min.z.toFixed(3)}`);
+                console.log(`  - Max: ${this.originalBoundingBox.max.x.toFixed(3)}, ${this.originalBoundingBox.max.y.toFixed(3)}, ${this.originalBoundingBox.max.z.toFixed(3)}`);
+            }
+
+            analyzeAndConvertMaterials(model = this.model) {
+                if (!model) return;
+
+                let converted = 0;
+                model.traverse((node) => {
+                    if (node.isMesh && node.material) {
+                        const originalMaterial = node.material;
+
+                        // Preservar colores y texturas originales
+                        const newMaterial = new THREE.MeshBasicMaterial({
+                            transparent: false,
+                            opacity: 1.0,
+                            side: THREE.DoubleSide,
+                            wireframe: false
+                        });
+
+                        // Preservar color original
+                        if (originalMaterial.color) {
+                            newMaterial.color = originalMaterial.color.clone();
+                        } else {
+                            newMaterial.color = new THREE.Color(0xffffff);
+                        }
+
+                        // Preservar textura original
+                        if (originalMaterial.map) {
+                            newMaterial.map = originalMaterial.map;
+                            newMaterial.map.encoding = THREE.sRGBEncoding;
+                        }
+
+                        node.material = newMaterial;
+                        node.material.needsUpdate = true;
+                        converted++;
+                    }
                 });
+
+                this.materialStats.converted = converted;
+                console.log(`🎨 ${converted} materiales optimizados preservando apariencia`);
             }
 
-            onLoadProgress(xhr) {
-                if (xhr.lengthComputable && this.dom.loading) {
-                    const percent = Math.floor((xhr.loaded / xhr.total) * 100);
-                    this.dom.loading.querySelector('div:last-child').textContent = `Cargando modelo... ${percent}%`;
-                }
-            }
+            autoFitModel() {
+                if (!this.model || !this.originalBoundingBox) return;
 
-            onLoadError(error) {
-                console.error('Error cargando modelo:', error);
-                this.showError(`Error de carga: ${error.message || 'Error desconocido'}`);
-            }
-
-            animateScale(targetScale, callback) {
-                const animate = (startTime = Date.now()) => {
-                    const elapsed = Date.now() - startTime;
-                    const progress = Math.min(elapsed / 1000, 1);
-                    const easeOut = 1 - Math.pow(1 - progress, 3);
-                    const currentScale = targetScale * easeOut;
-                    this.model.scale.setScalar(currentScale);
-                    if (progress < 1) requestAnimationFrame(() => animate(startTime));
-                    else if (callback) callback();
-                };
-                animate();
-            }
-
-            updateScale(value) {
-                if (this.model) {
-                    this.model.scale.setScalar(parseFloat(value));
-                    if (this.dom.scaleValue) this.dom.scaleValue.textContent = parseFloat(value).toFixed(1) + 'x';
-                }
-            }
-
-            updatePositionY(value) {
-                if (this.model) {
-                    this.model.position.y = parseFloat(value);
-                    if (this.dom.posYValue) this.dom.posYValue.textContent = parseFloat(value).toFixed(1);
-                }
-            }
-
-            updateRotationY(value) {
-                if (this.model) {
-                    this.model.rotation.y = parseFloat(value) * Math.PI / 180;
-                    if (this.dom.rotYValue) this.dom.rotYValue.textContent = value + '°';
-                }
-            }
-
-            autoFit() {
-                if (!this.model) return;
-
-                const box = new THREE.Box3().setFromObject(this.model);
-                const center = box.getCenter(new THREE.Vector3());
-                const size = box.getSize(new THREE.Vector3());
+                const size = this.originalBoundingBox.getSize(new THREE.Vector3());
                 const maxDim = Math.max(size.x, size.y, size.z);
-                const targetScale = maxDim > 0 ? 3 / maxDim : 1;
 
-                this.animateToValues({
-                    scale: targetScale,
-                    position: center.clone().negate(),
-                    camera: true
-                });
-            }
+                let targetSize;
+                if (this.isARMode) {
+                    // Para AR: GIGANTESCO para garantizar visibilidad
+                    targetSize = 3.0; // 3 metros!!!
+                } else {
+                    // Para vista previa
+                    targetSize = 2.0;
+                }
 
-            animateToValues(targets) {
-                if (!this.model) return;
+                this.targetScale = maxDim > 0 ? targetSize / maxDim : 1;
+                this.model.scale.setScalar(this.targetScale);
 
-                const startScale = this.model.scale.x;
-                const startPos = this.model.position.clone();
+                const finalSize = maxDim * this.targetScale;
+                console.log(`📏 ESCALA APLICADA: ${this.targetScale.toFixed(3)}x (${targetSize}m target, final: ${finalSize.toFixed(2)}m)`);
 
-                const animate = (startTime = Date.now()) => {
-                    const elapsed = Date.now() - startTime;
-                    const progress = Math.min(elapsed / 800, 1);
-                    const easeInOut = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
-
-                    if (targets.scale !== undefined) {
-                        const currentScale = startScale + (targets.scale - startScale) * easeInOut;
-                        this.model.scale.setScalar(currentScale);
-                        if (this.dom.scaleSlider) this.dom.scaleSlider.value = currentScale;
-                        if (this.dom.scaleValue) this.dom.scaleValue.textContent = currentScale.toFixed(1) + 'x';
-                    }
-
-                    if (targets.position) {
-                        this.model.position.lerpVectors(startPos, targets.position, easeInOut);
-                        if (this.dom.posYSlider) this.dom.posYSlider.value = this.model.position.y;
-                        if (this.dom.posYValue) this.dom.posYValue.textContent = this.model.position.y.toFixed(1);
-                    }
-
-                    if (progress < 1) requestAnimationFrame(() => animate(startTime));
-                    else if (targets.camera) this.fitCameraToModel();
-                };
-                animate();
+                this.updateDebugInfo();
             }
 
             fitCameraToModel() {
-                if (!this.model || !this.camera) return;
+                if (!this.model || !this.camera || this.isARMode) return;
 
                 const box = new THREE.Box3().setFromObject(this.model);
                 const center = box.getCenter(new THREE.Vector3());
                 const size = box.getSize(new THREE.Vector3());
                 const maxDim = Math.max(size.x, size.y, size.z);
+
                 const fov = this.camera.fov * (Math.PI / 180);
-                const cameraZ = Math.abs(maxDim / (2 * Math.tan(fov / 2))) * 1.5;
-                const targetPos = new THREE.Vector3(center.x, center.y + size.y / 4, center.z + cameraZ);
-                const startPos = this.camera.position.clone();
+                const cameraZ = Math.abs(maxDim / (2 * Math.tan(fov / 2))) * 2;
 
-                const animate = (startTime = Date.now()) => {
-                    const elapsed = Date.now() - startTime;
-                    const progress = Math.min(elapsed / 1000, 1);
-                    const easeOut = 1 - Math.pow(1 - progress, 3);
+                this.camera.position.set(center.x, center.y + size.y / 2, center.z + cameraZ);
 
-                    this.camera.position.lerpVectors(startPos, targetPos, easeOut);
-                    if (this.controls) {
-                        this.controls.target.lerp(center, easeOut);
-                        this.controls.update();
-                    } else {
-                        this.camera.lookAt(center);
-                    }
+                if (this.controls) {
+                    this.controls.target.copy(center);
+                    this.controls.update();
+                }
 
-                    if (progress < 1) requestAnimationFrame(() => animate(startTime));
-                };
-                animate();
+                console.log(`📷 Cámara ajustada: distancia ${cameraZ.toFixed(2)}m`);
             }
 
-            async startCamera() {
-                try {
-                    console.log('Iniciando cámara...');
-                    const constraints = {
-                        video: {
-                            facingMode: 'environment', // Cámara trasera
-                            width: { ideal: 1280 },
-                            height: { ideal: 720 }
+            createFallbackCube() {
+                const geometry = new THREE.BoxGeometry(1, 1, 1);
+                const material = new THREE.MeshBasicMaterial({ color: 0xff6b35 });
+                this.model = new THREE.Mesh(geometry, material);
+                this.model.visible = true;
+                this.scene.add(this.model);
+                this.modelLoaded = true;
+
+                this.originalBoundingBox = new THREE.Box3().setFromObject(this.model);
+                this.originalCenter = this.originalBoundingBox.getCenter(new THREE.Vector3());
+                this.autoFitModel();
+                this.fitCameraToModel();
+                this.updateDebugInfo();
+
+                document.getElementById('loading').style.display = 'none';
+                console.log('🔄 Cubo de respaldo creado');
+            }
+
+            async checkARSupport() {
+                const buttonEl = document.getElementById('startARButton');
+
+                if (navigator.xr) {
+                    try {
+                        const supported = await navigator.xr.isSessionSupported('immersive-ar');
+                        if (supported) {
+                            buttonEl.disabled = false;
+                            console.log('✅ AR soportado');
+                        } else {
+                            console.log('❌ AR no soportado en este dispositivo');
                         }
-                    };
-
-                    this.cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
-                    this.dom.cameraVideo.srcObject = this.cameraStream;
-
-                    return new Promise((resolve) => {
-                        this.dom.cameraVideo.addEventListener('loadedmetadata', () => {
-                            console.log('Cámara iniciada correctamente');
-                            resolve();
-                        });
-                    });
-                } catch (error) {
-                    console.error('Error iniciando cámara:', error);
-                    let errorMsg = error.message;
-                    if (error.name === 'NotAllowedError') {
-                        errorMsg = 'Permisos de cámara denegados. Por favor permite el acceso a la cámara.';
-                    } else if (error.name === 'NotFoundError') {
-                        errorMsg = 'No se encontró cámara trasera. Se usará la cámara frontal.';
-                    } else if (error.name === 'NotSupportedError') {
-                        errorMsg = 'Cámara no soportada en este navegador.';
+                    } catch (error) {
+                        console.error('Error checking AR:', error);
                     }
-                    throw new Error(errorMsg);
-                }
-            }
-
-            stopCamera() {
-                if (this.cameraStream) {
-                    console.log('Deteniendo cámara...');
-                    this.cameraStream.getTracks().forEach(track => track.stop());
-                    this.cameraStream = null;
-                    this.dom.cameraVideo.srcObject = null;
-                }
-            }
-
-            async toggleAR() {
-                if (this.isARActive) {
-                    await this.stopAR();
                 } else {
-                    await this.startAR();
+                    console.log('❌ WebXR no disponible');
                 }
+            }
+
+            setupEventListeners() {
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = window.innerWidth / window.innerHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                    this.updateDebugInfo();
+                });
+
+                // Eventos de touch para pellizco de dedos en AR
+                document.addEventListener('touchstart', (e) => this.onTouchStart(e), { passive: false });
+                document.addEventListener('touchmove', (e) => this.onTouchMove(e), { passive: false });
+                document.addEventListener('touchend', (e) => this.onTouchEnd(e), { passive: false });
+
+                console.log('👆 Event listeners configurados para pellizco de dedos');
+            }
+
+            updateDebugInfo() {
+                if (!this.debugMode) return;
+
+                // Estado del modelo
+                document.getElementById('debug-loaded').textContent = this.modelLoaded ? '✅ Cargado' : '❌ No cargado';
+
+                // Tamaño actual
+                if (this.originalBoundingBox) {
+                    const originalSize = this.originalBoundingBox.getSize(new THREE.Vector3());
+                    const currentSize = originalSize.clone().multiplyScalar(this.targetScale);
+                    document.getElementById('debug-size-current').textContent =
+                        `${currentSize.x.toFixed(2)}×${currentSize.y.toFixed(2)}×${currentSize.z.toFixed(2)}m`;
+                }
+
+                // Escala
+                const displayScale = this.isARMode && this.modelAdded ?
+                    this.targetScale * this.currentScale : this.targetScale;
+                document.getElementById('debug-scale-current').textContent = `${displayScale.toFixed(2)}x`;
+
+                // Mostrar info de pellizco si está activo
+                if (this.isScaling) {
+                    console.log(`🤏 Pellizco activo: ${this.currentScale.toFixed(2)}x`);
+                }
+
+                // Posiciones
+                if (this.model) {
+                    const pos = this.model.position;
+                    document.getElementById('debug-pos-model').textContent =
+                        `${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)}`;
+                }
+
+                if (this.cursor) {
+                    const cPos = this.cursor.position;
+                    document.getElementById('debug-pos-cursor').textContent =
+                        `${cPos.x.toFixed(2)}, ${cPos.y.toFixed(2)}, ${cPos.z.toFixed(2)}`;
+                }
+
+                // Estado AR
+                document.getElementById('debug-mode').textContent = this.isARMode ? '🥽 AR' : '🖥️ Preview';
+                document.getElementById('debug-cursor-status').textContent = this.cursorVisible ? '✅ Visible' : '❌ Oculto';
+                document.getElementById('debug-placed').textContent = this.modelAdded ? '✅ Colocado' : '❌ No colocado';
+            }
+
+            toggleDebugMode() {
+                this.debugMode = !this.debugMode;
+                const debugEl = document.getElementById('debugInfo');
+                debugEl.style.display = this.debugMode ? 'block' : 'none';
+            }
+
+            toggleTestMode() {
+                this.useTestMode = !this.useTestMode;
+                const btn = document.getElementById('testModeBtn');
+                const arText = document.getElementById('ar-mode-text');
+
+                btn.textContent = this.useTestMode ? '🧪 Cubo: ON' : '🧪 Cubo: OFF';
+                btn.className = this.useTestMode ? 'btn btn-primary btn-small' : 'btn btn-small';
+
+                if (arText) {
+                    arText.textContent = this.useTestMode ?
+                        '🧪 Modo: CUBO ROJO (funciona)' :
+                        '🍕 Modo: MODELO REAL (debug)';
+                }
+
+                console.log(`🧪 Modo de prueba: ${this.useTestMode ? 'ACTIVADO' : 'DESACTIVADO'}`);
+            }
+
+            analyzeModel() {
+                if (!this.model) {
+                    console.log('❌ No hay modelo para analizar');
+                    return;
+                }
+
+                console.log('🔬 === ANÁLISIS COMPLETO DEL MODELO ===');
+
+                // Analizar el wrapper
+                console.log(`📦 WRAPPER (${this.model.type}):`);
+                console.log(`  - Posición: ${this.model.position.x.toFixed(3)}, ${this.model.position.y.toFixed(3)}, ${this.model.position.z.toFixed(3)}`);
+                console.log(`  - Escala: ${this.model.scale.x.toFixed(3)}, ${this.model.scale.y.toFixed(3)}, ${this.model.scale.z.toFixed(3)}`);
+                console.log(`  - Visible: ${this.model.visible}`);
+                console.log(`  - Hijos: ${this.model.children.length}`);
+
+                // Analizar el contenido original si existe
+                if (this.model.children.length > 0) {
+                    const originalModel = this.model.children[0];
+                    console.log(`📦 MODELO ORIGINAL (${originalModel.type}):`);
+                    console.log(`  - Posición: ${originalModel.position.x.toFixed(3)}, ${originalModel.position.y.toFixed(3)}, ${originalModel.position.z.toFixed(3)}`);
+                    console.log(`  - Escala: ${originalModel.scale.x.toFixed(3)}, ${originalModel.scale.y.toFixed(3)}, ${originalModel.scale.z.toFixed(3)}`);
+
+                    this.analyzeModelStructure(originalModel);
+                    this.calculateOriginalBoundingBox(originalModel);
+                }
+
+                console.log(`📊 Visibilidad actual:`);
+                console.log(`  - Wrapper visible: ${this.model.visible}`);
+                console.log(`  - Wrapper parent: ${this.model.parent ? this.model.parent.type : 'null'}`);
+                console.log(`  - En escena: ${this.model.parent === this.scene}`);
+
+                this.model.traverse((node, index) => {
+                    if (node.isMesh) {
+                        console.log(`🔸 Mesh ${index}:`, {
+                            visible: node.visible,
+                            material: node.material.type,
+                            color: node.material.color,
+                            opacity: node.material.opacity,
+                            transparent: node.material.transparent,
+                            position: `${node.position.x.toFixed(2)},${node.position.y.toFixed(2)},${node.position.z.toFixed(2)}`
+                        });
+                    }
+                });
+
+                this.updateDebugInfo();
+            }
+
+            forceSimpleMaterials() {
+                if (!this.model) return;
+
+                console.log('🎨 Optimizando materiales para AR...');
+                let count = 0;
+
+                this.model.traverse((node) => {
+                    if (node.isMesh && node.material) {
+                        const originalMaterial = node.material;
+
+                        const newMaterial = new THREE.MeshBasicMaterial({
+                            transparent: false,
+                            opacity: 1.0,
+                            side: THREE.DoubleSide,
+                            wireframe: false,
+                            fog: false
+                        });
+
+                        // Preservar color original
+                        if (originalMaterial.color) {
+                            newMaterial.color = originalMaterial.color.clone();
+                            newMaterial.color.multiplyScalar(1.1); // Ligeramente más brillante
+                        } else {
+                            newMaterial.color = new THREE.Color(0xdddddd);
+                        }
+
+                        // Preservar textura
+                        if (originalMaterial.map) {
+                            newMaterial.map = originalMaterial.map;
+                        }
+
+                        node.material = newMaterial;
+                        node.material.needsUpdate = true;
+                        count++;
+                    }
+                });
+
+                console.log(`✅ ${count} materiales optimizados`);
+                this.materialStats.converted = count;
+                this.updateDebugInfo();
+            }
+
+            makeHuge() {
+                if (!this.model) return;
+
+                console.log('📏 Haciendo modelo GIGANTESCO...');
+                this.targetScale = this.isARMode ? 10.0 : 5.0; // ENORME
+                this.model.scale.setScalar(this.targetScale);
+
+                if (!this.isARMode) {
+                    this.fitCameraToModel();
+                }
+
+                console.log(`📏 Escala aplicada: ${this.targetScale}x`);
+                this.updateDebugInfo();
+            }
+
+            resetView() {
+                if (this.isARMode) return;
+
+                this.autoFitModel();
+                this.fitCameraToModel();
+                console.log('🔄 Vista reiniciada');
             }
 
             async startAR() {
+                if (!this.modelLoaded || this.isARMode) return;
+
+                const statusEl = document.getElementById('status');
+                const previewEl = document.getElementById('previewControls');
+                const instructionsEl = document.getElementById('instructions');
+
                 try {
-                    console.log('Iniciando modo AR...');
+                    statusEl.textContent = `🚀 Iniciando AR...`;
+                    console.log('🥽 Iniciando AR...');
 
-                    // Iniciar cámara
-                    await this.startCamera();
+                    this.xrSession = await navigator.xr.requestSession('immersive-ar', {
+                        requiredFeatures: ['local'],
+                        optionalFeatures: ['hit-test', 'dom-overlay'],
+                        domOverlay: { root: document.body }
+                    });
 
-                    // Mostrar cámara de fondo
-                    this.dom.cameraContainer.style.display = 'block';
+                    await this.setupXRSession();
 
-                    // Actualizar renderer para transparencia
-                    this.isARActive = true;
-                    this.updateRendererForMode();
+                    // Cambiar a modo AR
+                    this.isARMode = true;
+                    this.scene.background = null;
+                    this.renderer.setClearColor(0x000000, 0);
 
-                    // Ajustar modelo para AR (posición más adecuada para flotar)
-                    if (this.model) {
-                        this.model.position.set(0, 0, -3); // Más cercano para verse mejor
-                        // Mantener la escala actual o ajustarla ligeramente
-                        const currentScale = this.model.scale.x;
-                        this.model.scale.setScalar(Math.max(currentScale, 1.2)); // Mínimo 1.2x para AR
+                    console.log('🔧 Preparando objetos para AR...');
+
+                    if (this.useTestMode) {
+                        // Preparar cubo de prueba
+                        this.testCube.position.set(0, 0, 0);
+                        this.testCube.rotation.set(0, 0, 0);
+                        this.testCube.quaternion.set(0, 0, 0, 1);
+                        this.testCube.scale.setScalar(1.0);
+                        this.testCube.visible = false;
+                        this.modelAdded = false;
+                        console.log('🧪 Cubo de prueba preparado (posición inicial: 0,0,0)');
+                    } else {
+                        // Preparar modelo real - MISMO SETUP QUE EL CUBO
+                        console.log('🍕 Preparando modelo pizza...');
+
+                        // Resetear wrapper del modelo igual que el cubo
+                        this.model.position.set(0, 0, 0);
+                        this.model.rotation.set(0, 0, 0);
+                        this.model.quaternion.set(0, 0, 0, 1);
+                        this.model.scale.setScalar(1.0); // Reset escala base
+                        this.model.visible = false;
+                        this.modelAdded = false;
+
+                        // Resetear variables de pellizco
+                        this.currentScale = 1.0;
+                        this.initialScale = 1.0;
+                        this.isScaling = false;
+
+                        // Configurar escala para AR
+                        this.autoFitModel();
+
+                        console.log(`🍕 Modelo preparado:`);
+                        console.log(`  - Posición wrapper: ${this.model.position.x}, ${this.model.position.y}, ${this.model.position.z}`);
+                        console.log(`  - Escala objetivo: ${this.targetScale.toFixed(3)}x`);
+                        console.log(`  - Visible: ${this.model.visible}`);
+
+                        // Verificar contenido del wrapper
+                        console.log(`  - Hijos en wrapper: ${this.model.children.length}`);
+                        if (this.model.children.length > 0) {
+                            const child = this.model.children[0];
+                            console.log(`  - Primer hijo pos: ${child.position.x.toFixed(3)}, ${child.position.y.toFixed(3)}, ${child.position.z.toFixed(3)}`);
+                        }
+
+                        // Forzar materiales simples
+                        this.forceSimpleMaterials();
                     }
 
-                    // Actualizar controles para modo AR
-                    if (this.controls) {
-                        this.controls.enableRotate = true;
-                        this.controls.enableZoom = true;
-                        this.controls.enablePan = true;
-                    }
+                    if (this.controls) this.controls.enabled = false;
 
-                    // Actualizar UI
-                    const arButton = document.getElementById('ar-toggle');
-                    if (arButton) {
-                        arButton.classList.add('active');
-                        arButton.textContent = '✓';
-                    }
+                    previewEl.classList.add('hidden');
+                    instructionsEl.classList.remove('hidden');
 
-                    // Mostrar instrucciones
-                    this.showARInstructions();
+                    statusEl.textContent = `✅ AR Activo`;
+                    this.updateDebugInfo();
 
-                    console.log('Modo AR activado');
+                    console.log('✅ AR iniciado correctamente');
 
                 } catch (error) {
-                    console.error('Error iniciando AR:', error);
-                    alert('Error AR: ' + error.message);
-                    this.isARActive = false;
-                    this.updateRendererForMode();
+                    console.error('❌ Error iniciando AR:', error);
+                    statusEl.textContent = `❌ Error AR: ${error.message}`;
                 }
             }
 
-            async stopAR() {
-                console.log('Deteniendo modo AR...');
+            async setupXRSession() {
+                this.xrRefSpace = await this.xrSession.requestReferenceSpace('local');
+                this.viewerSpace = await this.xrSession.requestReferenceSpace('viewer');
 
-                // Detener cámara
-                this.stopCamera();
+                this.renderer.xr.setReferenceSpaceType('local');
+                this.renderer.xr.setSession(this.xrSession);
 
-                // Ocultar cámara
-                this.dom.cameraContainer.style.display = 'none';
+                await this.setupHitTesting();
 
-                // Restaurar modo normal
-                this.isARActive = false;
-                this.updateRendererForMode();
+                this.xrSession.addEventListener('select', (event) => {
+                    this.onSelect(event);
+                });
 
-                // Restaurar posición del modelo con autoajuste
+                this.xrSession.addEventListener('end', () => {
+                    this.onSessionEnd();
+                });
+
+                this.renderer.setAnimationLoop((time, frame) => {
+                    this.render(time, frame);
+                });
+            }
+
+            async setupHitTesting() {
+                try {
+                    this.hitTestSource = await this.xrSession.requestHitTestSource({ space: this.viewerSpace });
+                    console.log('✅ Hit testing configurado');
+                } catch (error) {
+                    console.warn('❌ Hit testing no disponible:', error);
+                }
+            }
+
+            render(time, frame) {
+                if (this.isARMode && frame && this.hitTestSource && !this.modelAdded) {
+                    const hitTestResults = frame.getHitTestResults(this.hitTestSource);
+                    if (hitTestResults.length > 0) {
+                        const hit = hitTestResults[0];
+                        const pose = hit.getPose(this.xrRefSpace);
+                        if (pose) {
+                            this.modelMatrix.fromArray(pose.transform.matrix);
+
+                            this.cursor.visible = true;
+                            this.cursor.position.set(
+                                pose.transform.position.x,
+                                pose.transform.position.y,
+                                pose.transform.position.z
+                            );
+
+                            if (!this.cursorVisible) {
+                                console.log('✅ Superficie detectada');
+                            }
+                            this.cursorVisible = true;
+                        }
+                    } else {
+                        this.cursor.visible = false;
+                        this.cursorVisible = false;
+                    }
+                } else if (this.modelAdded && this.cursor) {
+                    this.cursor.visible = false;
+                    this.cursorVisible = false;
+                }
+
+                this.renderer.render(this.scene, this.camera);
+
+                if (this.debugMode) {
+                    requestAnimationFrame(() => this.updateDebugInfo());
+                }
+            }
+
+            onSelect(event) {
+                if (!this.modelAdded && this.modelMatrix && this.cursorVisible) {
+                    console.log('🎯 Colocando objeto en AR...');
+
+                    const objectToPlace = this.useTestMode ? this.testCube : this.model;
+                    const objectName = this.useTestMode ? 'CUBO ROJO' : 'MODELO PIZZA';
+
+                    console.log(`📍 Matriz del cursor:`, this.modelMatrix);
+
+                    // ⭐ USAR EXACTAMENTE LA MISMA LÓGICA PARA AMBOS OBJETOS
+
+                    // 1. Extraer posición del hit test
+                    const position = new THREE.Vector3();
+                    const quaternion = new THREE.Quaternion();
+                    const scale = new THREE.Vector3();
+                    this.modelMatrix.decompose(position, quaternion, scale);
+
+                    console.log(`📍 Posición del hit test: ${position.x.toFixed(3)}, ${position.y.toFixed(3)}, ${position.z.toFixed(3)}`);
+
+                    // 2. Limpiar transformaciones del objeto
+                    objectToPlace.position.set(0, 0, 0);
+                    objectToPlace.rotation.set(0, 0, 0);
+                    objectToPlace.quaternion.set(0, 0, 0, 1);
+
+                    // 3. Aplicar EXACTAMENTE la misma posición que el cursor
+                    objectToPlace.position.copy(position);
+                    objectToPlace.quaternion.copy(quaternion);
+
+                    // 4. Elevar ligeramente para evitar que se enterre
+                    objectToPlace.position.y += 0.1;
+
+                    console.log(`📍 Posición final del objeto: ${objectToPlace.position.x.toFixed(3)}, ${objectToPlace.position.y.toFixed(3)}, ${objectToPlace.position.z.toFixed(3)}`);
+
+                    // 5. Aplicar escala
+                    if (this.useTestMode) {
+                        // Cubo: escala fija
+                        objectToPlace.scale.setScalar(1.0);
+                        this.currentScale = 1.0; // Sincronizar escala de pellizco
+                        console.log('🧪 CUBO: Escala 1.0x aplicada');
+                    } else {
+                        // Modelo: escala calculada
+                        objectToPlace.scale.setScalar(this.targetScale);
+                        this.currentScale = 1.0; // Inicializar escala de pellizco
+                        console.log(`🍕 MODELO: Escala ${this.targetScale.toFixed(3)}x aplicada`);
+                        console.log(`🤏 Pellizco habilitado - Usa dos dedos para redimensionar`);
+
+                        // Log detallado del modelo
+                        objectToPlace.traverse((node, index) => {
+                            if (node.isMesh) {
+                                console.log(`  🔸 Mesh ${index}: visible=${node.visible}, pos=(${node.position.x.toFixed(2)},${node.position.y.toFixed(2)},${node.position.z.toFixed(2)})`);
+                            }
+                        });
+                    }
+
+                    // 6. Hacer visible
+                    objectToPlace.visible = true;
+                    this.modelAdded = true;
+                    this.cursor.visible = false;
+
+                    console.log(`✅ ${objectName} colocado con lógica idéntica al cubo`);
+                    console.log(`📊 Comparación de posiciones:`);
+                    console.log(`  - Cursor: ${position.x.toFixed(3)}, ${position.y.toFixed(3)}, ${position.z.toFixed(3)}`);
+                    console.log(`  - Objeto: ${objectToPlace.position.x.toFixed(3)}, ${objectToPlace.position.y.toFixed(3)}, ${objectToPlace.position.z.toFixed(3)}`);
+                    console.log(`  - Diferencia Y: +${(objectToPlace.position.y - position.y).toFixed(3)} (elevación)`);
+
+                    this.updateDebugInfo();
+                }
+            }
+
+            forceTestColors() {
+                if (!this.model) return;
+
+                console.log('🧪 Forzando colores de PRUEBA (solo para debug extremo)...');
+                let count = 0;
+                const testColors = [
+                    new THREE.Color(1, 0, 0),     // Rojo
+                    new THREE.Color(0, 1, 0),     // Verde
+                    new THREE.Color(0, 0, 1),     // Azul
+                    new THREE.Color(1, 1, 0),     // Amarillo
+                    new THREE.Color(1, 0, 1),     // Magenta
+                    new THREE.Color(0, 1, 1),     // Cyan
+                ];
+
+                this.model.traverse((node) => {
+                    if (node.isMesh && node.material) {
+                        // Material con color de prueba brillante
+                        const testColor = testColors[count % testColors.length];
+                        node.material = new THREE.MeshBasicMaterial({
+                            color: testColor,
+                            transparent: false,
+                            opacity: 1.0,
+                            side: THREE.DoubleSide,
+                            wireframe: false,
+                            fog: false
+                        });
+                        node.material.needsUpdate = true;
+                        console.log(`  🎨 Mesh ${count}: Color de prueba #${testColor.getHexString()}`);
+                        count++;
+                    }
+                });
+
+                console.log(`🧪 ${count} materiales convertidos a colores de PRUEBA`);
+                console.log(`⚠️ Esto es solo para debug - colores no realistas`);
+                this.materialStats.converted = count;
+                this.updateDebugInfo();
+            }
+
+            forceVisibility() {
+                if (!this.model || !this.modelAdded) {
+                    console.log('❌ No hay modelo colocado para forzar');
+                    return;
+                }
+
+                console.log('👁️ Forzando visibilidad extrema...');
+
+                // Hacer más grande y visible
+                this.model.visible = true;
+                this.model.scale.setScalar(this.targetScale * 2); // Doble de grande
+                this.model.position.y += 0.5; // Más alto
+
+                this.model.traverse((node) => {
+                    if (node.isMesh) {
+                        node.visible = true;
+
+                        // Material rojo brillante para emergencia
+                        node.material = new THREE.MeshBasicMaterial({
+                            color: new THREE.Color(1, 0, 0), // ROJO PURO
+                            transparent: false,
+                            opacity: 1.0,
+                            side: THREE.DoubleSide,
+                            wireframe: false
+                        });
+                        node.material.needsUpdate = true;
+                    }
+                });
+
+                console.log('🔴 Modelo convertido a ROJO GIGANTE - Solo para emergencias');
+                this.updateDebugInfo();
+            }
+
+            stopAR() {
+                if (!this.isARMode || !this.xrSession) return;
+                console.log('🔚 Deteniendo AR...');
+                this.xrSession.end();
+            }
+
+            onSessionEnd() {
+                console.log('🔚 === SESIÓN AR TERMINADA ===');
+
+                const statusEl = document.getElementById('status');
+                const previewEl = document.getElementById('previewControls');
+                const instructionsEl = document.getElementById('instructions');
+
+                this.isARMode = false;
+
+                // Restaurar fondo
+                const loader = new THREE.CubeTextureLoader();
+                const colors = ['#0c0c0c', '#0c0c0c', '#1a1a1a', '#1a1a1a', '#0c0c0c', '#0c0c0c'];
+                const texture = loader.load(
+                    colors.map(c => `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1"><rect width="1" height="1" fill="${c}"/></svg>`)
+                );
+                this.scene.background = texture;
+                this.renderer.setClearColor(0x0c0c0c, 1);
+
+                // Limpiar estado AR
+                this.xrSession = null;
+                this.xrRefSpace = null;
+                this.hitTestSource = null;
+                this.modelAdded = false;
+
+                // Restaurar objetos
                 if (this.model) {
-                    setTimeout(() => {
-                        this.autoFit();
-                    }, 100);
+                    this.model.visible = true;
+                    this.autoFitModel();
+                    this.model.position.set(0, 0, 0);
+                    this.fitCameraToModel();
                 }
 
-                // Actualizar UI
-                const arButton = document.getElementById('ar-toggle');
-                if (arButton) {
-                    arButton.classList.remove('active');
-                    arButton.textContent = '📷';
+                if (this.testCube) {
+                    this.testCube.visible = false;
+                    this.testCube.position.set(0, 0, 0);
+                    this.testCube.scale.setScalar(1.0);
                 }
 
-                console.log('Modo AR desactivado');
-            }
+                // Restablecer variables de escala
+                this.currentScale = 1.0;
+                this.initialScale = 1.0;
+                this.isScaling = false;
+                this.hideScaleInfo();
 
-            showARInstructions() {
-                this.dom.arInstructions.style.display = 'block';
-                setTimeout(() => {
-                    this.dom.arInstructions.style.display = 'none';
-                }, 5000); // Auto-hide después de 5 segundos
-            }
+                if (this.controls) this.controls.enabled = true;
+                if (this.cursor) this.cursor.visible = false;
 
-            onResize() {
-                if (!this.camera || !this.renderer) return;
-                this.camera.aspect = window.innerWidth / window.innerHeight;
-                this.camera.updateProjectionMatrix();
-                this.renderer.setSize(window.innerWidth, window.innerHeight);
-            }
+                previewEl.classList.remove('hidden');
+                instructionsEl.classList.add('hidden');
 
-            showError(message) {
-                console.error(message);
-                if (this.dom.errorMessage) this.dom.errorMessage.textContent = message;
-                this.hideLoading();
-                if (this.dom.error) this.dom.error.style.display = 'block';
-            }
+                this.renderer.setAnimationLoop(null);
 
-            hideLoading() {
-                if (this.dom.loading) this.dom.loading.style.display = 'none';
-            }
-
-            reload() {
-                location.reload();
+                statusEl.textContent = `✅ Debug AR terminado`;
+                this.updateDebugInfo();
             }
 
             animate() {
                 requestAnimationFrame(() => this.animate());
-                if (this.controls) this.controls.update();
-                if (this.renderer && this.scene && this.camera) {
-                    this.renderer.render(this.scene, this.camera);
+
+                if (!this.isARMode) {
+                    if (this.controls) this.controls.update();
+                    if (this.renderer && this.scene && this.camera) {
+                        this.renderer.render(this.scene, this.camera);
+                    }
                 }
             }
         }
 
+        // Variables globales
         let app;
 
-        function togglePanel(panelId) {
-            const panel = document.getElementById(panelId);
-            if (panel) panel.classList.toggle('hidden');
+        // Funciones globales
+        function autoFitModel() {
+            if (app) app.autoFitModel();
         }
 
-        function togglePanels() {
-            if (!app) return;
-            const panels = ['controls-panel', 'nutrition-panel', 'allergens-panel'];
-            const currentIndex = panels.indexOf(app.currentPanel);
-            const nextIndex = (currentIndex + 1) % panels.length;
-
-            if (app.currentPanel) {
-                const currentPanel = document.getElementById(app.currentPanel);
-                if (currentPanel) {
-                    currentPanel.classList.remove('visible');
-                    currentPanel.classList.add('hidden');
-                }
-            }
-
-            app.currentPanel = panels[nextIndex];
-            const nextPanel = document.getElementById(app.currentPanel);
-            if (nextPanel) {
-                nextPanel.classList.remove('hidden');
-                nextPanel.classList.add('visible');
-            }
-
-            const toggleBtn = document.getElementById('panel-toggle');
-            const icons = ['🎮', '🥗', '⚠️'];
-            if (toggleBtn) toggleBtn.textContent = icons[nextIndex];
+        function resetView() {
+            if (app) app.resetView();
         }
 
-        function toggleAR() {
-            if (app) app.toggleAR();
+        function toggleDebugInfo() {
+            if (app) app.toggleDebugMode();
         }
 
-        function hideARInstructions() {
-            const instructions = document.getElementById('ar-instructions');
-            if (instructions) instructions.style.display = 'none';
+        function toggleTestMode() {
+            if (app) app.toggleTestMode();
         }
 
+        function forceSimpleMaterials() {
+            if (app) app.forceSimpleMaterials();
+        }
+
+        function startAR() {
+            if (app) app.startAR();
+        }
+
+        function stopAR() {
+            if (app) app.stopAR();
+        }
+
+        function forceVisibility() {
+            if (app) app.forceVisibility();
+        }
+
+        // Inicializar
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('Iniciando AR Viewer con modelo real');
-            app = new ARViewer();
+            console.log('🚀 === AR OPTIMIZADO INICIADO ===');
+            console.log(`🍕 Producto: ${PRODUCTO_NOMBRE} (ID: ${PRODUCTO_ID})`);
+            console.log(`📁 Modelo: ${MODELO_ARCHIVO}`);
+
+            app = new OptimizedWebAR();
         });
 
+        // Manejo de errores
         window.addEventListener('error', (e) => {
-            console.error('Error global:', e.error);
-            if (app) app.showError('Error global: ' + e.message);
+            console.error('❌ Error global:', e.error);
+            const statusEl = document.getElementById('status');
+            if (statusEl) statusEl.textContent = '❌ Error: ' + e.message;
         });
     </script>
 </body>
