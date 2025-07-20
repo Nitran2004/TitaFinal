@@ -249,6 +249,8 @@ namespace ProyectoIdentity.Controllers
                     return "/RealidadAumentada/GetGLBFile?archivo=nachos_verace.glb";
                 case "bread sticks":
                     return "/RealidadAumentada/GetGLBFile?archivo=breadsticks.glb";
+                case "bread sticks verace":
+                    return "/RealidadAumentada/GetGLBFile?archivo=breadsticks.glb";
                 default:
                     return "";
             }
@@ -290,6 +292,8 @@ namespace ProyectoIdentity.Controllers
                 case 77:
                     return "nachos_verace.glb";
                 case 78:
+                    return "breadsticks.glb";
+                case 79:
                     return "breadsticks.glb";
                 default:
                     return "pizza2.glb"; // Por defecto para cualquier ID no mapeado
