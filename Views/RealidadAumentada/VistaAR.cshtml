@@ -151,6 +151,23 @@
             margin: 4px;
         }
 
+        /* Botón de colapso */
+        .btn-collapse {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            font-size: 14px;
+            margin: 0;
+            border-radius: 8px;
+        }
+
+            .btn-collapse:hover {
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+                border-color: rgba(255, 255, 255, 0.5);
+                box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2);
+            }
+
         #status {
             margin: 16px 0;
             font-size: 14px;
@@ -163,7 +180,7 @@
             display: none !important;
         }
 
-        /* Panel de Debug Expandido */
+        /* Panel de Debug Expandido - OCULTO PARA USUARIO FINAL */
         #debugInfo {
             position: fixed;
             top: 20px;
@@ -183,6 +200,7 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
             font-family: 'Monaco', 'Courier New', monospace;
             color: #10b981;
+            display: none !important; /* OCULTO PARA USUARIO FINAL */
         }
 
             #debugInfo h4 {
@@ -294,12 +312,42 @@
             line-height: 1.6;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             z-index: 100;
+            transition: all 0.3s ease;
         }
 
-            #instructions p {
-                margin: 8px 0;
-                color: rgba(255, 255, 255, 0.9);
+        /* AR Header con botón de colapso */
+        .ar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .ar-title {
+            font-weight: 600;
+            font-size: 16px;
+            background: linear-gradient(135deg, #fff 0%, #a0a0a0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Contenido colapsable */
+        .ar-content {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+            .ar-content.collapsed {
+                height: 0;
+                padding: 0;
+                opacity: 0;
             }
+
+        #instructions p {
+            margin: 8px 0;
+            color: rgba(255, 255, 255, 0.9);
+        }
 
         /* Loading */
         .loading {
@@ -366,7 +414,7 @@
             font-weight: 700;
         }
 
-        /* Toggle para Debug */
+        /* Toggle para Debug - OCULTO PARA USUARIO FINAL */
         #debugToggle {
             position: fixed;
             top: 120px;
@@ -382,6 +430,7 @@
             font-weight: 500;
             z-index: 160;
             transition: all 0.3s ease;
+            display: none !important; /* OCULTO PARA USUARIO FINAL */
         }
 
             #debugToggle:hover {
@@ -399,11 +448,13 @@
             max-width: calc(100vw - 24px);
             font-size: 9px;
             max-height: 60vh;
+            display: none !important; /* OCULTO PARA USUARIO FINAL */
         }
 
         #debugToggle {
             right: 12px;
             top: 100px;
+            display: none !important; /* OCULTO PARA USUARIO FINAL */
         }
 
         #ui {
@@ -436,6 +487,11 @@
             padding: 20px 24px;
         }
 
+        .ar-header {
+            flex-direction: column;
+            gap: 8px;
+        }
+
         }
     </style>
 </head>
@@ -458,12 +514,12 @@
         <div id="status">Preparando modelo...</div>
     </div>
 
-    <!-- Toggle Debug -->
-    <button id="debugToggle" onclick="toggleDebugInfo()">📊 Debug</button>
+    <!-- Toggle Debug - OCULTO PARA USUARIO FINAL PERO FUNCIONAL -->
+    <button id="debugToggle" onclick="toggleDebugInfo()">Debug</button>
 
-    <!-- Panel de Debug Simplificado -->
+    <!-- Panel de Debug Simplificado - OCULTO PARA USUARIO FINAL PERO FUNCIONAL -->
     <div id="debugInfo">
-        <h4>📊 Debug AR</h4>
+        <h4>Debug AR</h4>
 
         <div class="debug-section">
             <h5>Modelo</h5>
@@ -505,7 +561,7 @@
             </div>
             <div class="debug-item">
                 <span class="debug-label">Colocado:</span>
-                <span class="debug-value" id="debug-placed">❌</span>
+                <span class="debug-value" id="debug-placed">❌ No colocado</span>
             </div>
         </div>
     </div>
@@ -513,8 +569,8 @@
     <!-- Controles de Vista Previa Simplificados -->
     <div id="previewControls">
         <div class="instructions">
-            🎮 <strong>Vista Previa 3D:</strong> Verifica que el modelo se ve correctamente antes de activar AR.
-            <br>🤏 <strong>En AR:</strong> Usa pellizco de dedos para redimensionar después de colocar.
+            <strong>Vista Previa 3D:</strong> Verifica que el modelo se ve correctamente antes de activar AR.
+            <br><strong>En AR:</strong> Usa pellizco de dedos para redimensionar después de colocar.
         </div>
         <div class="control-row">
             <button class="btn btn-primary" id="startARButton" onclick="startAR()" disabled>🚀 Iniciar AR</button>
@@ -523,23 +579,28 @@
 
     <!-- Instrucciones AR con Controles Integrados -->
     <div id="instructions" class="hidden">
-        <p><strong>🥽 AR ACTIVO</strong></p>
-        <p>📱 Busca el <strong>cursor verde</strong> moviéndote lentamente</p>
-        <p>🎯 <strong>Toca</strong> para colocar la pizza</p>
-        <p>🤏 <strong>Pellizca con dos dedos</strong> para redimensionar</p>
-        <p id="ar-mode-text">🍕 Modo: MODELO REAL (colores originales)</p>
+        <!-- Header con botón de colapso -->
+        <div class="ar-header">
+            <div class="ar-title">AR ACTIVO</div>
+            <button class="btn btn-collapse" id="collapseBtn" onclick="toggleARCollapse()">
+                <span id="collapseIcon">🔽</span>
+            </button>
+        </div>
 
-        <!-- Controles de AR -->
-        <div style="margin-top: 20px;">
-            <div class="control-row">
-                <button class="btn btn-small" onclick="autoFitModel()">🎯 Auto-Ajustar</button>
-                <button class="btn btn-small" onclick="resetView()">🔄 Reset</button>
-                <button class="btn btn-small" onclick="toggleTestMode()" id="testModeBtn">🧪 Cubo: OFF</button>
-                <button class="btn btn-small" onclick="forceSimpleMaterials()">🎨 Optimizar</button>
-            </div>
-            <div class="control-row">
-                <button class="btn btn-danger" onclick="stopAR()">❌ Salir de AR</button>
-                <button class="btn btn-small" onclick="forceVisibility()">👁️ Forzar Visibilidad</button>
+        <!-- Contenido colapsable -->
+        <div class="ar-content" id="arContent">
+            <p>Busca el <strong>cursor verde</strong> moviéndote lentamente</p>
+            <p><strong>Toca</strong> para colocar la pizza</p>
+            <p><strong>Pellizca con dos dedos</strong> para redimensionar</p>
+
+            <!-- Controles de AR (simplificados) -->
+            <div style="margin-top: 20px;">
+                <div class="control-row">
+                    <button class="btn btn-small" onclick="autoFitModel()">Auto-Ajustar</button>
+                </div>
+                <div class="control-row">
+                    <button class="btn btn-danger" onclick="stopAR()">Salir de AR</button>
+                </div>
             </div>
         </div>
     </div>
@@ -555,6 +616,9 @@
         const PRODUCTO_NOMBRE = '@ViewBag.ProductoNombre';
         const MODELO_ARCHIVO = '@ViewBag.ModeloArchivo';
         const MODELO_PATH = '@Html.Raw(ViewBag.ModeloPath)';
+
+        // Variable para el estado de colapso
+        let isARCollapsed = false;
 
         class OptimizedWebAR {
             constructor() {
@@ -584,7 +648,7 @@
                 this.originalScale = 1.0;
                 this.targetScale = 1.0;
                 this.modelLoaded = false;
-                this.debugMode = true; // Activo por defecto
+                this.debugMode = true; // Activo internamente pero oculto para usuario final
                 this.materialStats = { total: 0, converted: 0 };
 
                 this.init();
@@ -686,10 +750,10 @@
                 const loadingEl = document.getElementById('loading');
 
                 try {
-                    statusEl.textContent = `🔬 Cargando modelo para debug...`;
+                    statusEl.textContent = `Cargando modelo para debug...`;
 
                     const modeloArchivo = MODELO_ARCHIVO || 'pizza2.glb';
-                    console.log(`🎯 Cargando: ${modeloArchivo}`);
+                    console.log(`Cargando: ${modeloArchivo}`);
 
                     const loader = new THREE.GLTFLoader();
                     const gltf = await new Promise((resolve, reject) => {
@@ -698,7 +762,7 @@
                             resolve,
                             (progress) => {
                                 const percent = Math.round((progress.loaded / progress.total) * 100);
-                                statusEl.textContent = `🔬 Cargando... ${percent}%`;
+                                statusEl.textContent = `Cargando... ${percent}%`;
                             },
                             reject
                         );
@@ -708,7 +772,7 @@
                     this.model = new THREE.Group();
                     const originalModel = gltf.scene;
 
-                    console.log('📦 GLTF cargado:', gltf);
+                    console.log('GLTF cargado:', gltf);
 
                     // ANÁLISIS COMPLETO DEL MODELO ORIGINAL
                     this.analyzeModelStructure(originalModel);
@@ -742,15 +806,15 @@
                     this.fitCameraToModel();
                     loadingEl.style.display = 'none';
 
-                    statusEl.textContent = `✅ Modelo cargado y centrado en wrapper`;
-                    console.log('✅ Modelo procesado con wrapper - Debería posicionarse como el cubo');
+                    statusEl.textContent = `Modelo cargado y centrado en wrapper`;
+                    console.log('Modelo procesado con wrapper - Debería posicionarse como el cubo');
 
                     await this.checkARSupport();
                     this.updateDebugInfo();
 
                 } catch (error) {
-                    console.error('❌ Error cargando modelo:', error);
-                    statusEl.textContent = `❌ Error: ${error.message}`;
+                    console.error('Error cargando modelo:', error);
+                    statusEl.textContent = `Error: ${error.message}`;
                     loadingEl.style.display = 'none';
                     this.createFallbackCube();
                 }
@@ -769,9 +833,9 @@
                     this.initialDistance = this.getDistance(event.touches[0], event.touches[1]);
                     this.initialScale = this.currentScale;
 
-                    console.log('🤏 Iniciando pellizco de dedos');
-                    console.log(`📏 Distancia inicial: ${this.initialDistance.toFixed(0)}px`);
-                    console.log(`📏 Escala inicial: ${this.initialScale.toFixed(2)}x`);
+                    console.log('Iniciando pellizco de dedos');
+                    console.log(`Distancia inicial: ${this.initialDistance.toFixed(0)}px`);
+                    console.log(`Escala inicial: ${this.initialScale.toFixed(2)}x`);
 
                     this.showScaleInfo();
                 }
@@ -800,7 +864,7 @@
 
                 if (event.touches.length < 2) {
                     this.isScaling = false;
-                    console.log(`🎯 Pellizco terminado - Escala final: ${this.currentScale.toFixed(2)}x`);
+                    console.log(`Pellizco terminado - Escala final: ${this.currentScale.toFixed(2)}x`);
 
                     // Ocultar info de escala después de un momento
                     this.hideScaleInfo();
@@ -944,7 +1008,7 @@
                 let targetSize;
                 if (this.isARMode) {
                     // Para AR: GIGANTESCO para garantizar visibilidad
-                    targetSize = 3.0; // 3 metros!!!
+                    targetSize = 0.3; // 30 centimetros!!!
                 } else {
                     // Para vista previa
                     targetSize = 2.0;
@@ -954,7 +1018,7 @@
                 this.model.scale.setScalar(this.targetScale);
 
                 const finalSize = maxDim * this.targetScale;
-                console.log(`📏 ESCALA APLICADA: ${this.targetScale.toFixed(3)}x (${targetSize}m target, final: ${finalSize.toFixed(2)}m)`);
+                console.log(`ESCALA APLICADA: ${this.targetScale.toFixed(3)}x (${targetSize}m target, final: ${finalSize.toFixed(2)}m)`);
 
                 this.updateDebugInfo();
             }
@@ -995,7 +1059,7 @@
                 this.updateDebugInfo();
 
                 document.getElementById('loading').style.display = 'none';
-                console.log('🔄 Cubo de respaldo creado');
+                console.log('Cubo de respaldo creado');
             }
 
             async checkARSupport() {
@@ -1006,15 +1070,15 @@
                         const supported = await navigator.xr.isSessionSupported('immersive-ar');
                         if (supported) {
                             buttonEl.disabled = false;
-                            console.log('✅ AR soportado');
+                            console.log('AR soportado');
                         } else {
-                            console.log('❌ AR no soportado en este dispositivo');
+                            console.log('AR no soportado en este dispositivo');
                         }
                     } catch (error) {
                         console.error('Error checking AR:', error);
                     }
                 } else {
-                    console.log('❌ WebXR no disponible');
+                    console.log('WebXR no disponible');
                 }
             }
 
@@ -1038,7 +1102,7 @@
                 if (!this.debugMode) return;
 
                 // Estado del modelo
-                document.getElementById('debug-loaded').textContent = this.modelLoaded ? '✅ Cargado' : '❌ No cargado';
+                document.getElementById('debug-loaded').textContent = this.modelLoaded ? 'Cargado' : 'No cargado';
 
                 // Tamaño actual
                 if (this.originalBoundingBox) {
@@ -1055,7 +1119,7 @@
 
                 // Mostrar info de pellizco si está activo
                 if (this.isScaling) {
-                    console.log(`🤏 Pellizco activo: ${this.currentScale.toFixed(2)}x`);
+                    console.log(`Pellizco activo: ${this.currentScale.toFixed(2)}x`);
                 }
 
                 // Posiciones
@@ -1072,9 +1136,9 @@
                 }
 
                 // Estado AR
-                document.getElementById('debug-mode').textContent = this.isARMode ? '🥽 AR' : '🖥️ Preview';
-                document.getElementById('debug-cursor-status').textContent = this.cursorVisible ? '✅ Visible' : '❌ Oculto';
-                document.getElementById('debug-placed').textContent = this.modelAdded ? '✅ Colocado' : '❌ No colocado';
+                document.getElementById('debug-mode').textContent = this.isARMode ? 'AR' : 'Preview';
+                document.getElementById('debug-cursor-status').textContent = this.cursorVisible ? 'Visible' : 'Oculto';
+                document.getElementById('debug-placed').textContent = this.modelAdded ? 'Colocado' : 'No colocado';
             }
 
             toggleDebugMode() {
@@ -1088,69 +1152,246 @@
                 const btn = document.getElementById('testModeBtn');
                 const arText = document.getElementById('ar-mode-text');
 
-                btn.textContent = this.useTestMode ? '🧪 Cubo: ON' : '🧪 Cubo: OFF';
+                btn.textContent = this.useTestMode ? 'Cubo: ON' : 'Cubo: OFF';
                 btn.className = this.useTestMode ? 'btn btn-primary btn-small' : 'btn btn-small';
 
                 if (arText) {
                     arText.textContent = this.useTestMode ?
-                        '🧪 Modo: CUBO ROJO (funciona)' :
-                        '🍕 Modo: MODELO REAL (debug)';
+                        'Modo: CUBO ROJO (funciona)' :
+                        'Modo: MODELO REAL (debug)';
                 }
 
-                console.log(`🧪 Modo de prueba: ${this.useTestMode ? 'ACTIVADO' : 'DESACTIVADO'}`);
+                console.log(`Modo de prueba: ${this.useTestMode ? 'ACTIVADO' : 'DESACTIVADO'}`);
             }
 
-            analyzeModel() {
-                if (!this.model) {
-                    console.log('❌ No hay modelo para analizar');
-                    return;
-                }
+            async startAR() {
+                if (!this.modelLoaded || this.isARMode) return;
 
-                console.log('🔬 === ANÁLISIS COMPLETO DEL MODELO ===');
+                const statusEl = document.getElementById('status');
+                const previewEl = document.getElementById('previewControls');
+                const instructionsEl = document.getElementById('instructions');
 
-                // Analizar el wrapper
-                console.log(`📦 WRAPPER (${this.model.type}):`);
-                console.log(`  - Posición: ${this.model.position.x.toFixed(3)}, ${this.model.position.y.toFixed(3)}, ${this.model.position.z.toFixed(3)}`);
-                console.log(`  - Escala: ${this.model.scale.x.toFixed(3)}, ${this.model.scale.y.toFixed(3)}, ${this.model.scale.z.toFixed(3)}`);
-                console.log(`  - Visible: ${this.model.visible}`);
-                console.log(`  - Hijos: ${this.model.children.length}`);
+                try {
+                    statusEl.textContent = `Iniciando AR...`;
+                    console.log('Iniciando AR...');
 
-                // Analizar el contenido original si existe
-                if (this.model.children.length > 0) {
-                    const originalModel = this.model.children[0];
-                    console.log(`📦 MODELO ORIGINAL (${originalModel.type}):`);
-                    console.log(`  - Posición: ${originalModel.position.x.toFixed(3)}, ${originalModel.position.y.toFixed(3)}, ${originalModel.position.z.toFixed(3)}`);
-                    console.log(`  - Escala: ${originalModel.scale.x.toFixed(3)}, ${originalModel.scale.y.toFixed(3)}, ${originalModel.scale.z.toFixed(3)}`);
+                    this.xrSession = await navigator.xr.requestSession('immersive-ar', {
+                        requiredFeatures: ['local'],
+                        optionalFeatures: ['hit-test', 'dom-overlay'],
+                        domOverlay: { root: document.body }
+                    });
 
-                    this.analyzeModelStructure(originalModel);
-                    this.calculateOriginalBoundingBox(originalModel);
-                }
+                    await this.setupXRSession();
 
-                console.log(`📊 Visibilidad actual:`);
-                console.log(`  - Wrapper visible: ${this.model.visible}`);
-                console.log(`  - Wrapper parent: ${this.model.parent ? this.model.parent.type : 'null'}`);
-                console.log(`  - En escena: ${this.model.parent === this.scene}`);
+                    // Cambiar a modo AR
+                    this.isARMode = true;
+                    this.scene.background = null;
+                    this.renderer.setClearColor(0x000000, 0);
 
-                this.model.traverse((node, index) => {
-                    if (node.isMesh) {
-                        console.log(`🔸 Mesh ${index}:`, {
-                            visible: node.visible,
-                            material: node.material.type,
-                            color: node.material.color,
-                            opacity: node.material.opacity,
-                            transparent: node.material.transparent,
-                            position: `${node.position.x.toFixed(2)},${node.position.y.toFixed(2)},${node.position.z.toFixed(2)}`
-                        });
+                    console.log('Preparando objetos para AR...');
+
+                    if (this.useTestMode) {
+                        // Preparar cubo de prueba
+                        this.testCube.position.set(0, 0, 0);
+                        this.testCube.rotation.set(0, 0, 0);
+                        this.testCube.quaternion.set(0, 0, 0, 1);
+                        this.testCube.scale.setScalar(1.0);
+                        this.testCube.visible = false;
+                        this.modelAdded = false;
+                        console.log('Cubo de prueba preparado (posición inicial: 0,0,0)');
+                    } else {
+                        // Preparar modelo real - MISMO SETUP QUE EL CUBO
+                        console.log('Preparando modelo pizza...');
+
+                        // Resetear wrapper del modelo igual que el cubo
+                        this.model.position.set(0, 0, 0);
+                        this.model.rotation.set(0, 0, 0);
+                        this.model.quaternion.set(0, 0, 0, 1);
+                        this.model.scale.setScalar(1.0); // Reset escala base
+                        this.model.visible = false;
+                        this.modelAdded = false;
+
+                        // Resetear variables de pellizco
+                        this.currentScale = 1.0;
+                        this.initialScale = 1.0;
+                        this.isScaling = false;
+
+                        // Configurar escala para AR
+                        this.autoFitModel();
+
+                        console.log(`Modelo preparado:`);
+                        console.log(`  - Posición wrapper: ${this.model.position.x}, ${this.model.position.y}, ${this.model.position.z}`);
+                        console.log(`  - Escala objetivo: ${this.targetScale.toFixed(3)}x`);
+                        console.log(`  - Visible: ${this.model.visible}`);
+
+                        // Verificar contenido del wrapper
+                        console.log(`  - Hijos en wrapper: ${this.model.children.length}`);
+                        if (this.model.children.length > 0) {
+                            const child = this.model.children[0];
+                            console.log(`  - Primer hijo pos: ${child.position.x.toFixed(3)}, ${child.position.y.toFixed(3)}, ${child.position.z.toFixed(3)}`);
+                        }
+
+                        // Forzar materiales simples
+                        this.forceSimpleMaterials();
                     }
+
+                    if (this.controls) this.controls.enabled = false;
+
+                    previewEl.classList.add('hidden');
+                    instructionsEl.classList.remove('hidden');
+
+                    statusEl.textContent = `AR Activo`;
+                    this.updateDebugInfo();
+
+                    console.log('AR iniciado correctamente');
+
+                } catch (error) {
+                    console.error('Error iniciando AR:', error);
+                    statusEl.textContent = `Error AR: ${error.message}`;
+                }
+            }
+
+            async setupXRSession() {
+                this.xrRefSpace = await this.xrSession.requestReferenceSpace('local');
+                this.viewerSpace = await this.xrSession.requestReferenceSpace('viewer');
+
+                this.renderer.xr.setReferenceSpaceType('local');
+                this.renderer.xr.setSession(this.xrSession);
+
+                await this.setupHitTesting();
+
+                this.xrSession.addEventListener('select', (event) => {
+                    this.onSelect(event);
                 });
 
-                this.updateDebugInfo();
+                this.xrSession.addEventListener('end', () => {
+                    this.onSessionEnd();
+                });
+
+                this.renderer.setAnimationLoop((time, frame) => {
+                    this.render(time, frame);
+                });
+            }
+
+            async setupHitTesting() {
+                try {
+                    this.hitTestSource = await this.xrSession.requestHitTestSource({ space: this.viewerSpace });
+                    console.log('Hit testing configurado');
+                } catch (error) {
+                    console.warn('Hit testing no disponible:', error);
+                }
+            }
+
+            render(time, frame) {
+                if (this.isARMode && frame && this.hitTestSource && !this.modelAdded) {
+                    const hitTestResults = frame.getHitTestResults(this.hitTestSource);
+                    if (hitTestResults.length > 0) {
+                        const hit = hitTestResults[0];
+                        const pose = hit.getPose(this.xrRefSpace);
+                        if (pose) {
+                            this.modelMatrix.fromArray(pose.transform.matrix);
+
+                            this.cursor.visible = true;
+                            this.cursor.position.set(
+                                pose.transform.position.x,
+                                pose.transform.position.y,
+                                pose.transform.position.z
+                            );
+
+                            if (!this.cursorVisible) {
+                                console.log('Superficie detectada');
+                            }
+                            this.cursorVisible = true;
+                        }
+                    } else {
+                        this.cursor.visible = false;
+                        this.cursorVisible = false;
+                    }
+                } else if (this.modelAdded && this.cursor) {
+                    this.cursor.visible = false;
+                    this.cursorVisible = false;
+                }
+
+                this.renderer.render(this.scene, this.camera);
+
+                if (this.debugMode) {
+                    requestAnimationFrame(() => this.updateDebugInfo());
+                }
+            }
+
+            onSelect(event) {
+                if (!this.modelAdded && this.modelMatrix && this.cursorVisible) {
+                    console.log('Colocando objeto en AR...');
+
+                    const objectToPlace = this.useTestMode ? this.testCube : this.model;
+                    const objectName = this.useTestMode ? 'CUBO ROJO' : 'MODELO PIZZA';
+
+                    console.log(`Matriz del cursor:`, this.modelMatrix);
+
+                    // ⭐ USAR EXACTAMENTE LA MISMA LÓGICA PARA AMBOS OBJETOS
+
+                    // 1. Extraer posición del hit test
+                    const position = new THREE.Vector3();
+                    const quaternion = new THREE.Quaternion();
+                    const scale = new THREE.Vector3();
+                    this.modelMatrix.decompose(position, quaternion, scale);
+
+                    console.log(`Posición del hit test: ${position.x.toFixed(3)}, ${position.y.toFixed(3)}, ${position.z.toFixed(3)}`);
+
+                    // 2. Limpiar transformaciones del objeto
+                    objectToPlace.position.set(0, 0, 0);
+                    objectToPlace.rotation.set(0, 0, 0);
+                    objectToPlace.quaternion.set(0, 0, 0, 1);
+
+                    // 3. Aplicar EXACTAMENTE la misma posición que el cursor
+                    objectToPlace.position.copy(position);
+                    objectToPlace.quaternion.copy(quaternion);
+
+                    // 4. Elevar ligeramente para evitar que se enterre
+                    objectToPlace.position.y += 0.1;
+
+                    console.log(`Posición final del objeto: ${objectToPlace.position.x.toFixed(3)}, ${objectToPlace.position.y.toFixed(3)}, ${objectToPlace.position.z.toFixed(3)}`);
+
+                    // 5. Aplicar escala
+                    if (this.useTestMode) {
+                        // Cubo: escala fija
+                        objectToPlace.scale.setScalar(1.0);
+                        this.currentScale = 1.0; // Sincronizar escala de pellizco
+                        console.log('CUBO: Escala 1.0x aplicada');
+                    } else {
+                        // Modelo: escala calculada
+                        objectToPlace.scale.setScalar(this.targetScale);
+                        this.currentScale = 1.0; // Inicializar escala de pellizco
+                        console.log(`MODELO: Escala ${this.targetScale.toFixed(3)}x aplicada`);
+                        console.log(`Pellizco habilitado - Usa dos dedos para redimensionar`);
+
+                        // Log detallado del modelo
+                        objectToPlace.traverse((node, index) => {
+                            if (node.isMesh) {
+                                console.log(`  🔸 Mesh ${index}: visible=${node.visible}, pos=(${node.position.x.toFixed(2)},${node.position.y.toFixed(2)},${node.position.z.toFixed(2)})`);
+                            }
+                        });
+                    }
+
+                    // 6. Hacer visible
+                    objectToPlace.visible = true;
+                    this.modelAdded = true;
+                    this.cursor.visible = false;
+
+                    console.log(`${objectName} colocado con lógica idéntica al cubo`);
+                    console.log(`Comparación de posiciones:`);
+                    console.log(`  - Cursor: ${position.x.toFixed(3)}, ${position.y.toFixed(3)}, ${position.z.toFixed(3)}`);
+                    console.log(`  - Objeto: ${objectToPlace.position.x.toFixed(3)}, ${objectToPlace.position.y.toFixed(3)}, ${objectToPlace.position.z.toFixed(3)}`);
+                    console.log(`  - Diferencia Y: +${(objectToPlace.position.y - position.y).toFixed(3)} (elevación)`);
+
+                    this.updateDebugInfo();
+                }
             }
 
             forceSimpleMaterials() {
                 if (!this.model) return;
 
-                console.log('🎨 Optimizando materiales para AR...');
+                console.log('Optimizando materiales para AR...');
                 let count = 0;
 
                 this.model.traverse((node) => {
@@ -1184,337 +1425,19 @@
                     }
                 });
 
-                console.log(`✅ ${count} materiales optimizados`);
+                console.log(`${count} materiales optimizados`);
                 this.materialStats.converted = count;
-                this.updateDebugInfo();
-            }
-
-            makeHuge() {
-                if (!this.model) return;
-
-                console.log('📏 Haciendo modelo GIGANTESCO...');
-                this.targetScale = this.isARMode ? 10.0 : 5.0; // ENORME
-                this.model.scale.setScalar(this.targetScale);
-
-                if (!this.isARMode) {
-                    this.fitCameraToModel();
-                }
-
-                console.log(`📏 Escala aplicada: ${this.targetScale}x`);
-                this.updateDebugInfo();
-            }
-
-            resetView() {
-                if (this.isARMode) return;
-
-                this.autoFitModel();
-                this.fitCameraToModel();
-                console.log('🔄 Vista reiniciada');
-            }
-
-            async startAR() {
-                if (!this.modelLoaded || this.isARMode) return;
-
-                const statusEl = document.getElementById('status');
-                const previewEl = document.getElementById('previewControls');
-                const instructionsEl = document.getElementById('instructions');
-
-                try {
-                    statusEl.textContent = `🚀 Iniciando AR...`;
-                    console.log('🥽 Iniciando AR...');
-
-                    this.xrSession = await navigator.xr.requestSession('immersive-ar', {
-                        requiredFeatures: ['local'],
-                        optionalFeatures: ['hit-test', 'dom-overlay'],
-                        domOverlay: { root: document.body }
-                    });
-
-                    await this.setupXRSession();
-
-                    // Cambiar a modo AR
-                    this.isARMode = true;
-                    this.scene.background = null;
-                    this.renderer.setClearColor(0x000000, 0);
-
-                    console.log('🔧 Preparando objetos para AR...');
-
-                    if (this.useTestMode) {
-                        // Preparar cubo de prueba
-                        this.testCube.position.set(0, 0, 0);
-                        this.testCube.rotation.set(0, 0, 0);
-                        this.testCube.quaternion.set(0, 0, 0, 1);
-                        this.testCube.scale.setScalar(1.0);
-                        this.testCube.visible = false;
-                        this.modelAdded = false;
-                        console.log('🧪 Cubo de prueba preparado (posición inicial: 0,0,0)');
-                    } else {
-                        // Preparar modelo real - MISMO SETUP QUE EL CUBO
-                        console.log('🍕 Preparando modelo pizza...');
-
-                        // Resetear wrapper del modelo igual que el cubo
-                        this.model.position.set(0, 0, 0);
-                        this.model.rotation.set(0, 0, 0);
-                        this.model.quaternion.set(0, 0, 0, 1);
-                        this.model.scale.setScalar(1.0); // Reset escala base
-                        this.model.visible = false;
-                        this.modelAdded = false;
-
-                        // Resetear variables de pellizco
-                        this.currentScale = 1.0;
-                        this.initialScale = 1.0;
-                        this.isScaling = false;
-
-                        // Configurar escala para AR
-                        this.autoFitModel();
-
-                        console.log(`🍕 Modelo preparado:`);
-                        console.log(`  - Posición wrapper: ${this.model.position.x}, ${this.model.position.y}, ${this.model.position.z}`);
-                        console.log(`  - Escala objetivo: ${this.targetScale.toFixed(3)}x`);
-                        console.log(`  - Visible: ${this.model.visible}`);
-
-                        // Verificar contenido del wrapper
-                        console.log(`  - Hijos en wrapper: ${this.model.children.length}`);
-                        if (this.model.children.length > 0) {
-                            const child = this.model.children[0];
-                            console.log(`  - Primer hijo pos: ${child.position.x.toFixed(3)}, ${child.position.y.toFixed(3)}, ${child.position.z.toFixed(3)}`);
-                        }
-
-                        // Forzar materiales simples
-                        this.forceSimpleMaterials();
-                    }
-
-                    if (this.controls) this.controls.enabled = false;
-
-                    previewEl.classList.add('hidden');
-                    instructionsEl.classList.remove('hidden');
-
-                    statusEl.textContent = `✅ AR Activo`;
-                    this.updateDebugInfo();
-
-                    console.log('✅ AR iniciado correctamente');
-
-                } catch (error) {
-                    console.error('❌ Error iniciando AR:', error);
-                    statusEl.textContent = `❌ Error AR: ${error.message}`;
-                }
-            }
-
-            async setupXRSession() {
-                this.xrRefSpace = await this.xrSession.requestReferenceSpace('local');
-                this.viewerSpace = await this.xrSession.requestReferenceSpace('viewer');
-
-                this.renderer.xr.setReferenceSpaceType('local');
-                this.renderer.xr.setSession(this.xrSession);
-
-                await this.setupHitTesting();
-
-                this.xrSession.addEventListener('select', (event) => {
-                    this.onSelect(event);
-                });
-
-                this.xrSession.addEventListener('end', () => {
-                    this.onSessionEnd();
-                });
-
-                this.renderer.setAnimationLoop((time, frame) => {
-                    this.render(time, frame);
-                });
-            }
-
-            async setupHitTesting() {
-                try {
-                    this.hitTestSource = await this.xrSession.requestHitTestSource({ space: this.viewerSpace });
-                    console.log('✅ Hit testing configurado');
-                } catch (error) {
-                    console.warn('❌ Hit testing no disponible:', error);
-                }
-            }
-
-            render(time, frame) {
-                if (this.isARMode && frame && this.hitTestSource && !this.modelAdded) {
-                    const hitTestResults = frame.getHitTestResults(this.hitTestSource);
-                    if (hitTestResults.length > 0) {
-                        const hit = hitTestResults[0];
-                        const pose = hit.getPose(this.xrRefSpace);
-                        if (pose) {
-                            this.modelMatrix.fromArray(pose.transform.matrix);
-
-                            this.cursor.visible = true;
-                            this.cursor.position.set(
-                                pose.transform.position.x,
-                                pose.transform.position.y,
-                                pose.transform.position.z
-                            );
-
-                            if (!this.cursorVisible) {
-                                console.log('✅ Superficie detectada');
-                            }
-                            this.cursorVisible = true;
-                        }
-                    } else {
-                        this.cursor.visible = false;
-                        this.cursorVisible = false;
-                    }
-                } else if (this.modelAdded && this.cursor) {
-                    this.cursor.visible = false;
-                    this.cursorVisible = false;
-                }
-
-                this.renderer.render(this.scene, this.camera);
-
-                if (this.debugMode) {
-                    requestAnimationFrame(() => this.updateDebugInfo());
-                }
-            }
-
-            onSelect(event) {
-                if (!this.modelAdded && this.modelMatrix && this.cursorVisible) {
-                    console.log('🎯 Colocando objeto en AR...');
-
-                    const objectToPlace = this.useTestMode ? this.testCube : this.model;
-                    const objectName = this.useTestMode ? 'CUBO ROJO' : 'MODELO PIZZA';
-
-                    console.log(`📍 Matriz del cursor:`, this.modelMatrix);
-
-                    // ⭐ USAR EXACTAMENTE LA MISMA LÓGICA PARA AMBOS OBJETOS
-
-                    // 1. Extraer posición del hit test
-                    const position = new THREE.Vector3();
-                    const quaternion = new THREE.Quaternion();
-                    const scale = new THREE.Vector3();
-                    this.modelMatrix.decompose(position, quaternion, scale);
-
-                    console.log(`📍 Posición del hit test: ${position.x.toFixed(3)}, ${position.y.toFixed(3)}, ${position.z.toFixed(3)}`);
-
-                    // 2. Limpiar transformaciones del objeto
-                    objectToPlace.position.set(0, 0, 0);
-                    objectToPlace.rotation.set(0, 0, 0);
-                    objectToPlace.quaternion.set(0, 0, 0, 1);
-
-                    // 3. Aplicar EXACTAMENTE la misma posición que el cursor
-                    objectToPlace.position.copy(position);
-                    objectToPlace.quaternion.copy(quaternion);
-
-                    // 4. Elevar ligeramente para evitar que se enterre
-                    objectToPlace.position.y += 0.1;
-
-                    console.log(`📍 Posición final del objeto: ${objectToPlace.position.x.toFixed(3)}, ${objectToPlace.position.y.toFixed(3)}, ${objectToPlace.position.z.toFixed(3)}`);
-
-                    // 5. Aplicar escala
-                    if (this.useTestMode) {
-                        // Cubo: escala fija
-                        objectToPlace.scale.setScalar(1.0);
-                        this.currentScale = 1.0; // Sincronizar escala de pellizco
-                        console.log('🧪 CUBO: Escala 1.0x aplicada');
-                    } else {
-                        // Modelo: escala calculada
-                        objectToPlace.scale.setScalar(this.targetScale);
-                        this.currentScale = 1.0; // Inicializar escala de pellizco
-                        console.log(`🍕 MODELO: Escala ${this.targetScale.toFixed(3)}x aplicada`);
-                        console.log(`🤏 Pellizco habilitado - Usa dos dedos para redimensionar`);
-
-                        // Log detallado del modelo
-                        objectToPlace.traverse((node, index) => {
-                            if (node.isMesh) {
-                                console.log(`  🔸 Mesh ${index}: visible=${node.visible}, pos=(${node.position.x.toFixed(2)},${node.position.y.toFixed(2)},${node.position.z.toFixed(2)})`);
-                            }
-                        });
-                    }
-
-                    // 6. Hacer visible
-                    objectToPlace.visible = true;
-                    this.modelAdded = true;
-                    this.cursor.visible = false;
-
-                    console.log(`✅ ${objectName} colocado con lógica idéntica al cubo`);
-                    console.log(`📊 Comparación de posiciones:`);
-                    console.log(`  - Cursor: ${position.x.toFixed(3)}, ${position.y.toFixed(3)}, ${position.z.toFixed(3)}`);
-                    console.log(`  - Objeto: ${objectToPlace.position.x.toFixed(3)}, ${objectToPlace.position.y.toFixed(3)}, ${objectToPlace.position.z.toFixed(3)}`);
-                    console.log(`  - Diferencia Y: +${(objectToPlace.position.y - position.y).toFixed(3)} (elevación)`);
-
-                    this.updateDebugInfo();
-                }
-            }
-
-            forceTestColors() {
-                if (!this.model) return;
-
-                console.log('🧪 Forzando colores de PRUEBA (solo para debug extremo)...');
-                let count = 0;
-                const testColors = [
-                    new THREE.Color(1, 0, 0),     // Rojo
-                    new THREE.Color(0, 1, 0),     // Verde
-                    new THREE.Color(0, 0, 1),     // Azul
-                    new THREE.Color(1, 1, 0),     // Amarillo
-                    new THREE.Color(1, 0, 1),     // Magenta
-                    new THREE.Color(0, 1, 1),     // Cyan
-                ];
-
-                this.model.traverse((node) => {
-                    if (node.isMesh && node.material) {
-                        // Material con color de prueba brillante
-                        const testColor = testColors[count % testColors.length];
-                        node.material = new THREE.MeshBasicMaterial({
-                            color: testColor,
-                            transparent: false,
-                            opacity: 1.0,
-                            side: THREE.DoubleSide,
-                            wireframe: false,
-                            fog: false
-                        });
-                        node.material.needsUpdate = true;
-                        console.log(`  🎨 Mesh ${count}: Color de prueba #${testColor.getHexString()}`);
-                        count++;
-                    }
-                });
-
-                console.log(`🧪 ${count} materiales convertidos a colores de PRUEBA`);
-                console.log(`⚠️ Esto es solo para debug - colores no realistas`);
-                this.materialStats.converted = count;
-                this.updateDebugInfo();
-            }
-
-            forceVisibility() {
-                if (!this.model || !this.modelAdded) {
-                    console.log('❌ No hay modelo colocado para forzar');
-                    return;
-                }
-
-                console.log('👁️ Forzando visibilidad extrema...');
-
-                // Hacer más grande y visible
-                this.model.visible = true;
-                this.model.scale.setScalar(this.targetScale * 2); // Doble de grande
-                this.model.position.y += 0.5; // Más alto
-
-                this.model.traverse((node) => {
-                    if (node.isMesh) {
-                        node.visible = true;
-
-                        // Material rojo brillante para emergencia
-                        node.material = new THREE.MeshBasicMaterial({
-                            color: new THREE.Color(1, 0, 0), // ROJO PURO
-                            transparent: false,
-                            opacity: 1.0,
-                            side: THREE.DoubleSide,
-                            wireframe: false
-                        });
-                        node.material.needsUpdate = true;
-                    }
-                });
-
-                console.log('🔴 Modelo convertido a ROJO GIGANTE - Solo para emergencias');
                 this.updateDebugInfo();
             }
 
             stopAR() {
                 if (!this.isARMode || !this.xrSession) return;
-                console.log('🔚 Deteniendo AR...');
+                console.log('Deteniendo AR...');
                 this.xrSession.end();
             }
 
             onSessionEnd() {
-                console.log('🔚 === SESIÓN AR TERMINADA ===');
+                console.log('=== SESIÓN AR TERMINADA ===');
 
                 const statusEl = document.getElementById('status');
                 const previewEl = document.getElementById('previewControls');
@@ -1563,9 +1486,16 @@
                 previewEl.classList.remove('hidden');
                 instructionsEl.classList.add('hidden');
 
+                // Restablecer estado de colapso
+                isARCollapsed = false;
+                const arContent = document.getElementById('arContent');
+                const collapseIcon = document.getElementById('collapseIcon');
+                if (arContent) arContent.classList.remove('collapsed');
+                if (collapseIcon) collapseIcon.textContent = '🔽';
+
                 this.renderer.setAnimationLoop(null);
 
-                statusEl.textContent = `✅ Debug AR terminado`;
+                statusEl.textContent = `Debug AR terminado`;
                 this.updateDebugInfo();
             }
 
@@ -1589,20 +1519,12 @@
             if (app) app.autoFitModel();
         }
 
-        function resetView() {
-            if (app) app.resetView();
-        }
-
         function toggleDebugInfo() {
             if (app) app.toggleDebugMode();
         }
 
         function toggleTestMode() {
             if (app) app.toggleTestMode();
-        }
-
-        function forceSimpleMaterials() {
-            if (app) app.forceSimpleMaterials();
         }
 
         function startAR() {
@@ -1613,24 +1535,37 @@
             if (app) app.stopAR();
         }
 
-        function forceVisibility() {
-            if (app) app.forceVisibility();
+        // Nueva función para colapsar/expandir AR
+        function toggleARCollapse() {
+            isARCollapsed = !isARCollapsed;
+            const arContent = document.getElementById('arContent');
+            const collapseIcon = document.getElementById('collapseIcon');
+
+            if (isARCollapsed) {
+                arContent.classList.add('collapsed');
+                collapseIcon.textContent = '🔼';
+                console.log('Panel AR colapsado');
+            } else {
+                arContent.classList.remove('collapsed');
+                collapseIcon.textContent = '🔽';
+                console.log('Panel AR expandido');
+            }
         }
 
         // Inicializar
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 === AR OPTIMIZADO INICIADO ===');
-            console.log(`🍕 Producto: ${PRODUCTO_NOMBRE} (ID: ${PRODUCTO_ID})`);
-            console.log(`📁 Modelo: ${MODELO_ARCHIVO}`);
+            console.log('=== AR OPTIMIZADO INICIADO ===');
+            console.log(`Producto: ${PRODUCTO_NOMBRE} (ID: ${PRODUCTO_ID})`);
+            console.log(`Modelo: ${MODELO_ARCHIVO}`);
 
             app = new OptimizedWebAR();
         });
 
         // Manejo de errores
         window.addEventListener('error', (e) => {
-            console.error('❌ Error global:', e.error);
+            console.error('Error global:', e.error);
             const statusEl = document.getElementById('status');
-            if (statusEl) statusEl.textContent = '❌ Error: ' + e.message;
+            if (statusEl) statusEl.textContent = 'Error: ' + e.message;
         });
     </script>
 </body>
