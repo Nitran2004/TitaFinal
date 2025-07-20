@@ -27,6 +27,9 @@ namespace ProyectoIdentity.Controllers
             ViewBag.ProductoId = id;
             ViewBag.ProductoNombre = producto.Nombre;
             ViewBag.ProductoPrecio = producto.Precio;
+            ViewBag.ProductoDescripcion = producto.Descripcion;
+            ViewBag.InfoNutricional = producto.InfoNutricional ?? "";
+            ViewBag.Alergenos = producto.Alergenos ?? "";
             ViewBag.ModeloPath = DeterminarModelo3D(producto.Nombre);
             ViewBag.ModeloArchivo = DeterminarModeloPorId(id.Value);
 
@@ -41,6 +44,9 @@ namespace ProyectoIdentity.Controllers
                 // Si no se proporciona ID, usar por defecto
                 ViewBag.ProductoId = 1;
                 ViewBag.ProductoNombre = "Pizza Por Defecto";
+                ViewBag.ProductoDescripcion = "Pizza deliciosa por defecto";
+                ViewBag.InfoNutricional = "Peso:210g|Calorías:517Kcal - 26%|Grasas:26g - 33%|Carbohidratos:42g - 14%|Proteínas:28g - 57%|Sodio:1020mg - 42%";
+                ViewBag.Alergenos = "Contiene lácteos|Puede contener gluten|Puede contener trazas de frutos secos";
                 ViewBag.ModeloArchivo = "pizza2.glb";
                 ViewBag.ModeloPath = "/RealidadAumentada/GetGLBFile?archivo=pizza2.glb";
             }
@@ -51,6 +57,9 @@ namespace ProyectoIdentity.Controllers
 
                 ViewBag.ProductoId = id;
                 ViewBag.ProductoNombre = producto.Nombre;
+                ViewBag.ProductoDescripcion = producto.Descripcion;
+                ViewBag.InfoNutricional = producto.InfoNutricional ?? "";
+                ViewBag.Alergenos = producto.Alergenos ?? "";
 
                 // Determinar archivo según ID
                 string archivoModelo = DeterminarModeloPorId(id.Value);
@@ -60,6 +69,40 @@ namespace ProyectoIdentity.Controllers
 
             return View();
         }
+
+        [HttpGet("Debug")]
+        public async Task<IActionResult> Debug(int? id)
+        {
+            if (id == null)
+            {
+                ViewBag.ProductoId = 1;
+                ViewBag.ProductoNombre = "Debug - Pizza Por Defecto";
+                ViewBag.ProductoDescripcion = "Pizza debug por defecto";
+                ViewBag.InfoNutricional = "Peso:210g|Calorías:517Kcal - 26%|Grasas:26g - 33%|Carbohidratos:42g - 14%|Proteínas:28g - 57%|Sodio:1020mg - 42%";
+                ViewBag.Alergenos = "Contiene lácteos|Puede contener gluten|Puede contener trazas de frutos secos";
+                ViewBag.ModeloArchivo = "pizza2.glb";
+                ViewBag.ModeloPath = "/RealidadAumentada/GetGLBFile?archivo=pizza2.glb";
+            }
+            else
+            {
+                var producto = await _context.Productos.FindAsync(id);
+                if (producto == null) return NotFound();
+
+                ViewBag.ProductoId = id;
+                ViewBag.ProductoNombre = $"Debug - {producto.Nombre}";
+                ViewBag.ProductoDescripcion = producto.Descripcion;
+                ViewBag.InfoNutricional = producto.InfoNutricional ?? "";
+                ViewBag.Alergenos = producto.Alergenos ?? "";
+
+                string archivoModelo = DeterminarModeloPorId(id.Value);
+                ViewBag.ModeloArchivo = archivoModelo;
+                ViewBag.ModeloPath = $"/RealidadAumentada/GetGLBFile?archivo={archivoModelo}";
+            }
+
+            return View();
+        }
+
+        // ... resto de métodos sin cambios (GetGLBFile, Test, TestArchivos, DeterminarModelo3D, DeterminarModeloPorId)
 
         [HttpGet("GetGLBFile")]
         public IActionResult GetGLBFile(string archivo = "pizza2.glb")
@@ -182,33 +225,6 @@ namespace ProyectoIdentity.Controllers
             return Content(string.Join("<br>", resultado), "text/html");
         }
 
-
-        [HttpGet("Debug")]
-        public async Task<IActionResult> Debug(int? id)
-        {
-            if (id == null)
-            {
-                ViewBag.ProductoId = 1;
-                ViewBag.ProductoNombre = "Debug - Pizza Por Defecto";
-                ViewBag.ModeloArchivo = "pizza2.glb";
-                ViewBag.ModeloPath = "/RealidadAumentada/GetGLBFile?archivo=pizza2.glb";
-            }
-            else
-            {
-                var producto = await _context.Productos.FindAsync(id);
-                if (producto == null) return NotFound();
-
-                ViewBag.ProductoId = id;
-                ViewBag.ProductoNombre = $"Debug - {producto.Nombre}";
-
-                string archivoModelo = DeterminarModeloPorId(id.Value);
-                ViewBag.ModeloArchivo = archivoModelo;
-                ViewBag.ModeloPath = $"/RealidadAumentada/GetGLBFile?archivo={archivoModelo}";
-            }
-
-            return View();
-        }
-
         private string DeterminarModelo3D(string nombreProducto)
         {
             if (string.IsNullOrEmpty(nombreProducto)) return "";
@@ -282,9 +298,9 @@ namespace ProyectoIdentity.Controllers
                 case 10:
                     return "pizza_verace.glb";
                 case 69:
-                    return "sandwich_tradicional.glb"; 
+                    return "sandwich_tradicional.glb";
                 case 70:
-                    return "sandwich_carne_mechada.glb"; 
+                    return "sandwich_carne_mechada.glb";
                 case 71:
                     return "sandwich_veggie.glb";
                 case 76:
