@@ -638,7 +638,7 @@
             </div>
 
             @* ✅ MOSTRAR RA SOLO PARA PIZZA Y SÁNDUCHES *@
-            @if (Model.Categoria.ToLower() == "pizza")
+            @if (new[] { "pizza", "sánduches", "picadas" }.Contains(Model.Categoria.ToLower()))
             {
                 <div class="category-header-touch">
                     <img src="~/images1/ra.png" alt="Realidad Aumentada" class="category-icon" />
@@ -654,6 +654,7 @@
                     <i class="fas fa-cube ml-2"></i>
                 </button>
             }
+
         </div>
 
         <!-- Información del producto -->

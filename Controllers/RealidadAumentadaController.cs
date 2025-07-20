@@ -237,6 +237,20 @@ namespace ProyectoIdentity.Controllers
                     return "/RealidadAumentada/GetGLBFile?archivo=pizza_veggielovers.glb";
                 case "hawaiana":
                     return "/RealidadAumentada/GetGLBFile?archivo=pizza_h.glb";
+                case "tradicional":
+                    return "/RealidadAumentada/GetGLBFile?archivo=sandwich_tradicional.glb";
+                case "carne mechada":
+                    return "/RealidadAumentada/GetGLBFile?archivo=sandwich_carne_mechada.glb";
+                case "veggie":
+                    return "/RealidadAumentada/GetGLBFile?archivo=sandwich_veggie.glb";
+                case "nachos cheddar":
+                    return "/RealidadAumentada/GetGLBFile?archivo=nachos_cheddar.glb";
+                case "nachos verace":
+                    return "/RealidadAumentada/GetGLBFile?archivo=nachos_verace.glb";
+                case "bread sticks":
+                    return "/RealidadAumentada/GetGLBFile?archivo=breadsticks.glb";
+                case "bread sticks verace":
+                    return "/RealidadAumentada/GetGLBFile?archivo=breadsticks.glb";
                 default:
                     return "";
             }
@@ -267,6 +281,20 @@ namespace ProyectoIdentity.Controllers
                     return "pizza_say_cheese.glb";
                 case 10:
                     return "pizza_verace.glb";
+                case 69:
+                    return "sandwich_tradicional.glb"; 
+                case 70:
+                    return "sandwich_carne_mechada.glb"; 
+                case 71:
+                    return "sandwich_veggie.glb";
+                case 76:
+                    return "nachos_cheddar.glb";
+                case 77:
+                    return "nachos_verace.glb";
+                case 78:
+                    return "breadsticks.glb";
+                case 79:
+                    return "breadsticks.glb";
                 default:
                     return "pizza2.glb"; // Por defecto para cualquier ID no mapeado
             }
