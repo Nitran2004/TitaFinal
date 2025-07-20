@@ -1,7 +1,6 @@
 ﻿@{
     Layout = null;
 }
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -47,7 +46,7 @@
                 cursor: grabbing;
             }
 
-        /* UI Principal */
+        /* UI Principal con Pestañas */
         #ui {
             position: fixed;
             top: 20px;
@@ -58,14 +57,56 @@
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 24px;
             border-radius: 20px;
-            text-align: center;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             transition: all 0.3s ease;
+            overflow: hidden;
         }
 
-            #ui h3 {
+        /* Sistema de Pestañas */
+        .tabs-container {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+        }
+
+            .tab-button:hover {
+                background: rgba(255, 255, 255, 0.1);
+                color: rgba(255, 255, 255, 0.9);
+            }
+
+            .tab-button.active {
+                background: rgba(76, 175, 80, 0.15);
+                color: #4CAF50;
+                border-bottom-color: #4CAF50;
+            }
+
+        .tab-content {
+            padding: 24px;
+            text-align: center;
+            display: none;
+        }
+
+            .tab-content.active {
+                display: block;
+            }
+
+            /* Contenido de Pestañas */
+            .tab-content h3 {
                 font-weight: 600;
                 font-size: 20px;
                 margin-bottom: 8px;
@@ -86,6 +127,84 @@
             background-clip: text;
         }
 
+        .description {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        /* Tablas de Información */
+        .info-table {
+            width: 100%;
+            margin-top: 16px;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+            .info-table tr {
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+                .info-table tr:last-child {
+                    border-bottom: none;
+                }
+
+            .info-table td {
+                padding: 12px 16px;
+                text-align: left;
+                font-size: 14px;
+            }
+
+                .info-table td:first-child {
+                    font-weight: 600;
+                    color: rgba(255, 255, 255, 0.9);
+                    width: 40%;
+                }
+
+                .info-table td:last-child {
+                    color: rgba(255, 255, 255, 0.7);
+                }
+
+        /* Lista de Alérgenos */
+        .allergen-list {
+            list-style: none;
+            margin-top: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+            .allergen-list li {
+                padding: 12px 16px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                font-size: 14px;
+                color: rgba(255, 255, 255, 0.8);
+                display: flex;
+                align-items: center;
+            }
+
+                .allergen-list li:last-child {
+                    border-bottom: none;
+                }
+
+                .allergen-list li:before {
+                    content: "⚠️";
+                    margin-right: 12px;
+                    font-size: 16px;
+                }
+
+        /* Mensaje cuando no hay datos */
+        .no-data {
+            color: rgba(255, 255, 255, 0.5);
+            font-style: italic;
+            font-size: 14px;
+            margin-top: 16px;
+        }
+
+        /* Botones */
         .btn {
             background: linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(76, 175, 80, 0.1) 100%);
             backdrop-filter: blur(10px);
@@ -151,7 +270,6 @@
             margin: 4px;
         }
 
-        /* Botón de colapso */
         .btn-collapse {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%);
             border-color: rgba(255, 255, 255, 0.3);
@@ -180,7 +298,7 @@
             display: none !important;
         }
 
-        /* Panel de Debug Expandido - OCULTO PARA USUARIO FINAL */
+        /* Panel de Debug - OCULTO PARA USUARIO FINAL */
         #debugInfo {
             position: fixed;
             top: 20px;
@@ -200,63 +318,7 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
             font-family: 'Monaco', 'Courier New', monospace;
             color: #10b981;
-            display: none !important; /* OCULTO PARA USUARIO FINAL */
-        }
-
-            #debugInfo h4 {
-                color: #4CAF50;
-                font-size: 14px;
-                margin-bottom: 12px;
-                font-weight: 600;
-                text-align: center;
-                border-bottom: 1px solid rgba(34, 197, 94, 0.3);
-                padding-bottom: 8px;
-            }
-
-        .debug-section {
-            margin-bottom: 16px;
-            padding: 12px;
-            background: rgba(34, 197, 94, 0.1);
-            border-radius: 8px;
-            border-left: 3px solid #10b981;
-        }
-
-            .debug-section:last-child {
-                margin-bottom: 0;
-            }
-
-            .debug-section h5 {
-                color: #22c55e;
-                font-size: 11px;
-                margin-bottom: 8px;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-
-        .debug-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 4px;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-            .debug-item:last-child {
-                margin-bottom: 0;
-            }
-
-        .debug-label {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 10px;
-            flex: 1;
-        }
-
-        .debug-value {
-            color: #10b981;
-            font-weight: 600;
-            font-size: 10px;
-            flex: 1;
-            text-align: right;
+            display: none !important;
         }
 
         /* Controles de Vista Previa */
@@ -315,7 +377,6 @@
             transition: all 0.3s ease;
         }
 
-        /* AR Header con botón de colapso */
         .ar-header {
             display: flex;
             justify-content: space-between;
@@ -332,7 +393,6 @@
             background-clip: text;
         }
 
-        /* Contenido colapsable */
         .ar-content {
             transition: all 0.3s ease;
             overflow: hidden;
@@ -383,7 +443,7 @@
 
         }
 
-        /* Información de Escala durante Pellizco */
+        /* Información de Escala */
         #scaleInfo {
             position: fixed;
             top: 50%;
@@ -414,7 +474,7 @@
             font-weight: 700;
         }
 
-        /* Toggle para Debug - OCULTO PARA USUARIO FINAL */
+        /* Toggle para Debug - OCULTO */
         #debugToggle {
             position: fixed;
             top: 120px;
@@ -430,39 +490,31 @@
             font-weight: 500;
             z-index: 160;
             transition: all 0.3s ease;
-            display: none !important; /* OCULTO PARA USUARIO FINAL */
+            display: none !important;
         }
-
-            #debugToggle:hover {
-                background: rgba(16, 185, 129, 0.3);
-                transform: translateY(-2px);
-            }
 
         /* Responsividad */
         @@media (max-width: 768px) {
-            #debugInfo
+            #ui
 
         {
-            right: 12px;
-            top: 12px;
-            max-width: calc(100vw - 24px);
-            font-size: 9px;
-            max-height: 60vh;
-            display: none !important; /* OCULTO PARA USUARIO FINAL */
-        }
-
-        #debugToggle {
-            right: 12px;
-            top: 100px;
-            display: none !important; /* OCULTO PARA USUARIO FINAL */
-        }
-
-        #ui {
             left: 12px;
             right: 12px;
             top: 12px;
-            padding: 20px;
         }
+
+        .tab-button {
+            font-size: 12px;
+            padding: 10px 12px;
+        }
+
+        .tab-content {
+            padding: 16px;
+        }
+
+            .tab-content h3 {
+                font-size: 18px;
+            }
 
         #previewControls, #instructions {
             left: 12px;
@@ -481,7 +533,6 @@
             padding: 12px 20px;
         }
 
-        /* Información de escala más pequeña en móvil */
         #scaleInfo {
             font-size: 18px;
             padding: 20px 24px;
@@ -490,6 +541,16 @@
         .ar-header {
             flex-direction: column;
             gap: 8px;
+        }
+
+        .info-table td {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .allergen-list li {
+            padding: 10px 12px;
+            font-size: 12px;
         }
 
         }
@@ -504,23 +565,96 @@
         <div>Cargando modelo 3D...</div>
     </div>
 
-    <!-- UI Principal -->
+    <!-- UI Principal con Pestañas -->
     <div id="ui">
-        <h3>@ViewBag.ProductoNombre</h3>
-        @if (ViewBag.ProductoPrecio != null)
-        {
-            <div id="precio">$@ViewBag.ProductoPrecio</div>
-        }
-        <div id="status">Preparando modelo...</div>
+        <!-- Pestañas -->
+        <div class="tabs-container">
+            <button class="tab-button active" onclick="showTab('general')">
+                <span>🏷️ General</span>
+            </button>
+            <button class="tab-button" onclick="showTab('nutrition')">
+                <span>📊 Nutrición</span>
+            </button>
+            <button class="tab-button" onclick="showTab('allergens')">
+                <span>⚠️ Alérgenos</span>
+            </button>
+        </div>
+
+        <!-- Contenido General -->
+        <div class="tab-content active" id="tab-general">
+            <h3>@ViewBag.ProductoNombre</h3>
+            @if (ViewBag.ProductoPrecio != null)
+            {
+                <div id="precio">$@ViewBag.ProductoPrecio</div>
+            }
+            @if (!string.IsNullOrEmpty(ViewBag.ProductoDescripcion?.ToString()))
+            {
+                <div class="description">@ViewBag.ProductoDescripcion</div>
+            }
+            <div id="status">Preparando modelo...</div>
+        </div>
+
+        <!-- Contenido Nutricional -->
+        <div class="tab-content" id="tab-nutrition">
+            <h3>Información Nutricional</h3>
+            @if (!string.IsNullOrEmpty(ViewBag.InfoNutricional?.ToString()))
+            {
+                <table class="info-table">
+                    @foreach (var linea in ViewBag.InfoNutricional.ToString().Split('|'))
+                    {
+                        var partes = linea.Split(':');
+                        if (partes.Length == 2)
+                        {
+                            <tr>
+                                <td>@partes[0]</td>
+                                <td>@partes[1]</td>
+                            </tr>
+                        }
+                    }
+                </table>
+            }
+            else
+            {
+                <table class="info-table">
+                    <tr><td>Peso</td><td>210g</td></tr>
+                    <tr><td>Calorías</td><td>517Kcal - 26%</td></tr>
+                    <tr><td>Grasas</td><td>26g - 33%</td></tr>
+                    <tr><td>Carbohidratos</td><td>42g - 14%</td></tr>
+                    <tr><td>Proteínas</td><td>28g - 57%</td></tr>
+                    <tr><td>Sodio</td><td>1020mg - 42%</td></tr>
+                </table>
+            }
+        </div>
+
+        <!-- Contenido Alérgenos -->
+        <div class="tab-content" id="tab-allergens">
+            <h3>Información de Alérgenos</h3>
+            @if (!string.IsNullOrEmpty(ViewBag.Alergenos?.ToString()))
+            {
+                <ul class="allergen-list">
+                    @foreach (var alergeno in ViewBag.Alergenos.ToString().Split('|'))
+                    {
+                        <li>@alergeno</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <ul class="allergen-list">
+                    <li>Contiene lácteos</li>
+                    <li>Puede contener gluten</li>
+                    <li>Puede contener trazas de frutos secos</li>
+                </ul>
+            }
+        </div>
     </div>
 
     <!-- Toggle Debug - OCULTO PARA USUARIO FINAL PERO FUNCIONAL -->
     <button id="debugToggle" onclick="toggleDebugInfo()">Debug</button>
 
-    <!-- Panel de Debug Simplificado - OCULTO PARA USUARIO FINAL PERO FUNCIONAL -->
+    <!-- Panel de Debug - OCULTO PARA USUARIO FINAL PERO FUNCIONAL -->
     <div id="debugInfo">
         <h4>Debug AR</h4>
-
         <div class="debug-section">
             <h5>Modelo</h5>
             <div class="debug-item">
@@ -536,7 +670,6 @@
                 <span class="debug-value" id="debug-scale-current">1.0x</span>
             </div>
         </div>
-
         <div class="debug-section">
             <h5>Posición AR</h5>
             <div class="debug-item">
@@ -548,7 +681,6 @@
                 <span class="debug-value" id="debug-pos-cursor">0, 0, 0</span>
             </div>
         </div>
-
         <div class="debug-section">
             <h5>Estado AR</h5>
             <div class="debug-item">
@@ -579,21 +711,16 @@
 
     <!-- Instrucciones AR con Controles Integrados -->
     <div id="instructions" class="hidden">
-        <!-- Header con botón de colapso -->
         <div class="ar-header">
             <div class="ar-title">AR ACTIVO</div>
             <button class="btn btn-collapse" id="collapseBtn" onclick="toggleARCollapse()">
                 <span id="collapseIcon">🔽</span>
             </button>
         </div>
-
-        <!-- Contenido colapsable -->
         <div class="ar-content" id="arContent">
             <p>Busca el <strong>cursor verde</strong> moviéndote lentamente</p>
             <p><strong>Toca</strong> para colocar la pizza</p>
             <p><strong>Pellizca con dos dedos</strong> para redimensionar</p>
-
-            <!-- Controles de AR (simplificados) -->
             <div style="margin-top: 20px;">
                 <div class="control-row">
                     <button class="btn btn-small" onclick="autoFitModel()">Auto-Ajustar</button>
@@ -620,6 +747,23 @@
         // Variable para el estado de colapso
         let isARCollapsed = false;
 
+        // Sistema de Pestañas
+        function showTab(tabName) {
+            // Ocultar todas las pestañas
+            const allTabs = document.querySelectorAll('.tab-content');
+            const allButtons = document.querySelectorAll('.tab-button');
+
+            allTabs.forEach(tab => tab.classList.remove('active'));
+            allButtons.forEach(btn => btn.classList.remove('active'));
+
+            // Mostrar la pestaña seleccionada
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.closest('.tab-button').classList.add('active');
+
+            console.log('Pestaña cambiada a:', tabName);
+        }
+
+        // Clase AR optimizada (mantengo la lógica original)
         class OptimizedWebAR {
             constructor() {
                 this.scene = null;
@@ -648,7 +792,7 @@
                 this.originalScale = 1.0;
                 this.targetScale = 1.0;
                 this.modelLoaded = false;
-                this.debugMode = true; // Activo internamente pero oculto para usuario final
+                this.debugMode = true;
                 this.materialStats = { total: 0, converted: 0 };
 
                 this.init();
@@ -689,14 +833,13 @@
                 this.renderer.setPixelRatio(window.devicePixelRatio);
                 this.renderer.setSize(window.innerWidth, window.innerHeight);
                 this.renderer.xr.enabled = true;
-                this.renderer.shadowMap.enabled = false; // Deshabilitado para debug
-                this.renderer.toneMapping = THREE.NoToneMapping; // Sin tone mapping para debug
+                this.renderer.shadowMap.enabled = false;
+                this.renderer.toneMapping = THREE.NoToneMapping;
                 this.renderer.outputEncoding = THREE.sRGBEncoding;
                 document.getElementById('container').appendChild(this.renderer.domElement);
             }
 
             setupLights() {
-                // Luces súper brillantes para debug
                 const ambientLight = new THREE.AmbientLight(0xffffff, 2.0);
                 this.scene.add(ambientLight);
 
@@ -768,37 +911,27 @@
                         );
                     });
 
-                    // ⭐ IMPORTANTE: Crear wrapper para que se comporte como el cubo
                     this.model = new THREE.Group();
                     const originalModel = gltf.scene;
 
                     console.log('GLTF cargado:', gltf);
 
-                    // ANÁLISIS COMPLETO DEL MODELO ORIGINAL
                     this.analyzeModelStructure(originalModel);
                     this.calculateOriginalBoundingBox(originalModel);
                     this.analyzeAndConvertMaterials(originalModel);
 
-                    // ⭐ CENTRAR EL MODELO ORIGINAL EN EL WRAPPER
                     const box = new THREE.Box3().setFromObject(originalModel);
                     const center = box.getCenter(new THREE.Vector3());
 
-                    // Mover el modelo original para que su centro esté en (0,0,0) del wrapper
                     originalModel.position.sub(center);
-
-                    // Agregar el modelo centrado al wrapper
                     this.model.add(originalModel);
 
                     console.log(`📐 Modelo centrado en wrapper:`);
                     console.log(`  - Centro original: ${center.x.toFixed(3)}, ${center.y.toFixed(3)}, ${center.z.toFixed(3)}`);
                     console.log(`  - Posición en wrapper: ${originalModel.position.x.toFixed(3)}, ${originalModel.position.y.toFixed(3)}, ${originalModel.position.z.toFixed(3)}`);
 
-                    // El wrapper ahora está en (0,0,0) y contiene el modelo centrado
                     this.model.position.set(0, 0, 0);
-
-                    // Auto-ajustar para vista previa
                     this.autoFitModel();
-
                     this.model.visible = true;
                     this.scene.add(this.model);
                     this.modelLoaded = true;
@@ -820,9 +953,8 @@
                 }
             }
 
-            // 👆 MÉTODOS PARA PELLIZCO DE DEDOS EN AR
+            // Métodos para pellizco de dedos en AR
             onTouchStart(event) {
-                // Solo funciona en AR cuando el modelo está colocado
                 if (!this.isARMode || !this.modelAdded) return;
 
                 this.lastTouches = Array.from(event.touches);
@@ -850,7 +982,6 @@
                     const currentDistance = this.getDistance(event.touches[0], event.touches[1]);
                     const scaleChange = currentDistance / this.initialDistance;
 
-                    // Aplicar cambio de escala con límites razonables
                     this.currentScale = Math.max(0.2, Math.min(5.0, this.initialScale * scaleChange));
 
                     this.updateModelScale();
@@ -866,7 +997,6 @@
                     this.isScaling = false;
                     console.log(`Pellizco terminado - Escala final: ${this.currentScale.toFixed(2)}x`);
 
-                    // Ocultar info de escala después de un momento
                     this.hideScaleInfo();
                     this.updateDebugInfo();
                 }
@@ -882,8 +1012,6 @@
                 if (!this.model || !this.modelAdded) return;
 
                 const objectToScale = this.useTestMode ? this.testCube : this.model;
-
-                // Aplicar escala: escala base del target × escala actual del pellizco
                 const finalScale = this.targetScale * this.currentScale;
                 objectToScale.scale.setScalar(finalScale);
 
@@ -903,7 +1031,6 @@
                     scaleInfoEl.style.opacity = '1';
                     scaleInfoEl.style.pointerEvents = 'none';
 
-                    // Limpiar timeout anterior si existe
                     if (this.scaleTimeout) {
                         clearTimeout(this.scaleTimeout);
                     }
@@ -915,7 +1042,7 @@
                 if (scaleInfoEl) {
                     this.scaleTimeout = setTimeout(() => {
                         scaleInfoEl.style.opacity = '0';
-                    }, 2000); // Se oculta después de 2 segundos
+                    }, 2000);
                 }
             }
 
@@ -968,7 +1095,6 @@
                     if (node.isMesh && node.material) {
                         const originalMaterial = node.material;
 
-                        // Preservar colores y texturas originales
                         const newMaterial = new THREE.MeshBasicMaterial({
                             transparent: false,
                             opacity: 1.0,
@@ -976,14 +1102,12 @@
                             wireframe: false
                         });
 
-                        // Preservar color original
                         if (originalMaterial.color) {
                             newMaterial.color = originalMaterial.color.clone();
                         } else {
                             newMaterial.color = new THREE.Color(0xffffff);
                         }
 
-                        // Preservar textura original
                         if (originalMaterial.map) {
                             newMaterial.map = originalMaterial.map;
                             newMaterial.map.encoding = THREE.sRGBEncoding;
@@ -1007,10 +1131,8 @@
 
                 let targetSize;
                 if (this.isARMode) {
-                    // Para AR: GIGANTESCO para garantizar visibilidad
-                    targetSize = 0.3; // 30 centimetros!!!
+                    targetSize = 0.3;
                 } else {
-                    // Para vista previa
                     targetSize = 2.0;
                 }
 
@@ -1090,7 +1212,6 @@
                     this.updateDebugInfo();
                 });
 
-                // Eventos de touch para pellizco de dedos en AR
                 document.addEventListener('touchstart', (e) => this.onTouchStart(e), { passive: false });
                 document.addEventListener('touchmove', (e) => this.onTouchMove(e), { passive: false });
                 document.addEventListener('touchend', (e) => this.onTouchEnd(e), { passive: false });
@@ -1101,10 +1222,8 @@
             updateDebugInfo() {
                 if (!this.debugMode) return;
 
-                // Estado del modelo
                 document.getElementById('debug-loaded').textContent = this.modelLoaded ? 'Cargado' : 'No cargado';
 
-                // Tamaño actual
                 if (this.originalBoundingBox) {
                     const originalSize = this.originalBoundingBox.getSize(new THREE.Vector3());
                     const currentSize = originalSize.clone().multiplyScalar(this.targetScale);
@@ -1112,17 +1231,14 @@
                         `${currentSize.x.toFixed(2)}×${currentSize.y.toFixed(2)}×${currentSize.z.toFixed(2)}m`;
                 }
 
-                // Escala
                 const displayScale = this.isARMode && this.modelAdded ?
                     this.targetScale * this.currentScale : this.targetScale;
                 document.getElementById('debug-scale-current').textContent = `${displayScale.toFixed(2)}x`;
 
-                // Mostrar info de pellizco si está activo
                 if (this.isScaling) {
                     console.log(`Pellizco activo: ${this.currentScale.toFixed(2)}x`);
                 }
 
-                // Posiciones
                 if (this.model) {
                     const pos = this.model.position;
                     document.getElementById('debug-pos-model').textContent =
@@ -1135,7 +1251,6 @@
                         `${cPos.x.toFixed(2)}, ${cPos.y.toFixed(2)}, ${cPos.z.toFixed(2)}`;
                 }
 
-                // Estado AR
                 document.getElementById('debug-mode').textContent = this.isARMode ? 'AR' : 'Preview';
                 document.getElementById('debug-cursor-status').textContent = this.cursorVisible ? 'Visible' : 'Oculto';
                 document.getElementById('debug-placed').textContent = this.modelAdded ? 'Colocado' : 'No colocado';
@@ -1183,7 +1298,6 @@
 
                     await this.setupXRSession();
 
-                    // Cambiar a modo AR
                     this.isARMode = true;
                     this.scene.background = null;
                     this.renderer.setClearColor(0x000000, 0);
@@ -1191,7 +1305,6 @@
                     console.log('Preparando objetos para AR...');
 
                     if (this.useTestMode) {
-                        // Preparar cubo de prueba
                         this.testCube.position.set(0, 0, 0);
                         this.testCube.rotation.set(0, 0, 0);
                         this.testCube.quaternion.set(0, 0, 0, 1);
@@ -1200,23 +1313,19 @@
                         this.modelAdded = false;
                         console.log('Cubo de prueba preparado (posición inicial: 0,0,0)');
                     } else {
-                        // Preparar modelo real - MISMO SETUP QUE EL CUBO
                         console.log('Preparando modelo pizza...');
 
-                        // Resetear wrapper del modelo igual que el cubo
                         this.model.position.set(0, 0, 0);
                         this.model.rotation.set(0, 0, 0);
                         this.model.quaternion.set(0, 0, 0, 1);
-                        this.model.scale.setScalar(1.0); // Reset escala base
+                        this.model.scale.setScalar(1.0);
                         this.model.visible = false;
                         this.modelAdded = false;
 
-                        // Resetear variables de pellizco
                         this.currentScale = 1.0;
                         this.initialScale = 1.0;
                         this.isScaling = false;
 
-                        // Configurar escala para AR
                         this.autoFitModel();
 
                         console.log(`Modelo preparado:`);
@@ -1224,14 +1333,12 @@
                         console.log(`  - Escala objetivo: ${this.targetScale.toFixed(3)}x`);
                         console.log(`  - Visible: ${this.model.visible}`);
 
-                        // Verificar contenido del wrapper
                         console.log(`  - Hijos en wrapper: ${this.model.children.length}`);
                         if (this.model.children.length > 0) {
                             const child = this.model.children[0];
                             console.log(`  - Primer hijo pos: ${child.position.x.toFixed(3)}, ${child.position.y.toFixed(3)}, ${child.position.z.toFixed(3)}`);
                         }
 
-                        // Forzar materiales simples
                         this.forceSimpleMaterials();
                     }
 
@@ -1328,9 +1435,6 @@
 
                     console.log(`Matriz del cursor:`, this.modelMatrix);
 
-                    // ⭐ USAR EXACTAMENTE LA MISMA LÓGICA PARA AMBOS OBJETOS
-
-                    // 1. Extraer posición del hit test
                     const position = new THREE.Vector3();
                     const quaternion = new THREE.Quaternion();
                     const scale = new THREE.Vector3();
@@ -1338,34 +1442,27 @@
 
                     console.log(`Posición del hit test: ${position.x.toFixed(3)}, ${position.y.toFixed(3)}, ${position.z.toFixed(3)}`);
 
-                    // 2. Limpiar transformaciones del objeto
                     objectToPlace.position.set(0, 0, 0);
                     objectToPlace.rotation.set(0, 0, 0);
                     objectToPlace.quaternion.set(0, 0, 0, 1);
 
-                    // 3. Aplicar EXACTAMENTE la misma posición que el cursor
                     objectToPlace.position.copy(position);
                     objectToPlace.quaternion.copy(quaternion);
 
-                    // 4. Elevar ligeramente para evitar que se enterre
                     objectToPlace.position.y += 0.1;
 
                     console.log(`Posición final del objeto: ${objectToPlace.position.x.toFixed(3)}, ${objectToPlace.position.y.toFixed(3)}, ${objectToPlace.position.z.toFixed(3)}`);
 
-                    // 5. Aplicar escala
                     if (this.useTestMode) {
-                        // Cubo: escala fija
                         objectToPlace.scale.setScalar(1.0);
-                        this.currentScale = 1.0; // Sincronizar escala de pellizco
+                        this.currentScale = 1.0;
                         console.log('CUBO: Escala 1.0x aplicada');
                     } else {
-                        // Modelo: escala calculada
                         objectToPlace.scale.setScalar(this.targetScale);
-                        this.currentScale = 1.0; // Inicializar escala de pellizco
+                        this.currentScale = 1.0;
                         console.log(`MODELO: Escala ${this.targetScale.toFixed(3)}x aplicada`);
                         console.log(`Pellizco habilitado - Usa dos dedos para redimensionar`);
 
-                        // Log detallado del modelo
                         objectToPlace.traverse((node, index) => {
                             if (node.isMesh) {
                                 console.log(`  🔸 Mesh ${index}: visible=${node.visible}, pos=(${node.position.x.toFixed(2)},${node.position.y.toFixed(2)},${node.position.z.toFixed(2)})`);
@@ -1373,7 +1470,6 @@
                         });
                     }
 
-                    // 6. Hacer visible
                     objectToPlace.visible = true;
                     this.modelAdded = true;
                     this.cursor.visible = false;
@@ -1406,15 +1502,13 @@
                             fog: false
                         });
 
-                        // Preservar color original
                         if (originalMaterial.color) {
                             newMaterial.color = originalMaterial.color.clone();
-                            newMaterial.color.multiplyScalar(1.1); // Ligeramente más brillante
+                            newMaterial.color.multiplyScalar(1.1);
                         } else {
                             newMaterial.color = new THREE.Color(0xdddddd);
                         }
 
-                        // Preservar textura
                         if (originalMaterial.map) {
                             newMaterial.map = originalMaterial.map;
                         }
@@ -1445,7 +1539,6 @@
 
                 this.isARMode = false;
 
-                // Restaurar fondo
                 const loader = new THREE.CubeTextureLoader();
                 const colors = ['#0c0c0c', '#0c0c0c', '#1a1a1a', '#1a1a1a', '#0c0c0c', '#0c0c0c'];
                 const texture = loader.load(
@@ -1454,13 +1547,11 @@
                 this.scene.background = texture;
                 this.renderer.setClearColor(0x0c0c0c, 1);
 
-                // Limpiar estado AR
                 this.xrSession = null;
                 this.xrRefSpace = null;
                 this.hitTestSource = null;
                 this.modelAdded = false;
 
-                // Restaurar objetos
                 if (this.model) {
                     this.model.visible = true;
                     this.autoFitModel();
@@ -1474,7 +1565,6 @@
                     this.testCube.scale.setScalar(1.0);
                 }
 
-                // Restablecer variables de escala
                 this.currentScale = 1.0;
                 this.initialScale = 1.0;
                 this.isScaling = false;
@@ -1486,7 +1576,6 @@
                 previewEl.classList.remove('hidden');
                 instructionsEl.classList.add('hidden');
 
-                // Restablecer estado de colapso
                 isARCollapsed = false;
                 const arContent = document.getElementById('arContent');
                 const collapseIcon = document.getElementById('collapseIcon');
@@ -1535,7 +1624,6 @@
             if (app) app.stopAR();
         }
 
-        // Nueva función para colapsar/expandir AR
         function toggleARCollapse() {
             isARCollapsed = !isARCollapsed;
             const arContent = document.getElementById('arContent');
@@ -1554,7 +1642,7 @@
 
         // Inicializar
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('=== AR OPTIMIZADO INICIADO ===');
+            console.log('=== AR OPTIMIZADO CON PESTAÑAS INICIADO ===');
             console.log(`Producto: ${PRODUCTO_NOMBRE} (ID: ${PRODUCTO_ID})`);
             console.log(`Modelo: ${MODELO_ARCHIVO}`);
 
