@@ -7,7 +7,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Debug - @ViewBag.ProductoNombre</title>
+    <title>AR Optimizado - @ViewBag.ProductoNombre</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
@@ -335,6 +335,37 @@
 
         }
 
+        /* Información de Escala durante Pellizco */
+        #scaleInfo {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(76, 175, 80, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 24px 32px;
+            border-radius: 20px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+            color: #4CAF50;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            z-index: 200;
+            box-shadow: 0 8px 32px rgba(76, 175, 80, 0.2);
+        }
+
+        #scaleValue {
+            background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
         /* Toggle para Debug */
         #debugToggle {
             position: fixed;
@@ -399,6 +430,12 @@
             padding: 12px 20px;
         }
 
+        /* Información de escala más pequeña en móvil */
+        #scaleInfo {
+            font-size: 18px;
+            padding: 20px 24px;
+        }
+
         }
     </style>
 </head>
@@ -424,95 +461,35 @@
     <!-- Toggle Debug -->
     <button id="debugToggle" onclick="toggleDebugInfo()">📊 Debug</button>
 
-    <!-- Panel de Debug Expandido -->
+    <!-- Panel de Debug Simplificado -->
     <div id="debugInfo">
-        <h4>🔬 Debug Completo AR</h4>
+        <h4>📊 Debug AR</h4>
 
         <div class="debug-section">
-            <h5>Modelo Original</h5>
+            <h5>Modelo</h5>
             <div class="debug-item">
-                <span class="debug-label">Archivo:</span>
-                <span class="debug-value" id="debug-file">@ViewBag.ModeloArchivo</span>
-            </div>
-            <div class="debug-item">
-                <span class="debug-label">Cargado:</span>
+                <span class="debug-label">Estado:</span>
                 <span class="debug-value" id="debug-loaded">❌</span>
             </div>
             <div class="debug-item">
-                <span class="debug-label">Wrapper:</span>
-                <span class="debug-value" id="debug-wrapper">❌</span>
-            </div>
-            <div class="debug-item">
-                <span class="debug-label">Nodos totales:</span>
-                <span class="debug-value" id="debug-nodes">0</span>
-            </div>
-            <div class="debug-item">
-                <span class="debug-label">Meshes:</span>
-                <span class="debug-value" id="debug-meshes">0</span>
-            </div>
-        </div>
-
-        <div class="debug-section">
-            <h5>Dimensiones</h5>
-            <div class="debug-item">
-                <span class="debug-label">Tamaño Orig:</span>
-                <span class="debug-value" id="debug-size-original">Calculando...</span>
-            </div>
-            <div class="debug-item">
-                <span class="debug-label">Tamaño Actual:</span>
+                <span class="debug-label">Tamaño:</span>
                 <span class="debug-value" id="debug-size-current">Calculando...</span>
             </div>
             <div class="debug-item">
-                <span class="debug-label">Centro Orig:</span>
-                <span class="debug-value" id="debug-center-original">0,0,0</span>
-            </div>
-        </div>
-
-        <div class="debug-section">
-            <h5>Escala</h5>
-            <div class="debug-item">
-                <span class="debug-label">Factor Base:</span>
-                <span class="debug-value" id="debug-scale-factor">1.0x</span>
-            </div>
-            <div class="debug-item">
-                <span class="debug-label">Escala Actual:</span>
+                <span class="debug-label">Escala:</span>
                 <span class="debug-value" id="debug-scale-current">1.0x</span>
-            </div>
-            <div class="debug-item">
-                <span class="debug-label">Tamaño Final:</span>
-                <span class="debug-value" id="debug-final-size">0m</span>
             </div>
         </div>
 
         <div class="debug-section">
             <h5>Posición AR</h5>
             <div class="debug-item">
-                <span class="debug-label">Pos. Modelo:</span>
+                <span class="debug-label">Modelo:</span>
                 <span class="debug-value" id="debug-pos-model">0, 0, 0</span>
             </div>
             <div class="debug-item">
-                <span class="debug-label">Pos. Cursor:</span>
+                <span class="debug-label">Cursor:</span>
                 <span class="debug-value" id="debug-pos-cursor">0, 0, 0</span>
-            </div>
-            <div class="debug-item">
-                <span class="debug-label">Distancia Cam:</span>
-                <span class="debug-value" id="debug-distance">0.00m</span>
-            </div>
-        </div>
-
-        <div class="debug-section">
-            <h5>Materiales</h5>
-            <div class="debug-item">
-                <span class="debug-label">Total Mat:</span>
-                <span class="debug-value" id="debug-materials">0</span>
-            </div>
-            <div class="debug-item">
-                <span class="debug-label">Convertidos:</span>
-                <span class="debug-value" id="debug-converted">0</span>
-            </div>
-            <div class="debug-item">
-                <span class="debug-label">Modo:</span>
-                <span class="debug-value" id="debug-material-mode">Original</span>
             </div>
         </div>
 
@@ -523,10 +500,6 @@
                 <span class="debug-value" id="debug-mode">Vista Previa</span>
             </div>
             <div class="debug-item">
-                <span class="debug-label">Hit Test:</span>
-                <span class="debug-value" id="debug-hit-status">❌</span>
-            </div>
-            <div class="debug-item">
                 <span class="debug-label">Cursor:</span>
                 <span class="debug-value" id="debug-cursor-status">❌</span>
             </div>
@@ -535,59 +508,45 @@
                 <span class="debug-value" id="debug-placed">❌</span>
             </div>
         </div>
-
-        <div class="debug-section">
-            <h5>Visibilidad</h5>
-            <div class="debug-item">
-                <span class="debug-label">Modelo Visible:</span>
-                <span class="debug-value" id="debug-visible">❌</span>
-            </div>
-            <div class="debug-item">
-                <span class="debug-label">En Escena:</span>
-                <span class="debug-value" id="debug-in-scene">❌</span>
-            </div>
-            <div class="debug-item">
-                <span class="debug-label">Renderer:</span>
-                <span class="debug-value" id="debug-renderer">❌</span>
-            </div>
-        </div>
     </div>
 
-    <!-- Controles de Vista Previa -->
+    <!-- Controles de Vista Previa Simplificados -->
     <div id="previewControls">
         <div class="instructions">
-            🎮 <strong>Vista Previa 3D:</strong> Verifica que el modelo se ve correctamente. Colores originales preservados.
+            🎮 <strong>Vista Previa 3D:</strong> Verifica que el modelo se ve correctamente antes de activar AR.
+            <br>🤏 <strong>En AR:</strong> Usa pellizco de dedos para redimensionar después de colocar.
         </div>
         <div class="control-row">
-            <button class="btn btn-small" onclick="autoFitModel()">🎯 Auto-Ajustar</button>
-            <button class="btn btn-small" onclick="resetView()">🔄 Reset</button>
-            <button class="btn btn-small" onclick="toggleTestMode()" id="testModeBtn">🧪 Cubo: OFF</button>
-            <button class="btn btn-small" onclick="analyzeModel()">🔬 Analizar</button>
-        </div>
-        <div class="control-row">
-            <button class="btn btn-small" onclick="forceSimpleMaterials()">🎨 Optimizar</button>
-            <button class="btn btn-small" onclick="forceTestColors()">🧪 Test Color</button>
-            <button class="btn btn-small" onclick="makeHuge()">📏 Gigante</button>
-            <button class="btn btn-primary" id="startARButton" onclick="startAR()" disabled>🚀 AR</button>
-        </div>
-        <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 8px;">
-            <strong>Optimizar:</strong> Preserva colores originales | <strong>Test Color:</strong> Colores debug | <strong>Cubo:</strong> Test básico
+            <button class="btn btn-primary" id="startARButton" onclick="startAR()" disabled>🚀 Iniciar AR</button>
         </div>
     </div>
 
-    <!-- Instrucciones AR -->
+    <!-- Instrucciones AR con Controles Integrados -->
     <div id="instructions" class="hidden">
-        <p><strong>🥽 AR ACTIVO - POSICIONAMIENTO CORREGIDO</strong></p>
+        <p><strong>🥽 AR ACTIVO</strong></p>
         <p>📱 Busca el <strong>cursor verde</strong> moviéndote lentamente</p>
-        <p>🎯 <strong>Toca</strong> para colocar objeto</p>
-        <p id="ar-mode-text">🍕 Modo: MODELO REAL (ahora se posiciona IGUAL que el cubo)</p>
-        <p style="font-size: 12px; color: rgba(255,255,255,0.7);">
-            ✅ CORREGIDO: El modelo ahora usa wrapper centrado - misma lógica que el cubo
-        </p>
-        <div style="margin-top: 16px;">
-            <button class="btn btn-danger" onclick="stopAR()">❌ Salir</button>
-            <button class="btn btn-small" onclick="forceVisibility()">👁️ Forzar</button>
+        <p>🎯 <strong>Toca</strong> para colocar la pizza</p>
+        <p>🤏 <strong>Pellizca con dos dedos</strong> para redimensionar</p>
+        <p id="ar-mode-text">🍕 Modo: MODELO REAL (colores originales)</p>
+
+        <!-- Controles de AR -->
+        <div style="margin-top: 20px;">
+            <div class="control-row">
+                <button class="btn btn-small" onclick="autoFitModel()">🎯 Auto-Ajustar</button>
+                <button class="btn btn-small" onclick="resetView()">🔄 Reset</button>
+                <button class="btn btn-small" onclick="toggleTestMode()" id="testModeBtn">🧪 Cubo: OFF</button>
+                <button class="btn btn-small" onclick="forceSimpleMaterials()">🎨 Optimizar</button>
+            </div>
+            <div class="control-row">
+                <button class="btn btn-danger" onclick="stopAR()">❌ Salir de AR</button>
+                <button class="btn btn-small" onclick="forceVisibility()">👁️ Forzar Visibilidad</button>
+            </div>
         </div>
+    </div>
+
+    <!-- Información de Escala durante Pellizco -->
+    <div id="scaleInfo">
+        Escala: <span id="scaleValue">1.0x</span>
     </div>
 
     <script>
@@ -597,7 +556,7 @@
         const MODELO_ARCHIVO = '@ViewBag.ModeloArchivo';
         const MODELO_PATH = '@Html.Raw(ViewBag.ModeloPath)';
 
-        class ARDebugger {
+        class OptimizedWebAR {
             constructor() {
                 this.scene = null;
                 this.camera = null;
@@ -632,7 +591,7 @@
             }
 
             async init() {
-                console.log('🚀 Iniciando AR Debugger...');
+                console.log('🚀 Iniciando AR Optimizado...');
                 this.setupScene();
                 this.setupCamera();
                 this.setupRenderer();
@@ -681,7 +640,7 @@
                 directionalLight.position.set(5, 10, 5);
                 this.scene.add(directionalLight);
 
-                console.log('💡 Luces debug configuradas (súper brillantes)');
+                console.log('💡 Luces optimizadas para AR');
             }
 
             setupControls() {
@@ -797,6 +756,105 @@
                 }
             }
 
+            // 👆 MÉTODOS PARA PELLIZCO DE DEDOS EN AR
+            onTouchStart(event) {
+                // Solo funciona en AR cuando el modelo está colocado
+                if (!this.isARMode || !this.modelAdded) return;
+
+                this.lastTouches = Array.from(event.touches);
+
+                if (event.touches.length === 2) {
+                    event.preventDefault();
+                    this.isScaling = true;
+                    this.initialDistance = this.getDistance(event.touches[0], event.touches[1]);
+                    this.initialScale = this.currentScale;
+
+                    console.log('🤏 Iniciando pellizco de dedos');
+                    console.log(`📏 Distancia inicial: ${this.initialDistance.toFixed(0)}px`);
+                    console.log(`📏 Escala inicial: ${this.initialScale.toFixed(2)}x`);
+
+                    this.showScaleInfo();
+                }
+            }
+
+            onTouchMove(event) {
+                if (!this.isARMode || !this.modelAdded || !this.isScaling) return;
+
+                if (event.touches.length === 2) {
+                    event.preventDefault();
+
+                    const currentDistance = this.getDistance(event.touches[0], event.touches[1]);
+                    const scaleChange = currentDistance / this.initialDistance;
+
+                    // Aplicar cambio de escala con límites razonables
+                    this.currentScale = Math.max(0.2, Math.min(5.0, this.initialScale * scaleChange));
+
+                    this.updateModelScale();
+                    this.updateScaleDisplay();
+                    this.updateDebugInfo();
+                }
+            }
+
+            onTouchEnd(event) {
+                if (!this.isARMode || !this.modelAdded) return;
+
+                if (event.touches.length < 2) {
+                    this.isScaling = false;
+                    console.log(`🎯 Pellizco terminado - Escala final: ${this.currentScale.toFixed(2)}x`);
+
+                    // Ocultar info de escala después de un momento
+                    this.hideScaleInfo();
+                    this.updateDebugInfo();
+                }
+            }
+
+            getDistance(touch1, touch2) {
+                const dx = touch1.clientX - touch2.clientX;
+                const dy = touch1.clientY - touch2.clientY;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            updateModelScale() {
+                if (!this.model || !this.modelAdded) return;
+
+                const objectToScale = this.useTestMode ? this.testCube : this.model;
+
+                // Aplicar escala: escala base del target × escala actual del pellizco
+                const finalScale = this.targetScale * this.currentScale;
+                objectToScale.scale.setScalar(finalScale);
+
+                console.log(`📏 Escala aplicada: ${finalScale.toFixed(3)}x (base: ${this.targetScale.toFixed(2)}x × pellizco: ${this.currentScale.toFixed(2)}x)`);
+            }
+
+            updateScaleDisplay() {
+                const scaleValueEl = document.getElementById('scaleValue');
+                if (scaleValueEl) {
+                    scaleValueEl.textContent = this.currentScale.toFixed(1) + 'x';
+                }
+            }
+
+            showScaleInfo() {
+                const scaleInfoEl = document.getElementById('scaleInfo');
+                if (scaleInfoEl) {
+                    scaleInfoEl.style.opacity = '1';
+                    scaleInfoEl.style.pointerEvents = 'none';
+
+                    // Limpiar timeout anterior si existe
+                    if (this.scaleTimeout) {
+                        clearTimeout(this.scaleTimeout);
+                    }
+                }
+            }
+
+            hideScaleInfo() {
+                const scaleInfoEl = document.getElementById('scaleInfo');
+                if (scaleInfoEl) {
+                    this.scaleTimeout = setTimeout(() => {
+                        scaleInfoEl.style.opacity = '0';
+                    }, 2000); // Se oculta después de 2 segundos
+                }
+            }
+
             analyzeModelStructure(model = this.model) {
                 if (!model) return;
 
@@ -842,13 +900,11 @@
                 if (!model) return;
 
                 let converted = 0;
-
                 model.traverse((node) => {
                     if (node.isMesh && node.material) {
                         const originalMaterial = node.material;
-                        console.log(`🎨 Material original:`, originalMaterial);
 
-                        // ✅ PRESERVAR colores y texturas originales
+                        // Preservar colores y texturas originales
                         const newMaterial = new THREE.MeshBasicMaterial({
                             transparent: false,
                             opacity: 1.0,
@@ -856,45 +912,27 @@
                             wireframe: false
                         });
 
-                        // 1. Preservar COLOR original
+                        // Preservar color original
                         if (originalMaterial.color) {
                             newMaterial.color = originalMaterial.color.clone();
-                            console.log(`  - Color preservado: #${originalMaterial.color.getHexString()}`);
                         } else {
-                            // Solo usar color por defecto si NO existe color original
-                            newMaterial.color = new THREE.Color(0xffffff); // Blanco neutro
-                            console.log(`  - Color por defecto: blanco`);
+                            newMaterial.color = new THREE.Color(0xffffff);
                         }
 
-                        // 2. Preservar TEXTURA original (map)
+                        // Preservar textura original
                         if (originalMaterial.map) {
                             newMaterial.map = originalMaterial.map;
                             newMaterial.map.encoding = THREE.sRGBEncoding;
-                            console.log(`  - Textura preservada`);
                         }
 
-                        // 3. Intentar preservar texturas adicionales importantes
-                        if (originalMaterial.normalMap) {
-                            // No usar normal maps en MeshBasicMaterial, pero log para debug
-                            console.log(`  - Normal map detectado (omitido en MeshBasic)`);
-                        }
-
-                        if (originalMaterial.roughnessMap) {
-                            console.log(`  - Roughness map detectado (omitido en MeshBasic)`);
-                        }
-
-                        // 4. Aplicar material preservando características
                         node.material = newMaterial;
                         node.material.needsUpdate = true;
                         converted++;
-
-                        console.log(`  ✅ Material convertido a MeshBasicMaterial manteniendo apariencia original`);
                     }
                 });
 
                 this.materialStats.converted = converted;
-                console.log(`🎨 MATERIALES CONVERTIDOS: ${converted}/${this.materialStats.total}`);
-                console.log(`✅ Colores y texturas originales PRESERVADOS`);
+                console.log(`🎨 ${converted} materiales optimizados preservando apariencia`);
             }
 
             autoFitModel() {
@@ -987,60 +1025,44 @@
                     this.renderer.setSize(window.innerWidth, window.innerHeight);
                     this.updateDebugInfo();
                 });
+
+                // Eventos de touch para pellizco de dedos en AR
+                document.addEventListener('touchstart', (e) => this.onTouchStart(e), { passive: false });
+                document.addEventListener('touchmove', (e) => this.onTouchMove(e), { passive: false });
+                document.addEventListener('touchend', (e) => this.onTouchEnd(e), { passive: false });
+
+                console.log('👆 Event listeners configurados para pellizco de dedos');
             }
 
             updateDebugInfo() {
                 if (!this.debugMode) return;
 
-                // Info básica del modelo
-                document.getElementById('debug-loaded').textContent = this.modelLoaded ? '✅' : '❌';
-                document.getElementById('debug-wrapper').textContent =
-                    (this.model && this.model.type === 'Group') ? '✅ Group' : '❌';
+                // Estado del modelo
+                document.getElementById('debug-loaded').textContent = this.modelLoaded ? '✅ Cargado' : '❌ No cargado';
 
-                if (this.model) {
-                    let nodeCount = 0, meshCount = 0;
-                    this.model.traverse(() => nodeCount++);
-                    this.model.traverse((node) => { if (node.isMesh) meshCount++; });
-
-                    document.getElementById('debug-nodes').textContent = nodeCount;
-                    document.getElementById('debug-meshes').textContent = meshCount;
-                }
-
-                // Dimensiones
+                // Tamaño actual
                 if (this.originalBoundingBox) {
                     const originalSize = this.originalBoundingBox.getSize(new THREE.Vector3());
                     const currentSize = originalSize.clone().multiplyScalar(this.targetScale);
-
-                    document.getElementById('debug-size-original').textContent =
-                        `${originalSize.x.toFixed(3)}×${originalSize.y.toFixed(3)}×${originalSize.z.toFixed(3)}`;
                     document.getElementById('debug-size-current').textContent =
-                        `${currentSize.x.toFixed(2)}×${currentSize.y.toFixed(2)}×${currentSize.z.toFixed(2)}`;
-                    document.getElementById('debug-center-original').textContent =
-                        `${this.originalCenter.x.toFixed(2)},${this.originalCenter.y.toFixed(2)},${this.originalCenter.z.toFixed(2)}`;
-
-                    const maxDim = Math.max(currentSize.x, currentSize.y, currentSize.z);
-                    document.getElementById('debug-final-size').textContent = `${maxDim.toFixed(2)}m`;
+                        `${currentSize.x.toFixed(2)}×${currentSize.y.toFixed(2)}×${currentSize.z.toFixed(2)}m`;
                 }
 
                 // Escala
-                document.getElementById('debug-scale-factor').textContent = `${this.targetScale.toFixed(3)}x`;
-                document.getElementById('debug-scale-current').textContent = `${this.targetScale.toFixed(3)}x`;
+                const displayScale = this.isARMode && this.modelAdded ?
+                    this.targetScale * this.currentScale : this.targetScale;
+                document.getElementById('debug-scale-current').textContent = `${displayScale.toFixed(2)}x`;
 
-                // Posición
+                // Mostrar info de pellizco si está activo
+                if (this.isScaling) {
+                    console.log(`🤏 Pellizco activo: ${this.currentScale.toFixed(2)}x`);
+                }
+
+                // Posiciones
                 if (this.model) {
                     const pos = this.model.position;
                     document.getElementById('debug-pos-model').textContent =
                         `${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)}`;
-
-                    if (this.camera) {
-                        const distance = this.camera.position.distanceTo(pos);
-                        document.getElementById('debug-distance').textContent = `${distance.toFixed(2)}m`;
-                    }
-
-                    // Información adicional en AR
-                    if (this.isARMode && this.modelAdded) {
-                        console.log(`📊 Debug AR - Posición modelo: ${pos.x.toFixed(3)}, ${pos.y.toFixed(3)}, ${pos.z.toFixed(3)}`);
-                    }
                 }
 
                 if (this.cursor) {
@@ -1049,25 +1071,10 @@
                         `${cPos.x.toFixed(2)}, ${cPos.y.toFixed(2)}, ${cPos.z.toFixed(2)}`;
                 }
 
-                // Materiales
-                document.getElementById('debug-materials').textContent = this.materialStats.total;
-                document.getElementById('debug-converted').textContent = this.materialStats.converted;
-                document.getElementById('debug-material-mode').textContent =
-                    this.materialStats.converted > 0 ? 'MeshBasic' : 'Original';
-
                 // Estado AR
                 document.getElementById('debug-mode').textContent = this.isARMode ? '🥽 AR' : '🖥️ Preview';
-                document.getElementById('debug-hit-status').textContent = this.hitTestSource ? '✅' : '❌';
-                document.getElementById('debug-cursor-status').textContent = this.cursorVisible ? '✅' : '❌';
-                document.getElementById('debug-placed').textContent = this.modelAdded ? '✅' : '❌';
-
-                // Visibilidad
-                document.getElementById('debug-visible').textContent =
-                    (this.model && this.model.visible) ? '✅' : '❌';
-                document.getElementById('debug-in-scene').textContent =
-                    (this.model && this.model.parent === this.scene) ? '✅' : '❌';
-                document.getElementById('debug-renderer').textContent =
-                    this.renderer ? '✅' : '❌';
+                document.getElementById('debug-cursor-status').textContent = this.cursorVisible ? '✅ Visible' : '❌ Oculto';
+                document.getElementById('debug-placed').textContent = this.modelAdded ? '✅ Colocado' : '❌ No colocado';
             }
 
             toggleDebugMode() {
@@ -1143,14 +1150,13 @@
             forceSimpleMaterials() {
                 if (!this.model) return;
 
-                console.log('🎨 Optimizando materiales para AR (preservando colores)...');
+                console.log('🎨 Optimizando materiales para AR...');
                 let count = 0;
 
                 this.model.traverse((node) => {
                     if (node.isMesh && node.material) {
                         const originalMaterial = node.material;
 
-                        // ✅ Crear material simple PERO preservando apariencia
                         const newMaterial = new THREE.MeshBasicMaterial({
                             transparent: false,
                             opacity: 1.0,
@@ -1159,22 +1165,17 @@
                             fog: false
                         });
 
-                        // Preservar color original si existe
+                        // Preservar color original
                         if (originalMaterial.color) {
                             newMaterial.color = originalMaterial.color.clone();
-                            // Solo intensificar ligeramente para AR (no cambiar color)
-                            newMaterial.color.multiplyScalar(1.1);
-                            console.log(`  ✅ Color original preservado: #${originalMaterial.color.getHexString()}`);
+                            newMaterial.color.multiplyScalar(1.1); // Ligeramente más brillante
                         } else {
-                            // Solo usar color neutro si no hay color original
-                            newMaterial.color = new THREE.Color(0xdddddd); // Gris claro neutro
-                            console.log(`  ⚠️ Sin color original, usando gris neutro`);
+                            newMaterial.color = new THREE.Color(0xdddddd);
                         }
 
-                        // Preservar textura si existe
+                        // Preservar textura
                         if (originalMaterial.map) {
                             newMaterial.map = originalMaterial.map;
-                            console.log(`  ✅ Textura preservada`);
                         }
 
                         node.material = newMaterial;
@@ -1183,7 +1184,7 @@
                     }
                 });
 
-                console.log(`✅ ${count} materiales optimizados manteniendo apariencia original`);
+                console.log(`✅ ${count} materiales optimizados`);
                 this.materialStats.converted = count;
                 this.updateDebugInfo();
             }
@@ -1219,8 +1220,8 @@
                 const instructionsEl = document.getElementById('instructions');
 
                 try {
-                    statusEl.textContent = `🚀 Iniciando AR Debug...`;
-                    console.log('🥽 === INICIANDO AR DEBUG ===');
+                    statusEl.textContent = `🚀 Iniciando AR...`;
+                    console.log('🥽 Iniciando AR...');
 
                     this.xrSession = await navigator.xr.requestSession('immersive-ar', {
                         requiredFeatures: ['local'],
@@ -1258,6 +1259,11 @@
                         this.model.visible = false;
                         this.modelAdded = false;
 
+                        // Resetear variables de pellizco
+                        this.currentScale = 1.0;
+                        this.initialScale = 1.0;
+                        this.isScaling = false;
+
                         // Configurar escala para AR
                         this.autoFitModel();
 
@@ -1282,10 +1288,10 @@
                     previewEl.classList.add('hidden');
                     instructionsEl.classList.remove('hidden');
 
-                    statusEl.textContent = `✅ AR Debug Activo`;
+                    statusEl.textContent = `✅ AR Activo`;
                     this.updateDebugInfo();
 
-                    console.log('✅ AR Debug iniciado - Busca superficies');
+                    console.log('✅ AR iniciado correctamente');
 
                 } catch (error) {
                     console.error('❌ Error iniciando AR:', error);
@@ -1363,7 +1369,7 @@
 
             onSelect(event) {
                 if (!this.modelAdded && this.modelMatrix && this.cursorVisible) {
-                    console.log('🎯 === COLOCANDO OBJETO EN AR ===');
+                    console.log('🎯 Colocando objeto en AR...');
 
                     const objectToPlace = this.useTestMode ? this.testCube : this.model;
                     const objectName = this.useTestMode ? 'CUBO ROJO' : 'MODELO PIZZA';
@@ -1398,11 +1404,14 @@
                     if (this.useTestMode) {
                         // Cubo: escala fija
                         objectToPlace.scale.setScalar(1.0);
+                        this.currentScale = 1.0; // Sincronizar escala de pellizco
                         console.log('🧪 CUBO: Escala 1.0x aplicada');
                     } else {
                         // Modelo: escala calculada
                         objectToPlace.scale.setScalar(this.targetScale);
+                        this.currentScale = 1.0; // Inicializar escala de pellizco
                         console.log(`🍕 MODELO: Escala ${this.targetScale.toFixed(3)}x aplicada`);
+                        console.log(`🤏 Pellizco habilitado - Usa dos dedos para redimensionar`);
 
                         // Log detallado del modelo
                         objectToPlace.traverse((node, index) => {
@@ -1539,7 +1548,14 @@
                 if (this.testCube) {
                     this.testCube.visible = false;
                     this.testCube.position.set(0, 0, 0);
+                    this.testCube.scale.setScalar(1.0);
                 }
+
+                // Restablecer variables de escala
+                this.currentScale = 1.0;
+                this.initialScale = 1.0;
+                this.isScaling = false;
+                this.hideScaleInfo();
 
                 if (this.controls) this.controls.enabled = true;
                 if (this.cursor) this.cursor.visible = false;
@@ -1585,20 +1601,8 @@
             if (app) app.toggleTestMode();
         }
 
-        function analyzeModel() {
-            if (app) app.analyzeModel();
-        }
-
         function forceSimpleMaterials() {
             if (app) app.forceSimpleMaterials();
-        }
-
-        function forceTestColors() {
-            if (app) app.forceTestColors();
-        }
-
-        function makeHuge() {
-            if (app) app.makeHuge();
         }
 
         function startAR() {
@@ -1615,12 +1619,11 @@
 
         // Inicializar
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 === INICIANDO AR DEBUGGER ===');
+            console.log('🚀 === AR OPTIMIZADO INICIADO ===');
             console.log(`🍕 Producto: ${PRODUCTO_NOMBRE} (ID: ${PRODUCTO_ID})`);
             console.log(`📁 Modelo: ${MODELO_ARCHIVO}`);
-            console.log(`🔗 Path: ${MODELO_PATH}`);
 
-            app = new ARDebugger();
+            app = new OptimizedWebAR();
         });
 
         // Manejo de errores
