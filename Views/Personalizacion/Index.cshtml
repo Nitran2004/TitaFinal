@@ -6,6 +6,53 @@
 
 <style>
     /* ===== SMART IMAGE POSITIONING SYSTEM BASE ===== */
+
+    .ra-tag-container {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        z-index: 10;
+    }
+
+    .category-header-touch {
+        display: flex;
+        align-items: center;
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 5px 10px;
+        border-radius: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+
+        .category-header-touch:hover {
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+            background-color: white;
+        }
+
+    .category-icon {
+        width: 20px;
+        height: 20px;
+        margin-right: 5px;
+    }
+
+    .touchable-text {
+        color: #333;
+        text-decoration: none;
+        font-size: 12px;
+        line-height: 1.1;
+        font-weight: 500;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .tight-line {
+        line-height: 1;
+    }
+
+    .smart-image-container {
+        position: relative;
+    }
     .smart-image-container {
         position: relative;
         overflow: hidden;
@@ -483,7 +530,7 @@
 <!-- ✅ ESTADO UNIFICADO DE PRODUCTOS -->
 <div class="container mt-4">
     <div id="estado-unificado" class="alert alert-info" style="display: none;">
-        <h6><i class="fas fa-info-circle"></i> Estado unificado de productos</h6>
+        <h6><i class="fas fa-info-circle"></i> Estado de productos</h6>
         <div class="row">
             <div class="col-md-4">
                 <strong>Disponibles:</strong> <span id="disponibles-count">-</span> producto(s) más
@@ -491,13 +538,13 @@
             <div class="col-md-4">
                 <strong>Pedidos realizados:</strong> <span id="activos-count">-</span>
             </div>
-            <div class="col-md-4">
+@*             <div class="col-md-4">
                 <strong>En ambos carritos:</strong> <span id="carritos-count">-</span> productos
-            </div>
+            </div> *@
         </div>
-        <small class="text-muted d-block mt-2">
+@*         <small class="text-muted d-block mt-2">
             <em>Límite compartido entre personalización y recomendación IA: <span id="limite-info">0/3</span> productos</em>
-        </small>
+        </small> *@
     </div>
 </div>
 
@@ -533,7 +580,7 @@
                         @if (producto.Imagen != null)
                         {
                             <img src="data:image/jpeg;base64,@Convert.ToBase64String(producto.Imagen)"
-                                 alt="@producto.Nombre" 
+                                 alt="@producto.Nombre"
                                  class="smart-image smart-image-loading"
                                  onload="handleSmartImageLoad(this)"
                                  onerror="handleSmartImageError(this)" />
@@ -544,23 +591,36 @@
                                 <i class="fas fa-utensils"></i>
                             </div>
                         }
+
+                        <!-- Moved RA tag inside image container for better positioning -->
+                        @if (new[] { "pizza", "sánduches", "picadas" }.Contains(producto.Categoria.ToLower()))
+                        {
+                            <div class="ra-tag-container">
+                                <div class="category-header-touch">
+                                    <img src="~/images1/ra.png" alt="Realidad Aumentada" class="category-icon" />
+                                    <a href="@Url.Action("VistaAR", "RealidadAumentada", new { id = producto.Id })" class="touchable-text">
+                                        <span class="tight-line">Realidad</span>
+                                        <span class="tight-line">Aumentada</span>
+                                    </a>
+                                </div>
+                            </div>
+                        }
                     </div>
 
                     <div class="card-body">
                         <div class="product-name">@producto.Nombre</div>
                         <div class="product-price">$@producto.Precio.ToString("F2")</div>
                         <p class="product-description">@producto.Descripcion</p>
-                        
+
                         <div class="points-info">
                             <small class="text-success">
                                 <i class="fas fa-star"></i> Ganas @((int)(producto.Precio * 30)) puntos
                             </small>
                         </div>
-                        
+
                         <div class="mt-auto">
-                            <!-- ✅ BOTÓN CON VALIDACIÓN DE LÍMITES -->
-                            <button type="button" 
-                                    class="btn-seleccionar" 
+                            <button type="button"
+                                    class="btn-seleccionar"
                                     data-producto-id="@producto.Id"
                                     onclick="validarYSeleccionar(@producto.Id)">
                                 <i class="fas fa-cog"></i> Seleccionar
