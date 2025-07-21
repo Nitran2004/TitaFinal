@@ -711,7 +711,6 @@
     <!-- Controles de Vista Previa Simplificados -->
     <div id="previewControls">
         <div class="instructions">
-            <strong>Vista Previa 3D:</strong> Verifica que el modelo se ve correctamente antes de activar AR.
             <br><strong>En AR:</strong> Usa pellizco de dedos para redimensionar después de colocar.
         </div>
         <div class="control-row">
@@ -722,7 +721,6 @@
     <!-- Instrucciones AR con Controles Integrados -->
     <div id="instructions" class="hidden">
         <div class="ar-header">
-            <div class="ar-title">AR ACTIVO</div>
             <div class="ar-header-buttons">
                 <button class="btn btn-collapse" id="relocateBtn" onclick="relocateModel()" title="Reubicar modelo">
                     <span>🔄</span>
@@ -955,7 +953,7 @@
                     this.fitCameraToModel();
                     loadingEl.style.display = 'none';
 
-                    statusEl.textContent = `Modelo cargado y centrado en wrapper`;
+                    statusEl.textContent = ``;
                     console.log('Modelo procesado con wrapper - Debería posicionarse como el cubo');
 
                     await this.checkARSupport();
@@ -1303,7 +1301,6 @@
                 const instructionsEl = document.getElementById('instructions');
 
                 try {
-                    statusEl.textContent = `Iniciando AR...`;
                     console.log('Iniciando AR...');
 
                     this.xrSession = await navigator.xr.requestSession('immersive-ar', {
@@ -1363,7 +1360,6 @@
                     previewEl.classList.add('hidden');
                     instructionsEl.classList.remove('hidden');
 
-                    statusEl.textContent = `AR Activo`;
                     this.updateDebugInfo();
 
                     console.log('AR iniciado correctamente');
