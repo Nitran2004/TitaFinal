@@ -284,6 +284,13 @@
         background: #000000 !important;
     }
 
+    .ra-icon-highlight {
+        filter: sepia(1) hue-rotate(90deg) saturate(2) brightness(0.9);
+        transition: all 0.3s ease;
+        border-radius: 50%;
+        box-shadow: 0 0 6px rgba(40, 167, 69, 0.4);
+    }
+
     /* ===== AJUSTE ESPECIAL PARA MÓVIL ===== */
     @@media (max-width: 768px) {
         .smart-image[alt*="Cheddar"],
@@ -594,7 +601,7 @@
                         {
                             <div class="ra-tag-container">
                                 <div class="category-header-touch">
-                                    <img src="~/images1/ra.png" alt="Realidad Aumentada" class="category-icon" />
+                                    <img src="~/images1/ra.png" alt="Realidad Aumentada" class="category-icon ra-icon-highlight" />
                                     <a href="@Url.Action("VistaAR", "RealidadAumentada", new { id = producto.Id })" class="touchable-text">
                                         <span class="tight-line">Realidad</span>
                                         <span class="tight-line">Aumentada</span>
