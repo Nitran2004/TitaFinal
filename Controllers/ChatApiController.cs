@@ -278,6 +278,197 @@ namespace ProyectoIdentity.Controllers
                 .ToListAsync();
         }
 
+        // ============== MODIFICACIONES PARA TU ChatApiController.cs EXISTENTE ==============
+
+        // 1. AÑADIR ESTOS MÉTODOS A TU ChatApiController EXISTENTE:
+
+        [HttpGet("verificar")]
+        public async Task<IActionResult> VerificarSistema()
+        {
+            try
+            {
+                // Verificar conexión a base de datos
+                var productosCount = await _context.Productos.CountAsync();
+
+                // Verificar si el recomendador está inicializado
+                bool recomendadorListo = _recomendador.EstaInicializado;
+
+                if (!recomendadorListo)
+                {
+                    // Inicializar recomendador si no está listo
+                    var productos = await _context.Productos.ToListAsync();
+                    _recomendador.Inicializar(productos);
+                    recomendadorListo = _recomendador.EstaInicializado;
+                }
+
+                if (productosCount > 0 && recomendadorListo)
+                {
+                    return Ok(new
+                    {
+                        estado = "activo",
+                        mensaje = $"Sistema listo - {productosCount} productos disponibles",
+                        productosDisponibles = productosCount,
+                        recomendadorActivo = recomendadorListo
+                    });
+                }
+                else
+                {
+                    return Ok(new
+                    {
+                        estado = "error",
+                        mensaje = "Sistema no disponible - Sin productos o recomendador inactivo",
+                        productosDisponibles = productosCount,
+                        recomendadorActivo = recomendadorListo
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error verificando sistema de chat");
+                return Ok(new
+                {
+                    estado = "error",
+                    mensaje = "Error de conexión con el sistema",
+                    error = ex.Message
+                });
+            }
+        }
+
+        [HttpPost("mensaje")]
+        public async Task<IActionResult> ProcesarMensajeSimple([FromBody] MensajeSimpleRequest request)
+        {
+            try
+            {
+                _logger.LogInformation("Procesando mensaje: {Mensaje}", request.Mensaje);
+
+                if (string.IsNullOrWhiteSpace(request.Mensaje))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        respuesta = "Por favor, escribe un mensaje válido.",
+                        productoId = -1
+                    });
+                }
+
+                // Validar límite de caracteres
+                if (request.Mensaje.Length > 500)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        respuesta = "El mensaje es demasiado largo. Por favor, sé más conciso.",
+                        productoId = -1
+                    });
+                }
+
+                // Obtener productos actualizados
+                var productos = await _context.Productos
+                    .Where(p => p.Cantidad > 0) // Solo productos disponibles
+                    .ToListAsync();
+
+                if (!productos.Any())
+                {
+                    return Ok(new
+                    {
+                        success = true,
+                        respuesta = "Lo siento, no tenemos productos disponibles en este momento. Por favor, inténtalo más tarde.",
+                        productoId = -1
+                    });
+                }
+
+                // Asegurar que el recomendador esté inicializado
+                if (!_recomendador.EstaInicializado)
+                {
+                    _recomendador.Inicializar(productos);
+                }
+
+                // Obtener recomendación de la IA
+                var recomendacion = await _recomendador.ObtenerRecomendacion(request.Mensaje, productos);
+
+                if (recomendacion == null)
+                {
+                    return Ok(new
+                    {
+                        success = true,
+                        respuesta = "No pude procesar tu consulta en este momento. ¿Podrías reformularla?",
+                        productoId = -1
+                    });
+                }
+
+                // ✅ VALIDAR QUE EL PRODUCTO EXISTE Y ESTÁ DISPONIBLE
+                Producto? productoValidado = null;
+                if (recomendacion.ProductoId > 0)
+                {
+                    productoValidado = productos.FirstOrDefault(p => p.Id == recomendacion.ProductoId);
+
+                    if (productoValidado == null || (productoValidado.Cantidad ?? 0) <= 0)
+                    {
+                        // Producto no disponible, ajustar respuesta
+                        recomendacion.ProductoId = -1;
+                        recomendacion.Respuesta += " Sin embargo, este producto no está disponible en este momento. ¿Te gustaría que te recomiende algo similar?";
+                    }
+                }
+
+                // Guardar en historial usando tu estructura existente
+                var historial = new HistorialChat
+                {
+                    UsuarioId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+                    Mensaje = request.Mensaje,
+                    Respuesta = recomendacion.Respuesta,
+                    TipoMensaje = "recomendacion",
+                    ProductoId = recomendacion.ProductoId > 0 ? recomendacion.ProductoId : null,
+                    Fecha = DateTime.Now
+                };
+
+                _context.HistorialChat.Add(historial);
+                await _context.SaveChangesAsync();
+
+                // Construir respuesta compatible con el frontend
+                var respuesta = new
+                {
+                    success = true,
+                    respuesta = recomendacion.Respuesta,
+                    productoId = recomendacion.ProductoId,
+                    nombreProducto = productoValidado?.Nombre ?? recomendacion.NombreProducto,
+                    categoria = productoValidado?.Categoria ?? recomendacion.Categoria,
+                    precio = (productoValidado?.Precio ?? recomendacion.Precio).ToString("F2"),
+                    descripcion = productoValidado?.Descripcion ?? recomendacion.Descripcion,
+                    alergenos = productoValidado?.Alergenos ?? recomendacion.Alergenos,
+                    ingredientes = productoValidado?.Ingredientes ?? recomendacion.Ingredientes,
+                    cantidad = productoValidado?.Cantidad ?? recomendacion.Cantidad,
+                    puntuacion = recomendacion.Puntuacion,
+
+                    // ✅ DATOS ADICIONALES PARA EL FRONTEND
+                    disponible = productoValidado != null && (productoValidado.Cantidad ?? 0) > 0,
+                    puedeAgregar = User.Identity.IsAuthenticated && productoValidado != null,
+                    mensajeAdicional = !User.Identity.IsAuthenticated ? "Inicia sesión para añadir productos al carrito" : ""
+                };
+
+                _logger.LogInformation("Recomendación generada - ProductoId: {ProductoId}, Puntuación: {Puntuacion}",
+                    recomendacion.ProductoId, recomendacion.Puntuacion);
+
+                return Ok(respuesta);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error procesando mensaje de chat");
+                return Ok(new
+                {
+                    success = true,
+                    respuesta = "Disculpa, tuve un problema técnico. Por favor, inténtalo de nuevo en un momento.",
+                    productoId = -1,
+                    error = ex.Message // Solo en desarrollo
+                });
+            }
+        }
+
+        // 2. AÑADIR ESTE NUEVO MODELO DE REQUEST AL FINAL DE TU ARCHIVO:
+        public class MensajeSimpleRequest
+        {
+            public string Mensaje { get; set; } = "";
+        }
+
         private async Task<List<Producto>> ObtenerProductosAlternativos(string consulta, int cantidad)
         {
             // Lógica simple para obtener productos alternativos

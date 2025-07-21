@@ -135,9 +135,13 @@ namespace ProyectoIdentity.Servicios
                 CONSULTA DEL CLIENTE: ""{consulta}""
 
                 INSTRUCCIONES:
-                1. Analiza cuidadosamente la consulta del cliente
-                2. Revisa toda la información de los productos: nombre, descripción, categoría, ingredientes, alérgenos, información nutricional y disponibilidad.
-                3. Responde en formato JSON con esta estructura exacta:
+                1. La consulta del cliente puede incluir jerga ecuatoriana, expresiones locales o dialecto del Ecuador. Interprétala de manera natural y correcta.
+                2. Analiza cuidadosamente la consulta del cliente
+                3. Revisa toda la información de los productos: nombre, descripción, categoría, ingredientes, alérgenos, información nutricional.
+                4. Si el cliente usa expresiones como “sin [ingrediente]”, “no quiero [alérgeno]”, “no me gusta [ingrediente]”, “me hace daño [algo]”, “me cae mal [algo]” o similares, interpreta eso como una **restricción alimentaria** y excluye productos que contengan ese ingrediente o alérgeno.
+                5. Si el cliente menciona de forma general “quiero comida”, “algo para comer”, “tengo hambre”, “qué hay para comer”, interpreta eso como una búsqueda general dentro de las categorías: **Pizza**, **Sánduches**, **Picadas** y **Promo**.
+                6. Si el cliente dice frases como “algo para comer y beber”, interpreta eso como una solicitud de productos de la categoría **Promo**, que incluye combinaciones de comida y bebida.
+                7. Responde en formato JSON con esta estructura exacta:
                 {{
                     ""productoId"": [ID del producto recomendado o -1 si no hay coincidencia],
                     ""respuesta"": ""[Respuesta amigable y personalizada para el cliente]"",
@@ -145,12 +149,16 @@ namespace ProyectoIdentity.Servicios
                 }}
 
                 REGLAS:
-                - Si el cliente pregunta por algo específico (como pizza, cerveza, cóctel), busca en esa categoría
-                - Si menciona restricciones alimentarias (sin gluten, vegano, etc.), evita productos incompatibles
-                - Si pregunta por recomendaciones generales, sugiere productos populares
-                - La respuesta debe ser conversacional y explicar por qué recomiendas ese producto
-                - Si no encuentras nada específico, usa productoId: -1 y da una respuesta general útil
-
+               - Si el cliente pregunta por algo específico (como pizza, cerveza, cóctel), busca en esa categoría.
+                - Si menciona restricciones alimentarias (sin gluten, vegano, etc.), evita productos incompatibles.
+                - Si el cliente usa expresiones como “sin [ingrediente]”, “no quiero [alérgeno]”, “no me gusta [ingrediente]”, “me hace daño [algo]”, “me cae mal [algo]” o similares, interpreta eso como una restricción alimentaria y excluye productos que contengan ese ingrediente o alérgeno.
+                - Si el cliente menciona de forma general “quiero comida”, “algo para comer”, “tengo hambre”, “qué hay para comer”, interpreta eso como una búsqueda general dentro de las categorías: Pizza, Sánduches, Picadas y Promo.
+                - Si el cliente dice frases como “algo para comer y beber”, interpreta eso como una solicitud de productos de la categoría Promo.
+                - Si pregunta por recomendaciones generales, sugiere productos populares.
+                - La respuesta debe ser conversacional y explicar por qué recomiendas ese producto.
+                - Si no encuentras ningún producto que coincida con lo que el cliente pide (por nombre, categoría, o ingredientes), usa productoId: -1 y responde con un mensaje empático como: “Lo sentimos, no tenemos exactamente eso, pero te sugiero esto otro...”, seguido de una recomendación útil y general.
+                - Si el precio del producto es de hasta $5, considérese barato.
+                - Si el precio es más de $8, considérese caro.
                 Responde SOLO con el JSON, sin texto adicional.";
         }
 
@@ -308,42 +316,7 @@ namespace ProyectoIdentity.Servicios
                 Cantidad = productoRecomendado?.Cantidad ?? 0
             };
 
-            int cantidadSolicitada = ExtraerCantidadSolicitada(consulta);
-            var alergenosExcluidos = DetectarAlergenosExcluidos(consulta);
-
-            var productosFiltrados = _productos
-                .Where(p => p.Cantidad > 0)
-                .Where(p => !ContieneAlgunoDeLosAlergenos(p.Alergenos, alergenosExcluidos))
-                .ToList();
-
-            var recomendaciones = productosFiltrados
-                .Take(cantidadSolicitada)
-                .Select(p => new RecomendacionIA
-                {
-                    ProductoId = p.Id,
-                    Respuesta = $"Te recomiendo {p.Nombre}. {p.Descripcion}",
-                    Puntuacion = 75,
-                    NombreProducto = p.Nombre,
-                    Categoria = p.Categoria,
-                    Precio = p.Precio,
-                    Descripcion = p.Descripcion,
-                    Alergenos = p.Alergenos,
-                    Ingredientes = p.Ingredientes,
-                    Cantidad = p.Cantidad ?? 0
-                })
-                .ToList();
-
-            if (!recomendaciones.Any())
-            {
-                recomendaciones.Add(new RecomendacionIA
-                {
-                    ProductoId = -1,
-                    Respuesta = "No encontramos productos que se ajusten a tus criterios. ¡Explora nuestro menú para más opciones!",
-                    Puntuacion = 50
-                });
-            }
-
-            return recomendaciones.FirstOrDefault();
+            
         }
 
         // Método para verificar si contiene Leche

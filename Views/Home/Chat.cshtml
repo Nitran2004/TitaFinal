@@ -1,8 +1,42 @@
 ﻿@{
     ViewData["Title"] = "Chat de Recomendaciones";
+    Layout = "_Layout";
 }
 
 <style>
+    /* ============== CSS DEL CHAT ============== */
+
+    /* Aislar estilos del chat para evitar conflictos con el layout */
+    .chat-container,
+    .chat-container * {
+        position: static !important;
+    }
+
+    /* Asegurar que el navbar mantenga su z-index */
+    .navbar,
+    .navbar-nav,
+    .dropdown-menu {
+        position: relative !important;
+        z-index: 1050 !important;
+    }
+
+    .dropdown-menu {
+        position: absolute !important;
+        z-index: 1055 !important;
+        display: none;
+    }
+
+        .dropdown-menu.show {
+            display: block !important;
+        }
+
+    /* Evitar que elementos del chat interfieran */
+    .chat-box,
+    .product-recommendation,
+    .alert.position-fixed {
+        z-index: 1040 !important;
+    }
+
     .chat-container {
         max-width: 800px;
         margin: 0 auto;
@@ -20,17 +54,17 @@
         box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
     }
 
-    .chat-header h1 {
-        margin: 0 0 10px 0;
-        font-size: 2rem;
-        font-weight: 600;
-    }
+        .chat-header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2rem;
+            font-weight: 600;
+        }
 
-    .chat-header p {
-        margin: 0;
-        font-size: 1.1rem;
-        opacity: 0.9;
-    }
+        .chat-header p {
+            margin: 0;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
 
     .chat-box {
         height: 400px;
@@ -77,31 +111,90 @@
     }
 
     .product-recommendation {
-        margin-top: 10px;
-        padding: 15px;
+        margin-top: 15px;
+        padding: 20px;
         background: linear-gradient(135deg, #fff3cd, #ffeaa7);
         border-left: 4px solid #ffc107;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+        position: relative;
+        overflow: hidden;
     }
+
+        .product-recommendation::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ffc107, #F2A900, #ffc107);
+        }
 
     .product-name {
         font-weight: 600;
         color: #856404;
-        font-size: 1.1rem;
-        margin-bottom: 5px;
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
+        .product-name i {
+            color: #ffc107;
+            animation: pulse 2s infinite;
+        }
+
     .product-details {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         color: #6c757d;
+        line-height: 1.5;
+        margin-bottom: 15px;
     }
 
     .product-price {
-        font-weight: 600;
+        font-weight: 700;
         color: #28a745;
-        font-size: 1.1rem;
+        font-size: 1.3rem;
     }
+
+    .product-actions {
+        border-top: 1px solid #e9ecef;
+        padding-top: 15px;
+        text-align: center;
+    }
+
+        .product-actions .btn {
+            min-width: 120px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 0 5px;
+        }
+
+        .product-actions .btn-warning {
+            background: linear-gradient(135deg, #F2A900, #e09600);
+            border: none;
+            color: white;
+            box-shadow: 0 2px 8px rgba(242, 169, 0, 0.3);
+        }
+
+            .product-actions .btn-warning:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(242, 169, 0, 0.4);
+            }
+
+        .product-actions .btn-outline-primary {
+            border-color: #007bff;
+            color: #007bff;
+        }
+
+            .product-actions .btn-outline-primary:hover {
+                background-color: #007bff;
+                border-color: #007bff;
+                color: white;
+                transform: translateY(-1px);
+            }
 
     .input-group {
         display: flex;
@@ -119,10 +212,10 @@
         transition: border-color 0.3s ease;
     }
 
-    .message-input:focus {
-        border-color: #28a745;
-        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
-    }
+        .message-input:focus {
+            border-color: #28a745;
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+        }
 
     .send-button {
         padding: 12px 24px;
@@ -136,32 +229,20 @@
         box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
     }
 
-    .send-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
-    }
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
 
-    .send-button:disabled {
-        background: #6c757d;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-    }
+        .send-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
 
     .suggestions {
         margin-bottom: 20px;
-    }
-
-    .suggestions h4 {
-        color: #495057;
-        margin-bottom: 15px;
-        font-size: 1.1rem;
-    }
-
-    .suggestion-buttons {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
     }
 
     .suggestion-btn {
@@ -174,15 +255,16 @@
         font-size: 0.9rem;
         transition: all 0.3s ease;
         text-decoration: none;
+        margin: 5px;
     }
 
-    .suggestion-btn:hover {
-        background: #28a745;
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
-        text-decoration: none;
-    }
+        .suggestion-btn:hover {
+            background: #28a745;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+            text-decoration: none;
+        }
 
     .loading {
         display: none;
@@ -192,9 +274,9 @@
         margin: 10px 0;
     }
 
-    .loading.show {
-        display: block;
-    }
+        .loading.show {
+            display: block;
+        }
 
     .status-indicator {
         text-align: center;
@@ -216,27 +298,83 @@
         border: 1px solid #f5c6cb;
     }
 
+    /* Notificaciones flotantes */
+    .alert.position-fixed {
+        animation: slideInRight 0.5s ease-out;
+        top: 80px !important; /* Debajo del navbar */
+        z-index: 1040 !important;
+    }
+
+    @@keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
     @@keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.1);
+        }
+    }
+
+    .btn .fa-spinner {
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
     }
 
     @@media (max-width: 768px) {
         .chat-container {
             padding: 10px;
         }
-        
+
         .message-content {
             max-width: 85%;
         }
-        
+
         .input-group {
             flex-direction: column;
         }
-        
-        .suggestion-buttons {
-            justify-content: center;
+
+        .product-actions {
+            flex-direction: column;
+            gap: 10px;
         }
+
+            .product-actions .btn {
+                width: 100%;
+                margin: 0;
+            }
     }
 </style>
 
@@ -293,22 +431,52 @@
 
     <div class="text-center mt-3">
         <small class="text-muted">
-            <i class="fas fa-info-circle"></i> 
+            <i class="fas fa-info-circle"></i>
             Este chat usa inteligencia artificial para ayudarte a encontrar el producto perfecto
         </small>
     </div>
 </div>
 
 <script>
+    // ============== JAVASCRIPT COMPLETO DEL CHAT ==============
+
     let isProcessing = false;
 
     document.addEventListener('DOMContentLoaded', function() {
+        // Evitar conflictos con el navbar
+        const navbarDropdowns = document.querySelectorAll('.navbar .dropdown-toggle');
+
+        navbarDropdowns.forEach(dropdown => {
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+
+                document.querySelectorAll('.navbar .dropdown-menu.show').forEach(menu => {
+                    if (menu !== this.nextElementSibling) {
+                        menu.classList.remove('show');
+                    }
+                });
+
+                const menu = this.nextElementSibling;
+                if (menu) {
+                    menu.classList.toggle('show');
+                }
+            });
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.navbar .dropdown')) {
+                document.querySelectorAll('.navbar .dropdown-menu.show').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+            }
+        });
+
         verificarSistema();
         document.getElementById('messageInput').focus();
     });
 
     function verificarSistema() {
-        fetch('/api/chat/verificar')
+        fetch('/api/ChatApi/verificar')
             .then(response => response.json())
             .then(data => {
                 const statusDiv = document.getElementById('status');
@@ -358,18 +526,15 @@
         const sendButton = document.getElementById('sendButton');
         const loading = document.getElementById('loading');
 
-        // Deshabilitar interfaz
         input.disabled = true;
         sendButton.disabled = true;
         sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
         loading.classList.add('show');
 
-        // Mostrar mensaje del usuario
         agregarMensaje(mensaje, 'user');
         input.value = '';
 
-        // Enviar a la API
-        fetch('/api/chat/mensaje', {
+        fetch('/api/ChatApi/mensaje', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -379,7 +544,7 @@
         .then(response => response.json())
         .then(data => {
             loading.classList.remove('show');
-            
+
             if (data.respuesta) {
                 agregarRespuestaBot(data);
             } else {
@@ -392,7 +557,6 @@
             agregarMensaje('Lo siento, no pude procesar tu mensaje en este momento. Por favor, intenta más tarde.', 'bot');
         })
         .finally(() => {
-            // Rehabilitar interfaz
             isProcessing = false;
             input.disabled = false;
             sendButton.disabled = false;
@@ -426,8 +590,7 @@
 
         messageDiv.appendChild(contentDiv);
 
-        // Si hay una recomendación específica de producto
-        if (data.productoId && data.productoId > 0) {
+        if (data.productoId && data.productoId > 0 && data.disponible) {
             const productDiv = document.createElement('div');
             productDiv.className = 'product-recommendation';
 
@@ -437,7 +600,7 @@
                 </div>
                 <div class="product-details">
                     <strong>Categoría:</strong> ${data.categoria}<br>
-                    <strong>Precio:</strong> <span class="product-price">${data.precio}</span>
+                    <strong>Precio:</strong> <span class="product-price">$${data.precio}</span>
             `;
 
             if (data.descripcion) {
@@ -448,11 +611,15 @@
                 productHtml += `<br><strong>Alérgenos:</strong> ${data.alergenos}`;
             }
 
-            // if (data.cantidad) {
-            //     productHtml += `<br><strong>Disponible:</strong> ${data.cantidad} unidades`;
-            // }
+            productHtml += `
+                </div>
+                <div class="product-actions mt-3">
+                    <button type="button" class="btn btn-warning btn-sm me-2" onclick="añadirAlCarritoDesdeIA(${data.productoId}, '${data.nombreProducto.replace(/'/g, "\\'")}', ${parseFloat(data.precio).toFixed(2)})">
+                        <i class="fas fa-cart-plus"></i> Añadir al Carrito
+                    </button>
+                </div>
+            `;
 
-            productHtml += '</div>';
             productDiv.innerHTML = productHtml;
             messageDiv.appendChild(productDiv);
         }
@@ -461,31 +628,108 @@
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // Funcionalidad adicional para mejorar la experiencia
-    function limpiarChat() {
-        const chatBox = document.getElementById('chatBox');
-        chatBox.innerHTML = `
-            <div class="message bot-message">
-                <div class="message-content">
-                    ¡Hola! 👋 Soy tu asistente de recomendaciones. Puedes preguntarme sobre nuestros productos, especialidades, opciones sin gluten, o cualquier preferencia que tengas. ¿En qué puedo ayudarte hoy?
-                </div>
-            </div>
-        `;
+    async function añadirAlCarritoDesdeIA(productoId, nombreProducto, precio) {
+        const boton = event.target;
+        const textoOriginal = boton.innerHTML;
+
+        try {
+            boton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Añadiendo...';
+            boton.disabled = true;
+
+            const response = await fetch('/api/auth/verificar', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const authData = await response.json();
+
+            if (!authData.autenticado) {
+                alert('Debes iniciar sesión para añadir productos al carrito');
+                window.open('/Cuentas/Acceso', '_blank');
+                return;
+            }
+
+            const datosProducto = {
+                productoId: productoId,
+                cantidad: 1,
+                ingredientesRemovidos: [],
+                notasEspeciales: 'Recomendado por IA'
+            };
+
+            const responseCarrito = await fetch('/Personalizacion/AgregarAlCarrito', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(datosProducto)
+            });
+
+            if (!responseCarrito.ok) {
+                throw new Error(`HTTP error! status: ${responseCarrito.status}`);
+            }
+
+            const resultado = await responseCarrito.json();
+
+            if (resultado.success) {
+                boton.innerHTML = '<i class="fas fa-check"></i> ¡Añadido!';
+                boton.className = 'btn btn-success btn-sm me-2';
+
+                mostrarMensajeExito(`${nombreProducto} añadido al carrito exitosamente`);
+
+                setTimeout(() => {
+                    if (confirm('¿Deseas ir al carrito para revisar tu pedido?')) {
+                        window.open('/Personalizacion/VerCarrito', '_blank');
+                    }
+                }, 1500);
+            } else {
+                throw new Error(resultado.message || 'Error desconocido');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+
+            if (error.message.includes('límite') || error.message.includes('Límite')) {
+                alert('Límite de productos alcanzado: ' + error.message);
+                setTimeout(() => {
+                    if (confirm('¿Deseas revisar tu carrito actual?')) {
+                        window.open('/Personalizacion/VerCarrito', '_blank');
+                    }
+                }, 1000);
+            } else {
+                alert('Error al añadir el producto: ' + error.message);
+            }
+
+            boton.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
+            boton.className = 'btn btn-danger btn-sm me-2';
+        } finally {
+            setTimeout(() => {
+                boton.innerHTML = '<i class="fas fa-cart-plus"></i> Añadir al Carrito';
+                boton.className = 'btn btn-warning btn-sm me-2';
+                boton.disabled = false;
+            }, 3000);
+        }
     }
 
-    // Auto-resize del input cuando el usuario escribe mucho
-    document.getElementById('messageInput').addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-    });
+    function verDetalleProducto(productoId) {
+        window.open(`/Personalizacion/Detalle/${productoId}`, '_blank');
+    }
 
-    // Notificaciones de sonido (opcional)
-    function reproducirSonido() {
-        try {
-            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmMcBTqR1fPSfCoEIHLA7+GQRQ0PVqzn8KRYGAg+l9z1unEcBDuL0fXaeSsFH2u+8OESR');
-            audio.play();
-        } catch (e) {
-            // Silenciar errores de audio
-        }
+    function mostrarMensajeExito(mensaje) {
+        const notificacion = document.createElement('div');
+        notificacion.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        notificacion.style.cssText = 'top: 80px; right: 20px; z-index: 1040; min-width: 300px;';
+        notificacion.innerHTML = `
+            <i class="fas fa-check-circle"></i> ${mensaje}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(notificacion);
+
+        setTimeout(() => {
+            if (notificacion.parentNode) {
+                notificacion.remove();
+            }
+        }, 3000);
     }
 </script>

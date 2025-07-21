@@ -14,13 +14,7 @@
             <div class="col-md-4">
                 <strong>Pedidos realizados:</strong> <span id="activos-count">-</span>
             </div>
-            <div class="col-md-4">
-                <strong>En ambos carritos:</strong> <span id="carritos-count">-</span> productos
-            </div>
         </div>
-        <small class="text-muted d-block mt-2">
-            <em>Límite compartido entre personalización y recomendación IA: <span id="limite-info">0/3</span> productos</em>
-        </small>
     </div>
     <div class="row">
         <div class="col-md-8">
@@ -647,6 +641,209 @@
             cargarEstadoUnificado(); // ✅ AGREGAR ESTA LÍNEA
         }, 30000);
     });
+
+        function agregarRespuestaBot(data) {
+        const chatBox = document.getElementById('chatBox');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message bot-message';
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        contentDiv.textContent = data.respuesta;
+
+        messageDiv.appendChild(contentDiv);
+
+        // ✅ SI HAY UNA RECOMENDACIÓN ESPECÍFICA DE PRODUCTO
+        if (data.productoId && data.productoId > 0) {
+            const productDiv = document.createElement('div');
+            productDiv.className = 'product-recommendation';
+
+            let productHtml = `
+                <div class="product-name">
+                    <i class="fas fa-star"></i> ${data.nombreProducto}
+                </div>
+                <div class="product-details">
+                    <strong>Categoría:</strong> ${data.categoria}<br>
+                    <strong>Precio:</strong> <span class="product-price">${data.precio}</span>
+            `;
+
+            if (data.descripcion) {
+                productHtml += `<br><strong>Descripción:</strong> ${data.descripcion}`;
+            }
+
+            if (data.alergenos && data.alergenos !== 'NULL') {
+                productHtml += `<br><strong>Alérgenos:</strong> ${data.alergenos}`;
+            }
+
+            // ✅ AÑADIR BOTONES DE ACCIÓN
+            productHtml += `
+                </div>
+                <div class="product-actions mt-3">
+                    <button type="button" class="btn btn-warning btn-sm me-2" onclick="añadirAlCarritoDesdeIA(${data.productoId}, '${data.nombreProducto}', ${data.precio})">
+                        <i class="fas fa-cart-plus"></i> Añadir al Carrito
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="verDetalleProducto(${data.productoId})">
+                        <i class="fas fa-info-circle"></i> Ver Detalles
+                    </button>
+                </div>
+            `;
+
+            productDiv.innerHTML = productHtml;
+            messageDiv.appendChild(productDiv);
+        }
+
+        chatBox.appendChild(messageDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // ✅ FUNCIÓN PARA AÑADIR AL CARRITO DESDE IA
+       // ✅ REEMPLAZAR LA FUNCIÓN añadirAlCarritoDesdeIA con esta versión corregida:
+
+    async function añadirAlCarritoDesdeIA(productoId, nombreProducto, precio) {
+        const boton = event.target;
+        const textoOriginal = boton.innerHTML;
+
+        try {
+            // Mostrar indicador de carga
+            boton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Añadiendo...';
+            boton.disabled = true;
+
+            console.log('🛒 Iniciando añadir al carrito:', productoId, nombreProducto);
+
+            // Verificar autenticación
+            const response = await fetch('/api/auth/verificar', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const authData = await response.json();
+            console.log('🔐 Auth verificada:', authData);
+
+            if (!authData.autenticado) {
+                alert('Debes iniciar sesión para añadir productos al carrito');
+                window.open('/Cuentas/Acceso', '_blank');
+                return;
+            }
+
+            // Datos del producto para añadir al carrito
+            const datosProducto = {
+                productoId: productoId,
+                cantidad: 1,
+                ingredientesRemovidos: [],
+                notasEspeciales: 'Recomendado por IA'
+            };
+
+            console.log('📦 Enviando al carrito:', datosProducto);
+
+            // Llamar al endpoint de personalización
+            const responseCarrito = await fetch('/Personalizacion/AgregarAlCarrito', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(datosProducto)
+            });
+
+            if (!responseCarrito.ok) {
+                throw new Error(`HTTP error! status: ${responseCarrito.status}`);
+            }
+
+            const resultado = await responseCarrito.json();
+            console.log('✅ Resultado:', resultado);
+
+            if (resultado.success) {
+                // Cambiar botón a éxito temporalmente
+                boton.innerHTML = '<i class="fas fa-check"></i> ¡Añadido!';
+                boton.className = 'btn btn-success btn-sm me-2';
+
+                // Mostrar mensaje de éxito
+                mostrarMensajeExito(`${nombreProducto} añadido al carrito exitosamente`);
+
+                // Actualizar contadores si existen
+                actualizarContadoresCarrito(resultado.totalItems, resultado.totalCarrito);
+
+                // Ofrecer ir al carrito después de un momento
+                setTimeout(() => {
+                    if (confirm('¿Deseas ir al carrito para revisar tu pedido?')) {
+                        window.open('/Personalizacion/VerCarrito', '_blank');
+                    }
+                }, 1500);
+            } else {
+                throw new Error(resultado.message || 'Error desconocido');
+            }
+        } catch (error) {
+            console.error('❌ Error:', error);
+
+            // Mostrar error específico
+            if (error.message.includes('límite') || error.message.includes('Límite')) {
+                alert('Límite de productos alcanzado: ' + error.message);
+                setTimeout(() => {
+                    if (confirm('¿Deseas revisar tu carrito actual?')) {
+                        window.open('/Personalizacion/VerCarrito', '_blank');
+                    }
+                }, 1000);
+            } else {
+                alert('Error al añadir el producto: ' + error.message);
+            }
+
+            // Restaurar botón a estado de error
+            boton.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error';
+            boton.className = 'btn btn-danger btn-sm me-2';
+        } finally {
+            // Restaurar botón después de 3 segundos
+            setTimeout(() => {
+                boton.innerHTML = '<i class="fas fa-cart-plus"></i> Añadir al Carrito';
+                boton.className = 'btn btn-warning btn-sm me-2';
+                boton.disabled = false;
+            }, 3000);
+        }
+    }
+
+    // ✅ FUNCIÓN PARA VER DETALLES DEL PRODUCTO
+    function verDetalleProducto(productoId) {
+        window.open(`/Personalizacion/Detalle/${productoId}`, '_blank');
+    }
+
+    // ✅ FUNCIÓN PARA MOSTRAR MENSAJE DE ÉXITO
+    function mostrarMensajeExito(mensaje) {
+        // Crear elemento de notificación
+        const notificacion = document.createElement('div');
+        notificacion.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        notificacion.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notificacion.innerHTML = `
+            <i class="fas fa-check-circle"></i> ${mensaje}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(notificacion);
+
+        // Auto-remover después de 3 segundos
+        setTimeout(() => {
+            if (notificacion.parentNode) {
+                notificacion.remove();
+            }
+        }, 3000);
+    }
+
+    // ✅ FUNCIÓN PARA ACTUALIZAR CONTADORES
+    function actualizarContadoresCarrito(totalItems, totalCarrito) {
+        // Actualizar badge del carrito si existe
+        const badge = document.querySelector('.cart-badge');
+        if (badge) {
+            badge.textContent = totalItems;
+            badge.style.display = totalItems > 0 ? 'inline' : 'none';
+        }
+
+        // Actualizar total si existe
+        const totalElement = document.querySelector('.cart-total');
+        if (totalElement) {
+            totalElement.textContent = `$${totalCarrito.toFixed(2)}`;
+        }
+    }
+
+    // ==
 
     // ✅ ESCUCHAR CAMBIOS EN CARRITOS
     window.addEventListener('storage', function (e) {
