@@ -30,14 +30,14 @@ namespace ProyectoIdentity.Controllers
             {
                 var (countActivos, pedidosActivos) = await ContarPedidosActivos(userId);
 
-                if (countActivos >= 3)
+                if (countActivos >= 10)
                 {
                     var viewModelLimite = CrearViewModelLimite(countActivos, pedidosActivos);
                     return View("LimiteAlcanzado", viewModelLimite);
                 }
 
                 ViewBag.PedidosActivos = countActivos;
-                ViewBag.LimiteMaximo = 4;
+                ViewBag.LimiteMaximo = 10;
             }
 
             // Obtener productos
@@ -74,7 +74,7 @@ namespace ProyectoIdentity.Controllers
                 // ✅ NO BLOQUEAR AQUÍ - Solo mostrar info
                 ViewBag.ProductosActivos = productosActivos;
                 ViewBag.Disponibles = disponibles;
-                ViewBag.LimiteMaximo = 4;
+                ViewBag.LimiteMaximo = 10;
             }
 
             var categorias = await _context.Productos
@@ -117,7 +117,7 @@ namespace ProyectoIdentity.Controllers
                     var viewModel = new LimiteAlcanzadoViewModel
                     {
                         PedidosActivos = productosActivos,
-                        LimiteMaximo = 4,
+                        LimiteMaximo = 10,
                         PedidosPendientes = new List<PedidoPendienteInfo>()
                     };
                     return View("../Shared/LimiteAlcanzado", viewModel);
@@ -167,9 +167,9 @@ namespace ProyectoIdentity.Controllers
                 totalProductos += productos.Sum(pp => pp.Cantidad ?? 0); // ✅ CON ?? porque es int?
             }
 
-            if (totalProductos >= 4)
+            if (totalProductos >= 11)
             {
-                return (false, totalProductos, $"Ya tienes {totalProductos}/3 productos en pedidos activos. Espera a que se entreguen para pedir más.");
+                return (false, totalProductos, $"Ya tienes {totalProductos}/10 productos en pedidos activos. Espera a que se entreguen para pedir más.");
             }
 
             return (true, totalProductos, "");
@@ -181,12 +181,12 @@ namespace ProyectoIdentity.Controllers
             if (!permitido)
                 return (false, 0, mensaje);
 
-            int productosDisponibles = 3 - productosActuales;
+            int productosDisponibles = 10 - productosActuales;
 
             if (cantidadAAgregar > productosDisponibles)
             {
                 return (false, productosDisponibles,
-                    $"Solo puedes agregar {productosDisponibles} producto(s) más. Actualmente tienes {productosActuales}/3 productos en pedidos activos.");
+                    $"Solo puedes agregar {productosDisponibles} producto(s) más. Actualmente tienes {productosActuales}/10 productos en pedidos activos.");
             }
 
             return (true, productosDisponibles, "");
@@ -392,8 +392,8 @@ namespace ProyectoIdentity.Controllers
                     return Json(new
                     {
                         productosActivos = 0,
-                        limite = 4,
-                        disponibles = 4,
+                        limite = 11,
+                        disponibles = 11,
                         productosEnCarritos = 0,
                         totalOcupados = 0,
                         mensaje = "",
@@ -412,7 +412,7 @@ namespace ProyectoIdentity.Controllers
                 var resultado = new
                 {
                     productosActivos = productosActivos,    // ✅ NOMBRE CORRECTO
-                    limite = 4,
+                    limite = 11,
                     disponibles = disponibles,
                     productosEnCarritos = productosCarritos, // ✅ NOMBRE CORRECTO
                     totalOcupados = productosActivos + productosCarritos,
@@ -433,8 +433,8 @@ namespace ProyectoIdentity.Controllers
                 return Json(new
                 {
                     productosActivos = 0,
-                    limite = 4,
-                    disponibles = 4,
+                    limite = 11,
+                    disponibles = 11,
                     productosEnCarritos = 0,
                     totalOcupados = 0,
                     mensaje = "Error al obtener límites",
@@ -593,12 +593,12 @@ namespace ProyectoIdentity.Controllers
 
                 // Validar límite de productos en el carrito
                 int totalProductos = carritoItems.Sum(item => item.Cantidad);
-                if (totalProductos > 3)
+                if (totalProductos > 10)
                 {
                     return Json(new
                     {
                         success = false,
-                        message = $"No puedes procesar un pedido con {totalProductos} productos. Máximo permitido: 3 productos."
+                        message = $"No puedes procesar un pedido con {totalProductos} productos. Máximo permitido: 10 productos."
                     });
                 }
 
@@ -1245,7 +1245,7 @@ namespace ProyectoIdentity.Controllers
             return new LimiteAlcanzadoViewModel
             {
                 PedidosActivos = countActivos,
-                LimiteMaximo = 4,
+                LimiteMaximo = 10,
                 PedidosPendientes = pedidosActivos.Select(p => new PedidoPendienteInfo
                 {
                     Id = p.Id,
@@ -1460,7 +1460,7 @@ namespace ProyectoIdentity.Controllers
         // ✅ MÉTODO ValidarLimitesGlobales CORREGIDO PARA INCLUIR CARRITO ACTUAL
         private async Task<(bool permitido, int productosActivos, int productosCarritos, int disponibles, string mensaje)> ValidarLimitesGlobales(string usuarioId)
         {
-            const int LIMITE_MAXIMO = 4;
+            const int LIMITE_MAXIMO = 11;
 
             try
             {
@@ -1539,7 +1539,7 @@ namespace ProyectoIdentity.Controllers
                     }
                     else if (totalOcupados >= LIMITE_MAXIMO)
                     {
-                        mensaje = $"Límite alcanzado: {productosActivos} en pedidos activos + {productosCarritos} en carritos = {totalOcupados}/3 productos.";
+                        mensaje = $"Límite alcanzado: {productosActivos} en pedidos activos + {productosCarritos} en carritos = {totalOcupados}/10 productos.";
                     }
                 }
 
@@ -1571,8 +1571,8 @@ namespace ProyectoIdentity.Controllers
             if (cantidadAAgregar > disponibles)
             {
                 string mensaje = $"Solo puedes agregar {disponibles} producto(s) más. " +
-                                $"Límite: 3 productos total. " +
-                                $"Actualmente: {productosActivos} activos + {productosCarritos} en carritos = {productosActivos + productosCarritos}/3";
+                                $"Límite: 10 productos total. " +
+                                $"Actualmente: {productosActivos} activos + {productosCarritos} en carritos = {productosActivos + productosCarritos}/10";
                 return (false, disponibles, mensaje);
             }
 

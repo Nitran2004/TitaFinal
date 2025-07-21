@@ -601,7 +601,7 @@
 
 <div class="product-container">
     <div id="estado-unificado" class="alert alert-info" style="display: none;">
-        <h6><i class="fas fa-info-circle"></i> Estado unificado de productos</h6>
+        <h6><i class="fas fa-info-circle"></i> Estado de productos</h6>
         <div class="row">
             <div class="col-md-4">
                 <strong>Disponibles:</strong> <span id="disponibles-count">-</span> producto(s) más
@@ -609,13 +609,7 @@
             <div class="col-md-4">
                 <strong>Pedidos realizados:</strong> <span id="activos-count">-</span>
             </div>
-            <div class="col-md-4">
-                <strong>En ambos carritos:</strong> <span id="carritos-count">-</span> productos
-            </div>
         </div>
-        <small class="text-muted d-block mt-2">
-            <em>Límite compartido entre personalización y recomendación IA: <span id="limite-info">0/3</span> productos</em>
-        </small>
     </div>
     <div class="product-header">
         <!-- Imagen del producto MEJORADA -->
@@ -926,8 +920,8 @@
     // ✅ VARIABLES GLOBALES PARA LÍMITES Y CARRITO (CONSERVADAS)
     let limitesActuales = {
         productosActivos: 0,    // ✅ NOMBRE CORREGIDO
-        limite: 4,
-        disponibles: 4,
+        limite: 11,
+        disponibles: 11,
         productosEnCarritos: 0  // ✅ NOMBRE CORREGIDO
     };
 
@@ -940,8 +934,8 @@
             // ✅ ASEGURAR QUE LOS VALORES NO SEAN UNDEFINED
             limitesActuales = {
                 productosActivos: data.productosActivos || 0,
-                limite: 3,  // ✅ LÍMITE VISUAL SIEMPRE 3
-                disponibles: Math.min(3, data.disponibles || 0),  // ✅ MÁXIMO 3 VISUAL
+                limite: 10,  // ✅ LÍMITE VISUAL SIEMPRE 3
+                disponibles: Math.min(10, data.disponibles || 0),  // ✅ MÁXIMO 3 VISUAL
                 productosEnCarritos: data.productosEnCarritos || 0
             };
 
@@ -963,8 +957,8 @@
             // ✅ VALORES POR DEFECTO EN CASO DE ERROR
             limitesActuales = {
                 productosActivos: 0,
-                limite: 3,  // ✅ LÍMITE VISUAL 3
-                disponibles: 3,
+                limite: 10,  // ✅ LÍMITE VISUAL 3
+                disponibles: 10,
                 productosEnCarritos: 0
             };
         }
@@ -984,7 +978,7 @@
             const totalOcupados = productosActivos + productosCarritos;
 
             // ✅ APLICAR LÍMITE VISUAL DE 3 PARA TODO
-            const LIMITE_VISUAL = 3;
+            const LIMITE_VISUAL = 10;
             const productosActivosVisual = Math.min(LIMITE_VISUAL, productosActivos);
             const productosCarritosVisual = Math.min(LIMITE_VISUAL, productosCarritos);
             const totalVisual = productosActivosVisual + productosCarritosVisual;
@@ -1004,8 +998,6 @@
             // ✅ ACTUALIZAR INTERFAZ CON VALORES VISUALES (LÍMITE 3)
             document.getElementById('disponibles-count').textContent = disponiblesVisual;
             document.getElementById('activos-count').textContent = productosActivosVisual + '/' + LIMITE_VISUAL;
-            document.getElementById('carritos-count').textContent = productosCarritosVisual;
-            document.getElementById('limite-info').textContent = totalVisual + '/' + LIMITE_VISUAL;
 
             // ✅ MOSTRAR/OCULTAR Y CAMBIAR COLOR SEGÚN ESTADO
             const estadoElement = document.getElementById('estado-unificado');
@@ -1027,7 +1019,7 @@
             }
 
             console.log('[DEBUG] Estado unificado actualizado en detalle');
-            console.log(`[DEBUG] Visual: ${disponiblesVisual} disponibles, ${totalVisual}/3 ocupados`);
+            console.log(`[DEBUG] Visual: ${disponiblesVisual} disponibles, ${totalVisual}/10 ocupados`);
 
             // ✅ ACTUALIZAR INTERFAZ DE LÍMITES EXISTENTE
             actualizarInterfazLimites();
@@ -1037,8 +1029,8 @@
             // ✅ VALORES POR DEFECTO SEGUROS CON LÍMITE 3
             limitesActuales = {
                 productosActivos: 0,
-                limite: 3,  // ✅ LÍMITE VISUAL 3
-                disponibles: 3,
+                limite: 10,  // ✅ LÍMITE VISUAL 3
+                disponibles: 10,
                 productosEnCarritos: 0,
                 totalOcupados: 0,
                 permitido: true,
@@ -1058,7 +1050,7 @@
         const cantidadActual = parseInt(cantidadInput.value) || 1;
 
         // ✅ PERMITIR HASTA 3 PRODUCTOS REALES (aunque el backend maneja 4)
-        const maxPermitido = Math.min(3, Math.max(1, limitesActuales.disponibles));
+        const maxPermitido = Math.min(10, Math.max(1, limitesActuales.disponibles));
 
         console.log(`[DEBUG] Cantidad actual: ${cantidadActual}, Max permitido: ${maxPermitido}, Disponibles: ${limitesActuales.disponibles}`);
 
@@ -1081,7 +1073,7 @@
             botonMas.style.cursor = debeDeshabilitarse ? 'not-allowed' : 'pointer';
 
             if (debeDeshabilitarse) {
-                botonMas.title = 'Máximo 3 productos por pedido';
+                botonMas.title = 'Máximo 10 productos por pedido';
             } else {
                 botonMas.title = 'Agregar uno más';
             }
@@ -1101,7 +1093,7 @@
         const formContainer = document.querySelector('.personalization-form');
         const botonAgregar = formContainer.querySelector('.btn-success');
 
-        const disponiblesVisuales = Math.min(3, limitesActuales.disponibles);
+        const disponiblesVisuales = Math.min(10, limitesActuales.disponibles);
 
         if (disponiblesVisuales <= 0) {
             botonAgregar.disabled = true;
@@ -1119,7 +1111,7 @@
             mensajeElement.innerHTML = `
                     <h6><i class="fas fa-exclamation-triangle"></i> No puedes agregar más productos</h6>
                     <p>${mensaje}</p>
-                    <p><small>El límite máximo es 3 productos activos en total.</small></p>
+                    <p><small>El límite máximo es 10 productos activos en total.</small></p>
                     <a href="@Url.Action("VerCarrito")" class="btn btn-outline-primary btn-sm">
                         Ver carrito actual
                     </a>
@@ -1142,17 +1134,17 @@
         }
 
         // ✅ LÍMITE VISUAL DE 3 (aunque el backend permita 4)
-        if (nuevaCantidad > 3) {
+        if (nuevaCantidad > 10) {
             console.log('[DEBUG] Límite visual máximo: 3');
             if (cambio > 0) {
                 // Si está intentando aumentar más de 3, no hacer nada
                 return;
             }
-            nuevaCantidad = 3;
+            nuevaCantidad = 10;
         }
 
         // ✅ TAMBIÉN RESPETAR LOS DISPONIBLES DEL BACKEND
-        const maxDisponibles = Math.min(3, limitesActuales.disponibles);
+        const maxDisponibles = Math.min(10, limitesActuales.disponibles);
         if (nuevaCantidad > maxDisponibles) {
             console.log(`[DEBUG] No se puede exceder disponibles: ${maxDisponibles}`);
             if (cambio > 0) {
@@ -1249,14 +1241,14 @@
         console.log(`[DEBUG] Intentando agregar ${cantidad} productos. Disponibles reales: ${limitesActuales.disponibles}`);
 
         // ✅ VALIDACIÓN CON LÍMITE VISUAL DE 3
-        if (cantidad > 3) {
-            alert('No puedes agregar más de 3 productos por pedido.');
+        if (cantidad > 10) {
+            alert('No puedes agregar más de 10 productos por pedido.');
             return;
         }
 
         // ✅ PERO USAR LOS DISPONIBLES REALES DEL BACKEND
         if (cantidad > limitesActuales.disponibles) {
-            alert(`Solo puedes agregar ${Math.min(3, limitesActuales.disponibles)} producto(s) más.`);
+            alert(`Solo puedes agregar ${Math.min(10, limitesActuales.disponibles)} producto(s) más.`);
             return;
         }
 

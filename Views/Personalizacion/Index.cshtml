@@ -538,13 +538,10 @@
             <div class="col-md-4">
                 <strong>Pedidos realizados:</strong> <span id="activos-count">-</span>
             </div>
-@*             <div class="col-md-4">
-                <strong>En ambos carritos:</strong> <span id="carritos-count">-</span> productos
-            </div> *@
         </div>
-@*         <small class="text-muted d-block mt-2">
-            <em>Límite compartido entre personalización y recomendación IA: <span id="limite-info">0/3</span> productos</em>
-        </small> *@
+        <small class="text-muted d-block mt-2">
+            <em>Límite: <span id="limite-info">0/10</span> productos</em>
+        </small>
     </div>
 </div>
 
@@ -766,8 +763,8 @@
     // ✅ VARIABLES GLOBALES PARA LÍMITES CORREGIDAS - LÍMITE VISUAL SIEMPRE 3
     let limitesActuales = {
         productosActivos: 0,        
-        limite: 3,                  // ✅ LÍMITE VISUAL SIEMPRE 3
-        disponibles: 3,             // ✅ DISPONIBLES MÁXIMO 3
+        limite: 10,                  // ✅ LÍMITE VISUAL SIEMPRE 3
+        disponibles: 10,             // ✅ DISPONIBLES MÁXIMO 3
         productosEnCarritos: 0,     
         totalOcupados: 0,
         permitido: true,
@@ -785,12 +782,12 @@
             // ✅ TOMAR DATOS DEL BACKEND PERO APLICAR LÍMITE VISUAL DE 3
             const productosActivos = data.productosActivos || 0;
             const productosCarritos = data.productosEnCarritos || 0;
-            const limiteBackend = data.limite || 4;  // Backend puede seguir usando 4
+            const limiteBackend = data.limite || 11;  // Backend puede seguir usando 4
             const disponiblesBackend = data.disponibles || 0;
             const totalOcupados = productosActivos + productosCarritos;
 
             // ✅ APLICAR LÍMITE VISUAL DE 3 PARA TODO
-            const LIMITE_VISUAL = 3;
+            const LIMITE_VISUAL = 10;
             const productosActivosVisual = Math.min(LIMITE_VISUAL, productosActivos);
             const productosCarritosVisual = Math.min(LIMITE_VISUAL, productosCarritos);
             const totalVisual = productosActivosVisual + productosCarritosVisual;
@@ -813,7 +810,6 @@
             // ✅ ACTUALIZAR INTERFAZ CON VALORES VISUALES (LÍMITE 3)
             document.getElementById('disponibles-count').textContent = disponiblesVisual;
             document.getElementById('activos-count').textContent = productosActivosVisual + '/' + LIMITE_VISUAL;
-            document.getElementById('carritos-count').textContent = productosCarritosVisual;
             document.getElementById('limite-info').textContent = totalVisual + '/' + LIMITE_VISUAL;
 
             // ✅ MOSTRAR/OCULTAR Y CAMBIAR COLOR SEGÚN ESTADO
@@ -860,14 +856,14 @@
             }
 
             console.log('[DEBUG] Estado unificado actualizado:', limitesActuales);
-            console.log(`[DEBUG] Visual: ${disponiblesVisual} disponibles, ${totalVisual}/3 ocupados`);
+            console.log(`[DEBUG] Visual: ${disponiblesVisual} disponibles, ${totalVisual}/10 ocupados`);
         } catch (error) {
             console.error('Error al cargar estado unificado:', error);
             // ✅ VALORES POR DEFECTO SEGUROS CON LÍMITE 3
             limitesActuales = {
                 productosActivos: 0,
-                limite: 3,  // ✅ LÍMITE VISUAL 3
-                disponibles: 3,
+                limite: 10,  // ✅ LÍMITE VISUAL 3
+                disponibles: 10,
                 productosEnCarritos: 0,
                 totalOcupados: 0,
                 permitido: true,
@@ -884,8 +880,8 @@
         await cargarEstadoUnificado();
 
         // ✅ USAR LÍMITE VISUAL DE 3
-        if (limitesActuales.totalOcupados >= 3) {
-            console.log('[DEBUG] Límite de 3 productos alcanzado - mostrando modal');
+        if (limitesActuales.totalOcupados >= 10) {
+            console.log('[DEBUG] Límite de 10 productos alcanzado - mostrando modal');
             mostrarModalLimite();
             return false;
         }
@@ -909,7 +905,7 @@
         content.innerHTML = `
             <div class="alert alert-warning">
                 <h6><i class="fas fa-exclamation-triangle"></i> Límite alcanzado</h6>
-                <p>Has alcanzado el límite máximo de <strong>3 productos</strong> entre personalización y recomendación IA.</p>
+                <p>Has alcanzado el límite máximo de <strong>10 productos</strong> entre personalización y recomendación IA.</p>
             </div>
             <div class="row">
                 <div class="col-6">

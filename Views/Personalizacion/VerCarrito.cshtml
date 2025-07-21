@@ -15,6 +15,9 @@
                 <strong>Pedidos realizados:</strong> <span id="activos-count">-</span>
             </div>
         </div>
+        <small class="text-muted d-block mt-2">
+            <em>Límite: <span id="limite-info">0/10</span> productos</em>
+        </small>
     </div>
     <div class="row">
         <div class="col-md-8">
@@ -250,7 +253,7 @@
             return;
         }
 
-        if (nuevaCantidad > 3) nuevaCantidad = 3;
+        if (nuevaCantidad > 10) nuevaCantidad = 10;
 
         // Actualizar carrito local
         carritoLocal[index].cantidad = nuevaCantidad;
@@ -281,7 +284,7 @@
             const totalOcupados = productosActivos + productosCarritos;
 
             // ✅ APLICAR LÍMITE VISUAL DE 3 PARA TODO
-            const LIMITE_VISUAL = 3;
+            const LIMITE_VISUAL = 10;
             const productosActivosVisual = Math.min(LIMITE_VISUAL, productosActivos);
             const productosCarritosVisual = Math.min(LIMITE_VISUAL, productosCarritos);
             const totalVisual = productosActivosVisual + productosCarritosVisual;
@@ -290,7 +293,6 @@
             // ✅ ACTUALIZAR INTERFAZ CON VALORES VISUALES (LÍMITE 3)
             document.getElementById('disponibles-count').textContent = disponiblesVisual;
             document.getElementById('activos-count').textContent = productosActivosVisual + '/' + LIMITE_VISUAL;
-            document.getElementById('carritos-count').textContent = productosCarritosVisual;
             document.getElementById('limite-info').textContent = totalVisual + '/' + LIMITE_VISUAL;
 
             // ✅ MOSTRAR/OCULTAR Y CAMBIAR COLOR SEGÚN ESTADO
@@ -313,7 +315,7 @@
             }
 
             console.log('[DEBUG] Estado unificado actualizado en carrito');
-            console.log(`[DEBUG] Visual: ${disponiblesVisual} disponibles, ${totalVisual}/3 ocupados`);
+            console.log(`[DEBUG] Visual: ${disponiblesVisual} disponibles, ${totalVisual}/10 ocupados`);
 
         } catch (error) {
             console.error('Error al cargar estado unificado:', error);
@@ -412,11 +414,11 @@
         // ✅ ACTUALIZAR BOTÓN PROCESAR CON VALIDACIONES MEJORADAS
         const btnProcesar = document.getElementById('btnProcesar');
         if (btnProcesar) {
-            const puedeConfirmar = totalItems > 0 && totalItems <= 3;
+            const puedeConfirmar = totalItems > 0 && totalItems <= 10;
             btnProcesar.disabled = !puedeConfirmar;
 
             if (totalItems > 3) {
-                btnProcesar.innerHTML = '<i class="fas fa-ban"></i> Límite Excedido (3 max)';
+                btnProcesar.innerHTML = '<i class="fas fa-ban"></i> Límite Excedido (10 max)';
                 btnProcesar.className = 'btn btn-danger w-100';
             } else if (totalItems === 0) {
                 btnProcesar.innerHTML = '<i class="fas fa-cart-plus"></i> Carrito Vacío';
@@ -462,8 +464,8 @@
         const totalItems = carritoLocal.reduce((total, item) => total + (item.cantidad || 0), 0);
 
         // ✅ VALIDACIONES ANTES DE PROCESAR
-        if (totalItems > 3) {
-            alert('No puedes procesar un pedido con más de 3 productos. Reduce la cantidad.');
+        if (totalItems > 10) {
+            alert('No puedes procesar un pedido con más de 10 productos. Reduce la cantidad.');
             return;
         }
 
@@ -525,10 +527,10 @@
 
     // ✅ AGREGAR ESTA VARIABLE AL INICIO DEL SCRIPT
     let limitesProductos = {
-        disponibles: 3,
+        disponibles: 10,
         productosActuales: 0,
         productosEnCarritos: 0,
-        limite: 3
+        limite: 10
     };
     // ✅ FUNCIÓN PARA CARGAR LÍMITES (AGREGAR)
     async function cargarLimitesCarrito() {
@@ -541,7 +543,7 @@
                 disponibles: data.disponibles || 0,
                 productosActuales: data.productosActivos || 0,
                 productosEnCarritos: data.productosEnCarritos || 0,
-                limite: data.limite || 3
+                limite: data.limite || 10
             };
 
             console.log('[DEBUG] Límites cargados en carrito:', limitesProductos);
@@ -550,10 +552,10 @@
             console.error('Error al cargar límites:', error);
             // ✅ VALORES POR DEFECTO EN CASO DE ERROR
             limitesProductos = {
-                disponibles: 3,
+                disponibles: 10,
                 productosActuales: 0,
                 productosEnCarritos: 0,
-                limite: 3
+                limite: 10
             };
         }
     }

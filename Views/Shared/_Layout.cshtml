@@ -339,23 +339,14 @@
 
                         @if (User.IsInRole("Administrador") || User.IsInRole("Registrado"))
                         {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="navbarCarritos" role="button" data-bs-toggle="dropdown">
-                                    <i class="fas fa-shopping-cart"></i> Mis Carritos
+
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Personalizacion" asp-action="VerCarrito">
+                                    <i class="fas fa-shopping-cart"></i> Mi Carrito
                                 </a>
-                                <ul class="dropdown-menu">
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Personalizacion" asp-action="VerCarrito">
-                                            <i class="fas fa-utensils"></i> Carrito Personalización
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="MenuRecomendacion" asp-action="VerCarrito">
-                                            <i class="fas fa-robot"></i> Carrito Recomendaciones IA
-                                        </a>
-                                    </li>
-                                </ul>
                             </li>
+
+
                         }
 
                         <!-- PARA REGISTRADO - Menú normal como antes -->
@@ -367,7 +358,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="MenuRecomendacion" asp-action="Recomendacion">
+                                <a class="nav-link" asp-controller="Home" asp-action="Chat">
                                     Recomendaciones IA
                                 </a>
                             </li>
@@ -399,12 +390,7 @@
                                             <i class="fas fa-exchange-alt"></i> Mis Canjes
                                         </a>
                                     </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="PedidoRecomendacion" asp-action="MisPedidos">
-                                            <i class="fas fa-star"></i> Mis Pedidos Recomendación
-                                        </a>
-                                    </li>
-                                    
+                                
                                 </ul>
                             </li>
                         }                    
