@@ -48,6 +48,8 @@ namespace ProyectoIdentity.Servicios
                 _logger.LogInformation("Enviando solicitud a OpenAI...");
 
                 var response = await _httpClient.PostAsync("chat/completions", content);
+                _logger.LogInformation("Respuesta obtenida de OpenAI exitosamente");
+                _logger.LogInformation($"\nRESPUESTA RESULTADO:\n{response}\n");
 
                 if (response.IsSuccessStatusCode)
                 {

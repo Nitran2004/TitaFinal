@@ -50,49 +50,79 @@ namespace ProyectoIdentity.Servicios
             {
                 _logger.LogInformation("Procesando consulta: {Consulta}", consulta);
 
-                // Intentar con OpenAI primero
-                var recomendacion = await IntentarConOpenAI(consulta, productos);
-
-                // Si OpenAI no está disponible, usar método de fallback
-                if (recomendacion.ProductoId == -1 && string.IsNullOrEmpty(recomendacion.Respuesta))
-                {
-                    _logger.LogInformation("OpenAI no disponible, usando método de respaldo...");
-                    recomendacion = await FallbackRecomendacion(consulta);
-                }
-
+                // Solo usar OpenAI, sin fallbacks
+                var recomendacion = await ProcesarConOpenAI(consulta, productos);
                 return recomendacion;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error obteniendo recomendación");
-                return await FallbackRecomendacion(consulta);
+                return new RecomendacionIA
+                {
+                    Respuesta = "Lo siento, hubo un error procesando tu consulta. Por favor intenta de nuevo.",
+                    ProductoId = -1,
+                    Puntuacion = 0
+                };
             }
         }
 
-        private async Task<RecomendacionIA> IntentarConOpenAI(string consulta, List<Producto> productos)
+        private async Task<RecomendacionIA> ProcesarConOpenAI(string consulta, List<Producto> productos)
         {
             try
             {
-                var productosFiltrados = FiltrarProductosRelevantes(consulta, productos);
+                // Verificar si OpenAI está disponible
+                var conexionValida = await _openAIService.VerificarConexion();
+                if (!conexionValida)
+                {
+                    _logger.LogWarning("OpenAI no está disponible");
+                    return new RecomendacionIA
+                    {
+                        Respuesta = "El servicio de recomendaciones no está disponible en este momento. Por favor, intenta más tarde.",
+                        ProductoId = -1,
+                        Puntuacion = 0
+                    };
+                }
 
+                var productosFiltrados = FiltrarProductosRelevantes(consulta, productos);
                 var prompt = CrearPromptRecomendacion(consulta, productos);
+
+                _logger.LogInformation("Enviando prompt a OpenAI para consulta: {Consulta}", consulta);
+
                 var respuestaIA = await _openAIService.GenerarRespuesta(prompt);
+                _logger.LogInformation($"\nRESPUESTA JIMMY:\n{respuestaIA}\n");
 
                 if (!string.IsNullOrEmpty(respuestaIA))
                 {
+                    _logger.LogInformation("Respuesta recibida de OpenAI: {Respuesta}", respuestaIA);
+
                     var recomendacion = ProcesarRespuestaIA(respuestaIA, consulta);
-                    _logger.LogInformation("Recomendación obtenida via OpenAI - ProductoId: {ProductoId}", recomendacion.ProductoId);
+                    _logger.LogInformation("Recomendación procesada - ProductoId: {ProductoId}", recomendacion.ProductoId);
                     return recomendacion;
+                }
+                else
+                {
+                    _logger.LogWarning("OpenAI retornó respuesta vacía");
+                    return new RecomendacionIA
+                    {
+                        Respuesta = "No pude generar una recomendación en este momento. Por favor, reformula tu pregunta.",
+                        ProductoId = -1,
+                        Puntuacion = 0
+                    };
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Error con OpenAI, usando método alternativo");
+                _logger.LogError(ex, "Error procesando con OpenAI: {Mensaje}", ex.Message);
+                return new RecomendacionIA
+                {
+                    Respuesta = "Hubo un error técnico. Por favor, intenta de nuevo en unos momentos.",
+                    ProductoId = -1,
+                    Puntuacion = 0
+                };
             }
-
-            return await FallbackRecomendacion(consulta);
         }
-        private List<Producto> FiltrarProductosRelevantes(string consulta, List<Producto> productos, int maxProductos = 10)
+
+        private List<Producto> FiltrarProductosRelevantes(string consulta, List<Producto> productos, int maxProductos = 15)
         {
             // Busca coincidencias en nombre, categoría o ingredientes (ignorando mayúsculas/minúsculas)
             var productosFiltrados = productos
@@ -106,8 +136,11 @@ namespace ProyectoIdentity.Servicios
 
             if (!productosFiltrados.Any())
             {
-                // Si no hay coincidencias, toma los primeros N productos disponibles como fallback
-                productosFiltrados = productos.Take(maxProductos).ToList();
+                // Si no hay coincidencias, toma los primeros N productos disponibles
+                productosFiltrados = productos
+                    .Where(p => p.Cantidad > 0)
+                    .Take(maxProductos)
+                    .ToList();
             }
 
             return productosFiltrados;
@@ -116,443 +149,120 @@ namespace ProyectoIdentity.Servicios
         private string CrearPromptRecomendacion(string consulta, List<Producto> productos)
         {
             var contexto = string.Join("\n\n", productos.Select(p =>
-                $"ID: {p.Id}\n" + // Si tienes un campo Id
+                $"ID: {p.Id}\n" +
                 $"Nombre: {p.Nombre}\n" +
                 $"Categoría: {p.Categoria}\n" +
                 $"Precio: {p.Precio}\n" +
                 $"Descripción: {p.Descripcion}\n" +
                 $"Ingredientes: {p.Ingredientes}\n" +
-                //$"Información nutricional: {p.InfoNutricional}\n" +
                 $"Alérgenos: {p.Alergenos}"
             ));
 
-
             return $@"
-                Eres un asistente especializado en recomendaciones de productos para un restaurante/bar.
+                Eres un asistente especializado en recomendaciones de productos para un restaurante/bar en Ecuador.
 
-                PRODUCTOS DISPONIBLES: {contexto}    
+                PRODUCTOS DISPONIBLES:
+                {contexto}    
 
                 CONSULTA DEL CLIENTE: ""{consulta}""
 
                 INSTRUCCIONES:
                 1. La consulta del cliente puede incluir jerga ecuatoriana, expresiones locales o dialecto del Ecuador. Interprétala de manera natural y correcta.
                 2. Analiza cuidadosamente la consulta del cliente
-                3. Revisa toda la información de los productos: nombre, descripción, categoría, ingredientes, alérgenos, información nutricional.
-                4. Si el cliente usa expresiones como “sin [ingrediente]”, “no quiero [alérgeno]”, “no me gusta [ingrediente]”, “me hace daño [algo]”, “me cae mal [algo]” o similares, interpreta eso como una **restricción alimentaria** y excluye productos que contengan ese ingrediente o alérgeno.
-                5. Si el cliente menciona de forma general “quiero comida”, “algo para comer”, “tengo hambre”, “qué hay para comer”, interpreta eso como una búsqueda general dentro de las categorías: **Pizza**, **Sánduches**, **Picadas** y **Promo**.
-                6. Si el cliente dice frases como “algo para comer y beber”, interpreta eso como una solicitud de productos de la categoría **Promo**, que incluye combinaciones de comida y bebida.
-                7. Responde en formato JSON con esta estructura exacta:
-                {{
-                    ""productoId"": [ID del producto recomendado o -1 si no hay coincidencia],
-                    ""respuesta"": ""[Respuesta amigable y personalizada para el cliente]"",
-                    ""puntuacion"": [número entre 0 y 100 indicando qué tan seguro estás de la recomendación]
-                }}
+                3. Revisa toda la información de los productos: nombre, descripción, categoría, ingredientes, alérgenos.
+                4. Si el cliente usa expresiones como ""sin [ingrediente]"", ""no quiero [alérgeno]"", ""no me gusta [ingrediente]"", ""me hace daño [algo]"", ""me cae mal [algo]"" o similares, interpreta eso como una **restricción alimentaria** y excluye productos que contengan ese ingrediente o alérgeno.
+                5. Si el cliente menciona de forma general ""quiero comida"", ""algo para comer"", ""tengo hambre"", ""qué hay para comer"", interpreta eso como una búsqueda general dentro de las categorías: **Pizza**, **Sánduches**, **Picadas** y **Promo**.
+                6. Si el cliente dice frases como ""algo para comer y beber"", interpreta eso como una solicitud de productos de la categoría **Promo**, que incluye combinaciones de comida y bebida.
+
+                
+
+                IMPORTANTE: Si no puedes generar un JSON válido por cualquier razón, responde SOLO con texto conversacional amigable explicando tu recomendación.
 
                 REGLAS:
-               - Si el cliente pregunta por algo específico (como pizza, cerveza, cóctel), busca en esa categoría.
+                - Si el cliente pregunta por algo específico (como pizza, cerveza, cóctel), busca en esa categoría.
                 - Si menciona restricciones alimentarias (sin gluten, vegano, etc.), evita productos incompatibles.
-                - Si el cliente usa expresiones como “sin [ingrediente]”, “no quiero [alérgeno]”, “no me gusta [ingrediente]”, “me hace daño [algo]”, “me cae mal [algo]” o similares, interpreta eso como una restricción alimentaria y excluye productos que contengan ese ingrediente o alérgeno.
-                - Si el cliente menciona de forma general “quiero comida”, “algo para comer”, “tengo hambre”, “qué hay para comer”, interpreta eso como una búsqueda general dentro de las categorías: Pizza, Sánduches, Picadas y Promo.
-                - Si el cliente dice frases como “algo para comer y beber”, interpreta eso como una solicitud de productos de la categoría Promo.
-                - Si pregunta por recomendaciones generales, sugiere productos populares.
+                - Si el cliente usa expresiones como ""sin [ingrediente]"", ""no quiero [alérgeno]"", interpreta eso como una restricción alimentaria.
+                - Si pregunta por recomendaciones generales, sugiere productos populares o que destaquen.
                 - La respuesta debe ser conversacional y explicar por qué recomiendas ese producto.
-                - Si no encuentras ningún producto que coincida con lo que el cliente pide (por nombre, categoría, o ingredientes), usa productoId: -1 y responde con un mensaje empático como: “Lo sentimos, no tenemos exactamente eso, pero te sugiero esto otro...”, seguido de una recomendación útil y general.
+                - Si no encuentras ningún producto que coincida exactamente, sugiere alternativas similares.
                 - Si el precio del producto es de hasta $5, considérese barato.
                 - Si el precio es más de $8, considérese caro.
-                Responde SOLO con el JSON, sin texto adicional.";
+                - Siempre sé útil y amigable, incluso si no hay una coincidencia perfecta.
+
+                Responde de la manera que mejor puedas ayudar al cliente:";
         }
 
         private RecomendacionIA ProcesarRespuestaIA(string respuestaIA, string consultaOriginal)
         {
             try
             {
-                // Limpiar la respuesta para extraer solo el JSON
+                // Intentar extraer y parsear el JSON
                 var jsonInicio = respuestaIA.IndexOf('{');
                 var jsonFin = respuestaIA.LastIndexOf('}');
 
                 if (jsonInicio >= 0 && jsonFin > jsonInicio)
                 {
                     var jsonStr = respuestaIA.Substring(jsonInicio, jsonFin - jsonInicio + 1);
-                    var respuestaJson = JsonSerializer.Deserialize<JsonElement>(jsonStr);
 
-                    var productoId = respuestaJson.TryGetProperty("productoId", out var idProp) ? idProp.GetInt32() : -1;
-                    var respuesta = respuestaJson.TryGetProperty("respuesta", out var respProp) ? respProp.GetString() : "";
-                    var puntuacion = respuestaJson.TryGetProperty("puntuacion", out var puntProp) ? puntProp.GetDouble() : 0;
-
-                    var producto = _productos.FirstOrDefault(p => p.Id == productoId);
-
-                    return new RecomendacionIA
+                    try
                     {
-                        ProductoId = productoId,
-                        Respuesta = respuesta ?? "Te recomiendo revisar nuestro menú completo.",
-                        Puntuacion = puntuacion,
-                        NombreProducto = producto?.Nombre ?? "",
-                        Categoria = producto?.Categoria ?? "",
-                        Precio = producto?.Precio ?? 0,
-                        Descripcion = producto?.Descripcion,
-                        Alergenos = producto?.Alergenos,
-                        Ingredientes = producto?.Ingredientes,
-                        Cantidad = producto?.Cantidad ?? 0
-                    };
+                        var respuestaJson = JsonSerializer.Deserialize<JsonElement>(jsonStr);
+
+                        var productoId = respuestaJson.TryGetProperty("productoId", out var idProp) ? idProp.GetInt32() : -1;
+                        var respuesta = respuestaJson.TryGetProperty("respuesta", out var respProp) ? respProp.GetString() : "";
+                        var puntuacion = respuestaJson.TryGetProperty("puntuacion", out var puntProp) ? puntProp.GetDouble() : 0;
+
+                        var producto = _productos.FirstOrDefault(p => p.Id == productoId);
+
+                        _logger.LogInformation("JSON parseado exitosamente - ProductoId: {ProductoId}", productoId);
+
+                        return new RecomendacionIA
+                        {
+                            ProductoId = productoId,
+                            Respuesta = respuesta ?? "Te recomiendo revisar nuestro menú completo.",
+                            Puntuacion = puntuacion,
+                            NombreProducto = producto?.Nombre ?? "",
+                            Categoria = producto?.Categoria ?? "",
+                            Precio = producto?.Precio ?? 0,
+                            Descripcion = producto?.Descripcion,
+                            Alergenos = producto?.Alergenos,
+                            Ingredientes = producto?.Ingredientes,
+                            Cantidad = producto?.Cantidad ?? 0
+                        };
+                    }
+                    catch (JsonException jsonEx)
+                    {
+                        _logger.LogWarning(jsonEx, "Error parseando JSON específico, usando respuesta completa de OpenAI");
+                    }
+                }
+                else
+                {
+                    _logger.LogInformation("No se encontró JSON válido en la respuesta, usando respuesta completa de OpenAI");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Error procesando respuesta IA, usando fallback");
+                _logger.LogWarning(ex, "Error general procesando respuesta IA, preservando respuesta original de OpenAI");
             }
+
+            // PRESERVAR SIEMPRE LA RESPUESTA DE OPENAI
+            // Si llegamos aquí, significa que no pudimos parsear JSON, pero tenemos una respuesta válida de OpenAI
+            _logger.LogInformation("Preservando respuesta completa de OpenAI como texto");
 
             return new RecomendacionIA
             {
                 ProductoId = -1,
-                Respuesta = "Basándome en tu consulta, te sugiero revisar nuestro menú. ¡Tenemos muchas opciones deliciosas!",
-                Puntuacion = 50
+                Respuesta = respuestaIA, // ¡PRESERVAMOS LA RESPUESTA COMPLETA DE OPENAI!
+                Puntuacion = 80, // Alta puntuación porque viene de OpenAI
+                NombreProducto = "",
+                Categoria = "",
+                Precio = 0,
+                Descripcion = null,
+                Alergenos = null,
+                Ingredientes = null,
+                Cantidad = 0
             };
         }
-
-        private async Task<RecomendacionIA> FallbackRecomendacion(string consulta)
-        {
-            // Método de respaldo usando lógica simple de palabras clave
-            var consultaLower = consulta.ToLower();
-            Producto? productoRecomendado = null;
-            string respuesta = "";
-
-            // Buscar por categorías principales
-            if (consultaLower.Contains("pizza"))
-            {
-                productoRecomendado = _productos.FirstOrDefault(p =>
-                    p.Categoria?.ToLower().Contains("pizza") == true && p.Cantidad > 0);
-                respuesta = productoRecomendado != null
-                    ? $"Te recomiendo nuestra {productoRecomendado.Nombre}. {productoRecomendado.Descripcion}"
-                    : "Tenemos deliciosas pizzas disponibles. ¡Echa un vistazo a nuestro menú!";
-            }
-            else if (consultaLower.Contains("cerveza") || consultaLower.Contains("beer"))
-            {
-                productoRecomendado = _productos.FirstOrDefault(p =>
-                    p.Categoria?.ToLower().Contains("cerveza") == true && p.Cantidad > 0);
-                respuesta = productoRecomendado != null
-                    ? $"Te sugiero nuestra {productoRecomendado.Nombre}. {productoRecomendado.Descripcion}"
-                    : "Tenemos una gran variedad de cervezas. ¡Revisa nuestras opciones!";
-            }
-            else if (consultaLower.Contains("coctel") || consultaLower.Contains("cóctel") || consultaLower.Contains("cocktail"))
-            {
-                productoRecomendado = _productos.FirstOrDefault(p =>
-                    p.Categoria?.ToLower().Contains("coctel") == true && p.Cantidad > 0);
-                respuesta = productoRecomendado != null
-                    ? $"Prueba nuestro {productoRecomendado.Nombre}. {productoRecomendado.Descripcion}"
-                    : "Nuestros cócteles son especiales. ¡Te van a encantar!";
-            }
-            else if (consultaLower.Contains("sandwich") || consultaLower.Contains("sándwich"))
-            {
-                productoRecomendado = _productos.FirstOrDefault(p =>
-                    p.Categoria?.ToLower().Contains("sándwich") == true && p.Cantidad > 0);
-                respuesta = productoRecomendado != null
-                    ? $"Te recomiendo nuestro {productoRecomendado.Nombre}. {productoRecomendado.Descripcion}"
-                    : "Nuestros sándwiches son frescos y deliciosos. ¡Pruébalos!";
-            }
-            else if (consultaLower.Contains("sin gluten") || consultaLower.Contains("gluten free"))
-            {
-                productoRecomendado = _productos.FirstOrDefault(p =>
-                    !ContieneGluten(p.Alergenos) && p.Cantidad > 0);
-                respuesta = productoRecomendado != null
-                    ? $"Perfecto para ti: {productoRecomendado.Nombre}. Es libre de gluten y delicioso."
-                    : "Tenemos varias opciones sin gluten disponibles. ¡Consulta nuestro menú!";
-            }
-            else if (consultaLower.Contains("bebida") || consultaLower.Contains("tomar"))
-            {
-                productoRecomendado = _productos.FirstOrDefault(p =>
-                    (p.Categoria?.ToLower().Contains("bebida") == true ||
-                     p.Categoria?.ToLower().Contains("cerveza") == true ||
-                     p.Categoria?.ToLower().Contains("coctel") == true) && p.Cantidad > 0);
-                respuesta = productoRecomendado != null
-                    ? $"Para beber te sugiero {productoRecomendado.Nombre}. {productoRecomendado.Descripcion}"
-                    : "Tenemos una gran variedad de bebidas. ¡Revisa nuestro menú de bebidas!";
-            }
-            else if (consultaLower.Contains("comer") || consultaLower.Contains("almorzar") || consultaLower.Contains("comida"))
-            {
-                productoRecomendado = _productos.FirstOrDefault(p =>
-                    (p.Categoria?.ToLower().Contains("pizza") == true ||
-                     p.Categoria?.ToLower().Contains("sándwich") == true ||
-                     p.Categoria?.ToLower().Contains("picada") == true) && p.Cantidad > 0);
-                respuesta = productoRecomendado != null
-                    ? $"Para comer te recomiendo {productoRecomendado.Nombre}. {productoRecomendado.Descripcion}"
-                    : "Tenemos deliciosas opciones de comida. ¡Explora nuestro menú!";
-            }
-            else if (consultaLower.Contains("compartir") || consultaLower.Contains("grupo"))
-            {
-                productoRecomendado = _productos.FirstOrDefault(p =>
-                    (p.Categoria?.ToLower().Contains("pizza") == true ||
-                     p.Categoria?.ToLower().Contains("picada") == true) && p.Cantidad > 0);
-                respuesta = productoRecomendado != null
-                    ? $"Para compartir te sugiero {productoRecomendado.Nombre}. {productoRecomendado.Descripcion}"
-                    : "Tenemos excelentes opciones para compartir. ¡Perfectas para grupos!";
-            }
-            else
-            {
-                // Recomendación general - tomar un producto aleatorio disponible
-                var productosDisponibles = _productos.Where(p => p.Cantidad > 0).ToList();
-                if (productosDisponibles.Any())
-                {
-                    var random = new Random();
-                    productoRecomendado = productosDisponibles[random.Next(productosDisponibles.Count)];
-                    respuesta = $"Te sugiero probar {productoRecomendado.Nombre}. {productoRecomendado.Descripcion}";
-                }
-                else
-                {
-                    respuesta = "¡Tenemos muchas opciones deliciosas! Te invito a explorar nuestro menú completo.";
-                }
-            }
-
-            return new RecomendacionIA
-            {
-                ProductoId = productoRecomendado?.Id ?? -1,
-                Respuesta = respuesta,
-                Puntuacion = productoRecomendado != null ? 75 : 50,
-                NombreProducto = productoRecomendado?.Nombre ?? "",
-                Categoria = productoRecomendado?.Categoria ?? "",
-                Precio = productoRecomendado?.Precio ?? 0,
-                Descripcion = productoRecomendado?.Descripcion,
-                Alergenos = productoRecomendado?.Alergenos,
-                Ingredientes = productoRecomendado?.Ingredientes,
-                Cantidad = productoRecomendado?.Cantidad ?? 0
-            };
-
-            
-        }
-
-        // Método para verificar si contiene Leche
-        private static bool ContieneLeche(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Leche", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Lactosa
-        private static bool ContieneLactosa(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Lactosa", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Pimienta
-        private static bool ContienePimienta(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Pimienta", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Gluten
-        private static bool ContieneGluten(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Gluten", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Sésamo
-        private static bool ContieneSesamo(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Sésamo", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Conservantes
-        private static bool ContieneConservantes(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Conservantes", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Nitratos
-        private static bool ContieneNitratos(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Nitratos", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Trigo
-        private static bool ContieneTrigo(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Trigo", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Mostaza
-        private static bool ContieneMostaza(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Mostaza", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Derivados de cerdo
-        private static bool ContieneDerivadosDeCerdo(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Derivados de cerdo", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Frutos secos
-        private static bool ContieneFrutosSecos(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Frutos secos", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Quesos madurados
-        private static bool ContieneQuesosMadurados(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Quesos madurados", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Leche de búfala
-        private static bool ContieneLecheDeBufala(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Leche de búfala", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Cebada
-        private static bool ContieneCebada(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Cebada", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Malta
-        private static bool ContieneMalta(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Malta", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Sulfitos
-        private static bool ContieneSulfitos(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Sulfitos", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Cítricos
-        private static bool ContieneCitricos(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Cítricos", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Agave 100%
-        private static bool ContieneAgave100(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Agave 100%", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Maracuyá
-        private static bool ContieneMaracuya(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Maracuyá", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Frutos rojos
-        private static bool ContieneFrutosRojos(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Frutos rojos", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Caramelo (colorante E-150d)
-        private static bool ContieneCarameloE150d(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Caramelo (colorante E-150d)", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Menta
-        private static bool ContieneMenta(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Menta", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Botánicos (Enebro)
-        private static bool ContieneBotanicosEnebro(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Botánicos (Enebro)", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Hierbas
-        private static bool ContieneHierbas(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Hierbas", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Huevo
-        private static bool ContieneHuevo(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Huevo", StringComparison.OrdinalIgnoreCase);
-        }
-
-        // Método para verificar si contiene Ajo
-        private static bool ContieneAjo(string? alergenos)
-        {
-            if (string.IsNullOrEmpty(alergenos) || alergenos == "NULL")
-                return false;
-
-            return alergenos.Contains("Ajo", StringComparison.OrdinalIgnoreCase);
-        }
-
 
         public bool EstaInicializado => _inicializado;
         public int CantidadProductos => _productos.Count;
@@ -579,41 +289,6 @@ namespace ProyectoIdentity.Servicios
             }
 
             return false;
-        }
-
-        private int ExtraerCantidadSolicitada(string consulta)
-        {
-            // Buscar números explícitos en la consulta (ej. “2 cervezas”)
-            var matches = Regex.Matches(consulta, @"\d+");
-            if (matches.Count > 0 && int.TryParse(matches[0].Value, out int resultado))
-                return resultado;
-
-            // Si no hay número explícito, devolver 1 como valor por defecto
-            return 1;
-        }
-
-        private List<string> DetectarAlergenosExcluidos(string consulta)
-        {
-            var alergenosPosibles = new List<string>
-    {
-        "Leche", "Lactosa", "Pimienta", "Gluten", "Sésamo", "Conservantes", "Nitratos",
-        "Trigo", "Mostaza", "Derivados de cerdo", "Frutos secos", "Quesos madurados", "Leche de búfala",
-        "Cebada", "Malta", "Sulfitos", "Cítricos", "Agave 100%", "Maracuyá", "Frutos rojos",
-        "Caramelo (colorante E-150d)", "Menta", "Botánicos (Enebro)", "Hierbas", "Huevo", "Ajo"
-    };
-
-            var excluidos = new List<string>();
-
-            foreach (var alergeno in alergenosPosibles)
-            {
-                if (consulta.Contains($"sin {alergeno}", StringComparison.OrdinalIgnoreCase) ||
-                    consulta.Contains($"sin {alergeno.ToLower()}", StringComparison.OrdinalIgnoreCase))
-                {
-                    excluidos.Add(alergeno);
-                }
-            }
-
-            return excluidos;
         }
 
         private static string? AnalizarConsultaInvalida(string consulta)
@@ -645,7 +320,5 @@ namespace ProyectoIdentity.Servicios
 
             return null; // Todo bien, puede continuar
         }
-
-
     }
 }

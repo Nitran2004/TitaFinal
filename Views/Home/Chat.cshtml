@@ -5,14 +5,11 @@
 
 <style>
     /* ============== CSS DEL CHAT ============== */
-
-    /* Aislar estilos del chat para evitar conflictos con el layout */
     .chat-container,
     .chat-container * {
         position: static !important;
     }
 
-    /* Asegurar que el navbar mantenga su z-index */
     .navbar,
     .navbar-nav,
     .dropdown-menu {
@@ -30,7 +27,6 @@
             display: block !important;
         }
 
-    /* Evitar que elementos del chat interfieran */
     .chat-box,
     .product-recommendation,
     .alert.position-fixed {
@@ -97,6 +93,7 @@
         max-width: 70%;
         word-wrap: break-word;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        line-height: 1.4;
     }
 
     .user-message .message-content {
@@ -108,6 +105,13 @@
         background: white;
         border: 1px solid #dee2e6;
         color: #333;
+    }
+
+    /* Mejorado: mejor formato para respuestas largas de OpenAI */
+    .bot-message .message-content {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-width: 85%;
     }
 
     .product-recommendation {
@@ -182,18 +186,6 @@
             .product-actions .btn-warning:hover {
                 transform: translateY(-2px);
                 box-shadow: 0 4px 12px rgba(242, 169, 0, 0.4);
-            }
-
-        .product-actions .btn-outline-primary {
-            border-color: #007bff;
-            color: #007bff;
-        }
-
-            .product-actions .btn-outline-primary:hover {
-                background-color: #007bff;
-                border-color: #007bff;
-                color: white;
-                transform: translateY(-1px);
             }
 
     .input-group {
@@ -298,45 +290,53 @@
         border: 1px solid #f5c6cb;
     }
 
-    /* Notificaciones flotantes */
     .alert.position-fixed {
         animation: slideInRight 0.5s ease-out;
-        top: 80px !important; /* Debajo del navbar */
+        top: 80px !important;
         z-index: 1040 !important;
     }
 
     @@keyframes slideInRight {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
+        from
 
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
+    {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
     }
 
     @@keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
+        from
 
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
     }
 
     @@keyframes pulse {
-        0%, 100% {
-            transform: scale(1);
-        }
+        0%, 100%
 
-        50% {
-            transform: scale(1.1);
-        }
+    {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
     }
 
     .btn .fa-spinner {
@@ -344,67 +344,73 @@
     }
 
     @@keyframes spin {
-        from {
-            transform: rotate(0deg);
-        }
+        from
 
-        to {
-            transform: rotate(360deg);
-        }
+    {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+
     }
 
     @@media (max-width: 768px) {
-        .chat-container {
-            padding: 10px;
+        .chat-container
+
+    {
+        padding: 10px;
+    }
+
+    .message-content {
+        max-width: 85%;
+    }
+
+    .input-group {
+        flex-direction: column;
+    }
+
+    .product-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+        .product-actions .btn {
+            width: 100%;
+            margin: 0;
         }
 
-        .message-content {
-            max-width: 85%;
-        }
-
-        .input-group {
-            flex-direction: column;
-        }
-
-        .product-actions {
-            flex-direction: column;
-            gap: 10px;
-        }
-
-            .product-actions .btn {
-                width: 100%;
-                margin: 0;
-            }
     }
 </style>
 
 <div class="chat-container">
     <div class="chat-header">
-        <h1><i class="fas fa-comments"></i> Chat de Recomendaciones</h1>
-        <p>¡Pregúntame qué te gustaría comer o beber hoy!</p>
+        <h1><i class="fas fa-robot"></i> Chat IA de Recomendaciones</h1>
+        <p>¡Pregúntame qué te gustaría comer o beber hoy! Potenciado por OpenAI</p>
     </div>
 
     <div id="status" class="status-indicator" style="display: none;"></div>
 
     <div class="suggestions">
-        <h4><i class="fas fa-lightbulb"></i> Sugerencias rápidas:</h4>
+        <h4><i class="fas fa-lightbulb"></i> Sugerencias para empezar:</h4>
         <div class="suggestion-buttons">
-            <button class="suggestion-btn" onclick="enviarSugerencia('¿Qué me recomiendan para almorzar?')">
+            <button class="suggestion-btn" onclick="enviarSugerencia('¿Qué me recomiendas para almorzar hoy?')">
                 🍽️ Para almorzar
             </button>
-            <button class="suggestion-btn" onclick="enviarSugerencia('Quiero algo sin gluten')">
+            <button class="suggestion-btn" onclick="enviarSugerencia('Quiero algo sin gluten, ¿qué tienes?')">
                 🌾 Sin gluten
             </button>
-            <button class="suggestion-btn" onclick="enviarSugerencia('¿Cuál es su especialidad?')">
+            <button class="suggestion-btn" onclick="enviarSugerencia('¿Cuál es la especialidad de la casa?')">
                 ⭐ Especialidad
             </button>
-            <button class="suggestion-btn" onclick="enviarSugerencia('Algo para compartir')">
+            <button class="suggestion-btn" onclick="enviarSugerencia('Algo rico para compartir con amigos')">
                 👥 Para compartir
             </button>
-            <button class="suggestion-btn" onclick="enviarSugerencia('Una cerveza refrescante')">
+            <button class="suggestion-btn" onclick="enviarSugerencia('Una cerveza bien fría para este calor')">
                 🍺 Cerveza
             </button>
-            <button class="suggestion-btn" onclick="enviarSugerencia('Un cóctel especial')">
+            <button class="suggestion-btn" onclick="enviarSugerencia('Un cóctel especial para celebrar')">
                 🍹 Cóctel
             </button>
         </div>
@@ -413,17 +419,26 @@
     <div id="chatBox" class="chat-box">
         <div class="message bot-message">
             <div class="message-content">
-                ¡Hola! 👋 Soy tu asistente de recomendaciones. Puedes preguntarme sobre nuestros productos, especialidades, opciones sin gluten, o cualquier preferencia que tengas. ¿En qué puedo ayudarte hoy?
+                ¡Hola! 👋 Soy tu asistente inteligente de recomendaciones, potenciado por OpenAI.
+
+                Puedes preguntarme:
+                • Qué platos o bebidas recomiendo
+                • Opciones sin gluten, veganas, etc.
+                • Especialidades de la casa
+                • Algo específico que tengas ganas de comer
+                • ¡O cualquier cosa relacionada con nuestro menú!
+
+                ¿En qué puedo ayudarte hoy?
             </div>
         </div>
     </div>
 
     <div class="loading" id="loading">
-        <i class="fas fa-spinner fa-spin"></i> Pensando en la mejor recomendación para ti...
+        <i class="fas fa-brain fa-pulse"></i> La IA está analizando nuestro menú para darte la mejor recomendación...
     </div>
 
     <div class="input-group">
-        <input type="text" id="messageInput" class="message-input" placeholder="Escribe tu pregunta aquí..." onkeypress="handleKeyPress(event)">
+        <input type="text" id="messageInput" class="message-input" placeholder="Escribe tu pregunta aquí... ej: 'Algo rico y sin lactosa'" onkeypress="handleKeyPress(event)">
         <button id="sendButton" class="send-button" onclick="enviarMensaje()">
             <i class="fas fa-paper-plane"></i> Enviar
         </button>
@@ -431,31 +446,26 @@
 
     <div class="text-center mt-3">
         <small class="text-muted">
-            <i class="fas fa-info-circle"></i>
-            Este chat usa inteligencia artificial para ayudarte a encontrar el producto perfecto
+            <i class="fas fa-robot"></i>
+            Chat inteligente con IA - Solo las mejores recomendaciones de OpenAI
         </small>
     </div>
 </div>
 
 <script>
-    // ============== JAVASCRIPT COMPLETO DEL CHAT ==============
-
     let isProcessing = false;
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Evitar conflictos con el navbar
+        // Manejo del navbar
         const navbarDropdowns = document.querySelectorAll('.navbar .dropdown-toggle');
-
         navbarDropdowns.forEach(dropdown => {
             dropdown.addEventListener('click', function(e) {
                 e.stopPropagation();
-
                 document.querySelectorAll('.navbar .dropdown-menu.show').forEach(menu => {
                     if (menu !== this.nextElementSibling) {
                         menu.classList.remove('show');
                     }
                 });
-
                 const menu = this.nextElementSibling;
                 if (menu) {
                     menu.classList.toggle('show');
@@ -482,7 +492,7 @@
                 const statusDiv = document.getElementById('status');
                 if (data.estado === 'activo') {
                     statusDiv.className = 'status-indicator status-success';
-                    statusDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${data.mensaje}`;
+                    statusDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${data.mensaje} - IA Lista`;
                     statusDiv.style.display = 'block';
                     setTimeout(() => statusDiv.style.display = 'none', 3000);
                 } else {
@@ -495,7 +505,7 @@
                 console.error('Error verificando sistema:', error);
                 const statusDiv = document.getElementById('status');
                 statusDiv.className = 'status-indicator status-error';
-                statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error conectando con el sistema';
+                statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Error conectando con la IA';
                 statusDiv.style.display = 'block';
             });
     }
@@ -548,13 +558,13 @@
             if (data.respuesta) {
                 agregarRespuestaBot(data);
             } else {
-                agregarMensaje('Lo siento, hubo un problema procesando tu mensaje. Por favor, intenta de nuevo.', 'bot');
+                agregarMensaje('Lo siento, la IA no pudo procesar tu mensaje. Por favor, intenta de nuevo.', 'bot');
             }
         })
         .catch(error => {
             console.error('Error:', error);
             loading.classList.remove('show');
-            agregarMensaje('Lo siento, no pude procesar tu mensaje en este momento. Por favor, intenta más tarde.', 'bot');
+            agregarMensaje('Lo siento, no pude conectar con la IA en este momento. Por favor, intenta más tarde.', 'bot');
         })
         .finally(() => {
             isProcessing = false;
@@ -590,6 +600,7 @@
 
         messageDiv.appendChild(contentDiv);
 
+        // Solo mostrar tarjeta de producto si hay un producto específico recomendado
         if (data.productoId && data.productoId > 0 && data.disponible) {
             const productDiv = document.createElement('div');
             productDiv.className = 'product-recommendation';
@@ -638,9 +649,7 @@
 
             const response = await fetch('/api/auth/verificar', {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'Content-Type': 'application/json' }
             });
 
             const authData = await response.json();
@@ -660,9 +669,7 @@
 
             const responseCarrito = await fetch('/Personalizacion/AgregarAlCarrito', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(datosProducto)
             });
 
@@ -675,7 +682,6 @@
             if (resultado.success) {
                 boton.innerHTML = '<i class="fas fa-check"></i> ¡Añadido!';
                 boton.className = 'btn btn-success btn-sm me-2';
-
                 mostrarMensajeExito(`${nombreProducto} añadido al carrito exitosamente`);
 
                 setTimeout(() => {
@@ -709,10 +715,6 @@
                 boton.disabled = false;
             }, 3000);
         }
-    }
-
-    function verDetalleProducto(productoId) {
-        window.open(`/Personalizacion/Detalle/${productoId}`, '_blank');
     }
 
     function mostrarMensajeExito(mensaje) {
